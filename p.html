@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tool Assignment</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #1e90ff;
+    }
+    .form-container {
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      width: 50%;
+      display: none; /* Form is hidden by default */
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: none;
+      background-color: #333333;
+      color: #ffffff;
+    }
+    button {
+      background-color: #1e90ff;
+      cursor: pointer;
+      width: 200px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #333333;
+      text-align: left;
+    }
+    th {
+      background-color: #1e90ff;
+    }
+    tr:nth-child(even) {
+      background-color: #1e1e1e;
+    }
+    .dropdown {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #333333;
+      border: 1px solid #1e90ff;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 1;
+      width: 100%;
+    }
+    .dropdown-content div {
+      padding: 10px;
+      cursor: pointer;
+    }
+    .dropdown-content div:hover {
+      background-color: #1e90ff;
+    }
+    .checked-in {
+      background-color: #32CD32 !important; /* Light green */
+    }
+  </style>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Function to populate the tool dropdown list
+    async function populateToolDropdown() {
+      const toolDropdown = document.getElementById("toolDropdown");
+      const toolSnapshot = await getDocs(collection(db, "tools"));
+      
+      // Convert the snapshot to an array of tool objects
+      const tools = [];
+      toolSnapshot.forEach((doc) => {
+        const data = doc.data();
+        tools.push({
+          id: doc.id,
+          code: data.code,
+          name: data.name
+        });
+      });
+
+      // Sort tools alphabetically by name
+      tools.sort((a, b) => a.name.localeCompare(b.name));
+
+      // Clear the existing options
+      toolDropdown.innerHTML = '';
+
+      // Populate the dropdown with sorted tools
+      tools.forEach((tool) => {
+        const option = document.createElement("div");
+        option.textContent = `${tool.code} - ${tool.name}`;
+        option.onclick = () => {
+          document.getElementById("toolId").value = `${tool.code} - ${tool.name}`;
+          toolDropdown.style.display = "none";
+        };
+        toolDropdown.appendChild(option);
+      });
+    }
+
+    // Function to filter dropdown options based on input
+    function filterDropdown() {
+      const input = document.getElementById("toolId").value.toLowerCase();
+      const toolDropdown = document.getElementById("toolDropdown");
+      const options = toolDropdown.getElementsByTagName("div");
+
+      for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        if (option.textContent.toLowerCase().includes(input)) {
+          option.style.display = "";
+        } else {
+          option.style.display = "none";
+        }
+      }
+
+      // Show dropdown if there are matching options
+      toolDropdown.style.display = input && Array.from(options).some(option => option.style.display === "") ? "block" : "none";
+    }
+
+    // Function to add a tool movement
+    async function addToolMovement(toolId, toolName, personnel, date, location, taskDescription) {
+      if (!toolId || !toolName || !personnel || !date || !location || !taskDescription) {
+        alert("Please fill in all fields before assigning the tool.");
+        return;
+      }
+
+      // Check if the tool is already assigned
+      const toolMovementsQuery = query(collection(db, "toolMovements"), 
+        where("toolId", "==", toolId), 
+        where("checkInDate", "==", null)
+      );
+      const toolMovementsSnapshot = await getDocs(toolMovementsQuery);
+
+      if (!toolMovementsSnapshot.empty) {
+        alert("This tool is already assigned. Please check it in before assigning it to another person.");
+        return;
+      }
+
+      try {
+        const docRef = await addDoc(collection(db, "toolMovements"), {
+          toolId: toolId,
+          toolName: toolName,
+          personnel: personnel,
+          date: date,
+          location: location,
+          taskDescription: taskDescription,
+          checkInDate: null
+        });
+        console.log("Document written with ID: ", docRef.id);
+
+        // Update the tool details in the tool tracker file
+        updateToolDetails(toolId, personnel, location);
+
+        // Hide the form after successfully adding a tool movement
+        document.querySelector(".form-container").style.display = "none";
+        
+        // Clear the form
+        document.getElementById("toolId").value = "";
+        document.getElementById("personnel").value = "";
+        document.getElementById("date").value = "";
+        document.getElementById("location").value = "";
+        document.getElementById("taskDescription").value = "";
+      } catch (e) {
+        console.error("Error adding document: ", e);
+        alert("Error adding tool movement. Please try again.");
+      }
+    }
+
+    // Function to update tool details in the tool tracker file
+    async function updateToolDetails(toolId, personnel, location) {
+      const toolTable = document.getElementById("toolsTableBody");
+      if (toolTable) {
+        const rows = toolTable.getElementsByTagName("tr");
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const cells = row.getElementsByTagName("td");
+          if (cells[0].textContent === toolId) {
+            cells[2].textContent = location;
+            cells[3].textContent = personnel;
+            break;
+          }
+        }
+      }
+    }
+
+    // Function to check a tool back into the warehouse
+    async function checkInTool(docId) {
+      try {
+        const toolDoc = doc(db, "toolMovements", docId);
+        await updateDoc(toolDoc, {
+          checkInDate: new Date().toISOString().split('T')[0]
+        });
+        console.log("Document updated with ID: ", docId);
+
+        // Change button color to light green
+        const button = document.querySelector(`button[onclick="checkInTool('${docId}')"]`);
+        if (button) {
+          button.classList.add('checked-in');
+          button.textContent = 'Checked In';
+          button.disabled = true;
+        }
+      } catch (e) {
+        console.error("Error updating document: ", e);
+        alert("Error checking in tool. Please try again.");
+      }
+    }
+
+    // Function to fetch tasks from the database
+    async function fetchTasks() {
+      const tasksSelect = document.getElementById("taskDescription");
+      const tasksSnapshot = await getDocs(collection(db, "tasks"));
+      
+      // Clear existing options first
+      tasksSelect.innerHTML = '<option value="">Select a task...</option>';
+      
+      tasksSnapshot.forEach((doc) => {
+        const option = document.createElement("option");
+        const taskData = doc.data();
+        option.value = taskData.TaskDescription;  // Use the actual description as the value
+        option.textContent = taskData.TaskDescription;
+        tasksSelect.appendChild(option);
+      });
+    }
+
+    // Function to listen for real-time updates
+    function listenForToolMovements(filterDate = null) {
+      const q = collection(db, "toolMovements");
+      onSnapshot(q, (snapshot) => {
+        const movements = document.getElementById("movements");
+        movements.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (!filterDate || data.date === filterDate || data.checkInDate === filterDate) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${data.toolId}</td>
+              <td>${data.toolName}</td>
+              <td>${data.personnel}</td>
+              <td>${data.date}</td>
+              <td>${data.location}</td>
+              <td>${data.taskDescription}</td>
+              <td>${data.checkInDate ? data.checkInDate : 'Not Checked In'}</td>
+              <td>
+                <button 
+                  ${data.checkInDate ? 'class="checked-in" disabled' : `onclick="checkInTool('${doc.id}')"` }
+                >
+                  ${data.checkInDate ? 'Checked In' : 'Check-In'}
+                </button>
+              </td>
+            `;
+            movements.appendChild(row);
+          }
+        });
+      });
+    }
+
+    // Function to search for a specific tool's history
+    function searchToolHistory(toolName) {
+      if (!toolName.trim()) {
+        listenForToolMovements(); // If search is empty, show all movements
+        return;
+      }
+      
+      const q = query(collection(db, "toolMovements"), where("toolName", "==", toolName));
+      onSnapshot(q, (snapshot) => {
+        const movements = document.getElementById("movements");
+        movements.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.toolId}</td>
+            <td>${data.toolName}</td>
+            <td>${data.personnel}</td>
+            <td>${data.date}</td>
+            <td>${data.location}</td>
+            <td>${data.taskDescription}</td>
+            <td>${data.checkInDate ? data.checkInDate : 'Not Checked In'}</td>
+            <td>
+              <button 
+                ${data.checkInDate ? 'class="checked-in" disabled' : `onclick="checkInTool('${doc.id}')"` }
+              >
+                ${data.checkInDate ? 'Checked In' : 'Check-In'}
+              </button>
+            </td>
+          `;
+          movements.appendChild(row);
+        });
+      });
+    }
+
+    // Run when the page loads
+    window.addEventListener("load", () => {
+      // Check if there's a stored filter date in localStorage
+      const storedFilterDate = localStorage.getItem("filterDate");
+      if (storedFilterDate) {
+        document.getElementById("filterDate").value = storedFilterDate;
+        listenForToolMovements(storedFilterDate);
+      } else {
+        listenForToolMovements();
+      }
+      fetchTasks(); // Fetch tasks when the page loads
+    });
+
+    // Add Movement button click handler
+    document.getElementById("addMovement").addEventListener("click", () => {
+      const toolIdInput = document.getElementById("toolId").value;
+      const toolId = toolIdInput.split(' - ')[0];
+      const toolName = toolIdInput.split(' - ')[1];
+      const personnel = document.getElementById("personnel").value;
+      const date = document.getElementById("date").value;
+      const location = document.getElementById("location").value;
+      const taskDescription = document.getElementById("taskDescription").value;
+      addToolMovement(toolId, toolName, personnel, date, location, taskDescription);
+    });
+
+    // Filter by date
+    document.getElementById("filterDate").addEventListener("change", () => {
+      const filterDate = document.getElementById("filterDate").value;
+      localStorage.setItem("filterDate", filterDate);
+      listenForToolMovements(filterDate);
+    });
+
+    // Search for tool history
+    document.getElementById("searchToolId").addEventListener("input", () => {
+      const searchToolName = document.getElementById("searchToolId").value;
+      searchToolHistory(searchToolName);
+    });
+
+    // Toggle form visibility
+    document.getElementById("toggleForm").addEventListener("click", () => {
+      const formContainer = document.querySelector(".form-container");
+      formContainer.style.display = formContainer.style.display === "none" ? "block" : "none";
+    });
+
+    // Expose checkInTool function to global scope
+    window.checkInTool = checkInTool;
+
+    // Show dropdown when clicking on the tool input
+    document.getElementById("toolId").addEventListener("click", () => {
+      const toolDropdown = document.getElementById("toolDropdown");
+      toolDropdown.style.display = "block";
+      populateToolDropdown();
+    });
+
+    // Filter dropdown options as typing
+    document.getElementById("toolId").addEventListener("input", () => {
+      filterDropdown();
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", (event) => {
+      const toolDropdown = document.getElementById("toolDropdown");
+      if (event.target !== document.getElementById("toolId")) {
+        toolDropdown.style.display = "none";
+      }
+    });
+    // Inactivity timeout
+        let inactivityTimeout;
+        function resetInactivityTimeout() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                logout();
+            }, 600000); // 10 minutes
+        }
+
+        // Set up inactivity timer
+        resetInactivityTimeout();
+        document.addEventListener('mousemove', resetInactivityTimeout);
+        document.addEventListener('keypress', resetInactivityTimeout);
+        document.addEventListener('click', resetInactivityTimeout);
+        document.addEventListener('touchstart', resetInactivityTimeout);
+
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+  </script>
+</head>
+<body>
+  <h1>Tool Assignment and Movement History</h1>
+  <button id="toggleForm">Toggle Form</button>
+  <a href="tt.html">
+    <button>View All Tools</button>
+  </a>
+  <div class="form-container">
+    <form>
+      <label for="toolId">Tool Name (ID):</label>
+      <input type="text" id="toolId" name="toolId" placeholder="Click to select a tool">
+      <div id="toolDropdown" class="dropdown-content"></div><br>
+      
+      <label for="personnel">Personnel:</label>
+      <input type="text" id="personnel" name="personnel" required><br>
+      
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" required><br>
+      
+      <label for="location">Location:</label>
+      <input type="text" id="location" name="location" required><br>
+      
+      <label for="taskDescription">Task Description:</label>
+      <select id="taskDescription" name="taskDescription" required>
+        <option value="">Select a task...</option>
+      </select><br>
+      
+      <button type="button" id="addMovement">Add Movement</button>
+    </form>
+  </div>
+  
+  <h2>Movement History</h2>
+  <label for="filterDate">Filter by Date:</label>
+  <input type="date" id="filterDate" name="filterDate"><br>
+  
+  <label for="searchToolId">Search Tool Name:</label>
+  <input type="text" id="searchToolId" name="searchToolId"><br>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Tool ID</th>
+        <th>Tool Name</th>
+        <th>Personnel</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Task Description</th>
+        <th>Check-In Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="movements"></tbody>
+  </table>
+</body>
+</html>

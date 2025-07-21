@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool Details</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    html, body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      background: #f4f7fa;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    #wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .navbar {
+      background: #2c3e50;
+      color: #fff;
+      min-height: 60px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+      width: 100%;
+      position: fixed;
+      top: 0;
+      z-index: 1001;
+      border: none;
+      border-radius: 0;
+    }
+    .navbar .navbar-header {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+    }
+    .navbar .navbar-brand {
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.4rem;
+      text-decoration: none;
+      margin-right: 40px;
+    }
+    .navbar .navbar-brand:hover {
+      color: #1abc9c;
+    }
+    .btn-danger {
+      background: #666363!important;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 16px;
+      font-size: 15px;
+      margin-left: 10px;
+      transition: background 0.2s;
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #c0392b !important;
+    }
+    .user-info {
+      color: #fff;
+      padding: 15px 50px 5px 50px;
+      font-size: 16px;
+      float: right;
+    }
+    #page-wrapper {
+      margin-left: 0 !important;
+      margin-top: 60px;
+      padding: 32px 32px 32px 32px;
+      background: #f4f7fa;
+      min-height: calc(100vh - 60px);
+      width: 100%;
+      transition: margin-left 0.2s;
+    }
+    h2 {
+      color: #000000;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #dbe5ea;
+      margin: 22px 0;
+    }
+    .btn-primary {
+      background: #8c9391;
+      border: none;
+      color: #fff !important;
+      border-radius: 4px;
+      padding: 10px 18px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      margin-right: 10px;
+      font-size: 15px;
+      box-shadow: 0 2px 8px 0 rgba(44,62,80,0.06);
+      transition: background 0.18s;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background: #16a085;
+      color: #fff !important;
+    }
+    .panel {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(44,62,80,0.04);
+      margin-bottom: 30px;
+      border: none;
+    }
+    .panel-heading {
+      background: #666363;
+      color: #fff;
+      padding: 18px 24px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      font-size: 1.16rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .panel-heading .toggle-details-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.3rem;
+      cursor: pointer;
+      outline: none;
+      margin-left: 16px;
+      transition: color 0.17s;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    .panel-heading .toggle-details-btn:hover {
+      color: #e0e0e0;
+    }
+    .panel-body {
+      padding: 24px;
+      transition: max-height 0.25s, opacity 0.17s;
+      overflow: hidden;
+    }
+    .panel-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      pointer-events: none;
+      height: 0;
+      min-height: 0;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 18px;
+      border-radius: 7px;
+      box-shadow: 0 1px 4px rgba(44,62,80,0.08);
+      background: #fff;
+      padding: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-bottom: 0;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    thead {
+      background: #666363;
+      color: #fff;
+    }
+    th, td {
+      padding: 14px 12px;
+      text-align: left;
+      font-size: 15px;
+    }
+    th {
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    tr {
+      transition: background 0.14s;
+    }
+    tr:nth-child(even) {
+      background: #f7fafc;
+    }
+    tr:hover {
+      background: #eafaf1;
+    }
+    #transfer-history-table {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <nav class="navbar" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" aria-label="Toggle navigation">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">IMS Portal</a>
+        <span class="user-info" style="margin-left:auto;">
+          Welcome Christopher Chishela&nbsp;
+          <a href="logout.php" class="btn btn-danger square-btn-adjust">Logout</a>
+        </span>
+      </div>
+    </nav>
+    <div id="page-wrapper">
+      <div id="page-inner">
+        <div class="row">
+          <div class="col-md-12">
+            <h2 id="tool-title">Loading...</h2>
+          </div>
+        </div>
+        <hr />
+        <div id="tool-actions" style="margin-bottom: 22px;">
+          <!-- Optional: Add action buttons here if you want -->
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default">
+              <div class="panel-heading" id="tool-details-heading">
+                <b>Tool Details</b>
+                <button class="toggle-details-btn" id="toggle-tool-details-btn" aria-label="Hide/Show Tool Details">
+                  <span id="toggle-tool-details-icon" class="fa fa-chevron-up"></span>
+                </button>
+              </div>
+              <div class="panel-body" id="tool-details-panel-body">
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered table-hover" id="tool-details-table">
+                    <tbody id="tool-details-tbody">
+                      <!-- Dynamic tool details here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- Transfer History BELOW tool details table, always visible -->
+              <h3 style="color:#1abc9c; margin-top:38px;">
+                Transfer History
+              </h3>
+              <div class="table-responsive">
+                <table class="table table-striped table-bordered table-hover" id="transfer-history-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>From Location</th>
+                      <th>From Employee</th>
+                      <th>To Location</th>
+                      <th>To Employee</th>
+                    </tr>
+                  </thead>
+                  <tbody id="transfer-history-tbody">
+                    <tr><td colspan="7">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <!-- End Transfer History -->
+            </div>
+            <!--End Advanced Tables -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- FIREBASE & REALTIME SCRIPT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    // Firebase config (project-task-588c4)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Helper: Get tool id from ?id=XYZ in URL
+    function getToolId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("id");
+    }
+
+    // Render tool details
+    function renderToolDetails(tool) {
+      document.getElementById("tool-title").textContent = tool.name || "Tool Details";
+      const rows = [
+        { label: "Tool ID", value: tool.toolId || "-" },
+        { label: "Bin ID", value: tool.bin || "-" },
+        { label: "Name", value: tool.name || "-" },
+        { label: "Category", value: tool.category || "-" },
+        { label: "Description", value: tool.description || "-" },
+        { label: "Comment", value: tool.comment || "-" },
+        { label: "Supplier", value: tool.supplier || "-" },
+        { label: "Owner", value: tool.owner || "-" },
+        { label: "Current Tool Location", value: tool.location || "-" },
+        { label: "Cost", value: tool.cost || "-" },
+        { label: "Current Holder", value: tool.currentHolder || "-" },
+        { label: "Uploaded", value: tool.uploaded || "-" },
+      ];
+      let html = "";
+      for (const row of rows) {
+        html += `<tr><td>${row.label} :</td><td>${row.value}</td></tr>`;
+      }
+      document.getElementById("tool-details-tbody").innerHTML = html;
+    }
+
+    // Render transfer history (if you save it in firestore)
+    async function renderTransferHistory(toolId) {
+      // transfer history is in tools-2/{toolId}/transfers (subcollection)
+      const tbody = document.getElementById("transfer-history-tbody");
+      tbody.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
+      try {
+        const q = query(
+          collection(db, "tools-2", toolId, "transfers"),
+          orderBy("timestamp", "desc")
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          tbody.innerHTML = "<tr><td colspan='7'>No transfer history found.</td></tr>";
+        } else {
+          let i = 1;
+          let html = "";
+          snap.forEach(doc => {
+            const t = doc.data();
+            html += `<tr>
+              <td>${i++}</td>
+              <td>${t.date || "-"}</td>
+              <td>${t.time || "-"}</td>
+              <td>${t.fromLocation || "-"}</td>
+              <td>${t.fromEmployee || "-"}</td>
+              <td>${t.toLocation || "-"}</td>
+              <td>${t.toEmployee || "-"}</td>
+            </tr>`;
+          });
+          tbody.innerHTML = html;
+        }
+      } catch (err) {
+        tbody.innerHTML = "<tr><td colspan='7'>Error loading transfer history.</td></tr>";
+      }
+    }
+
+    function setupHideUnhide() {
+      const btn = document.getElementById('toggle-tool-details-btn');
+      const panelBody = document.getElementById('tool-details-panel-body');
+      const icon = document.getElementById('toggle-tool-details-icon');
+      let collapsed = false;
+      btn.addEventListener('click', function() {
+        collapsed = !collapsed;
+        if (collapsed) {
+          panelBody.classList.add('collapsed');
+          icon.classList.remove('fa-chevron-up');
+          icon.classList.add('fa-chevron-down');
+          btn.setAttribute('aria-label', 'Show Tool Details');
+        } else {
+          panelBody.classList.remove('collapsed');
+          icon.classList.remove('fa-chevron-down');
+          icon.classList.add('fa-chevron-up');
+          btn.setAttribute('aria-label', 'Hide Tool Details');
+        }
+      });
+    }
+
+    (async function(){
+      setupHideUnhide();
+      const toolId = getToolId();
+      if (!toolId) {
+        document.getElementById("tool-title").textContent = "Tool not found";
+        document.getElementById("tool-details-tbody").innerHTML = "<tr><td colspan='2'>No tool selected. Invalid URL.</td></tr>";
+        document.getElementById("transfer-history-tbody").innerHTML = "<tr><td colspan='7'>No data.</td></tr>";
+        return;
+      }
+      // Fetch tool details from "tools-2"
+      const toolRef = doc(db, "tools-2", toolId);
+      const toolSnap = await getDoc(toolRef);
+      if (!toolSnap.exists()) {
+        document.getElementById("tool-title").textContent = "Tool not found";
+        document.getElementById("tool-details-tbody").innerHTML = "<tr><td colspan='2'>Tool not found in database.</td></tr>";
+        document.getElementById("transfer-history-tbody").innerHTML = "<tr><td colspan='7'>No data.</td></tr>";
+        return;
+      }
+      const tool = toolSnap.data();
+      renderToolDetails(tool);
+      await renderTransferHistory(toolId);
+    })();
+  </script>
+</body>
+</html>

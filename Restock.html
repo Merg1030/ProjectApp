@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restock Inventory</title>
+  <style>
+    /* Dark Mode Styling */
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    th {
+      background-color: #333;
+      color: #ffffff;
+    }
+
+    tr:hover {
+      background-color: #1e1e1e;
+    }
+
+    button {
+      background-color: #8e8f91;
+      color: #121212;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #4d7aff;
+    }
+
+    #restockForm {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #restockForm input, #restockForm select {
+      padding: 10px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background-color: #1e1e1e;
+      color: #ffffff;
+    }
+
+    #filterInput {
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background-color: #1e1e1e;
+      color: #ffffff;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Restock Inventory</h1>
+
+  <!-- Input to Filter Restock History by Product Name -->
+  <input type="text" id="filterInput" placeholder="Filter by Product Name">
+
+  <!-- Button to Restock Product -->
+  <button id="restockProductButton">Restock Product</button>
+
+  <!-- Form to Restock Product -->
+  <div id="restockForm">
+    <h2>Restock Product</h2>
+    <form id="restockProductForm">
+      <input type="date" id="restockDate" required>
+      <select id="productSelect" required>
+        <!-- Options will be populated dynamically -->
+      </select>
+      <input type="number" id="restockQty" placeholder="Restock Quantity" required>
+      <button type="submit">Restock</button>
+    </form>
+  </div>
+
+  <!-- Table to Display Restock History -->
+  <table id="restockTable">
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Restock Qty</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Data will be populated dynamically -->
+    </tbody>
+  </table>
+
+  <script type="module">
+    // Import Firebase and Firestore
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load Restock Data from Firestore
+    async function loadRestockHistory() {
+      const querySnapshot = await getDocs(collection(db, "restockHistory"));
+      const restockTable = document.getElementById('restockTable').getElementsByTagName('tbody')[0];
+      restockTable.innerHTML = ""; // Clear existing rows
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+          <td class="productName">${data.productName}</td>
+          <td>${data.restockQty}</td>
+          <td>${data.date}</td>
+        `;
+        restockTable.appendChild(newRow);
+      });
+    }
+
+    // Filter Restock History by Product Name
+    document.getElementById('filterInput').addEventListener('input', () => {
+      const filterValue = document.getElementById('filterInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#restockTable tbody tr');
+
+      rows.forEach(row => {
+        const productName = row.querySelector('.productName').textContent.toLowerCase();
+        if (productName.includes(filterValue)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+
+    // Show Restock Form
+    document.getElementById('restockProductButton').addEventListener('click', async () => {
+      document.getElementById('restockForm').style.display = 'block';
+      const productSelect = document.getElementById('productSelect');
+      productSelect.innerHTML = ""; // Clear existing options
+
+      const querySnapshot = await getDocs(collection(db, "inventory"));
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const option = document.createElement('option');
+        option.value = data.productName;
+        option.textContent = data.productName;
+        productSelect.appendChild(option);
+      });
+    });
+
+    // Restock Product
+    document.getElementById('restockProductForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const restockDate = document.getElementById('restockDate').value;
+      const product = document.getElementById('productSelect').value;
+      const restockQty = parseInt(document.getElementById('restockQty').value);
+
+      try {
+        // Add to restockHistory collection
+        await addDoc(collection(db, "restockHistory"), {
+          date: restockDate,
+          productName: product,
+          restockQty,
+        });
+
+        // Update inventory collection
+        const inventorySnapshot = await getDocs(collection(db, "inventory"));
+        inventorySnapshot.forEach(async (doc) => {
+          const data = doc.data();
+          if (data.productName === product) {
+            const docRef = doc.ref;
+            const newReceivedQty = data.receivedQty + restockQty;
+            await updateDoc(docRef, { receivedQty: newReceivedQty });
+          }
+        });
+
+        alert("Product restocked successfully!");
+        loadRestockHistory(); // Refresh the table
+        document.getElementById('restockForm').style.display = 'none'; // Hide the form
+      } catch (error) {
+        console.error("Error restocking product: ", error);
+      }
+    });
+
+    // Load Restock Data on Page Load
+    loadRestockHistory();
+    // Inactivity timeout
+        let inactivityTimeout;
+        function resetInactivityTimeout() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                logout();
+            }, 600000); // 10 minutes
+        }
+
+        // Set up inactivity timer
+        resetInactivityTimeout();
+        document.addEventListener('mousemove', resetInactivityTimeout);
+        document.addEventListener('keypress', resetInactivityTimeout);
+        document.addEventListener('click', resetInactivityTimeout);
+        document.addEventListener('touchstart', resetInactivityTimeout);
+
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+  </script>
+</body>
+</html>

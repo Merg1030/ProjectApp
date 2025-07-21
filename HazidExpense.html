@@ -1,0 +1,690 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMS | Expenses Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; padding: 30px;}
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    #toggle-form-btn {
+      margin-bottom: 16px; background: #1976d2; color: #fff; border: none;
+      font-size: 15px; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
+      transition: background 0.2s;
+    }
+    #toggle-form-btn:hover { background: #125195; }
+    .airtel-btn {
+      margin-left: 8px; background: #1976d2; color: #fff; border: none;
+      font-size: 15px; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
+      transition: background 0.2s;
+    }
+    .airtel-btn:hover { background:#1976d2; }
+    .download-week-btn {
+      margin-left: 8px; background: #1976d2; color: #fff; border: none;
+      font-size: 15px; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
+      transition: background 0.18s;
+    }
+    .download-week-btn:hover { background: #215c98; }
+    form { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; margin-bottom: 22px; }
+    form label { font-weight: bold; }
+    form input, form select, form textarea, form button { padding: 7px 12px; font-size: 15px; border-radius: 4px; border: 1px solid #bbb; }
+    form input[type="date"] { min-width: 140px;}
+    form input[type="text"], form input[type="number"], form select, form textarea { min-width: 120px;}
+    form textarea { resize: vertical; min-height: 34px; max-height: 160px; }
+    form button { background: #1976d2; color: #fff; border: none; cursor: pointer; font-weight: bold;}
+    form button:hover { background: #0d47a1;}
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .hide { display: none !important; }
+    .account-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .account-filter-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .account-btn {
+      background: #e3e8ef;
+      border: none;
+      color: #1976d2;
+      font-weight: bold;
+      padding: 8px 24px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.18s, color 0.18s;
+      outline: none;
+    }
+    .account-btn.selected,
+    .account-btn:focus {
+      background: #1976d2;
+      color: #fff;
+    }
+    .search-bar {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .search-bar input[type="text"] {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      font-size: 15px;
+      width: 260px;
+      max-width: 90vw;
+    }
+    .filter-invoice {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      font-size: 15px;
+      width: 200px;
+      margin-left: 10px;
+    }
+    .week-filter-select { padding: 8px 12px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; margin-left: 10px;}
+    .month-filter-select { padding: 8px 14px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
+    @media (max-width: 900px) {
+      .panel { padding: 5vw 2vw; }
+      .account-filter-bar { flex-direction: column; gap: 10px; }
+      .account-filter-btns { gap: 8px; }
+      .search-bar { flex-direction: column; gap: 10px; }
+      table th, table td { white-space: nowrap; }
+      .filter-invoice, .week-filter-select { width: 100%; margin-left: 0; }
+    }
+    .B{
+      background: #e3e8ef;
+      border: none;
+      color: #1976d2;
+      font-weight: bold;
+      padding: 8px 24px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.18s, color 0.18s;
+      outline: none;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <button class="B" onclick="window.history.back()">← Back</button>
+
+  <div class="panel">
+  
+    <div class="panel-heading">Expenses Tracker</div>
+    <div style="display:flex;align-items:center;gap:0.5em;flex-wrap:wrap;">
+      <button id="toggle-form-btn" type="button">Add transaction</button>
+      <button id="airtel-btn" type="button" class="airtel-btn">Airtel Money</button>
+      <button id="download-week-btn" class="download-week-btn" type="button">Download Weekly Report</button>
+      <select id="week-filter" class="week-filter-select"></select>
+    </div>
+    <form id="expense-form" autocomplete="off" class="hide">
+      <div>
+        <label for="exp-date">Date</label><br>
+        <input type="date" id="exp-date" required>
+      </div>
+      <div>
+        <label for="exp-taskid">Task ID</label><br>
+        <select id="exp-taskid-select" style="width:140px;display:none;"></select>
+        <input type="text" id="exp-taskid" required placeholder="e.g. 0625-3">
+        <small id="taskid-tip" style="font-size:12px;color:#888;display:block;"></small>
+      </div>
+      <div>
+        <label for="exp-description">Description</label><br>
+        <textarea id="exp-description" placeholder="Expense Description"></textarea>
+      </div>
+      <div>
+        <label for="exp-project">Project</label><br>
+        <select id="exp-project" required>
+          <option value="">--Choose Project--</option>
+          <option value="_general">General (No Project)</option>
+        </select>
+      </div>
+      <div>
+        <label for="exp-account">Account</label><br>
+        <select id="exp-account" required>
+          <option value="">--Choose--</option>
+          <option value="Hazida Limited">Hazida Limited</option>
+          <option value="Hazida Motors">Hazida Motors</option>
+          <option value="Freight n Passengers">Freight n Passengers</option>
+          <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
+        </select>
+      </div>
+      <div>
+        <label for="exp-invoice">Invoice/Entry #</label><br>
+        <select id="exp-invoice-type" style="margin-bottom:8px;">
+          <option value="type">Type...</option>
+          <option value="nonvatable">Non Vatable</option>
+        </select><br>
+        <input type="text" id="exp-invoice" placeholder="Invoice or Entry Number" style="margin-top:3px;">
+      </div>
+      <div>
+        <label for="exp-supplier">Supplier</label><br>
+        <input type="text" id="exp-supplier" required placeholder="Supplier name">
+      </div>
+      <div>
+        <label for="exp-amount">Amount</label><br>
+        <input type="number" min="0" id="exp-amount" required placeholder="Amount">
+      </div>
+      <div style="align-self: flex-end;">
+        <button type="submit">Add Expense</button>
+      </div>
+      <div id="expense-form-error"></div>
+    </form>
+
+    <div class="account-filter-bar">
+      <div class="account-filter-btns" id="account-btns">
+        <button type="button" class="account-btn" data-account="Hazida Limited">Hazida Limited</button>
+        <button type="button" class="account-btn" data-account="Hazida Motors">Hazida Motors</button>
+        <button type="button" class="account-btn" data-account="Freight n Passengers">Freight n Passengers</button>
+        <button type="button" class="account-btn" data-account="Hazida Ezone Limited">Hazida Ezone Limited</button>
+        <button type="button" class="account-btn selected" data-account="">All Accounts</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-filter" placeholder="Search any field...">
+      </div>
+      <div>
+        <input type="text" id="invoice-filter" class="filter-invoice" placeholder="Filter by Invoice/Entry #">
+      </div>
+      <div>
+        <select id="month-filter" class="month-filter-select"></select>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Task ID</th>
+            <th>Description</th>
+            <th>Project</th>
+            <th>Account</th>
+            <th>Invoice/Entry #</th>
+            <th>Supplier</th>
+            <th>Amount</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="expenses-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- Elements ---
+    const expenseForm = document.getElementById("expense-form");
+    const expensesTableBody = document.getElementById("expenses-table-body");
+    const formError = document.getElementById("expense-form-error");
+    const toggleFormBtn = document.getElementById("toggle-form-btn");
+    const airtelBtn = document.getElementById("airtel-btn");
+    const accountSelect = document.getElementById("exp-account");
+    const invoiceInput = document.getElementById("exp-invoice");
+    const invoiceTypeSelect = document.getElementById("exp-invoice-type");
+    const dateInput = document.getElementById("exp-date");
+    const taskIdInput = document.getElementById("exp-taskid");
+    const taskIdSelect = document.getElementById("exp-taskid-select");
+    const projectSelect = document.getElementById("exp-project");
+    const supplierInput = document.getElementById("exp-supplier");
+    const descriptionInput = document.getElementById("exp-description");
+    const searchFilter = document.getElementById("search-filter");
+    const invoiceFilter = document.getElementById("invoice-filter");
+    const accountBtns = document.querySelectorAll(".account-btn");
+    const monthFilter = document.getElementById("month-filter");
+    const weekFilter = document.getElementById("week-filter");
+    const downloadWeekBtn = document.getElementById("download-week-btn");
+    const taskidTip = document.getElementById("taskid-tip");
+
+    // --- Invoice Type Logic ---
+    invoiceTypeSelect.addEventListener("change", function() {
+      if (this.value === "nonvatable") {
+        invoiceInput.value = "Non Vatable";
+        invoiceInput.readOnly = true;
+        invoiceInput.required = false;
+        invoiceInput.style.background = "#eee";
+      } else {
+        invoiceInput.value = "";
+        invoiceInput.readOnly = false;
+        invoiceInput.required = true;
+        invoiceInput.style.background = "";
+      }
+    });
+
+    // --- Airtel Money Button Logic ---
+    airtelBtn.onclick = function() {
+      window.location.href = "Airtel.html";
+    };
+
+    // --- Week Filter Dropdown ---
+    function fillWeekDropdown() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentWeek = getWeekNumber(now);
+      let options = "";
+      for (let y = currentYear; y >= currentYear - 5; y--) {
+        let maxW = (y === currentYear) ? currentWeek : 53;
+        for (let w = maxW; w >= 1; w--) {
+          options += `<option value="${y}-${w}"${y===currentYear&&w===currentWeek?' selected':''}>Week ${w}, ${y}</option>`;
+        }
+      }
+      weekFilter.innerHTML = options;
+    }
+    fillWeekDropdown();
+
+    weekFilter.addEventListener("change", renderTable);
+
+    // --- Month Filter Dropdown ---
+    function fillMonthDropdown() {
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const d = new Date();
+      let options = "";
+      for (let y = d.getFullYear(); y >= d.getFullYear() - 10; y--) {
+        for (let m = 11; m >= 0; m--) {
+          options += `<option value="${y}-${String(m+1).padStart(2,'0')}"${y===d.getFullYear()&&m===d.getMonth()?' selected':''}>${months[m]} ${y}</option>`;
+        }
+      }
+      monthFilter.innerHTML = options;
+    }
+    fillMonthDropdown();
+
+    monthFilter.addEventListener("change", renderTable);
+
+    // --- Show/Hide Form Logic ---
+    let formVisible = false;
+    expenseForm.classList.add("hide");
+    toggleFormBtn.textContent = "Add Transaction";
+    toggleFormBtn.onclick = function() {
+      formVisible = !formVisible;
+      expenseForm.classList.toggle("hide", !formVisible);
+      toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction";
+    };
+
+    // --- Persisted Filter Logic ---
+    let selectedAccount = localStorage.getItem('ims_selectedAccount') || "";
+    let persistedSearchFilter = localStorage.getItem('ims_searchFilter') || "";
+    let persistedInvoiceFilter = localStorage.getItem('ims_invoiceFilter') || "";
+
+    window.addEventListener('DOMContentLoaded', () => {
+      accountBtns.forEach((btn) => {
+        if (btn.getAttribute("data-account") === selectedAccount) {
+          btn.classList.add("selected");
+        } else {
+          btn.classList.remove("selected");
+        }
+      });
+      searchFilter.value = persistedSearchFilter;
+      invoiceFilter.value = persistedInvoiceFilter;
+      renderTable();
+    });
+
+    accountBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        accountBtns.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        selectedAccount = btn.getAttribute("data-account");
+        localStorage.setItem('ims_selectedAccount', selectedAccount);
+        renderTable();
+      });
+    });
+
+    // --- Load Projects for Dropdown & Tasks for Project ---
+    let projectTasksCache = {}; // {projectId: [{taskId, taskDescription}]}
+    function loadProjectsForDropdown() {
+      onSnapshot(collection(db, "projectDashboard"), (snap) => {
+        let html = `<option value="">--Choose Project--</option><option value="_general">General (No Project)</option>`;
+        snap.forEach(doc => {
+          const name = doc.data().name || "Unnamed Project";
+          html += `<option value="${doc.id}">${name}</option>`;
+        });
+        projectSelect.innerHTML = html;
+      }, (err) => {
+        projectSelect.innerHTML = `<option value="">--Error Loading Projects--</option>`;
+        projectSelect.disabled = true;
+      });
+    }
+    loadProjectsForDropdown();
+
+    // Load all project tasks into cache
+    function populateProjectTasksCache() {
+      onSnapshot(collection(db, "projectTasks"), (snap) => {
+        projectTasksCache = {};
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (!d.projectId || !d.taskId) return;
+          if (!projectTasksCache[d.projectId]) projectTasksCache[d.projectId] = [];
+          projectTasksCache[d.projectId].push({
+            taskId: d.taskId,
+            taskDescription: d.taskDescription || ""
+          });
+        });
+      });
+    }
+    populateProjectTasksCache();
+
+    // When project changes, update taskId select field
+    projectSelect.addEventListener("change", function() {
+      const pVal = projectSelect.value;
+      if (!pVal || pVal === "_general") {
+        // General: hide select, show text input, clear tip
+        taskIdSelect.style.display = "none";
+        taskIdSelect.innerHTML = ""; // clear
+        taskIdInput.style.display = "";
+        taskIdInput.value = "";
+        taskIdInput.required = false;
+        taskidTip.textContent = "Type a general or custom Task ID (or leave blank if not applicable).";
+      } else {
+        // Populate select with tasks for chosen project
+        const tasks = projectTasksCache[pVal] || [];
+        if (tasks.length) {
+          let options = `<option value="">--Select Task--</option>`;
+          for (const t of tasks) {
+            options += `<option value="${t.taskId}">${t.taskId}${t.taskDescription ? " - "+t.taskDescription : ""}</option>`;
+          }
+          taskIdSelect.innerHTML = options;
+          taskIdSelect.style.display = "";
+          taskIdInput.style.display = "none";
+          taskIdInput.value = "";
+          taskidTip.textContent = "Choose a Task from this Project, or select blank for none.";
+        } else {
+          // No tasks for this project, default to manual entry
+          taskIdSelect.style.display = "none";
+          taskIdSelect.innerHTML = "";
+          taskIdInput.style.display = "";
+          taskIdInput.value = "";
+          taskIdInput.required = false;
+          taskidTip.textContent = "No tasks found for this project. Enter a Task ID manually (or leave blank for general).";
+        }
+        // Reset value
+        taskIdSelect.value = "";
+      }
+    });
+
+    // When task select changes, update task input
+    taskIdSelect.addEventListener("change", function() {
+      if (taskIdSelect.value) {
+        taskIdInput.value = taskIdSelect.value;
+      } else {
+        taskIdInput.value = "";
+      }
+    });
+
+    // On manual typing in input (when in general), allow editing
+    taskIdInput.addEventListener("input", function() {
+      // No-op, field is always editable when visible
+    });
+
+    // --- Add Expense Handler (with description and invoice dropdown logic) ---
+    expenseForm.onsubmit = async function(e) {
+      e.preventDefault();
+      formError.textContent = "";
+      const dateVal = dateInput.value;
+      const taskIdVal = taskIdInput.value.trim();
+      const projectVal = projectSelect.value === "_general" ? "General" : projectSelect.options[projectSelect.selectedIndex]?.text || "";
+      const accountVal = accountSelect.value;
+      const invoiceVal = invoiceInput.value.trim();
+      const supplierVal = supplierInput.value.trim();
+      const descriptionVal = descriptionInput.value.trim();
+      const amountVal = parseFloat(document.getElementById("exp-amount").value);
+
+      if (!accountVal || !dateVal || !supplierVal || isNaN(amountVal) || amountVal < 0 || !invoiceVal || !projectVal) {
+        formError.textContent = "Please fill all fields correctly.";
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "General expenses"), {
+          date: dateVal,
+          taskId: taskIdVal,
+          project: projectVal,
+          account: accountVal,
+          invoice: invoiceVal,
+          supplier: supplierVal,
+          description: descriptionVal,
+          amount: amountVal,
+          createdAt: Timestamp.now()
+        });
+        expenseForm.reset();
+        invoiceInput.readOnly = false;
+        invoiceInput.required = true;
+        invoiceInput.style.background = "";
+        invoiceTypeSelect.value = "type";
+        taskIdInput.style.display = "";
+        taskIdSelect.style.display = "none";
+        taskIdInput.value = "";
+        projectSelect.value = "";
+        taskidTip.textContent = "";
+      } catch (err) {
+        formError.textContent = "Error saving expense: " + (err.message || err);
+      }
+    };
+
+    // --- Real-time Table Sync ---
+    let allExpenses = [];
+    let filteredExpenses = [];
+    onSnapshot(
+      collection(db, "General expenses"),
+      (snapshot) => {
+        allExpenses = [];
+        snapshot.forEach(docSnap => {
+          const exp = docSnap.data();
+          allExpenses.push(exp);
+        });
+        renderTable();
+      }
+    );
+
+    // --- Table Rendering & Filtering ---
+    function renderTable() {
+      let filtered = [...allExpenses];
+
+      // Account filter
+      if (selectedAccount !== "") {
+        filtered = filtered.filter(exp => exp.account === selectedAccount);
+      }
+
+      // Week filter
+      const weekVal = weekFilter.value;
+      if (weekVal) {
+        const [filterYear, filterWeek] = weekVal.split("-").map(Number);
+        filtered = filtered.filter(exp => {
+          if (!exp.date) return false;
+          const d = new Date(exp.date);
+          const weekYear = getWeekYear(d);
+          return weekYear.year === filterYear && weekYear.week === filterWeek;
+        });
+      }
+
+      // Month filter
+      const monthVal = monthFilter.value;
+      if (monthVal) {
+        filtered = filtered.filter(exp => {
+          if (!exp.date) return false;
+          const d = new Date(exp.date);
+          return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === monthVal;
+        });
+      }
+
+      // Invoice filter
+      const invoiceVal = invoiceFilter.value.trim().toLowerCase();
+      if (invoiceVal) {
+        filtered = filtered.filter(exp => (exp.invoice || "").toLowerCase().includes(invoiceVal));
+      }
+
+      // Search filter (applies to all fields)
+      const searchVal = searchFilter.value.trim().toLowerCase();
+      if (searchVal) {
+        filtered = filtered.filter(exp =>
+          Object.values(exp).some(value =>
+            (typeof value === "string" || typeof value === "number") &&
+            String(value).toLowerCase().includes(searchVal)
+          )
+        );
+      }
+
+      // Save filtered for download
+      filteredExpenses = filtered;
+
+      // Sort by date ascending, then by createdAt if needed
+      filtered.sort((a, b) => {
+        if ((a.date || "") === (b.date || "")) {
+          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        }
+        return (a.date || "") < (b.date || "") ? -1 : 1;
+      });
+
+      expensesTableBody.innerHTML = "";
+      let balance = 0;
+      filtered.forEach(exp => {
+        balance += exp.amount || 0;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${exp.date ? formatDate(exp.date) : "-"}</td>
+          <td>${exp.taskId || "-"}</td>
+          <td>${exp.description || "-"}</td>
+          <td>${typeof exp.project === "string" && exp.project.trim() ? exp.project : "-"}</td>
+          <td>${exp.account || "-"}</td>
+          <td>${exp.invoice || "-"}</td>
+          <td>${exp.supplier || "-"}</td>
+          <td>${typeof exp.amount === "number" ? exp.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
+          <td>${balance ? balance.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
+        `;
+        expensesTableBody.appendChild(tr);
+      });
+    }
+
+    searchFilter.addEventListener("input", function() {
+      localStorage.setItem('ims_searchFilter', searchFilter.value);
+      renderTable();
+    });
+    invoiceFilter.addEventListener("input", function() {
+      localStorage.setItem('ims_invoiceFilter', invoiceFilter.value);
+      renderTable();
+    });
+
+    // --- Week number helpers ---
+    function getWeekNumber(d) {
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return weekNo;
+    }
+    function getWeekYear(date) {
+      let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return {week: weekNo, year: d.getUTCFullYear()};
+    }
+
+    function formatDate(isoDateStr) {
+      const date = new Date(isoDateStr);
+      if (isNaN(date.getTime())) return isoDateStr;
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = date.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // --- Download Filtered Report ---
+    downloadWeekBtn.onclick = function() {
+      if (!filteredExpenses.length) return alert("No filtered results to download!");
+
+      let html = `
+        <div style="font-family:Arial,sans-serif;max-width:1000px;">
+          <h2 style="color:#1976d2;">Expenses Filtered Report</h2>
+          <div style="margin-bottom:10px;font-weight:bold;">Filtered Export</div>
+          <table style="width:100%;border-collapse:collapse;background:#fff;">
+            <thead>
+              <tr>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Date</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Task ID</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Description</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Project</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Account</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Invoice/Entry #</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Supplier</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Amount</th>
+                <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      let balance = 0;
+      filteredExpenses.sort((a, b) => {
+        if ((a.date || "") === (b.date || "")) {
+          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        }
+        return (a.date || "") < (b.date || "") ? -1 : 1;
+      });
+      filteredExpenses.forEach(exp => {
+        balance += exp.amount || 0;
+        html += `
+          <tr>
+            <td style="padding:8px 6px;border:1px solid #eee;">${exp.date ? formatDate(exp.date) : "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${exp.taskId || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${exp.description || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${typeof exp.project === "string" && exp.project.trim() ? exp.project : "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${exp.account || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${exp.invoice || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${exp.supplier || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${typeof exp.amount === "number" ? exp.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;">${balance ? balance.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+      document.body.appendChild(tempDiv);
+      html2pdf().from(tempDiv).set({
+        margin: 0.5,
+        filename: `expenses-filtered-report.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+      }).save().then(() => {
+        document.body.removeChild(tempDiv);
+      });
+    };
+  </script>
+</body>
+</html>

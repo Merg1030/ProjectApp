@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Employee Details</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    html, body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; padding: 0; color: #333; }
+    #wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { background: #2c3e50; color: #fff; min-height: 60px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); width: 100%; position: fixed; top: 0; z-index: 1001; }
+    .navbar .navbar-header { display: flex; align-items: center; padding: 0 20px; }
+    .navbar .navbar-brand { color: #fff; font-weight: bold; font-size: 1.4rem; text-decoration: none; margin-right: 40px; }
+    .navbar .navbar-brand:hover { color: #1abc9c; }
+    .btn-danger { background: #666363 !important; border: none; border-radius: 4px; padding: 6px 16px; font-size: 15px; margin-left: 10px; color: #fff; }
+    .btn-danger:hover { background: #c0392b !important; }
+    .user-info { color: #fff; padding: 15px 50px 5px 50px; font-size: 16px; float: right; }
+    #page-wrapper { margin-top: 60px; padding: 32px; background: #f4f7fa; min-height: calc(100vh - 60px); }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin-bottom: 30px; border: none; }
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: 0; }
+    .panel-body { padding: 24px; }
+    .table-responsive { overflow-x: auto; margin-top: 18px; border-radius: 7px; box-shadow: 0 1px 4px rgba(44,62,80,0.08); background: #fff; padding: 0; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 7px; overflow: hidden; }
+    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; letter-spacing: 0.5px; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .btn-success { background: #27ae60; border: none; color: #fff; border-radius: 4px; padding: 7px 16px; font-size: 14px; font-weight: 600; }
+    .btn-success:hover, .btn-success:focus { background: #535353; color: #fff; }
+    .info-table td { font-weight: 600; }
+    .info-table td.label { color: #555; width: 220px; font-weight: bold; }
+    @media (max-width: 500px) {
+      .navbar { min-height: 40px; } .navbar .navbar-header { padding: 0 6px; } .navbar .navbar-brand { font-size: 1rem; }
+      #page-wrapper { padding: 6px 0; } .panel-body { padding: 7px 0; } .panel-heading { font-size: 1rem; padding: 12px 8px; }
+      th, td { padding: 7px 5px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <nav class="navbar" role="navigation">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">IMS Portal</a>
+        <span class="user-info" style="margin-left:auto;">
+          Welcome Christopher Chishela&nbsp; 
+        </span>
+      </div>
+    </nav>
+    <div id="page-wrapper">
+      <div id="page-inner">
+        <h2 id="emp-name" style="margin-top:0;"></h2>
+        <hr />
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default sticky-panel">
+              <div class="panel-heading">
+                <b id="panel-title">Employee Details</b>
+              </div>
+              <div class="panel-body">
+                <div class="table-responsive">
+                  <table class="info-table">
+                    <tbody id="emp-details-table">
+                      <!-- Employee details here -->
+                    </tbody>
+                  </table>
+                </div>
+                <!-- Assigned Tools section REMOVED as requested -->
+                <h3 style="margin-top:40px;">Tool Transfer History</h3>
+                <div class="table-responsive">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Tool</th>
+                        <th>Tool ID</th>
+                        <th>From Person</th>
+                        <th>From Location</th>
+                        <th>To Person</th>
+                        <th>To Location</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tool-transfer-history-body">
+                      <!-- Tool transfer history here -->
+                    </tbody>
+                  </table>
+                </div>
+                <div id="details-message"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE EMPLOYEE DETAILS + TOOL TRANSFER HISTORY -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function getIdFromUrl() {
+      const q = new URLSearchParams(window.location.search);
+      return q.get('id');
+    }
+    const empId = getIdFromUrl();
+    const panelTitle = document.getElementById('panel-title');
+    const empName = document.getElementById('emp-name');
+    const detailsTable = document.getElementById('emp-details-table');
+    const detailsMsg = document.getElementById('details-message');
+    const transferHistoryBody = document.getElementById('tool-transfer-history-body');
+
+    function formatDate(ts) {
+      if (!ts) return "-";
+      try {
+        const d = ts.toDate();
+        return d.toLocaleDateString() + " " + d.toLocaleTimeString();
+      } catch {
+        return "-";
+      }
+    }
+
+    async function loadEmployeeAndTransfers() {
+      if (!empId) {
+        detailsMsg.innerHTML = '<div style="color:#e74c3c;">Employee not found (no id in URL)</div>';
+        return;
+      }
+      // Get employee
+      const empSnap = await getDoc(doc(db, "employees", empId));
+      if (!empSnap.exists()) {
+        detailsMsg.innerHTML = '<div style="color:#e74c3c;">Employee not found</div>';
+        return;
+      }
+      const emp = empSnap.data();
+      empName.textContent = emp.name || emp.empId || empId || "Employee";
+      panelTitle.textContent = emp.name ? `${emp.name}'s Details` : "Employee Details";
+      detailsTable.innerHTML = `
+        <tr><td class="label">Employee Number :</td><td>${emp.empId || "-"}</td></tr>
+        <tr><td class="label">NRC/Username :</td><td>${emp.username || "-"}</td></tr>
+        <tr><td class="label">Name :</td><td>${emp.name || "-"}</td></tr>
+        <tr><td class="label">Surname :</td><td>${emp.surname || "-"}</td></tr>
+        <tr><td class="label">Current Work Location :</td><td>${emp.workLocation || "-"}</td></tr>
+        <tr><td class="label">Job Role :</td><td>${emp.position || emp.role || "-"}</td></tr>
+        <tr><td class="label">Phone :</td><td>${emp.phone || "-"}</td></tr>
+        <tr><td class="label">Upload Time :</td><td>-</td></tr>
+      `;
+
+      // Get tool transfer history where this employee is either fromPerson or toPerson
+      let transferRow = 1;
+      transferHistoryBody.innerHTML = "";
+      const fullName = `${emp.name || ""} ${emp.surname || ""}`.trim();
+      // Firestore doesn't support OR, so query twice and merge
+      const toPersonSnap = await getDocs(query(collection(db, "tool_transfers"), where("toPerson", "==", fullName)));
+      const fromPersonSnap = await getDocs(query(collection(db, "tool_transfers"), where("fromPerson", "==", fullName)));
+      let history = [];
+      toPersonSnap.forEach(doc => history.push(doc.data()));
+      fromPersonSnap.forEach(doc => history.push(doc.data()));
+      // Remove duplicates (transfers where from and to were the same person)
+      const seen = new Set();
+      history = history.filter(t => {
+        const key = `${t.tool}|${t.date?.seconds || ""}|${t.fromPerson}|${t.toPerson}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      // Sort by date descending
+      history.sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+      history.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${transferRow++}</td>
+          <td>${t.tool || "-"}</td>
+          <td>${t.bin ? `T-${t.bin}` : "-"}</td>
+          <td>${t.fromPerson || "-"}</td>
+          <td>${t.fromLocation || "-"}</td>
+          <td>${t.toPerson || "-"}</td>
+          <td>${t.toLocation || "-"}</td>
+          <td>${formatDate(t.date)}</td>
+        `;
+        transferHistoryBody.appendChild(tr);
+      });
+
+      if (transferRow === 1) {
+        transferHistoryBody.innerHTML = `<tr><td colspan="8">No tool transfer history found.</td></tr>`;
+      }
+    }
+    loadEmployeeAndTransfers();
+  </script>
+</body>
+</html>

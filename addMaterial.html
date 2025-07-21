@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Add/Restock Material</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; max-width: 480px; padding: 30px; }
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    .form-group label { font-weight: 600; margin-bottom: 6px; }
+    .form-group input, .form-group select { border-radius: 5px; font-size: 1rem; padding: 8px 12px; border: 1px solid #ccc; width: 100%; background: #f7fafd; }
+    .btn-primary { background: #8c9391; border: none; color: #fff; border-radius: 4px; padding: 10px 18px; font-weight: 600; font-size: 15px; margin-right: 10px; }
+    .btn-primary:hover { background: #16a085; }
+    .success-msg { color: #1abc9c; font-weight: bold; margin-top: 16px; }
+    .error-msg { color: #e74c3c; font-weight: bold; margin-top: 16px; }
+    .audit-log-link { margin-top: 18px; display: block; color: #2980b9; text-decoration: underline; font-weight: 600; }
+    .toggle-btns { display: flex; gap: 10px; margin-bottom: 18px; }
+    .btn-toggle { background: #ecf0f1; color: #444; border: 1px solid #bbb; border-radius: 4px; padding: 8px 18px; font-weight: 600; cursor: pointer; }
+    .btn-toggle.active, .btn-toggle:focus { background: #1abc9c; color: #fff; border: 1.5px solid #1abc9c; }
+    #restock-fields { display: none; }
+    .btn.btn-outline{color: white; margin-right: 20PX;}
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">
+      <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a>Add / Restock Material</div>
+    <div class="toggle-btns">
+      <button type="button" class="btn-toggle active" id="btn-add">Add New Product</button>
+      <button type="button" class="btn-toggle" id="btn-restock">Restock Existing</button>
+    </div>
+    <form id="add-material-form" autocomplete="off">
+      <div class="form-group" id="materialNameGroup">
+        <label>Material Name:</label>
+        <!-- Will be replaced with a dropdown in restock mode -->
+        <input class="form-control" name="materialName" id="materialName" placeholder="e.g. Cement" required/>
+        <select class="form-control" name="materialNameDropdown" id="materialNameDropdown" style="display:none;">
+          <option value="">-- Select Material --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Category:</label>
+        <select class="form-control" name="category" id="category" required>
+          <option value="">-- Select Category --</option>
+          <option>Building</option>
+          <option>Carpentry and joinary</option>
+          <option>Metal fabrication</option>
+          <option>Electrical</option>
+          <option>General</option>
+          <option>Plumbing</option>
+          <option>painting</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity:</label>
+        <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
+      </div>
+      <div class="form-group">
+        <label>Unit Price:</label>
+        <input class="form-control" name="unitPrice" id="unitPrice" type="number" min="0" step="0.01" placeholder="e.g. 120.50" required/>
+      </div>
+      <div class="form-group">
+        <label>Location/Store:</label>
+        <input class="form-control" name="location" id="location" placeholder="e.g. Main Store" required/>
+      </div>
+      <div id="restock-fields">
+        <div class="form-group">
+          <label>Existing Stock: <span id="existing-stock"></span></label>
+        </div>
+        <div class="form-group">
+          <label>New Stock After Restock: <span id="new-stock"></span></label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn">Submit</button>
+      <button type="reset" class="btn btn-primary">Reset</button>
+      <div id="form-message"></div>
+    </form>
+    <a href="materialAuditLog.html" class="audit-log-link" >View Material Audit Log</a>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // UI toggle logic
+    const btnAdd = document.getElementById('btn-add');
+    const btnRestock = document.getElementById('btn-restock');
+    const restockFields = document.getElementById('restock-fields');
+    const materialNameInput = document.getElementById("materialName");
+    const materialNameDropdown = document.getElementById("materialNameDropdown");
+    const categorySelect = document.getElementById('category');
+    const unitPriceInput = document.getElementById('unitPrice');
+    const locationInput = document.getElementById('location');
+    const quantityInput = document.getElementById('quantity');
+    let mode = "add"; // or "restock"
+
+    // Material cache for restocking
+    let materialsCache = {};
+    async function loadMaterialNames() {
+      materialsCache = {};
+      materialNameDropdown.innerHTML = '<option value="">-- Select Material --</option>';
+      const querySnapshot = await getDocs(collection(db, "materials"));
+      querySnapshot.forEach((docSnap) => {
+        const m = docSnap.data();
+        // Always cache with lowercase key for robust lookup
+        materialsCache[m.materialName.trim().toLowerCase()] = { ...m, id: docSnap.id };
+        // Show all items in dropdown, with current stock
+        const option = document.createElement("option");
+        option.value = m.materialName;
+        option.textContent = `${m.materialName} (Stock: ${m.quantity || 0})`;
+        materialNameDropdown.appendChild(option);
+      });
+    }
+    loadMaterialNames();
+
+    // Toggle logic
+    function setMode(newMode) {
+      mode = newMode;
+      if (mode === "add") {
+        btnAdd.classList.add('active');
+        btnRestock.classList.remove('active');
+        restockFields.style.display = "none";
+        materialNameInput.style.display = "";
+        materialNameInput.value = "";
+        materialNameInput.required = true;
+        materialNameDropdown.style.display = "none";
+        materialNameDropdown.required = false;
+        categorySelect.value = "";
+        unitPriceInput.value = "";
+        locationInput.value = "";
+        quantityInput.value = "";
+        materialNameInput.readOnly = false;
+      } else {
+        btnRestock.classList.add('active');
+        btnAdd.classList.remove('active');
+        restockFields.style.display = "";
+        materialNameInput.style.display = "none";
+        materialNameInput.required = false;
+        materialNameDropdown.style.display = "";
+        materialNameDropdown.value = "";
+        materialNameDropdown.required = true;
+        categorySelect.value = "";
+        unitPriceInput.value = "";
+        locationInput.value = "";
+        quantityInput.value = "";
+      }
+      document.getElementById('form-message').innerHTML = '';
+      document.getElementById('existing-stock').textContent = '';
+      document.getElementById('new-stock').textContent = '';
+    }
+
+    btnAdd.onclick = () => setMode("add");
+    btnRestock.onclick = () => setMode("restock");
+
+    // Restock display logic
+    function updateRestockDisplay() {
+      if (mode !== "restock") return;
+      // Get selected option text and extract the actual material name before " (Stock:"
+      let selectedOption = materialNameDropdown.options[materialNameDropdown.selectedIndex];
+      let fullText = selectedOption ? selectedOption.value : "";
+      let materialKey = fullText.trim().toLowerCase();
+
+      if (materialsCache[materialKey]) {
+        const mat = materialsCache[materialKey];
+        restockFields.style.display = "block";
+        document.getElementById('existing-stock').textContent = mat.quantity;
+        const qty = parseInt(quantityInput.value) || 0;
+        document.getElementById('new-stock').textContent = mat.quantity + qty;
+        // Prefill fields
+        categorySelect.value = mat.category;
+        unitPriceInput.value = mat.unitPrice;
+        locationInput.value = mat.location;
+      } else {
+        restockFields.style.display = "block";
+        document.getElementById('existing-stock').textContent = "";
+        document.getElementById('new-stock').textContent = "";
+        categorySelect.value = "";
+        unitPriceInput.value = "";
+        locationInput.value = "";
+      }
+    }
+    materialNameDropdown.addEventListener("change", updateRestockDisplay);
+    quantityInput.addEventListener("input", updateRestockDisplay);
+
+    // Form logic
+    const form = document.getElementById('add-material-form');
+    const messageDiv = document.getElementById('form-message');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      let materialName, materialKey;
+      if (mode === "add") {
+        materialName = materialNameInput.value.trim();
+        materialKey = materialName.toLowerCase();
+      } else {
+        // Take only the value of the selected option (which is the original materialName)
+        materialName = materialNameDropdown.value.trim();
+        materialKey = materialName.toLowerCase();
+      }
+      const qty = parseInt(quantityInput.value);
+      const price = parseFloat(unitPriceInput.value);
+
+      if (mode === "add") {
+        if (!materialName || !categorySelect.value || !qty || !price || !locationInput.value) {
+          messageDiv.innerHTML = '<div class="error-msg">All fields are required!</div>';
+          return;
+        }
+        if (materialsCache[materialKey]) {
+          messageDiv.innerHTML = '<div class="error-msg">Material already exists. Please restock instead.</div>';
+          return;
+        }
+        // ADD NEW
+        const materialDoc = {
+          materialName: materialName,
+          category: categorySelect.value,
+          quantity: qty,
+          unitPrice: price,
+          location: locationInput.value,
+          createdAt: serverTimestamp()
+        };
+        const docRef = await addDoc(collection(db, "materials"), materialDoc);
+        // Audit log
+        await addDoc(collection(db, "materialAuditLog"), {
+          materialId: docRef.id,
+          materialName: materialName,
+          action: "add",
+          addedQuantity: qty,
+          unitPrice: price,
+          location: locationInput.value,
+          category: categorySelect.value,
+          timestamp: serverTimestamp()
+        });
+        messageDiv.innerHTML = '<div class="success-msg">Material added successfully!</div>';
+        await loadMaterialNames();
+        form.reset();
+      } else if (mode === "restock") {
+        if (!materialName || !materialsCache[materialKey]) {
+          messageDiv.innerHTML = '<div class="error-msg">Material does not exist.</div>';
+          return;
+        }
+        if (!qty || !price || !locationInput.value) {
+          messageDiv.innerHTML = '<div class="error-msg">All fields are required!</div>';
+          return;
+        }
+        // RESTOCK LOGIC
+        const mat = materialsCache[materialKey];
+        const matDocRef = doc(db, "materials", mat.id);
+        const oldQty = mat.quantity;
+        const newQty = oldQty + qty;
+        await updateDoc(matDocRef, {
+          quantity: newQty,
+          unitPrice: price,
+          category: categorySelect.value,
+          location: locationInput.value,
+        });
+        // Audit log
+        await addDoc(collection(db, "materialAuditLog"), {
+          materialId: mat.id,
+          materialName: mat.materialName,
+          action: "restock",
+          restockedQuantity: qty,
+          oldQuantity: oldQty,
+          newQuantity: newQty,
+          unitPrice: price,
+          location: locationInput.value,
+          category: categorySelect.value,
+          timestamp: serverTimestamp()
+        });
+        messageDiv.innerHTML = '<div class="success-msg">Material restocked successfully!</div>';
+        await loadMaterialNames();
+        form.reset();
+        restockFields.style.display = "block";
+        document.getElementById('existing-stock').textContent = "";
+        document.getElementById('new-stock').textContent = "";
+      }
+    });
+
+    form.addEventListener('reset', function() {
+      if (mode === "add") {
+        setMode("add");
+      } else {
+        setMode("restock");
+      }
+    });
+
+    // Default to add mode on page load
+    setMode("add");
+  </script>
+</body>
+</html>

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Transfer or Issue Out Fixed Inventory</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto 18px auto; padding: 30px;}
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    .toggle-form-btn {
+      margin-bottom: 24px;
+      background: #2980b9;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-form-btn:hover { background: #1a5fa0; }
+    #transfer-form {
+      max-width: 400px;
+      margin: 0 auto 30px auto;
+      padding: 18px 24px 18px 24px;
+      background: #f7fafd;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(44,62,80,0.03);
+      transition: box-shadow 0.2s;
+      display: none;
+    }
+    #transfer-form.visible { display: block; }
+    .form-group label { font-weight: 600; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea { border-radius: 5px; font-size: 1rem; padding: 8px 12px; border: 1px solid #ccc; width: 100%; background: #fff; }
+    .btn-primary { background: #8c9391; border: none; color: #fff; border-radius: 4px; padding: 10px 18px; font-weight: 600; font-size: 15px; margin-right: 10px; }
+    .btn-primary:hover { background: #16a085; }
+    .success-msg { color: #1abc9c; font-weight: bold; margin-top: 16px; }
+    .error-msg { color: #e74c3c; font-weight: bold; margin-top: 16px; }
+    .readonly-info { background: #f7fafc; border: 1px solid #ddd; border-radius: 5px; padding: 7px 12px; margin-bottom: 8px; font-size: 15px; }
+    .action-btns { display: flex; gap: 12px; margin-bottom: 18px; }
+    .btn-toggle { background: #ecf0f1; color: #444; border: 1px solid #bbb; border-radius: 4px; padding: 8px 18px; font-weight: 600; cursor: pointer; }
+    .btn-toggle.active, .btn-toggle:focus { background: #1abc9c; color: #fff; border: 1.5px solid #1abc9c; }
+    .hidden { display: none; }
+    .log-section { margin-top: 50px; }
+    .toggle-bar { display: flex; gap: 14px; margin-bottom: 10px; align-items: center; }
+    .toggle-btn {
+      background: #ecf0f1;
+      color: #444;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 8px 24px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .toggle-btn.active, .toggle-btn:focus {
+      background: #1abc9c;
+      color: #fff;
+      border: 1.5px solid #1abc9c;
+    }
+    .table-responsive { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 900px;
+      position: relative;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      font-size: 15px;
+      background: inherit;
+    }
+    th {
+      font-weight: 700;
+      background: #666363;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+    }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .action-badge { border-radius: 3px; padding: 2px 8px; font-size: 14px; margin-right: 6px; font-weight: bold;}
+    .transfer-badge { background: #eafaf1; color: #16a085; border: 1px solid #b9f6ca; }
+    .issueout-badge { background: #fdeaea; color: #c0392b; border: 1px solid #fabcbc; }
+    /* SEARCH BAR */
+    .search-bar-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 15px;
+      width: 260px;
+      transition: border 0.2s;
+      outline: none;
+    }
+    .search-input:focus {
+      border: 1.5px solid #1abc9c;
+    }
+    .search-btn {
+      background: #16a085;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.2s;
+      margin-left: 2px;
+    }
+    .search-btn:hover { background: #14806d; }
+    .clear-search-btn {
+      background: #eee;
+      color: #333;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background 0.2s;
+    }
+    .clear-search-btn:hover { background: #e1e1e1; }
+    @media (max-width: 900px) {
+      .panel { padding: 5px;}
+      table { min-width: 700px;}
+      #transfer-form { max-width: 98vw; padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">Transfer / Issue Out Fixed Inventory</div>
+    <button type="button" class="toggle-form-btn" id="toggleFormBtn">Show Transfer/Issue Out Form</button>
+    <form id="transfer-form" autocomplete="off">
+      <div class="action-btns">
+        <button type="button" class="btn-toggle active" id="btn-transfer">Transfer (Warehouse to Warehouse)</button>
+        <button type="button" class="btn-toggle" id="btn-issue">Issue Out (Remove for Good)</button>
+      </div>
+      <div class="form-group">
+        <label>Select Item:</label>
+        <select class="form-control" id="itemSelect" required></select>
+      </div>
+      <div id="item-info" class="readonly-info"></div>
+      <div class="form-group">
+        <label>Available Quantity:</label>
+        <input class="form-control" id="availableQty" readonly />
+      </div>
+      <div class="form-group">
+        <label>Quantity to Move:</label>
+        <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
+      </div>
+      <!-- Transfer fields -->
+      <div class="form-group" id="transfer-fields">
+        <label>Transfer To (Warehouse/Storage):</label>
+        <input class="form-control" name="transferTo" id="transferTo" placeholder="Destination location"/>
+        <label style="margin-top:7px;">Delivery Note Number (for Transfer):</label>
+        <input class="form-control" name="transferDNote" id="transferDNote" placeholder="Delivery note number for transfer"/>
+      </div>
+      <!-- Issue out fields -->
+      <div class="hidden" id="issue-fields">
+        <div class="form-group">
+          <label>Person Issued To:</label>
+          <input class="form-control" name="issuedTo" id="issuedTo" placeholder="Name of recipient"/>
+        </div>
+        <div class="form-group">
+          <label>Location Issued To:</label>
+          <input class="form-control" name="issuedLocation" id="issuedLocation" placeholder="Where is it going?"/>
+        </div>
+        <div class="form-group">
+          <label>Delivery Note Number (for Issue Out):</label>
+          <input class="form-control" name="issueDNote" id="issueDNote" placeholder="Delivery note number"/>
+        </div>
+        <div class="form-group">
+          <label>Reason for Issue Out:</label>
+          <textarea class="form-control" name="issueReason" id="issueReason" rows="2" placeholder="e.g. Used on Project X, Scrapped, Donated"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn">Submit</button>
+      <button type="reset" class="btn btn-primary">Reset</button>
+      <div id="form-message"></div>
+    </form>
+    <div class="log-section">
+      <!-- Search bar -->
+      <div class="search-bar-container">
+        <input type="text" class="search-input" id="logSearchInput" placeholder="Search logs by Item, Code, Note, etc...">
+        <button type="button" class="search-btn" id="searchBtn"><i class="fa fa-search"></i></button>
+        <button type="button" class="clear-search-btn" id="clearSearchBtn"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="toggle-bar">
+        <button type="button" class="toggle-btn active" id="showTransfersBtn">Show Transfers</button>
+        <button type="button" class="toggle-btn" id="showIssueOutBtn">Show Issue Outs</button>
+      </div>
+      <div class="table-responsive">
+        <table id="transfersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date/Time</th>
+              <th>Item Name</th>
+              <th>Item Code</th>
+              <th>Category</th>
+              <th>Action</th>
+              <th>Qty</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Delivery Note Number</th>
+            </tr>
+          </thead>
+          <tbody id="transfers-table-body"></tbody>
+        </table>
+        <table id="issueOutsTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date/Time</th>
+              <th>Item Name</th>
+              <th>Item Code</th>
+              <th>Category</th>
+              <th>Action</th>
+              <th>Qty</th>
+              <th>From</th>
+              <th>Issued To</th>
+              <th>Issued Location</th>
+              <th>Delivery Note Number</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="issueouts-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="table-message"></div>
+    <a href="fixedInventoryAuditLog.html" class="audit-log-link" >View Full Audit Log</a>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, doc, getDocs, updateDoc, serverTimestamp, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // FORM SHOW/HIDE LOGIC
+    const toggleFormBtn = document.getElementById('toggleFormBtn');
+    const transferForm = document.getElementById('transfer-form');
+    let formVisible = false;
+    transferForm.classList.remove('visible');
+    transferForm.style.display = 'none';
+    toggleFormBtn.textContent = "Show Transfer/Issue Out Form";
+    toggleFormBtn.onclick = () => {
+      formVisible = !formVisible;
+      if(formVisible) {
+        transferForm.classList.add('visible');
+        transferForm.style.display = 'block';
+        toggleFormBtn.textContent = 'Hide Transfer/Issue Out Form';
+      } else {
+        transferForm.classList.remove('visible');
+        transferForm.style.display = 'none';
+        toggleFormBtn.textContent = 'Show Transfer/Issue Out Form';
+      }
+    };
+
+    // UI Logic
+    const btnTransfer = document.getElementById('btn-transfer');
+    const btnIssue = document.getElementById('btn-issue');
+    const transferFields = document.getElementById('transfer-fields');
+    const issueFields = document.getElementById('issue-fields');
+    let mode = "transfer";
+    btnTransfer.onclick = () => setMode("transfer");
+    btnIssue.onclick = () => setMode("issue");
+    function setMode(newMode) {
+      mode = newMode;
+      if (mode === "transfer") {
+        btnTransfer.classList.add('active');
+        btnIssue.classList.remove('active');
+        transferFields.classList.remove('hidden');
+        issueFields.classList.add('hidden');
+        document.getElementById('transferTo').required = true;
+        document.getElementById('transferDNote').required = true;
+        document.getElementById('issuedTo').required = false;
+        document.getElementById('issuedLocation').required = false;
+        document.getElementById('issueDNote').required = false;
+        document.getElementById('issueReason').required = false;
+      } else {
+        btnIssue.classList.add('active');
+        btnTransfer.classList.remove('active');
+        transferFields.classList.add('hidden');
+        issueFields.classList.remove('hidden');
+        document.getElementById('transferTo').required = false;
+        document.getElementById('transferDNote').required = false;
+        document.getElementById('issuedTo').required = true;
+        document.getElementById('issuedLocation').required = true;
+        document.getElementById('issueDNote').required = true;
+        document.getElementById('issueReason').required = true;
+      }
+      document.getElementById('form-message').innerHTML = '';
+    }
+    setMode("transfer");
+
+    // Load items for selection
+    const itemSelect = document.getElementById('itemSelect');
+    const availableQty = document.getElementById('availableQty');
+    const itemInfoDiv = document.getElementById('item-info');
+    const issueDNoteInput = document.getElementById('issueDNote');
+    const transferDNoteInput = document.getElementById('transferDNote');
+    let inventoryMap = {};
+    async function loadItems() {
+      inventoryMap = {};
+      itemSelect.innerHTML = '<option value="">-- Select Item --</option>';
+      const querySnapshot = await getDocs(collection(db, "fixedInventory"));
+      querySnapshot.forEach((docSnap) => {
+        const m = docSnap.data();
+        inventoryMap[docSnap.id] = { ...m, id: docSnap.id };
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = `${m.itemName} (${m.location}) [Qty: ${m.quantity}]`;
+        itemSelect.appendChild(option);
+      });
+    }
+    loadItems();
+
+    // Show item info and prefill delivery note number when selected
+    itemSelect.addEventListener('change', function() {
+      const id = itemSelect.value;
+      if (!id || !inventoryMap[id]) {
+        availableQty.value = "";
+        itemInfoDiv.innerHTML = "";
+        issueDNoteInput.value = "";
+        transferDNoteInput.value = "";
+        return;
+      }
+      const m = inventoryMap[id];
+      availableQty.value = m.quantity;
+      itemInfoDiv.innerHTML = `
+        <b>Category:</b> ${m.category || '-'}<br/>
+        <b>Item Code:</b> ${m.itemCode || '-'}<br/>
+        <b>Came From:</b> ${m.cameFrom || '-'}<br/>
+        <b>Brought By:</b> ${m.broughtBy || '-'}<br/>
+        <b>Delivery Note Number:</b> ${m.deliveryNoteNumber || '-'}<br/>
+        <b>Current Location:</b> ${m.location || '-'}
+      `;
+      issueDNoteInput.value = m.deliveryNoteNumber || '';
+      transferDNoteInput.value = m.deliveryNoteNumber || '';
+    });
+
+    // Form logic
+    const form = document.getElementById('transfer-form');
+    const messageDiv = document.getElementById('form-message');
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const itemId = itemSelect.value;
+      if (!itemId || !inventoryMap[itemId]) {
+        messageDiv.innerHTML = '<div class="error-msg">Please select an item.</div>';
+        return;
+      }
+      const m = inventoryMap[itemId];
+      const qtyToMove = parseInt(document.getElementById('quantity').value);
+      if (!qtyToMove || qtyToMove < 1 || qtyToMove > m.quantity) {
+        messageDiv.innerHTML = '<div class="error-msg">Invalid quantity. Check available quantity.</div>';
+        return;
+      }
+
+      let actionDoc = {
+        inventoryId: itemId,
+        itemName: m.itemName,
+        itemCode: m.itemCode || '-',
+        category: m.category,
+        fromLocation: m.location,
+        movedQuantity: qtyToMove,
+        timestamp: serverTimestamp()
+      };
+
+      if (mode === "transfer") {
+        const transferTo = document.getElementById('transferTo').value.trim();
+        const transferDNote = document.getElementById('transferDNote').value.trim();
+        if (!transferTo || !transferDNote) {
+          messageDiv.innerHTML = '<div class="error-msg">Please specify destination location and delivery note number.</div>';
+          return;
+        }
+        try {
+          const itemRef = doc(db, "fixedInventory", itemId);
+          if (qtyToMove === m.quantity) {
+            await updateDoc(itemRef, { location: transferTo, deliveryNoteNumber: transferDNote });
+          } else {
+            await updateDoc(itemRef, { quantity: m.quantity - qtyToMove });
+            await addDoc(collection(db, "fixedInventory"), {
+              ...m,
+              quantity: qtyToMove,
+              location: transferTo,
+              deliveryNoteNumber: transferDNote,
+              createdAt: serverTimestamp()
+            });
+          }
+          await addDoc(collection(db, "fixedInventoryAuditLog"), {
+            ...actionDoc,
+            toLocation: transferTo,
+            deliveryNoteNumber: transferDNote,
+            action: "transfer"
+          });
+          messageDiv.innerHTML = '<div class="success-msg">Transfer completed successfully!</div>';
+          await loadItems();
+          form.reset();
+          availableQty.value = "";
+          itemInfoDiv.innerHTML = "";
+          issueDNoteInput.value = "";
+          transferDNoteInput.value = "";
+        } catch (err) {
+          messageDiv.innerHTML = '<div class="error-msg">Error: ' + (err.message || err) + '</div>';
+        }
+      } else if (mode === "issue") {
+        const issuedTo = document.getElementById('issuedTo').value.trim();
+        const issuedLocation = document.getElementById('issuedLocation').value.trim();
+        const issueDNote = document.getElementById('issueDNote').value.trim();
+        const issueReason = document.getElementById('issueReason').value.trim();
+        if (!issuedTo || !issuedLocation || !issueDNote || !issueReason) {
+          messageDiv.innerHTML = '<div class="error-msg">All fields are required for issue out.</div>';
+          return;
+        }
+        try {
+          const itemRef = doc(db, "fixedInventory", itemId);
+          if (qtyToMove === m.quantity) {
+            await updateDoc(itemRef, { quantity: 0 });
+          } else {
+            await updateDoc(itemRef, { quantity: m.quantity - qtyToMove });
+          }
+          await addDoc(collection(db, "fixedInventoryAuditLog"), {
+            ...actionDoc,
+            issuedTo: issuedTo,
+            issuedLocation: issuedLocation,
+            issueDNote: issueDNote,
+            issueReason: issueReason,
+            action: "issueOut"
+          });
+          messageDiv.innerHTML = '<div class="success-msg">Item issued out and removed from stock!</div>';
+          await loadItems();
+          form.reset();
+          availableQty.value = "";
+          itemInfoDiv.innerHTML = "";
+          issueDNoteInput.value = "";
+          transferDNoteInput.value = "";
+        } catch (err) {
+          messageDiv.innerHTML = '<div class="error-msg">Error: ' + (err.message || err) + '</div>';
+        }
+      }
+    });
+
+    form.addEventListener('reset', function() {
+      messageDiv.innerHTML = '';
+      availableQty.value = "";
+      itemInfoDiv.innerHTML = "";
+      issueDNoteInput.value = "";
+      transferDNoteInput.value = "";
+    });
+
+    // SEARCH BAR LOGIC
+    const logSearchInput = document.getElementById('logSearchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    let searchTerm = "";
+    function filterLog(rawData, mode, searchTerm = "") {
+      let filtered = rawData.filter(m => m.action === mode);
+      if (searchTerm && searchTerm.length > 0) {
+        const term = searchTerm.toLowerCase();
+        filtered = filtered.filter(m =>
+          (m.itemName || '').toLowerCase().includes(term) ||
+          (m.itemCode || '').toLowerCase().includes(term) ||
+          (m.category || '').toLowerCase().includes(term) ||
+          (m.fromLocation || '').toLowerCase().includes(term) ||
+          (m.toLocation || '').toLowerCase().includes(term) ||
+          (m.issuedTo || '').toLowerCase().includes(term) ||
+          (m.issuedLocation || '').toLowerCase().includes(term) ||
+          (m.deliveryNoteNumber || '').toLowerCase().includes(term) ||
+          (m.issueDNote || '').toLowerCase().includes(term) ||
+          (m.issueReason || '').toLowerCase().includes(term)
+        );
+      }
+      return filtered;
+    }
+    function filterAndRender() {
+      const showTransfers = showTransfersBtn.classList.contains('active');
+      if (showTransfers) {
+        renderTransfers(filterLog(auditData, "transfer", searchTerm));
+      } else {
+        renderIssueOuts(filterLog(auditData, "issueOut", searchTerm));
+      }
+    }
+    searchBtn.onclick = function() {
+      searchTerm = logSearchInput.value.trim();
+      filterAndRender();
+    };
+    clearSearchBtn.onclick = function() {
+      logSearchInput.value = "";
+      searchTerm = "";
+      filterAndRender();
+    };
+    logSearchInput.addEventListener("keyup", function(e) {
+      if (e.key === "Enter") {
+        searchTerm = logSearchInput.value.trim();
+        filterAndRender();
+      }
+    });
+
+    // TABLE TOGGLE LOGIC & LIVE AUDIT LOG
+    const showTransfersBtn = document.getElementById('showTransfersBtn');
+    const showIssueOutBtn = document.getElementById('showIssueOutBtn');
+    const transfersTable = document.getElementById('transfersTable');
+    const issueOutsTable = document.getElementById('issueOutsTable');
+    showTransfersBtn.onclick = function() {
+      showTransfersBtn.classList.add('active');
+      showIssueOutBtn.classList.remove('active');
+      transfersTable.style.display = '';
+      issueOutsTable.style.display = 'none';
+      filterAndRender();
+    };
+    showIssueOutBtn.onclick = function() {
+      showIssueOutBtn.classList.add('active');
+      showTransfersBtn.classList.remove('active');
+      transfersTable.style.display = 'none';
+      issueOutsTable.style.display = '';
+      filterAndRender();
+    };
+    const transfersTableBody = document.getElementById('transfers-table-body');
+    const issueoutsTableBody = document.getElementById('issueouts-table-body');
+    let auditData = [];
+    function renderTransfers(data) {
+      transfersTableBody.innerHTML = "";
+      let row = 1;
+      if (data.length === 0) {
+        transfersTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#e74c3c;font-weight:bold;">No results found.</td></tr>`;
+        return;
+      }
+      data.forEach(m => {
+        let actionBadge = `<span class="action-badge transfer-badge">Transfer</span>`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row++}</td>
+          <td>${m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toLocaleString() : '-'}</td>
+          <td>${m.itemName || '-'}</td>
+          <td>${m.itemCode || '-'}</td>
+          <td>${m.category || '-'}</td>
+          <td>${actionBadge}</td>
+          <td>${m.movedQuantity || '-'}</td>
+          <td>${m.fromLocation || '-'}</td>
+          <td>${m.toLocation || '-'}</td>
+          <td>${m.deliveryNoteNumber || '-'}</td>
+        `;
+        transfersTableBody.appendChild(tr);
+      });
+    }
+    function renderIssueOuts(data) {
+      issueoutsTableBody.innerHTML = "";
+      let row = 1;
+      if (data.length === 0) {
+        issueoutsTableBody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:#e74c3c;font-weight:bold;">No results found.</td></tr>`;
+        return;
+      }
+      data.forEach(m => {
+        let actionBadge = `<span class="action-badge issueout-badge">Issue Out</span>`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row++}</td>
+          <td>${m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toLocaleString() : '-'}</td>
+          <td>${m.itemName || '-'}</td>
+          <td>${m.itemCode || '-'}</td>
+          <td>${m.category || '-'}</td>
+          <td>${actionBadge}</td>
+          <td>${m.movedQuantity || '-'}</td>
+          <td>${m.fromLocation || '-'}</td>
+          <td>${m.issuedTo || '-'}</td>
+          <td>${m.issuedLocation || '-'}</td>
+          <td>${m.issueDNote || m.deliveryNoteNumber || '-'}</td>
+          <td>${m.issueReason || '-'}</td>
+        `;
+        issueoutsTableBody.appendChild(tr);
+      });
+    }
+    onSnapshot(query(collection(db, "fixedInventoryAuditLog"), orderBy("timestamp", "desc")), (snapshot) => {
+      auditData = [];
+      snapshot.forEach(doc => {
+        auditData.push(doc.data());
+      });
+      filterAndRender();
+    });
+
+    // Security measures
+    document.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+    });
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+        e.preventDefault();
+      }
+    });
+
+  </script>
+</body>
+</html>

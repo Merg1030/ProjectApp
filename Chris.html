@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple To-Do List (Dark Mode)</title>
+  <style>
+    /* Dark Mode Styles */
+    body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ff88;
+      margin-bottom: 20px;
+    }
+
+    #todo-container {
+      width: 100%;
+      height: 100vh;
+      background-color: #2a2a2a;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start; /* Align items to the left */
+    }
+
+    #todo-input-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #todo-input {
+      width: calc(100% - 90px);
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #3a3a3a;
+      color: #ffffff;
+      font-size: 16px;
+    }
+
+    #add-button {
+      width: 80px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #00ff88;
+      color: #1a1a1a;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #add-button:hover {
+      background-color: #00cc66;
+    }
+
+    #toggle-completed-button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #00ff88;
+      color: #1a1a1a;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    #toggle-completed-button:hover {
+      background-color: #00cc66;
+    }
+
+    #todo-list, #completed-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex-grow: 1;
+      width: 100%; /* Full width */
+    }
+
+    #todo-list li, #completed-list li {
+      padding: 10px;
+      background-color: #3a3a3a;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%; /* Full width */
+    }
+
+    #todo-list li.completed, #completed-list li.completed {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    #todo-list li input[type="checkbox"], #completed-list li input[type="checkbox"] {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    #todo-list li button, #completed-list li button {
+      background-color: #ff4444;
+      border: none;
+      color: #ffffff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #todo-list li button:hover, #completed-list li button:hover {
+      background-color: #cc0000;
+    }
+  </style>
+</head>
+<body>
+  <div id="todo-container">
+    <h1>To-Do List</h1>
+    <div id="todo-input-container">
+      <input type="text" id="todo-input" placeholder="Add a new task...">
+      <button id="add-button">Add</button>
+    </div>
+    <button id="toggle-completed-button">Show Completed Tasks</button>
+    <ul id="todo-list"></ul>
+    <ul id="completed-list" style="display: none;"></ul>
+  </div>
+
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
+    import { getFirestore, collection, doc, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.firebasestorage.app",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    const todoInput = document.getElementById('todo-input');
+    const addButton = document.getElementById('add-button');
+    const todoList = document.getElementById('todo-list');
+    const completedList = document.getElementById('completed-list');
+    const toggleCompletedButton = document.getElementById('toggle-completed-button');
+
+    const TASKS_KEY = 'tasks';
+    const COMPLETED_TASKS_KEY = 'completedTasks';
+
+    let tasks = JSON.parse(localStorage.getItem(TASKS_KEY)) || [];
+    let completedTasks = JSON.parse(localStorage.getItem(COMPLETED_TASKS_KEY)) || [];
+
+    // Save tasks to local storage
+    const saveTasksToLocal = () => {
+      localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+      localStorage.setItem(COMPLETED_TASKS_KEY, JSON.stringify(completedTasks));
+    };
+
+    // Load tasks from Firestore
+    const loadTasksFromFirestore = () => {
+      const taskCollection = collection(db, "tasks");
+      onSnapshot(taskCollection, (snapshot) => {
+        tasks = [];
+        completedTasks = [];
+        todoList.innerHTML = '';
+        completedList.innerHTML = '';
+        snapshot.docs.forEach(doc => {
+          const task = doc.data();
+          task.id = doc.id;
+          if (task.isCompleted) {
+            completedTasks.push(task);
+            addTask(task.text, task.isCompleted, task.id);
+          } else {
+            tasks.push(task);
+            addTask(task.text, task.isCompleted, task.id);
+          }
+        });
+        saveTasksToLocal();
+      });
+    };
+
+    // Save task to Firestore
+    const saveTaskToFirestore = (taskText, isCompleted) => {
+      return addDoc(collection(db, "tasks"), { text: taskText, isCompleted: isCompleted });
+    };
+
+    // Update task in Firestore
+    const updateTaskInFirestore = (taskId, updatedFields) => {
+      const taskDoc = doc(db, "tasks", taskId);
+      return updateDoc(taskDoc, updatedFields);
+    };
+
+    // Delete task from Firestore
+    const deleteTaskFromFirestore = (taskId) => {
+      const taskDoc = doc(db, "tasks", taskId);
+      return deleteDoc(taskDoc);
+    };
+
+    // Function to add a new task
+    const addTask = (taskText, isCompleted, taskId) => {
+      const listItem = document.createElement('li');
+      if (isCompleted) {
+        listItem.classList.add('completed');
+      }
+      listItem.innerHTML = `
+        <input type="checkbox" ${isCompleted ? 'checked' : ''}>
+        <span>${taskText}</span>
+        <button>Delete</button>
+      `;
+      if (isCompleted) {
+        completedList.appendChild(listItem);
+      } else {
+        todoList.appendChild(listItem);
+      }
+
+      // Add event listener to checkbox for task completion
+      const checkbox = listItem.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener('change', () => {
+        const updatedFields = { isCompleted: checkbox.checked };
+        if (checkbox.checked) {
+          listItem.classList.add('completed');
+          completedTasks.push({ text: taskText, isCompleted: true, id: taskId });
+          tasks = tasks.filter(task => task.id !== taskId);
+          completedList.appendChild(listItem);
+        } else {
+          listItem.classList.remove('completed');
+          tasks.push({ text: taskText, isCompleted: false, id: taskId });
+          completedTasks = completedTasks.filter(task => task.id !== taskId);
+          todoList.appendChild(listItem);
+        }
+        updateTaskInFirestore(taskId, updatedFields);
+        saveTasksToLocal();
+      });
+
+      // Add event listener to delete button
+      listItem.querySelector('button').addEventListener('click', () => {
+        listItem.remove();
+        if (isCompleted) {
+          completedTasks = completedTasks.filter(task => task.id !== taskId);
+        } else {
+          tasks = tasks.filter(task => task.id !== taskId);
+        }
+        deleteTaskFromFirestore(taskId);
+        saveTasksToLocal();
+      });
+    };
+
+    // Add button click event
+    addButton.addEventListener('click', () => {
+      const taskText = todoInput.value.trim();
+      if (taskText !== '') {
+        saveTaskToFirestore(taskText, false).then(docRef => {
+          tasks.push({ text: taskText, isCompleted: false, id: docRef.id });
+          addTask(taskText, false, docRef.id);
+          saveTasksToLocal();
+        });
+        todoInput.value = ''; // Clear input field
+      }
+    });
+
+    // Allow pressing "Enter" to add a task
+    todoInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addButton.click();
+      }
+    });
+
+    // Toggle completed tasks visibility
+    toggleCompletedButton.addEventListener('click', () => {
+      if (completedList.style.display === 'none') {
+        completedList.style.display = 'block';
+        toggleCompletedButton.textContent = 'Hide Completed Tasks';
+      } else {
+        completedList.style.display = 'none';
+        toggleCompletedButton.textContent = 'Show Completed Tasks';
+      }
+    });
+
+    // Load tasks on page load
+    loadTasksFromFirestore();
+  </script>
+</body>
+</html>

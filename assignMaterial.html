@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMS | Assign Material to Project Task</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    html, body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; color: #333; }
+    #wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { background: #2c3e50; color: #fff; min-height: 60px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); width: 100%; position: fixed; top: 0; z-index: 1001; }
+    .navbar .navbar-header { display: flex; align-items: center; padding: 0 20px; }
+    .navbar .navbar-brand { color: #fff; font-weight: bold; font-size: 1.4rem; text-decoration: none; margin-right: 40px; }
+    .navbar .navbar-brand:hover { color: #1abc9c; }
+    .btn-danger { background: #666363 !important; border: none; border-radius: 4px; padding: 6px 16px; font-size: 15px; margin-left: 10px; color: #fff; }
+    .btn-danger:hover { background: #c0392b !important; }
+    .user-info { color: #fff; padding: 15px 50px 5px 50px; font-size: 16px; float: right; }
+    #page-wrapper { margin-top: 60px; padding: 32px; background: #f4f7fa; min-height: calc(100vh - 60px); }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin-bottom: 30px; border: none; }
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: 0; }
+    .panel-body { padding: 24px; }
+    .btn-primary { background: #8c9391; border: none; color: #fff !important; border-radius: 4px; padding: 10px 18px; margin-bottom: 10px; font-weight: 600; margin-right: 10px; font-size: 15px; }
+    .btn-primary:hover, .btn-primary:focus { background: #16a085; color: #fff !important; }
+    .btn-default { background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px; padding: 10px 18px; font-weight: 600; font-size: 15px; margin-right: 10px; }
+    .btn-default:hover, .btn-default:focus { background: #d0d7db; color: #2c3e50; }
+    .checkbox { margin-bottom: 16px; font-size: 1rem; display: flex; align-items: center; }
+    .checkbox label { cursor: pointer; width: 220px; }
+    .material-qty-input { width: 90px; margin-left: 12px; }
+    .mat-stock-info { margin-left: 20px; font-size: 15px; color: #222; }
+    .mat-stock-info span { display:inline-block; min-width:110px; }
+    .success-msg { color: #1abc9c; font-weight: bold; margin-top: 16px; font-size: 1.18rem; }
+    .error-msg { color: #e74c3c; font-weight: bold; margin-top: 16px; font-size: 1.18rem; }
+    .assign-form { background: #f7fafc; border-radius: 8px; padding: 20px 24px; margin-top: 30px; box-shadow: 0 2px 10px rgba(44,62,80,0.06); }
+    .assign-form label { font-weight: 600; margin-bottom: 6px; display: block; }
+    .assign-form input, .assign-form select { border-radius: 5px; font-size: 1rem; padding: 8px 12px; border: 1px solid #ccc; margin-bottom: 12px; width: 100%; }
+    .assign-form input:focus, .assign-form select:focus { border: 1.5px solid #1abc9c; outline: none; }
+    @media (max-width: 700px) {
+      .checkbox { flex-direction: column; align-items: flex-start; }
+      .mat-stock-info { margin-left: 0; margin-top: 3px; }
+    }
+    @media (max-width: 500px) {
+      .navbar { min-height: 40px; } .navbar .navbar-header { padding: 0 6px; } .navbar .navbar-brand { font-size: 1rem; }
+      #page-wrapper { padding: 6px 0; } .panel-body { padding: 7px 0; } .panel-heading { font-size: 1rem; padding: 12px 8px; }
+    }
+    #task-select optgroup { font-style: normal; font-weight: bold; color: #222; background: #f4f7fa; }
+    #task-select option.subtask { font-weight: normal; color: #2c3e50; padding-left: 2em; }
+    .btn.btn-outline{color: white; margin-right: 20PX;}
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <nav class="navbar" role="navigation">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">
+              <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a>IMS Portal</a>
+        <span class="user-info" style="margin-left:auto;">Welcome Christopher Chishela&nbsp;</span>
+      </div>
+    </nav>
+    <div id="page-wrapper">
+      <div id="page-inner">
+        <h2 style="margin-top:0;">Select material(s) to assign to a task</h2>
+        <hr />
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default sticky-panel">
+              <div class="panel-heading">Select Materials, Project, Task, Person and Assign</div>
+              <div class="panel-body">
+                <form id="material-select-form" autocomplete="off">
+                  <button type="button" id="select-all" class="btn btn-primary" style="margin-bottom: 10px;">Select All</button>
+                  <button type="button" id="deselect-all" class="btn btn-primary" style="margin-bottom: 10px;">Deselect All</button>
+                  <div id="material-checkbox-list">
+                    <!-- Firestore material checkboxes will appear here -->
+                  </div>
+                  <button type="submit" class="btn btn-default">Next</button>
+                  <button type="reset" class="btn btn-primary">Reset</button>
+                  <div id="form-message"></div>
+                </form>
+                <!-- Project and Task Assignment Form -->
+                <form id="assign-form" class="assign-form" style="display:none;">
+                  <h4>Assign Selected Materials to Project Task</h4>
+                  <label for="project-select">Select Project:</label>
+                  <select id="project-select" required>
+                    <option value="">-- Select Project --</option>
+                  </select>
+                  <label for="task-select">Select Main Task:</label>
+                  <select id="task-select" required disabled>
+                    <option value="">-- Select Main Task --</option>
+                  </select>
+                  <label for="subtask-select">Select Subtask (optional):</label>
+                  <select id="subtask-select" disabled>
+                    <option value="">-- Assign to Main Task --</option>
+                  </select>
+                  <label for="subsubtask-select">Select Sub-Subtask (optional):</label>
+                  <select id="subsubtask-select" disabled>
+                    <option value="">-- Assign to Subtask or above --</option>
+                  </select>
+                  <label for="employee-select">Assign To (Person):</label>
+                  <select id="employee-select" required>
+                    <option value="">-- Select Name --</option>
+                  </select>
+                  <button type="submit" class="btn btn-default" id="assign-btn" disabled>Assign</button>
+                  <button type="button" class="btn btn-primary" id="cancel-assign">Cancel</button>
+                  <div id="assign-message"></div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, doc, query, where, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Fetch materials from Firestore and render as checkboxes + qty input
+    const materialListDiv = document.getElementById('material-checkbox-list');
+    let materialsData = [];
+    onSnapshot(collection(db, "materials"), (snapshot) => {
+      materialsData = [];
+      materialListDiv.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        materialsData.push({
+          id: docSnap.id,
+          name: data.materialName || "-",
+          category: data.category || "-",
+          location: data.location || "-",
+          qty: data.quantity || 0,
+          unit: data.unit || "",
+        });
+      });
+
+      materialsData.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      materialsData.forEach(m => {
+        const div = document.createElement('div');
+        div.className = "checkbox";
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" name="materials[]" value="${m.id}"/>
+            <b>${m.name}</b>
+          </label>
+          <span class="mat-stock-info">
+            <span><b>QTY IN STOCK:</b> ${m.qty} ${m.unit}</span>
+            <span><b>WAREHOUSE:</b> ${m.location}</span>
+          </span>
+          <input class="material-qty-input" type="number" min="1" max="${m.qty}" name="qty_${m.id}" placeholder="Qty" disabled required />
+        `;
+        materialListDiv.appendChild(div);
+      });
+
+      // Enable/disable qty input based on checkbox state
+      setTimeout(() => {
+        document.querySelectorAll('input[type="checkbox"][name="materials[]"]').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const qtyInput = this.parentNode.parentNode.querySelector('.material-qty-input');
+            qtyInput.disabled = !this.checked;
+            if (!this.checked) qtyInput.value = "";
+          });
+        });
+      }, 50);
+    });
+
+    // Select/Deselect All Functionality
+    const selectAllBtn = document.getElementById('select-all');
+    const deselectAllBtn = document.getElementById('deselect-all');
+    const getCheckboxes = () => document.querySelectorAll('input[name="materials[]"]');
+    selectAllBtn.onclick = function() {
+      getCheckboxes().forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event('change')); });
+    };
+    deselectAllBtn.onclick = function() {
+      getCheckboxes().forEach(cb => { cb.checked = false; cb.dispatchEvent(new Event('change')); });
+    };
+
+    // Show assign form when materials selected
+    const matForm = document.getElementById('material-select-form');
+    const assignForm = document.getElementById('assign-form');
+    const cancelAssign = document.getElementById('cancel-assign');
+    const messageDiv = document.getElementById('form-message');
+    const assignMsg = document.getElementById('assign-message');
+    let selectedMaterials = [];
+
+    matForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(matForm);
+      const materials = formData.getAll('materials[]');
+      if (materials.length === 0) {
+        messageDiv.innerHTML = '<div class="error-msg">Please select at least one material!</div>';
+        return;
+      }
+      let materialsWithQty = [];
+      let error = false;
+      materials.forEach(id => {
+        const qtyValue = formData.get(`qty_${id}`);
+        const mat = materialsData.find(m => m.id === id);
+        const qty = parseInt(qtyValue, 10);
+        if (!qty || qty <= 0 || qty > mat.qty) {
+          error = true;
+        }
+        materialsWithQty.push({id, name: mat.name, qty, category: mat.category, unit: mat.unit });
+      });
+      if (error) {
+        messageDiv.innerHTML = '<div class="error-msg">Please enter valid quantities for all selected materials (cannot exceed stock).</div>';
+        return;
+      }
+      selectedMaterials = materialsWithQty;
+      matForm.style.display = "none";
+      assignForm.style.display = "block";
+      assignMsg.innerHTML = "";
+      messageDiv.innerHTML = "";
+      loadProjectsDropdown();
+      loadEmployeesDropdown();
+    });
+
+    cancelAssign.onclick = function() {
+      matForm.style.display = "block";
+      assignForm.style.display = "none";
+      assignForm.reset();
+      assignMsg.innerHTML = "";
+    };
+
+    // --- Project and Task Dropdown Logic (with Main/Sub/Sub-Subtask Support) ---
+    const projectSelect = document.getElementById('project-select');
+    const taskSelect = document.getElementById('task-select');
+    const subtaskSelect = document.getElementById('subtask-select');
+    const subsubtaskSelect = document.getElementById('subsubtask-select');
+    const assignBtn = document.getElementById('assign-btn');
+    const employeeSelect = document.getElementById('employee-select');
+
+    function loadProjectsDropdown() {
+      projectSelect.innerHTML = '<option value="">-- Select Project --</option>';
+      onSnapshot(collection(db, "projectDashboard"), (snapshot) => {
+        projectSelect.innerHTML = '<option value="">-- Select Project --</option>';
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          const option = document.createElement('option');
+          option.value = docSnap.id;
+          option.textContent = `${data.name} (${data.client})`;
+          projectSelect.appendChild(option);
+        });
+      });
+      // Reset tasks dropdown
+      taskSelect.innerHTML = '<option value="">-- Select Main Task --</option>';
+      taskSelect.disabled = true;
+      subtaskSelect.innerHTML = '<option value="">-- Assign to Main Task --</option>';
+      subtaskSelect.disabled = true;
+      subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
+      subsubtaskSelect.disabled = true;
+      assignBtn.disabled = true;
+    }
+
+    projectSelect.addEventListener('change', async function() {
+      const projectId = projectSelect.value;
+      taskSelect.innerHTML = '<option value="">-- Select Main Task --</option>';
+      taskSelect.disabled = true;
+      subtaskSelect.innerHTML = '<option value="">-- Assign to Main Task --</option>';
+      subtaskSelect.disabled = true;
+      subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
+      subsubtaskSelect.disabled = true;
+      assignBtn.disabled = true;
+      if (!projectId) return;
+
+      const q = query(collection(db, "projectTasks"), where("projectId", "==", projectId));
+      const mainTasksSnap = await getDocs(q);
+      let hasTasks = false;
+      let optionsHtml = '';
+
+      for (const mainDocSnap of mainTasksSnap.docs) {
+        hasTasks = true;
+        const mainData = mainDocSnap.data();
+        const mainTaskId = mainDocSnap.id;
+        optionsHtml += `<option value="${mainTaskId}">[MAIN] ${mainData.taskId || ''} - ${mainData.taskDescription || ''}</option>`;
+      }
+      taskSelect.innerHTML = '<option value="">-- Select Main Task --</option>' + optionsHtml;
+      taskSelect.disabled = !hasTasks;
+      subtaskSelect.innerHTML = '<option value="">-- Assign to Main Task --</option>';
+      subtaskSelect.disabled = true;
+      subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
+      subsubtaskSelect.disabled = true;
+    });
+
+    taskSelect.addEventListener('change', async function() {
+      assignBtn.disabled = !taskSelect.value || !employeeSelect.value;
+      const mainTaskId = taskSelect.value;
+      subtaskSelect.innerHTML = '<option value="">-- Assign to Main Task --</option>';
+      subtaskSelect.disabled = false;
+      subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
+      subsubtaskSelect.disabled = true;
+      if (!mainTaskId) {
+        subtaskSelect.disabled = true;
+        subsubtaskSelect.disabled = true;
+        return;
+      }
+      // Fetch subtasks for selected main task
+      const subSnap = await getDocs(collection(db, "projectTasks", mainTaskId, "subtasks"));
+      let hasSubtasks = false;
+      subSnap.forEach(subDoc => {
+        const subData = subDoc.data();
+        hasSubtasks = true;
+        const option = document.createElement('option');
+        option.value = subDoc.id;
+        option.textContent = `[SUB] ${subData.taskId || ''} - ${subData.taskDescription || ''}`;
+        subtaskSelect.appendChild(option);
+      });
+      subtaskSelect.disabled = !hasSubtasks;
+      if (!hasSubtasks) {
+        subtaskSelect.innerHTML = '<option value="">No subtasks available (assign to main task)</option>';
+        subtaskSelect.disabled = true;
+        subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
+        subsubtaskSelect.disabled = true;
+      }
+    });
+
+    subtaskSelect.addEventListener('change', async function() {
+      const mainTaskId = taskSelect.value;
+      const subtaskId = subtaskSelect.value;
+      subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
+      subsubtaskSelect.disabled = true;
+      if (!mainTaskId || !subtaskId) {
+        assignBtn.disabled = false;
+        subsubtaskSelect.disabled = true;
+        return;
+      }
+      // Fetch sub-subtasks for selected subtask
+      const subsubSnap = await getDocs(collection(db, "projectTasks", mainTaskId, "subtasks", subtaskId, "subsubtasks"));
+      let hasSubsubtasks = false;
+      subsubSnap.forEach(subsubDoc => {
+        const subsubData = subsubDoc.data();
+        hasSubsubtasks = true;
+        const option = document.createElement('option');
+        option.value = subsubDoc.id;
+        option.textContent = `[SUBSUB] ${subsubData.taskId || ''} - ${subsubData.taskDescription || ''}`;
+        subsubtaskSelect.appendChild(option);
+      });
+      subsubtaskSelect.disabled = !hasSubsubtasks;
+      assignBtn.disabled = false;
+    });
+
+    subsubtaskSelect.addEventListener('change', function() {
+      assignBtn.disabled = false;
+    });
+
+    // --- Load employees (names) for assignment ---
+    function loadEmployeesDropdown() {
+      employeeSelect.innerHTML = '<option value="">-- Select Name --</option>';
+      onSnapshot(collection(db, "employees"), (snapshot) => {
+        snapshot.forEach(docSnap => {
+          const e = docSnap.data();
+          const option = document.createElement('option');
+          option.value = docSnap.id;
+          option.textContent = `${e.name || '-'} ${e.surname || ''} (${e.empId || ''})`;
+          employeeSelect.appendChild(option);
+        });
+      });
+    }
+    employeeSelect.addEventListener('change', function() {
+      assignBtn.disabled = !taskSelect.value || !employeeSelect.value;
+    });
+
+    // Handle assignment form submission (writes to materialsUsage and updates inventory)
+    assignForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const projectId = projectSelect.value;
+      const mainTaskId = taskSelect.value;
+      const subtaskId = subtaskSelect.value;
+      const subsubtaskId = subsubtaskSelect.value;
+      const employeeId = employeeSelect.value;
+      if (!projectId || !mainTaskId || !employeeId) {
+        assignMsg.innerHTML = '<div class="error-msg">Please select project, at least a main task, and person!</div>';
+        return;
+      }
+
+      let taskDocRef = doc(db, "projectTasks", mainTaskId);
+      let assignTaskId = "", assignTaskDescription = "", location = "", assignLevel = "main";
+
+      if (subsubtaskId) {
+        assignLevel = "subsub";
+        taskDocRef = doc(db, "projectTasks", mainTaskId, "subtasks", subtaskId, "subsubtasks", subsubtaskId);
+      } else if (subtaskId) {
+        assignLevel = "sub";
+        taskDocRef = doc(db, "projectTasks", mainTaskId, "subtasks", subtaskId);
+      }
+      // else main
+
+      const taskDocSnap = await getDoc(taskDocRef);
+      if (taskDocSnap.exists()) {
+        const t = taskDocSnap.data();
+        assignTaskDescription = t.taskDescription || "";
+        assignTaskId = t.taskId || "";
+        location = t.location || "";
+      }
+
+      let assignedTo = "", assignedToEmpId = "";
+      try {
+        const empSnap = await getDoc(doc(db, "employees", employeeId));
+        if (empSnap.exists()) {
+          const emp = empSnap.data();
+          assignedTo = (emp.name || "-") + " " + (emp.surname || "");
+          assignedToEmpId = emp.empId || "";
+        }
+      } catch {}
+
+      try {
+        for (const mat of selectedMaterials) {
+          // Double check latest stock
+          const matDocRef = doc(db, "materials", mat.id);
+          const matSnap = await getDoc(matDocRef);
+          if (!matSnap.exists()) continue;
+          const stock = matSnap.data().quantity;
+          if (mat.qty > stock) throw new Error(`Not enough stock for ${mat.name}`);
+          // Write assignment
+          await addDoc(collection(db, "materialsUsage"), {
+            materialId: mat.id,
+            materialName: mat.name,
+            category: mat.category,
+            unit: mat.unit,
+            quantity: mat.qty,
+            projectId,
+            taskId: assignTaskId,
+            taskDescription: assignTaskDescription,
+            location,
+            assignedToName: assignedTo,
+            assignedToEmpId: assignedToEmpId,
+            assignedToId: employeeId,
+            assignedAt: serverTimestamp(),
+            mainTaskId,
+            subtaskId: subtaskId || "",
+            subsubtaskId: subsubtaskId || "",
+            assignmentLevel: assignLevel
+          });
+          // Update stock
+          await updateDoc(matDocRef, { quantity: stock - mat.qty });
+        }
+        assignMsg.innerHTML = '<div class="success-msg">Assignment saved successfully!</div>';
+        assignForm.reset();
+        assignBtn.disabled = true;
+        setTimeout(() => {
+          assignForm.style.display = "none";
+          matForm.style.display = "block";
+        }, 1200);
+      } catch (err) {
+        assignMsg.innerHTML = '<div class="error-msg">Error: ' + err.message + '</div>';
+      }
+    });
+
+    matForm.addEventListener('reset', function() {
+      messageDiv.innerHTML = '';
+    });
+  </script>
+</body>
+</html>

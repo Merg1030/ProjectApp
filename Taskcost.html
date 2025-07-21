@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Expenses | Task Costs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-hover: #3a56d4;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #444;
+            --input-bg: #333;
+            --input-border: #555;
+        }
+
+        .light-mode {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+            --input-bg: #ffffff;
+            --input-border: #ced4da;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: var(--transition);
+            padding: 20px;
+        }
+
+        .container {
+        
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            border: none;
+            font-size: 14px;
+        }
+
+        .btn i {
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--card-bg);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-info {
+            background-color: var(--info);
+            color: white;
+        }
+
+        .project-header {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            box-shadow: var(--box-shadow);
+        }
+
+        .project-title {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--input-bg);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: var(--input-bg);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-color);
+            opacity: 0.6;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .total-cost {
+            text-align: right;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .toggle-form-btn {
+            margin-bottom: 20px;
+        }
+
+        .expense-form-container {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            max-height: 0;
+        }
+
+        .expense-form-container.visible {
+            max-height: 500px;
+        }
+
+        .filters-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .reset-filters {
+            align-self: flex-end;
+            margin-bottom: 15px;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .project-title {
+                font-size: 24px;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .filters-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .reset-filters {
+                align-self: flex-start;
+            }
+
+            .export-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Utility classes */
+        .text-success {
+            color: var(--success);
+        }
+        .text-warning {
+            color: var(--warning);
+        }
+        .text-danger {
+            color: var(--danger);
+        }
+        .text-primary {
+            color: var(--primary);
+        }
+        .text-muted {
+            color: var(--gray);
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <div class="header">
+            <div class="actions">
+                <button class="btn btn-outline" id="toggleModeBtn">
+                    <i class="fas fa-moon"></i> Light Mode
+                </button>
+            </div>
+        </div>
+        
+        <div class="project-header" id="projectHeader">
+            <h1 class="project-title" id="projectTitle">Project Expenses</h1>
+        </div>
+
+        <button class="btn btn-primary toggle-form-btn" id="toggleFormBtn">
+            <i class="fas fa-plus"></i> Add New Expense
+        </button>
+
+        <div class="expense-form-container" id="expenseFormContainer">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-dollar-sign"></i> Add New Expense
+                    </h3>
+                </div>
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label for="expenseDate" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="expenseDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseDescription" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="expenseDescription" placeholder="What was this expense for?" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseAmount" class="form-label">Amount (ZMW)</label>
+                        <input type="number" class="form-control" id="expenseAmount" placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseTaskId" class="form-label">Task ID (Optional)</label>
+                        <input type="text" class="form-control" id="expenseTaskId" placeholder="Enter related task ID if applicable">
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseComment" class="form-label">Comment</label>
+                        <input type="text" class="form-control" id="expenseComment" placeholder="Any additional notes about this expense">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Expense
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-receipt"></i> Expense History
+                </h3>
+                <div class="export-actions">
+                    <button class="btn btn-success" id="exportPdfBtn">
+                        <i class="fas fa-file-pdf"></i> Export to PDF
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="taskIdFilter" class="form-label">Filter by Task ID</label>
+                    <select class="form-control" id="taskIdFilter">
+                        <option value="">All Tasks</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="monthFilter" class="form-label">Filter by Month</label>
+                    <select class="form-control" id="monthFilter">
+                        <option value="">All Months</option>
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline reset-filters" id="resetFiltersBtn">
+                    <i class="fas fa-filter-circle-xmark"></i> Reset Filters
+                </button>
+            </div>
+            
+            <div id="expenseTableContainer">
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount (ZMW)</th>
+                            <th>Balance (ZMW)</th>
+                            <th>Task ID</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        <!-- Expenses will be added here dynamically -->
+                    </tbody>
+                </table>
+                <div class="total-cost" id="totalCost">
+                    Total: ZMW 0.00
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-receipt"></i>
+                    <p>No expenses recorded yet. Add your first expense above.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Get project ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('id');
+        
+        if (!projectId) {
+            window.location.href = 'dashboard.html';
+        }
+
+        // DOM Elements
+        const toggleModeBtn = document.getElementById('toggleModeBtn');
+        const projectTitle = document.getElementById('projectTitle');
+        const expenseForm = document.getElementById('expenseForm');
+        const expenseDate = document.getElementById('expenseDate');
+        const expenseDescription = document.getElementById('expenseDescription');
+        const expenseAmount = document.getElementById('expenseAmount');
+        const expenseTaskId = document.getElementById('expenseTaskId');
+        const expenseComment = document.getElementById('expenseComment');
+        const expenseTableBody = document.getElementById('expenseTableBody');
+        const totalCost = document.getElementById('totalCost');
+        const emptyState = document.getElementById('emptyState');
+        const toggleFormBtn = document.getElementById('toggleFormBtn');
+        const expenseFormContainer = document.getElementById('expenseFormContainer');
+        const taskIdFilter = document.getElementById('taskIdFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const body = document.body;
+
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // Set default date to today
+        expenseDate.valueAsDate = new Date();
+
+        // Load filters from localStorage
+        function loadFilters() {
+            const savedFilters = JSON.parse(localStorage.getItem(`expenseFilters_${projectId}`)) || {};
+            if (savedFilters.taskId) {
+                taskIdFilter.value = savedFilters.taskId;
+            }
+            if (savedFilters.month !== undefined) {
+                monthFilter.value = savedFilters.month;
+            }
+        }
+
+        // Save filters to localStorage
+        function saveFilters() {
+            const filters = {
+                taskId: taskIdFilter.value,
+                month: monthFilter.value
+            };
+            localStorage.setItem(`expenseFilters_${projectId}`, JSON.stringify(filters));
+        }
+
+        // Initialize filters
+        loadFilters();
+
+        // Toggle form visibility
+        toggleFormBtn.addEventListener('click', () => {
+            expenseFormContainer.classList.toggle('visible');
+            toggleFormBtn.innerHTML = expenseFormContainer.classList.contains('visible') 
+                ? '<i class="fas fa-minus"></i> Hide Form' 
+                : '<i class="fas fa-plus"></i> Add New Expense';
+        });
+
+        // Toggle dark/light mode
+        toggleModeBtn.addEventListener('click', function() {
+            body.classList.toggle('light-mode');
+            const icon = this.querySelector('i');
+            if (body.classList.contains('light-mode')) {
+                this.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                this.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'light') {
+            body.classList.add('light-mode');
+            toggleModeBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+        } else {
+            toggleModeBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+
+        // Format date for PDF (YYYY-MM-DD)
+        function formatDateForPdf(dateString) {
+            if (!dateString) return 'N/A';
+            const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+            return date.toISOString().split('T')[0];
+        }
+
+        // Get month from date
+        function getMonthFromDate(dateString) {
+            if (!dateString) return -1;
+            const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+            return date.getMonth();
+        }
+
+        // Format currency (Zambian Kwacha)
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-ZM', {
+                style: 'currency',
+                currency: 'ZMW',
+                minimumFractionDigits: 2
+            }).format(amount || 0);
+        }
+
+        // Calculate running balance
+        function calculateBalance(expenses) {
+            let balance = 0;
+            return expenses.map(expense => {
+                balance += parseFloat(expense.amount);
+                return {
+                    ...expense,
+                    balance: balance
+                };
+            });
+        }
+
+        // Filter expenses based on selected filters
+        function filterExpenses(expenses, taskId, month) {
+            return expenses.filter(expense => {
+                const matchesTaskId = !taskId || (expense.taskId && expense.taskId.toLowerCase().includes(taskId.toLowerCase()));
+                const matchesMonth = month === '' || getMonthFromDate(expense.date) === parseInt(month);
+                return matchesTaskId && matchesMonth;
+            });
+        }
+
+        // Update task ID filter dropdown
+        function updateTaskIdFilter(expenses) {
+            const currentValue = taskIdFilter.value;
+            
+            // Get unique task IDs from expenses
+            const taskIds = [...new Set(expenses
+                .filter(expense => expense.taskId)
+                .map(expense => expense.taskId)
+                .sort())];
+            
+            // Clear existing options except "All Tasks"
+            taskIdFilter.innerHTML = '<option value="">All Tasks</option>';
+            
+            // Add new options
+            taskIds.forEach(taskId => {
+                const option = document.createElement('option');
+                option.value = taskId;
+                option.textContent = taskId;
+                taskIdFilter.appendChild(option);
+            });
+            
+            // Restore previous selection if it still exists
+            if (currentValue && taskIds.includes(currentValue)) {
+                taskIdFilter.value = currentValue;
+            } else if (currentValue) {
+                // If the saved task ID isn't found, save the empty selection
+                taskIdFilter.value = '';
+                saveFilters();
+            }
+        }
+
+        // Render expenses table
+        function renderExpenses(expenses) {
+            expenseTableBody.innerHTML = '';
+            
+            if (!expenses || expenses.length === 0) {
+                emptyState.style.display = 'block';
+                totalCost.style.display = 'none';
+                return;
+            }
+            
+            // Update task ID filter options
+            updateTaskIdFilter(expenses);
+            
+            // Get current filter values
+            const selectedTaskId = taskIdFilter.value;
+            const selectedMonth = monthFilter.value;
+            
+            // Filter expenses
+            const filteredExpenses = filterExpenses(expenses, selectedTaskId, selectedMonth);
+            
+            if (filteredExpenses.length === 0) {
+                emptyState.style.display = 'block';
+                emptyState.innerHTML = '<i class="fas fa-filter"></i><p>No expenses match the current filters.</p>';
+                totalCost.style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            totalCost.style.display = 'block';
+            
+            const expensesWithBalance = calculateBalance(filteredExpenses);
+            let total = 0;
+            
+            expensesWithBalance.forEach((expense) => {
+                total += parseFloat(expense.amount);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(expense.date)}</td>
+                    <td>${expense.description}</td>
+                    <td>${formatCurrency(expense.amount)}</td>
+                    <td>${formatCurrency(expense.balance)}</td>
+                    <td>${expense.taskId || '-'}</td>
+                    <td>${expense.comment || '-'}</td>
+                `;
+                expenseTableBody.appendChild(row);
+            });
+            
+            totalCost.textContent = `Total: ${formatCurrency(total)}`;
+        }
+
+        // Export to PDF function
+        function exportToPDF(expenses) {
+            // Get current filter values
+            const selectedTaskId = taskIdFilter.value;
+            const selectedMonth = monthFilter.value;
+            
+            // Filter expenses
+            const filteredExpenses = filterExpenses(expenses, selectedTaskId, selectedMonth);
+            
+            if (filteredExpenses.length === 0) {
+                alert("No expenses to export with current filters");
+                return;
+            }
+            
+            const expensesWithBalance = calculateBalance(filteredExpenses);
+            const projectName = projectTitle.textContent.replace(' Expenses', '');
+            const total = filteredExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+            
+            // Create a new PDF document in landscape mode
+            const doc = new jsPDF({
+                orientation: 'landscape'
+            });
+            
+            // Add title and filters info
+            doc.setFontSize(16);
+            doc.text(`${projectName} - Expense Report`, 14, 20);
+            
+            doc.setFontSize(10);
+            let filtersText = 'Filters: ';
+            if (selectedTaskId) filtersText += `Task ID: ${selectedTaskId} `;
+            if (selectedMonth) filtersText += `Month: ${monthFilter.options[monthFilter.selectedIndex].text}`;
+            if (!selectedTaskId && !selectedMonth) filtersText += 'All expenses';
+            
+            doc.text(filtersText, 14, 28);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 34);
+            
+            // Prepare data for the table
+            const tableData = expensesWithBalance.map(expense => [
+                formatDateForPdf(expense.date),
+                expense.description,
+                formatCurrency(expense.amount),
+                formatCurrency(expense.balance),
+                expense.taskId || '-',
+                expense.comment || '-'
+            ]);
+            
+            // Add the table
+            doc.autoTable({
+                startY: 40,
+                head: [['Date', 'Description', 'Amount (ZMW)', 'Balance (ZMW)', 'Task ID', 'Comment']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [67, 97, 238], // Primary color
+                    textColor: 255
+                },
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 3
+                },
+                margin: { left: 14 }
+            });
+            
+            // Add total at the bottom
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total Expenses: ${formatCurrency(total)}`, 14, finalY);
+            
+            // Save the PDF
+            doc.save(`${projectName}_Expense_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // Add new expense
+        expenseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newExpense = {
+                date: expenseDate.value,
+                description: expenseDescription.value.trim(),
+                amount: parseFloat(expenseAmount.value).toFixed(2),
+                taskId: expenseTaskId.value.trim() || null,
+                comment: expenseComment.value.trim() || null
+            };
+            
+            if (!newExpense.description || isNaN(newExpense.amount)) {
+                alert('Please fill all required fields correctly');
+                return;
+            }
+            
+            try {
+                const projectRef = doc(db, "projectDashboard", projectId);
+                await updateDoc(projectRef, {
+                    expenses: arrayUnion(newExpense)
+                });
+                
+                // Clear form
+                expenseDescription.value = '';
+                expenseAmount.value = '';
+                expenseTaskId.value = '';
+                expenseComment.value = '';
+                expenseDescription.focus();
+                
+                // Hide form after submission
+                expenseFormContainer.classList.remove('visible');
+                toggleFormBtn.innerHTML = '<i class="fas fa-plus"></i> Add New Expense';
+            } catch (error) {
+                console.error("Error adding expense: ", error);
+                alert("Error adding expense. Please try again.");
+            }
+        });
+
+        // Load project data and set up real-time listener
+        const projectRef = doc(db, "projectDashboard", projectId);
+        let currentExpenses = [];
+        
+        // First, get project name for the header
+        getDoc(projectRef).then(doc => {
+            if (doc.exists()) {
+                const project = doc.data();
+                projectTitle.textContent = `${project.name} Expenses`;
+            }
+        });
+        
+        // Set up real-time listener for expenses
+        onSnapshot(projectRef, (doc) => {
+            if (doc.exists()) {
+                const project = doc.data();
+                currentExpenses = project.expenses || [];
+                renderExpenses(currentExpenses);
+            }
+        }, (error) => {
+            console.error("Error loading expenses: ", error);
+            emptyState.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>Error loading expenses. Please try again.</p>';
+        });
+
+        // Event listeners for filters
+        taskIdFilter.addEventListener('change', () => {
+            saveFilters();
+            const projectRef = doc(db, "projectDashboard", projectId);
+            getDoc(projectRef).then(doc => {
+                if (doc.exists()) {
+                    const project = doc.data();
+                    renderExpenses(project.expenses || []);
+                }
+            });
+        });
+
+        monthFilter.addEventListener('change', () => {
+            saveFilters();
+            const projectRef = doc(db, "projectDashboard", projectId);
+            getDoc(projectRef).then(doc => {
+                if (doc.exists()) {
+                    const project = doc.data();
+                    renderExpenses(project.expenses || []);
+                }
+            });
+        });
+
+        resetFiltersBtn.addEventListener('click', () => {
+            taskIdFilter.value = '';
+            monthFilter.value = '';
+            saveFilters();
+            const projectRef = doc(db, "projectDashboard", projectId);
+            getDoc(projectRef).then(doc => {
+                if (doc.exists()) {
+                    const project = doc.data();
+                    renderExpenses(project.expenses || []);
+                }
+            });
+        });
+
+        // Export to PDF button
+        exportPdfBtn.addEventListener('click', () => {
+            if (currentExpenses.length === 0) {
+                alert("No expenses to export");
+                return;
+            }
+            exportToPDF(currentExpenses);
+        });
+
+        // Inactivity timeout
+        let inactivityTimeout;
+        function resetInactivityTimeout() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                logout();
+            }, 600000); // 10 minutes
+        }
+
+        // Set up inactivity timer
+        resetInactivityTimeout();
+        document.addEventListener('mousemove', resetInactivityTimeout);
+        document.addEventListener('keypress', resetInactivityTimeout);
+        document.addEventListener('click', resetInactivityTimeout);
+        document.addEventListener('touchstart', resetInactivityTimeout);
+
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

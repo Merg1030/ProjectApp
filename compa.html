@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Comparison Sheet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyClOZGykyDEgqssG423M6CLLKZ8sxrtAFk",
+            authDomain: "shop-a24bc.firebaseapp.com",
+            projectId: "shop-a24bc",
+            storageBucket: "shop-a24bc.firebasestorage.app",
+            messagingSenderId: "405250859058",
+            appId: "1:405250859058:web:27a464f5fef792cf5d1c2b",
+            measurementId: "G-CRY40TTYX2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function displayPriceComparison() {
+            const comparisonTableBody = document.getElementById('comparisonTable').getElementsByTagName('tbody')[0];
+            comparisonTableBody.innerHTML = ''; // Clear existing data
+
+            const comparisonQuery = collection(db, "priceComparison");
+            const querySnapshot = await getDocs(comparisonQuery);
+
+            querySnapshot.forEach(doc => {
+                const row = comparisonTableBody.insertRow();
+                const codeCell = row.insertCell();
+                const nameCell = row.insertCell();
+                const orderPriceCell = row.insertCell();
+                const sellingPriceCell = row.insertCell();
+                const profitCell = row.insertCell();
+
+                const data = doc.data();
+                const profit = data.sellingPrice - data.orderPrice;
+
+                codeCell.textContent = data.code;
+                nameCell.textContent = data.itemName;
+                orderPriceCell.textContent = data.orderPrice.toFixed(2);
+                sellingPriceCell.textContent = data.sellingPrice.toFixed(2);
+                profitCell.textContent = profit.toFixed(2);
+            });
+        }
+
+        window.addEventListener('load', () => {
+            displayPriceComparison();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Price Comparison Sheet</h2>
+
+        <table id="comparisonTable">
+            <thead>
+                <tr>
+                    <th>Product Code</th>
+                    <th>Product Name</th>
+                    <th>Order Price (ZMW)</th>
+                    <th>Selling Price (ZMW)</th>
+                    <th>Profit (ZMW)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Price comparison data will be displayed here -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

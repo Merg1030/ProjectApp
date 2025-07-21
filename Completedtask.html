@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completed Tasks | Task Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI','Roboto',sans-serif; background: #181a22; color: #e0e0e0; margin: 0; }
+        .container { margin: 0 auto; padding: 8px; max-width: 1200px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 10px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 7px; font-weight: 500; cursor: pointer; text-decoration: none; border: none; font-size: 13px; transition: all 0.2s ease; }
+        .btn-outline { background: none; border: 1.2px solid #33394c; color: #4361ee; }
+        .btn-outline:hover { background: #23263a; }
+        .btn-primary { background: #4361ee; color: #fff; }
+        .btn-primary:hover { background: #3a56d4; }
+        .project-title-sticky { font-size: 19px; font-weight: 700; color: #4cc9f0; margin-bottom: 2px; }
+        .project-title { font-size: 24px; margin-bottom: 15px; color: #4361ee; font-weight: 600; }
+        .filters-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; padding: 5px 5px 5px 8px; background: linear-gradient(90deg, #4361ee 0%, #4cc9f0 100%); border-radius: 7px; box-shadow: 0 1px 8px rgba(67,97,238,0.08); margin-bottom: 9px;}
+        .filter-group { display: flex; align-items: center; gap: 4px; background: #23263a; border-radius: 16px; padding: 3.5px 9px 3.5px 7px; box-shadow: 0 1px 4px rgba(67,97,238,0.04); flex: 1 1 70px; min-width: 70px; max-width: 120px; }
+        .filter-label { font-size: 10px; font-weight: 600; color: #4361ee; }
+        select { border: 1.2px solid #4361ee; border-radius: 10px; padding: 2px 4px; background: #23263a; color: #e0e0e0; font-size: 11px; min-width: 40px; }
+        select:focus { outline: none; border-color: #4cc9f0;}
+        .card { background: #23263a; padding: 7px 4px 2px 4px; border-radius: 7px; border: 1px solid #33394c; box-shadow: 0 2px 10px rgba(67,97,238,0.07); margin-bottom: 0; overflow-x: auto; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .task-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .task-table th, .task-table td { padding: 4px 2px; border-bottom: 1px solid #33394c; }
+        .task-table th { background: #24263c; font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.3px; position: sticky; top: 0; z-index: 1;}
+        .task-table tr:nth-child(even) { background: #1f2233;}
+        .task-table tr:hover { background: #2c314b;}
+        .status-badge { display: inline-block; padding: 1.5px 5px; border-radius: 7px; font-size: 9.5px; font-weight: 600; }
+        .status-completed { background: rgba(76,201,240,0.1); color: #4cc9f0; border: 1px solid #4cc9f0; }
+        .status-ongoing { background: rgba(248,150,30,0.1); color: #f8961e; border: 1px solid #f8961e; }
+        .status-pending { background: rgba(108,117,125,0.13); color: #6c757d; border: 1px solid #6c757d; }
+        .cost-badge { display: inline-block; padding: 1.5px 5px; border-radius: 7px; font-size: 10px; font-weight: 600; background: rgba(67,97,238,0.1); color: #4361ee; border: 1px solid #4361ee; }
+        .empty-state { text-align: center; padding: 12px; color: #e0e0e0; opacity: 0.7; }
+        .empty-state i { font-size: 20px; opacity: 0.5; }
+        .project-info-container {
+            margin: 20px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .project-header-card {
+            background: #23263a;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .project-title-line {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4361ee;
+        }
+        .project-label {
+            font-weight: bold;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .project-value {
+            font-size: 16px;
+            color: #ffffff;
+        }
+        .project-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+        }
+        .detail-value {
+            color: #e0e0e0;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <div class="project-info-container">
+            <div class="project-header-card">
+                <div class="project-details-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">PROJECT MANAGER:</span>
+                        <span class="detail-value">Christopher chishela</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">SUPERVISOR:</span>
+                        <span class="detail-value">Orscar mushimbi</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">DEADLINE:</span>
+                        <span class="detail-value deadline">30 August 2025</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="header">
+            <div class="actions">
+                <a href="#" class="btn btn-outline action-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i> Back to Tasks
+                </a>
+            </div>
+            <div class="project-title-sticky" id="projectNameHeader">Completed Tasks</div>
+        </div>
+        <div class="filters-bar">
+            <div class="filter-group"><span class="filter-label">Month:</span>
+                <select id="monthFilter">
+                    <option value="">All Months</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <div class="filter-group"><span class="filter-label">Year:</span>
+                <select id="yearFilter">
+                    <option value="">All Years</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header" style="padding: 3px 0 7px 0;">
+                <h2 class="card-title" style="font-size:13px; margin:0; color:#4361ee; font-weight:500">
+                    <i class="fas fa-check-circle"></i> Completed Tasks
+                </h2>
+            </div>
+            <div class="table-responsive">
+                <table class="task-table" id="taskTable">
+                    <thead>
+                        <tr>
+                            <th>TASK ID</th>
+                            <th>TASK LINE</th>
+                            <th>DESCRIPTION</th>
+                            <th>ASSIGNED</th>
+                            <th>STATUS</th>
+                            <th>START DATE</th>
+                            <th>END DATE</th>
+                            <th>DURATION (Hrs)</th>
+                            <th>MATERIAL COST</th>
+                            <th>MAN COST</th>
+                            <th>TOTAL COST</th>
+                            <th>LOCATION</th>
+                            <th>COMPLETED DATE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskList">
+                        <!-- Completed tasks will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <i class="fas fa-check-circle"></i>
+                <p>No completed tasks found.</p>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+        authDomain: "project-task-588c4.firebaseapp.com",
+        projectId: "project-task-588c4",
+        storageBucket: "project-task-588c4.appspot.com",
+        messagingSenderId: "411882772509",
+        appId: "1:411882772509:web:08d613186c101a99f38ef4",
+        measurementId: "G-JMFLFYEM0F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get project ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('id');
+    
+    if (!projectId) {
+        alert("Project ID is missing from URL. Please access this page from the dashboard.");
+        throw new Error("Project ID missing from URL");
+    }
+
+    // DOM Elements
+    const taskList = document.getElementById('taskList');
+    const emptyState = document.getElementById('emptyState');
+    const monthFilter = document.getElementById('monthFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const backBtn = document.getElementById('backBtn');
+    const projectNameHeader = document.getElementById('projectNameHeader');
+
+    // Set the back button href with project ID
+    backBtn.href = `task.html?id=${projectId}`;
+
+    // Helper functions
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatCurrency(amount, curr='ZMW') {
+        if (!amount && amount !== 0) return '';
+        const formatter = new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: curr || 'ZMW',
+            minimumFractionDigits: 2
+        });
+        return formatter.format(amount);
+    }
+
+    function getStatusBadge(status) {
+        if (!status) return '';
+        status = status.toUpperCase();
+        if (status === 'COMPLETED') return 'status-badge status-completed';
+        if (status === 'ONGOING') return 'status-badge status-ongoing';
+        return 'status-badge status-pending';
+    }
+
+    async function getWorkedHoursForTaskId(taskId) {
+        if (!taskId) return 0;
+        const q = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
+        let sum = 0;
+        const snap = await getDocs(q);
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.mh && !isNaN(d.mh)) sum += Number(d.mh);
+        });
+        return sum;
+    }
+
+    async function getMaterialCostForTaskId(taskId) {
+        if (!taskId) return 0;
+        const q = query(collection(db, "materialsUsage"), where("taskId", "==", taskId));
+        let sum = 0;
+        const snap = await getDocs(q);
+        
+        const materialIds = new Set();
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.materialId) materialIds.add(d.materialId);
+        });
+        
+        const materialPriceMap = {};
+        await Promise.all([...materialIds].map(async materialId => {
+            const matSnap = await getDoc(doc(db, "materials", materialId));
+            if (matSnap.exists()) {
+                materialPriceMap[materialId] = matSnap.data().unitPrice || 0;
+            }
+        }));
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!d.reversed && d.quantity && d.materialId) {
+                const price = materialPriceMap[d.materialId] || 0;
+                sum += Number(d.quantity) * Number(price);
+            }
+        });
+        
+        return sum;
+    }
+
+    // Load project name
+    async function loadProjectName() {
+        try {
+            const projectDoc = await getDoc(doc(db, "projectDashboard", projectId));
+            if (projectDoc.exists()) {
+                const projectName = projectDoc.data().name || "Project";
+                projectNameHeader.textContent = `${projectName} - Completed Tasks`;
+            }
+        } catch (e) {
+            console.error("Error loading project name:", e);
+        }
+    }
+
+    // Load completed tasks
+    async function loadCompletedTasks() {
+        try {
+            const q = query(
+                collection(db, "projectTasks"), 
+                where("projectId", "==", projectId),
+                where("status", "==", "COMPLETED")
+            );
+            
+            const unsubscribe = onSnapshot(q, async (snapshot) => {
+                taskList.innerHTML = '';
+                let tasks = [];
+                
+                if (snapshot.empty) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                // Process main tasks
+                const promises = snapshot.docs.map(async docSnap => {
+                    const task = { id: docSnap.id, ...docSnap.data() };
+                    
+                    // Get hours and material costs
+                    const [hours, materialCost] = await Promise.all([
+                        getWorkedHoursForTaskId(task.taskId),
+                        getMaterialCostForTaskId(task.taskId)
+                    ]);
+                    
+                    task._durationHours = hours;
+                    task._materialCost = materialCost;
+                    tasks.push(task);
+                });
+                
+                await Promise.all(promises);
+                
+                // Filter by month/year if specified
+                const filteredTasks = filterTasks(tasks);
+                
+                if (filteredTasks.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // Sort by completion date (newest first)
+                filteredTasks.sort((a, b) => {
+                    const dateA = a.updatedAt?.toDate ? a.updatedAt.toDate() : new Date(a.updatedAt || 0);
+                    const dateB = b.updatedAt?.toDate ? b.updatedAt.toDate() : new Date(b.updatedAt || 0);
+                    return dateB - dateA;
+                });
+                
+                // Render tasks
+                filteredTasks.forEach(task => {
+                    const hours = task._durationHours || 0;
+                    const materialCost = task._materialCost || 0;
+                    const manCost = hours * 20;
+                    const totalCost = manCost + materialCost;
+                    const completedDate = task.updatedAt || task.endDate || '';
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${task.taskId || ''}</td>
+                        <td>${task.taskLine || ''}</td>
+                        <td>${task.taskDescription || ''}</td>
+                        <td>${task.assignedTo || ''}</td>
+                        <td><span class="${getStatusBadge(task.status)}">${task.status || ''}</span></td>
+                        <td>${formatDate(task.startDate) || ''}</td>
+                        <td>${formatDate(task.endDate) || ''}</td>
+                        <td>${hours}</td>
+                        <td><span class="cost-badge">${formatCurrency(materialCost)}</span></td>
+                        <td><span class="cost-badge">${formatCurrency(manCost)}</span></td>
+                        <td><span class="cost-badge">${formatCurrency(totalCost)}</span></td>
+                        <td>${task.location || ''}</td>
+                        <td>${formatDate(completedDate) || ''}</td>
+                    `;
+                    taskList.appendChild(tr);
+                });
+            }, (error) => {
+                console.error("Error loading completed tasks:", error);
+                alert("Error loading completed tasks: " + error.message);
+            });
+            
+            return unsubscribe;
+        } catch (e) {
+            console.error("Failed to load completed tasks:", e);
+            alert("Failed to load completed tasks: " + e.message);
+        }
+    }
+
+    function filterTasks(tasks) {
+        const monthVal = monthFilter.value;
+        const yearVal = yearFilter.value;
+        
+        return tasks.filter(task => {
+            let matchesMonth = true;
+            let matchesYear = true;
+            
+            // Check month filter
+            if (monthVal) {
+                const monthNum = parseInt(monthVal);
+                const completedDate = task.updatedAt?.toDate ? task.updatedAt.toDate() : new Date(task.updatedAt || 0);
+                matchesMonth = completedDate.getMonth() + 1 === monthNum;
+            }
+            
+            // Check year filter
+            if (yearVal) {
+                const yearNum = parseInt(yearVal);
+                const completedDate = task.updatedAt?.toDate ? task.updatedAt.toDate() : new Date(task.updatedAt || 0);
+                matchesYear = completedDate.getFullYear() === yearNum;
+            }
+            
+            return matchesMonth && matchesYear;
+        });
+    }
+
+    // Event listeners
+    monthFilter.addEventListener('change', () => {
+        loadCompletedTasks();
+    });
+    
+    yearFilter.addEventListener('change', () => {
+        loadCompletedTasks();
+    });
+
+    // Initialize
+    loadProjectName();
+    loadCompletedTasks();
+</script>
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Expenses and Labor Costs</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            margin: 0 auto;
+            max-width: 1500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #eeeeee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background-color: #333;
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: #1e1e1e;
+        }
+
+        /* Button Styles */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff8f8;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-container button:hover {
+            background-color: #4b68dc;
+        }
+
+        /* Form Styles */
+        .form-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+        }
+
+        .form-container input,
+        .form-container select,
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+        }
+
+        .form-container button {
+            background-color: #333;
+            color: #e9e9eb;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #4b68dc;
+        }
+
+        #labor-fields {
+            display: none;
+        }
+
+        .filter-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+        }
+
+        .filter-container select,
+        .filter-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+        }
+
+        .filter-container button {
+            background-color: #333;
+            color: #e9e9eb;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .filter-container button:hover {
+            background-color: #4b68dc;
+        }
+
+        .total-cost-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            color: #ffffff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Expenses and Labor Costs</h1>
+
+        <!-- Button Container -->
+        <div class="button-container">
+            <button onclick="toggleForm('expense-form-container')">Add Expense</button>
+            <button onclick="viewTasks()">View Tasks</button>
+        </div>
+
+        <!-- Filter Container -->
+        <div class="filter-container">
+            <select id="task-id-filter">
+                <option value="">Select Task</option>
+            </select>
+            <button onclick="filterByTaskId()">Filter</button>
+        </div>
+
+        <!-- Total Cost Container -->
+        <div class="total-cost-container" id="total-cost-container">
+            <h2>Total Cost for All Tasks</h2>
+            <p>Total Cost: K<span id="total-cost"></span></p>
+        </div>
+
+        <!-- Expense and Labor Cost Input Form -->
+        <div class="form-container" id="expense-form-container" style="display: none;">
+            <h2>Add New Expense</h2>
+            <form id="expense-form">
+                <input type="date" id="expense-date" required>
+                <input type="text" id="task-id-expense" placeholder="Task ID" required>
+                <input type="text" id="expense-description" placeholder="Expense Description" required>
+                <input type="text" id="supplier" placeholder="Supplier" required>
+                <input type="number" id="quantity" placeholder="Quantity" required>
+                <input type="number" id="unit-price" placeholder="Unit Price" required>
+                <button type="submit">Add Expense</button>
+                <button type="button" onclick="toggleLaborFields()">Add Labor Cost</button>
+
+                <!-- Labor Cost Fields -->
+                <div id="labor-fields">
+                    <h3>Labor Cost</h3>
+                    <input type="date" id="labor-date">
+                    <input type="text" id="personnel" placeholder="Personnel">
+                    <input type="number" id="hours-worked" placeholder="Hours Worked">
+                </div>
+            </form>
+        </div>
+
+        <!-- Combined Table for Expenses and Labor Costs -->
+        <table id="combined-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Task ID</th>
+                    <th>Description</th>
+                    <th>Supplier</th>
+                    <th>Qty</th>
+                    <th>Unit Price</th>
+                    <th>Amount</th>
+                    <th>Personnel</th>
+                    <th>Hours Worked</th>
+                    <th>Labor Cost</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, getDocs, query, orderBy, where } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const expensesCollection = collection(db, 'expenses');
+        const laborCollection = collection(db, 'labor_costs');
+
+        // Save to local storage
+        const saveToLocalStorage = (key, data) => {
+            console.log(`Saving to local storage: ${key}`, data);
+            localStorage.setItem(key, JSON.stringify(data));
+        };
+
+        // Load from local storage
+        const loadFromLocalStorage = (key) => {
+            const data = JSON.parse(localStorage.getItem(key)) || [];
+            console.log(`Loaded from local storage: ${key}`, data);
+            return data;
+        };
+
+        // Get filter state from local storage
+        const getFilterState = () => {
+            return localStorage.getItem('filterState') || '';
+        };
+
+        // Set filter state to local storage
+        const setFilterState = (taskId) => {
+            localStorage.setItem('filterState', taskId);
+        };
+
+        // Filter by Task ID
+        const filterByTaskId = () => {
+            const taskId = document.getElementById('task-id-filter').value;
+            setFilterState(taskId);
+            loadAndDisplayData(taskId);
+        };
+
+        // Load and display data
+        const loadAndDisplayData = (filterTaskId = '') => {
+            const combinedTableBody = document.querySelector('#combined-table tbody');
+            combinedTableBody.innerHTML = '';
+
+            const expenses = loadFromLocalStorage('expenses');
+            const laborCosts = loadFromLocalStorage('laborCosts');
+
+            const rows = {};
+            let totalCost = 0;
+
+            expenses.forEach(expense => {
+                if (!filterTaskId || expense.taskId === filterTaskId) {
+                    const key = `${expense.expenseDate}-${expense.taskId}`;
+                    expense.expenseAmount = expense.quantity * expense.unitPrice; // Calculate amount
+                    if (!rows[key]) {
+                        rows[key] = {
+                            expenseDate: expense.expenseDate,
+                            taskId: expense.taskId,
+                            expenseDescription: expense.expenseDescription,
+                            supplier: expense.supplier,
+                            quantity: expense.quantity,
+                            unitPrice: expense.unitPrice,
+                            expenseAmount: expense.expenseAmount,
+                            personnel: '',
+                            hoursWorked: 0,
+                            laborCost: 0,
+                            total: expense.expenseAmount
+                        };
+                    } else {
+                        rows[key].expenseAmount += expense.expenseAmount;
+                        rows[key].total += expense.expenseAmount;
+                    }
+                    totalCost += expense.expenseAmount;
+                }
+            });
+
+            laborCosts.forEach(labor => {
+                if (!filterTaskId || labor.taskId === filterTaskId) {
+                    const key = `${labor.laborDate}-${labor.taskId}`;
+                    if (!rows[key]) {
+                        rows[key] = {
+                            expenseDate: labor.laborDate,
+                            taskId: labor.taskId,
+                            expenseDescription: '',
+                            supplier: '',
+                            quantity: 0,
+                            unitPrice: 0,
+                            expenseAmount: 0,
+                            personnel: labor.personnel,
+                            hoursWorked: labor.hoursWorked,
+                            laborCost: labor.laborCost,
+                            total: labor.laborCost
+                        };
+                    } else {
+                        rows[key].laborCost += labor.laborCost;
+                        rows[key].total += labor.laborCost;
+                    }
+                    totalCost += labor.laborCost;
+                }
+            });
+
+            // Populate table with rows
+            for (const key in rows) {
+                const row = rows[key];
+                combinedTableBody.innerHTML += `
+                    <tr>
+                        <td>${row.expenseDate || ''}</td>
+                        <td>${row.taskId || ''}</td>
+                        <td>${row.expenseDescription || ''}</td>
+                        <td>${row.supplier || ''}</td>
+                        <td>${row.quantity || ''}</td>
+                        <td>${row.unitPrice || 0}</td>
+                        <td>${row.expenseAmount || 0}</td>
+                        <td>${row.personnel || ''}</td>
+                        <td>${row.hoursWorked || 0}</td>
+                        <td>${row.laborCost || 0}</td>
+                        <td>${row.total || 0}</td>
+                    </tr>`;
+            }
+
+            // Populate filter dropdown with Task IDs currently in the table
+            const taskIdSet = new Set(Object.values(rows).map(row => row.taskId));
+            const taskIdFilter = document.getElementById('task-id-filter');
+            taskIdFilter.innerHTML = '<option value="">Select Task</option>';
+            taskIdSet.forEach(taskId => {
+                taskIdFilter.innerHTML += `<option value="${taskId}">${taskId}</option>`;
+            });
+
+            // Set the filter dropdown to the previously selected value
+            taskIdFilter.value = filterTaskId;
+
+            // Display total cost
+            document.getElementById('total-cost').innerText = totalCost;
+        };
+
+        // Load data from Firestore and save to local storage
+        const loadDataFromFirestore = async () => {
+            const expensesSnapshot = await getDocs(expensesCollection);
+            const laborSnapshot = await getDocs(laborCollection);
+
+            const expenses = expensesSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+            const laborCosts = laborSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+            saveToLocalStorage('expenses', expenses);
+            saveToLocalStorage('laborCosts', laborCosts);
+
+            const filterTaskId = getFilterState();
+            loadAndDisplayData(filterTaskId);
+        };
+
+        // Initial load
+        window.addEventListener('load', async () => {
+            await loadDataFromFirestore();
+        });
+
+        // Add Expense and Labor Cost Form Submission
+        const expenseForm = document.getElementById('expense-form');
+        expenseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const quantity = parseInt(e.target['quantity'].value);
+            const unitPrice = parseFloat(e.target['unit-price'].value);
+            const expense = {
+                expenseDate: e.target['expense-date'].value,
+                taskId: e.target['task-id-expense'].value,
+                expenseDescription: e.target['expense-description'].value,
+                supplier: e.target['supplier'].value,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                expenseAmount: quantity * unitPrice // Calculate amount
+            };
+            try {
+                await addDoc(expensesCollection, expense);
+                e.target.reset();
+                alert('Expense added successfully!');
+                toggleForm('expense-form-container');
+            } catch (error) {
+                console.error('Error adding expense:', error);
+                alert('Failed to add expense. Please try again.');
+            }
+
+            const laborDate = e.target['labor-date'].value;
+            const personnel = e.target['personnel'].value;
+            const hoursWorked = e.target['hours-worked'].value;
+            if (laborDate && personnel && hoursWorked) {
+                const laborCost = parseInt(hoursWorked) * 20;
+                const labor = {
+                    laborDate,
+                    taskId: expense.taskId,
+                    personnel,
+                    hoursWorked: parseInt(hoursWorked),
+                    laborCost
+                };
+                try {
+                    await addDoc(laborCollection, labor);
+                    alert('Labor cost added successfully!');
+                } catch (error) {
+                    console.error('Error adding labor cost:', error);
+                    alert('Failed to add labor cost. Please try again.');
+                }
+            }
+
+            await loadDataFromFirestore();
+        });
+
+        // Toggle form visibility
+        window.toggleForm = (formId) => {
+            const formContainer = document.getElementById(formId);
+            formContainer.style.display = formContainer.style.display === 'none' || formContainer.style.display === '' ? 'block' : 'none';
+        };
+
+        // Toggle labor fields visibility
+        window.toggleLaborFields = () => {
+            const laborFields = document.getElementById('labor-fields');
+            laborFields.style.display = laborFields.style.display === 'none' || laborFields.style.display === '' ? 'block' : 'none';
+        };
+
+        // Delete expense
+        window.deleteExpense = async (expenseId) => {
+            try {
+                await deleteDoc(doc(db, 'expenses', expenseId));
+                alert('Expense deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting expense:', error);
+                alert('Failed to delete expense. Please try again.');
+            }
+
+            await loadDataFromFirestore();
+        };
+
+        // Delete labor cost
+        window.deleteLabor = async (laborId) => {
+            try {
+                await deleteDoc(doc(db, 'labor_costs', laborId));
+                alert('Labor cost deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting labor cost:', error);
+                alert('Failed to delete labor cost. Please try again.');
+            }
+
+            await loadDataFromFirestore();
+        };
+
+        // View tasks
+        window.viewTasks = () => {
+            window.location.href = 'taskSheet.html';
+        };
+    </script>
+</body>
+</html>

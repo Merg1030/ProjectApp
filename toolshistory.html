@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Tool Transfer History</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    html, body {
+      height: 100%;
+      font-family: 'Open Sans', Arial, sans-serif;
+      background: #f4f7fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    #wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar {
+      background: #2c3e50; color: #fff; border: none; border-radius: 0;
+      min-height: 60px; box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+      width: 100%; position: fixed; top: 0; z-index: 1001;
+    }
+    .navbar .navbar-header {
+      display: flex; align-items: center; padding: 0 20px;
+    }
+    .navbar .navbar-brand {
+      color: #fff; font-weight: bold; font-size: 1.4rem;
+      text-decoration: none; margin-right: 40px;
+    }
+    .navbar .navbar-brand:hover { color: #1abc9c; }
+    .user-info {
+      color: #fff; padding: 15px 50px 5px 50px; font-size: 16px; float: right;
+    }
+    #page-wrapper {
+      margin-left: 0 !important; margin-top: 60px; padding: 32px;
+      width: 100%; background: #f4f7fa;
+      min-height: calc(100vh - 60px); transition: margin-left 0.2s;
+    }
+    .panel {
+      background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04);
+      margin-bottom: 30px; border: none;
+    }
+    .btn.btn-outline{color: white}
+    .panel-heading {
+      background: #666363; color: #fff; padding: 18px 24px;
+      border-top-left-radius: 8px; border-top-right-radius: 8px;
+      font-size: 1.16rem; font-weight: bold; letter-spacing: 1px;
+    }
+    .panel-body { padding: 24px; }
+    .table-responsive {
+      overflow-x: auto; overflow-y: auto; max-height: 70vh; margin-top: 0;
+      border-radius: 7px; box-shadow: 0 1px 4px rgba(44,62,80,0.08);
+      background: #fff; padding: 0;
+    }
+    table {
+      width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 0;
+      border-radius: 7px; overflow: hidden;
+    }
+    thead { background: #666363; color: #fff; }
+    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; letter-spacing: 0.5px; }
+    tr { transition: background 0.14s; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .search-bar-container { padding: 0 0 16px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .search-bar {
+      padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px;
+      font-size: 15px; width: 200px; transition: border 0.2s; margin-bottom: 10px;
+    }
+    .search-bar:focus { border: 1.5px solid #1abc9c; outline: none; }
+    .filter-select, .filter-date {
+      padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px;
+      font-size: 15px; margin-bottom: 10px; background: #fff;
+    }
+    .edit-btn {
+      padding: 5px 14px; background: #1976d2; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; margin-left: 2px;
+    }
+    .edit-btn:hover { background: #0d47a1; }
+    .delete-btn {
+      padding: 5px 14px; background: #c0392b; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; margin-left: 6px;
+    }
+    .delete-btn:hover { background: #e74c3c; }
+    .modal {
+      display: none; position: fixed; z-index: 99;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.3); align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #fff; border-radius: 7px; padding: 28px 28px 18px 28px; min-width: 300px;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.10); position: relative;
+    }
+    .modal-content label { font-weight: bold; display: block; margin-bottom: 8px; }
+    .modal-content input[type="datetime-local"], .modal-content input[type="text"] {
+      width: 100%; padding: 7px 10px; font-size: 16px; margin-bottom: 14px; border: 1px solid #bbb; border-radius: 4px;
+    }
+    .modal-actions { text-align: right; }
+    .modal-actions button { margin-left: 8px; padding: 6px 18px; border: none; border-radius: 4px; font-size: 15px; }
+    .modal-actions .save-btn { background: #1976d2; color: #fff; }
+    .modal-actions .cancel-btn { background: #ccc; color: #222; }
+    .modal-actions .save-btn:hover { background: #125195; }
+    .modal-actions .cancel-btn:hover { background: #888; }
+    .modal-actions .delete-btn { background: #c0392b; color: #fff; margin-right: auto;}
+    .modal-actions .delete-btn:hover { background: #e74c3c; }
+    .modal-close { position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 22px; cursor: pointer; color: #888; }
+    .modal-close:hover { color: #222; }
+    #edit-modal-error { color: #c00; font-size: 0.97rem; margin-bottom: 7px; }
+    @media (max-width: 900px) {
+      #page-wrapper { padding: 16px 5px; }
+      .panel-body { padding: 12px 2px; }
+    }
+    @media (max-width: 500px) {
+      .navbar { min-height: 40px; }
+      .navbar .navbar-header { padding: 0 6px; }
+      .navbar .navbar-brand { font-size: 1rem; }
+      #page-wrapper { padding: 6px 0; }
+      .panel-body { padding: 7px 0; }
+      th, td { font-size: 13px; }
+      .search-bar { width: 100%; min-width: 80px; }
+      .search-bar-container { flex-direction: column; align-items: flex-start; gap: 5px;}
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <nav class="navbar" role="navigation">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">IMS Portal
+          <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a>
+        </a>
+        <span class="user-info" style="margin-left:auto;">
+          Welcome Christopher Chishela&nbsp; 
+        </span>
+      </div>
+    </nav>
+    <div id="page-wrapper">
+      <div id="page-inner">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                Tool Transfer History
+              </div>
+              <div class="panel-body">
+                <div class="search-bar-container">
+                  <input type="text" class="search-bar" id="history-search-bar" placeholder="Search...">
+                  <select class="filter-select" id="location-filter">
+                    <option value="">All Locations</option>
+                  </select>
+                  <input type="date" class="filter-date" id="date-filter" />
+                  <button class="filter-select" id="clear-filters-btn" style="display:none;">Clear</button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered table-hover" id="history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Tool Name</th>
+                        <th>Bin ID</th>
+                        <th>From Person</th>
+                        <th>From Location</th>
+                        <th>To Person</th>
+                        <th>To Location</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="history-table-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- EDIT & DELETE MODAL -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-modal-btn" title="Close">&times;</button>
+      <h3 style="margin-top:0;margin-bottom:17px;">Edit Tool Transfer</h3>
+      <div id="edit-modal-error"></div>
+      <form id="edit-modal-form">
+        <label for="edit-date">Date/Time:</label>
+        <input type="datetime-local" id="edit-date" required />
+        <label for="edit-tool">Tool Name:</label>
+        <input type="text" id="edit-tool" required />
+        <label for="edit-bin">Bin ID:</label>
+        <input type="text" id="edit-bin" required />
+        <label for="edit-from-person">From Person:</label>
+        <input type="text" id="edit-from-person" required />
+        <label for="edit-from-location">From Location:</label>
+        <input type="text" id="edit-from-location" required />
+        <label for="edit-to-person">To Person:</label>
+        <input type="text" id="edit-to-person" required />
+        <label for="edit-to-location">To Location:</label>
+        <input type="text" id="edit-to-location" required />
+        <div class="modal-actions" style="display:flex;align-items:center;gap:12px;">
+          <button type="button" class="delete-btn" id="delete-entry-btn" style="margin-right:auto;">Delete</button>
+          <button type="button" class="cancel-btn" id="cancel-edit-btn">Cancel</button>
+          <button type="submit" class="save-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById('history-table-body');
+    const searchInput = document.getElementById('history-search-bar');
+    const locationFilter = document.getElementById('location-filter');
+    const dateFilter = document.getElementById('date-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+
+    let transferHistory = [];
+    let transferDocs = [];
+
+    // Modal elements
+    const editModal = document.getElementById('edit-modal');
+    const editModalForm = document.getElementById('edit-modal-form');
+    const editModalError = document.getElementById('edit-modal-error');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const deleteEntryBtn = document.getElementById('delete-entry-btn');
+
+    // Form fields
+    const editDateInput = document.getElementById('edit-date');
+    const editToolInput = document.getElementById('edit-tool');
+    const editBinInput = document.getElementById('edit-bin');
+    const editFromPersonInput = document.getElementById('edit-from-person');
+    const editFromLocationInput = document.getElementById('edit-from-location');
+    const editToPersonInput = document.getElementById('edit-to-person');
+    const editToLocationInput = document.getElementById('edit-to-location');
+    let currentEditDocId = null;
+
+    function formatDate(ts) {
+      if (!ts) return '';
+      if (typeof ts === "string") return ts;
+      if (ts.toDate) {
+        const d = ts.toDate();
+        return d.getFullYear() + '-' +
+               String(d.getMonth()+1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0') + ' ' +
+               String(d.getHours()).padStart(2, '0') + ':' +
+               String(d.getMinutes()).padStart(2, '0');
+      }
+      return '';
+    }
+
+    // Fill location filter dropdown with unique locations (fromLocation, toLocation)
+    function fillLocationDropdown() {
+      const locations = new Set();
+      transferHistory.forEach(t => {
+        if (t.fromLocation) locations.add(t.fromLocation);
+        if (t.toLocation) locations.add(t.toLocation);
+      });
+      // keep current selection if possible
+      const current = locationFilter.value;
+      locationFilter.innerHTML = '<option value="">All Locations</option>';
+      Array.from(locations).sort().forEach(loc => {
+        const opt = document.createElement('option');
+        opt.value = loc;
+        opt.textContent = loc;
+        locationFilter.appendChild(opt);
+      });
+      if (Array.from(locations).includes(current)) locationFilter.value = current;
+    }
+
+    function filterAndRender() {
+      let filtered = transferHistory.slice();
+
+      // 1. Search filter
+      const val = searchInput.value.trim().toLowerCase();
+      if (val) {
+        filtered = filtered.filter(t =>
+          (t.tool || '').toLowerCase().includes(val) ||
+          (t.bin || '').toLowerCase().includes(val) ||
+          (t.fromPerson || '').toLowerCase().includes(val) ||
+          (t.fromLocation || '').toLowerCase().includes(val) ||
+          (t.toPerson || '').toLowerCase().includes(val) ||
+          (t.toLocation || '').toLowerCase().includes(val) ||
+          formatDate(t.date).toLowerCase().includes(val)
+        );
+      }
+      // 2. Location filter
+      const locVal = locationFilter.value;
+      if (locVal) {
+        filtered = filtered.filter(t =>
+          t.fromLocation === locVal || t.toLocation === locVal
+        );
+      }
+      // 3. Date filter (YYYY-MM-DD match)
+      const dateVal = dateFilter.value;
+      if (dateVal) {
+        filtered = filtered.filter(t => {
+          const d = t.date && t.date.toDate ? t.date.toDate() : (t.date ? new Date(t.date) : null);
+          if (!d) return false;
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}` === dateVal;
+        });
+      }
+      // Show/hide clear button
+      clearFiltersBtn.style.display = (val || locVal || dateVal) ? '' : 'none';
+
+      renderTable(filtered);
+    }
+
+    function renderTable(history) {
+      tableBody.innerHTML = "";
+      if (history.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;">No transfer history found.</td></tr>';
+        return;
+      }
+      history.forEach((t, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${formatDate(t.date)}</td>
+          <td>${t.tool || ""}</td>
+          <td>${t.bin || ""}</td>
+          <td>${t.fromPerson || ""}</td>
+          <td>${t.fromLocation || ""}</td>
+          <td>${t.toPerson || ""}</td>
+          <td>${t.toLocation || ""}</td>
+          <td></td>
+        `;
+        // Add edit button
+        const editBtn = document.createElement('button');
+        editBtn.className = "edit-btn";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => {
+          showEditModal(idx, t);
+        });
+        tr.children[7].appendChild(editBtn);
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // --- Modal logic ---
+    function showEditModal(idx, t) {
+      currentEditDocId = transferDocs[idx]?.id || null;
+      editModalError.textContent = "";
+      // Pre-fill modal form values
+      if (t.date && t.date.toDate) {
+        editDateInput.value = t.date.toDate().toISOString().slice(0,16);
+      } else if (t.date) {
+        editDateInput.value = t.date.slice(0,16);
+      } else {
+        editDateInput.value = "";
+      }
+      editToolInput.value = t.tool || "";
+      editBinInput.value = t.bin || "";
+      editFromPersonInput.value = t.fromPerson || "";
+      editFromLocationInput.value = t.fromLocation || "";
+      editToPersonInput.value = t.toPerson || "";
+      editToLocationInput.value = t.toLocation || "";
+
+      editModal.classList.add('active');
+      setTimeout(() => editDateInput.focus(), 120);
+    }
+    function hideEditModal() {
+      editModal.classList.remove('active');
+      currentEditDocId = null;
+      editModalError.textContent = "";
+      editModalForm.reset();
+    }
+
+    closeModalBtn.onclick = hideEditModal;
+    cancelEditBtn.onclick = hideEditModal;
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) hideEditModal();
+    });
+
+    editModalForm.onsubmit = async function(e) {
+      e.preventDefault();
+      editModalError.textContent = "";
+      if (!currentEditDocId) {
+        editModalError.textContent = "No document selected.";
+        return;
+      }
+      // Validate
+      const dateStr = editDateInput.value;
+      if (!dateStr) { editModalError.textContent = "Date/Time required."; return; }
+      let newDate;
+      try {
+        newDate = new Date(dateStr);
+        if (isNaN(newDate.getTime())) throw new Error();
+      } catch {
+        editModalError.textContent = "Invalid date/time format.";
+        return;
+      }
+      try {
+        await updateDoc(doc(db, "tool_transfers", currentEditDocId), {
+          date: Timestamp.fromDate(newDate),
+          tool: editToolInput.value,
+          bin: editBinInput.value,
+          fromPerson: editFromPersonInput.value,
+          fromLocation: editFromLocationInput.value,
+          toPerson: editToPersonInput.value,
+          toLocation: editToLocationInput.value
+        });
+        hideEditModal();
+      } catch (err) {
+        editModalError.textContent = "Failed to update. " + (err.message || "");
+      }
+    };
+
+    // Restore the tool to previous holder/location before deleting the transfer history
+    async function returnToolToPreviousHolder(binId, fromPerson, fromLocation) {
+      if (!binId) return;
+      try {
+        await updateDoc(doc(db, "tools", binId), {
+          currentHolder: fromPerson,
+          currentLocation: fromLocation
+        });
+      } catch (e) {
+        console.warn('Could not update tool', binId, e);
+      }
+    }
+
+    deleteEntryBtn.onclick = async function() {
+      if (!currentEditDocId) return;
+      if (!confirm("Are you sure you want to permanently delete this transfer entry?")) return;
+      editModalError.textContent = "";
+      try {
+        const idx = transferDocs.findIndex(d => d.id === currentEditDocId);
+        const data = transferDocs[idx]?.data;
+        if (data) {
+          await returnToolToPreviousHolder(data.bin, data.fromPerson, data.fromLocation);
+        }
+        await deleteDoc(doc(db, "tool_transfers", currentEditDocId));
+        hideEditModal();
+      } catch (err) {
+        editModalError.textContent = "Failed to delete entry. " + (err.message || "");
+      }
+    };
+
+    // LIVE FIRESTORE LISTEN
+    onSnapshot(query(collection(db, "tool_transfers"), orderBy("date", "desc")), (snapshot) => {
+      transferHistory = [];
+      transferDocs = [];
+      snapshot.forEach(docSnap => {
+        transferHistory.push(docSnap.data());
+        transferDocs.push({ id: docSnap.id, data: docSnap.data() });
+      });
+      fillLocationDropdown();
+      filterAndRender();
+    });
+
+    searchInput.addEventListener('input', filterAndRender);
+    locationFilter.addEventListener('change', filterAndRender);
+    dateFilter.addEventListener('change', filterAndRender);
+
+    clearFiltersBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      locationFilter.value = '';
+      dateFilter.value = '';
+      filterAndRender();
+    });
+
+  </script>
+</body>
+</html>

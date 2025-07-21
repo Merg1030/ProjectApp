@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Add Fixed Inventory</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; max-width: 480px; padding: 30px; }
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    .form-group label { font-weight: 600; margin-bottom: 6px; }
+    .form-group input, .form-group select { border-radius: 5px; font-size: 1rem; padding: 8px 12px; border: 1px solid #ccc; width: 100%; background: #f7fafd; }
+    .btn-primary { background: #8c9391; border: none; color: #fff; border-radius: 4px; padding: 10px 18px; font-weight: 600; font-size: 15px; margin-right: 10px; }
+    .btn-primary:hover { background: #16a085; }
+    .success-msg { color: #1abc9c; font-weight: bold; margin-top: 16px; }
+    .error-msg { color: #e74c3c; font-weight: bold; margin-top: 16px; }
+    .audit-log-link { margin-top: 18px; display: block; color: #2980b9; text-decoration: underline; font-weight: 600; }
+    .readonly-info { margin-top: 8px; font-size: 13px; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">Add Fixed Inventory</div>
+                <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a>
+    <form id="add-fixed-inventory-form" autocomplete="off">
+      <div class="form-group">
+        <label>Item Name:</label>
+        <input class="form-control" name="itemName" id="itemName" placeholder="e.g. Solar Panel" required/>
+      </div>
+      <div class="form-group">
+        <label>Category:</label>
+        <select class="form-control" name="category" id="category" required>
+          <option value="">-- Select Category --</option>
+          <option>Solar Equipment</option>
+          <option>Electrical</option>
+          <option>Building</option>
+          <option>IT Equipment</option>
+          <option>General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity:</label>
+        <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
+      </div>
+      <div class="form-group">
+        <label>Came From:</label>
+        <input class="form-control" name="cameFrom" id="cameFrom" placeholder="e.g. Site A, Supplier B" required/>
+      </div>
+      <div class="form-group">
+        <label>Brought By:</label>
+        <input class="form-control" name="broughtBy" id="broughtBy" placeholder="Person who brought the item" required/>
+      </div>
+      <div class="form-group">
+        <label>Delivery Note Number:</label>
+        <input class="form-control" name="deliveryNoteNumber" id="deliveryNoteNumber" placeholder="e.g. DN-12345" required/>
+      </div>
+      <div class="form-group">
+        <label>Location/Store:</label>
+        <input class="form-control" name="location" id="location" placeholder="e.g. Main Warehouse" required/>
+      </div>
+      <div class="form-group">
+        <label>Item Code (Auto-generated):</label>
+        <input class="form-control" name="itemCode" id="itemCode" readonly style="background:#f4f7fa;"/>
+        <div class="readonly-info">The item code is generated automatically and will be unique for every entry.</div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="submitBtn">Submit</button>
+      <button type="reset" class="btn btn-primary">Reset</button>
+      <div id="form-message"></div>
+    </form>
+    <a href="fixedInventoryAuditLog.html" class="audit-log-link" >View Fixed Inventory Audit Log</a>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Helper to generate a short unique item code: e.g. SP-20240617-ABCDE1
+    function generateItemCode(itemName) {
+      // Use first 2 chars of item name, date, and a 5-char random suffix
+      const prefix = (itemName || "IT").replace(/[^A-Za-z0-9]/g,'').substring(0,2).toUpperCase();
+      const date = new Date();
+      const datestamp = date.getFullYear().toString().substring(2) + 
+                        String(date.getMonth()+1).padStart(2,'0') +
+                        String(date.getDate()).padStart(2,'0');
+      const rand = Math.random().toString(36).substr(2,5).toUpperCase();
+      return `${prefix}-${datestamp}-${rand}`;
+    }
+
+    // Update the item code preview on item name change
+    const itemNameInput = document.getElementById('itemName');
+    const itemCodeInput = document.getElementById('itemCode');
+    function updateItemCodePreview() {
+      itemCodeInput.value = generateItemCode(itemNameInput.value);
+    }
+    itemNameInput.addEventListener('input', updateItemCodePreview);
+    // Set initial code
+    updateItemCodePreview();
+
+    const form = document.getElementById('add-fixed-inventory-form');
+    const messageDiv = document.getElementById('form-message');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const itemName = document.getElementById('itemName').value.trim();
+      const category = document.getElementById('category').value;
+      const qty = parseInt(document.getElementById('quantity').value);
+      const cameFrom = document.getElementById('cameFrom').value.trim();
+      const broughtBy = document.getElementById('broughtBy').value.trim();
+      const deliveryNoteNumber = document.getElementById('deliveryNoteNumber').value.trim();
+      const location = document.getElementById('location').value.trim();
+
+      if (!itemName || !category || !qty || !cameFrom || !broughtBy || !deliveryNoteNumber || !location) {
+        messageDiv.innerHTML = '<div class="error-msg">All fields are required!</div>';
+        return;
+      }
+
+      // Generate unique item code
+      let itemCode = generateItemCode(itemName);
+
+      // Ensure generated code is unique in the database (very rare collision, but checked)
+      let exists = true;
+      let tryCount = 0;
+      while (exists && tryCount < 6) {
+        // Query for this code
+        const q = await import("https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js");
+        const { getDocs, query, where, collection: coll } = q;
+        const snapshot = await getDocs(query(coll(db, "fixedInventory"), where("itemCode", "==", itemCode)));
+        if (snapshot.empty) {
+          exists = false;
+        } else {
+          itemCode = generateItemCode(itemName); // Try again
+        }
+        tryCount++;
+      }
+
+      // Add new inventory entry
+      const invDoc = {
+        itemName: itemName,
+        itemCode: itemCode,
+        category: category,
+        quantity: qty,
+        cameFrom: cameFrom,
+        broughtBy: broughtBy,
+        deliveryNoteNumber: deliveryNoteNumber,
+        location: location,
+        createdAt: serverTimestamp()
+      };
+      const { addDoc, collection: coll } = await import("https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js");
+      const docRef = await addDoc(coll(db, "fixedInventory"), invDoc);
+      // Audit log
+      await addDoc(coll(db, "fixedInventoryAuditLog"), {
+        inventoryId: docRef.id,
+        itemName: itemName,
+        itemCode: itemCode,
+        action: "add",
+        addedQuantity: qty,
+        cameFrom: cameFrom,
+        broughtBy: broughtBy,
+        deliveryNoteNumber: deliveryNoteNumber,
+        location: location,
+        category: category,
+        timestamp: serverTimestamp()
+      });
+      messageDiv.innerHTML = `<div class="success-msg">Fixed inventory item added successfully!<br>Item Code: <b>${itemCode}</b></div>`;
+      form.reset();
+      updateItemCodePreview();
+    });
+
+    form.addEventListener('reset', function() {
+      messageDiv.innerHTML = '';
+      updateItemCodePreview();
+    });
+  </script>
+</body>
+</html>

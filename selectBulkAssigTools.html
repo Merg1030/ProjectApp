@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Assign Tools Location Bulk/Single</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    .bulk-search-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+    .bulk-search-bar { padding: 8px 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; width: 220px; transition: border 0.2s; }
+    .bulk-search-bar:focus { border: 1.5px solid #1abc9c; outline: none; }
+    .bulk-search-btn { padding: 8px 16px; border-radius: 5px; background: #8c9391; color: #fff; border: none; font-size: 15px; cursor: pointer; transition: background 0.2s; }
+    .bulk-search-btn:hover { background: #16a085; }
+    html, body { height: 100%; font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; padding: 0; color: #333; }
+    #wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { background: #2c3e50; color: #fff; border: none; border-radius: 0; min-height: 60px; box-shadow: 0 2px 6px rgba(0,0,0,0.07); width: 100%; position: fixed; top: 0; z-index: 1001; }
+    .navbar .navbar-header { display: flex; align-items: center; padding: 0 20px; }
+    .navbar .navbar-brand { color: #fff; font-weight: bold; font-size: 1.4rem; text-decoration: none; margin-right: 40px; }
+    .navbar .navbar-brand:hover { color: #1abc9c; }
+    .btn-danger { background: #666363!important; border: none; border-radius: 4px; padding: 6px 16px; font-size: 15px; margin-left: 10px; transition: background 0.2s; color: #fff; }
+    .btn-danger:hover { background: #c0392b !important; }
+    .user-info { color: #fff; padding: 15px 50px 5px 50px; font-size: 16px; float: right; }
+    #page-wrapper { margin-left: 0 !important; margin-top: 60px; padding: 32px 32px 32px 32px; width: 100%; background: #f4f7fa; min-height: calc(100vh - 60px); transition: margin-left 0.2s; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin-bottom: 30px; border: none; }
+    .panel-heading { background: #686767; color: #fff; padding: 18px 24px; border-top-left-radius: 8px; border-top-right-radius: 8px; font-size: 1.16rem; font-weight: bold; letter-spacing: 1px; }
+    .panel-body { padding: 24px; }
+    .btn-primary { background: #8c9391; border: none; color: #fff !important; border-radius: 4px; padding: 10px 18px; margin-bottom: 10px; font-weight: 600; margin-right: 10px; font-size: 15px; box-shadow: 0 2px 8px 0 rgba(44,62,80,0.06); transition: background 0.18s; }
+    .btn-primary:hover, .btn-primary:focus { background: #16a085; color: #fff !important; }
+    .btn-default { background: #ecf0f1; color: #2c3e50; border: none; border-radius: 4px; padding: 10px 18px; font-weight: 600; font-size: 15px; margin-right: 10px; box-shadow: 0 1px 4px rgba(44,62,80,0.02); transition: background 0.18s; }
+    .btn-default:hover, .btn-default:focus { background: #d0d7db; color: #2c3e50; }
+    h2 { color: #1abc9c; font-size: 2rem; margin-top: 0; margin-bottom: 20px; font-weight: 700; }
+    hr { border: none; border-top: 1px solid #dbe5ea; margin: 22px 0; }
+    .radio { margin-bottom: 12px; font-size: 1rem; }
+    .radio label { cursor: pointer; }
+    .radio input[type="checkbox"] { margin-right: 8px; }
+    .radio-assigned label { color: #fff; background: #6b6a6a; border-radius: 5px; padding: 2px 8px; }
+    #bulkResult { background: #f9fbfc; border-radius: 8px; padding: 18px 18px 8px 18px; box-shadow: 0 1px 6px rgba(44,62,80,0.07); margin-top: 12px; }
+    #bulkResult h3 { color: #1abc9c; margin-top: 0; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; }
+    #bulkToolsList { padding-left: 18px; margin-bottom: 0; }
+    #bulkToolsList li { margin-bottom: 6px; font-size: 0.96rem; }
+    .form-popup { display: none; position: fixed; z-index: 10002; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #fff; border-radius: 10px; box-shadow: 0 0 18px rgba(44, 62, 80, 0.17); padding: 32px 32px 24px 32px; min-width: 320px; max-width: 96vw; width: 400px; animation: popupIn .24s cubic-bezier(.6,1.6,.41,.93);}
+    @keyframes popupIn {0% {opacity: 0; transform: scale(.8) translate(-50%, -50%);}100% {opacity: 1; transform: scale(1) translate(-50%, -50%);}}
+    .form-popup h3 { margin-top: 0; color: #1abc9c; font-weight: 700;}
+    .form-popup label { font-weight: bold; display: block; margin-bottom: 8px; }
+    .form-popup input, .form-popup select { width: 100%; padding: 10px; margin-bottom: 16px; border-radius: 4px; border: 1px solid #b7c9d3; background: #f9fbfc; font-size: 1rem; }
+    .form-popup .form-actions { text-align: right; }
+    .form-popup .btn { margin-left: 6px; }
+    .form-popup .close-btn { position: absolute; top: 8px; right: 14px; background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; }
+    .form-popup .close-btn:hover { color: #e74c3c; }
+    .overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(44,62,80,0.18); z-index: 10001; animation: fadeIn .16s; }
+    .btn.btn-outline{color: white}
+    @keyframes fadeIn {0% {opacity: 0;}100% {opacity: 1;}}
+    @media (max-width: 900px) { #page-wrapper { padding: 16px 5px; } .panel-body { padding: 12px 2px; } }
+    @media (max-width: 700px) { .form-popup { width: 96vw; min-width: 0; padding: 18px 8px 14px 8px; } #page-wrapper { padding: 5px; } }
+    @media (max-width: 500px) { .form-popup { padding: 12px 2px 7px 2px;} .navbar { min-height: 40px;} .navbar .navbar-header { padding: 0 6px;} .navbar .navbar-brand { font-size: 1rem;} #page-wrapper { padding: 6px 0;} .panel-body { padding: 7px 0;} }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+
+    <nav class="navbar" role="navigation">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" aria-label="Toggle navigation">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">IMS Portal <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a></a>
+        <span class="user-info" style="margin-left:auto;">
+          Welcome Christopher Chishela&nbsp;
+        </span>
+      </div>
+    </nav>
+    <div id="page-wrapper">
+      <div id="page-inner">
+        <div class="row">
+          <div class="col-md-12">
+   
+          </div>
+        </div>
+        <hr />
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                Select Below and Submit
+                <a href="toolshistory.html" class="btn btn-primary" style="float:right;margin-top:-7px;">Tools History</a>
+              </div>
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="bulk-search-row">
+                      <input type="text" id="bulkSearchInput" class="bulk-search-bar" placeholder="Search for a tool...">
+                      <button type="button" id="bulkSearchBtn" class="bulk-search-btn"><i class="fa fa-search"></i> Search</button>
+                    </div>
+                    <form id="bulkToolsForm" autocomplete="off">
+                      <input type="button" id="selectAllBtn" value="Select All"/>
+                      <input type="button" id="deselectAllBtn" value="Deselect All"/>
+                      <div id="tools-checkbox-list">
+                        <!-- Firestore data will populate here -->
+                      </div>
+                      <button type="submit" class="btn btn-default">Submit</button>
+                      <button type="reset" class="btn btn-primary">Reset</button>
+                    </form>
+                    <br />
+                  </div>
+                  <div class="col-md-6">
+                    <div id="bulkResult" style="display:none;">
+                      <h3>Selected tools</h3>
+                      <ul id="bulkToolsList"></ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- End Form Elements -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Popup overlay and form -->
+  <div class="overlay" id="overlay"></div>
+  <div class="form-popup" id="transferFormPopup">
+    <button class="close-btn" id="closePopupBtn">&times;</button>
+    <h3>Transfer Tools</h3>
+    <form id="transferForm" autocomplete="off">
+      <label for="personName">Person receiving the tool(s):</label>
+      <input list="magicEmployees" name="personName" id="personName" placeholder="Enter name..." required />
+      <datalist id="magicEmployees">
+        <!-- Will be populated by Firestore from project-task-588c4 -->
+      </datalist>
+      <label for="location">Location:</label>
+      <input name="location" id="location" placeholder="Enter location..." required />
+      <div class="form-actions">
+        <button type="submit" class="btn btn-default">Confirm Transfer</button>
+      </div>
+    </form>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore, collection, onSnapshot, doc, updateDoc,
+      addDoc, serverTimestamp, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM refs
+    const toolsListDiv = document.getElementById('tools-checkbox-list');
+    const form = document.getElementById('bulkToolsForm');
+    const bulkResultDiv = document.getElementById('bulkResult');
+    const bulkToolsList = document.getElementById('bulkToolsList');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const bulkSearchInput = document.getElementById('bulkSearchInput');
+    const bulkSearchBtn = document.getElementById('bulkSearchBtn');
+    // Popup
+    const overlay = document.getElementById('overlay');
+    const popup = document.getElementById('transferFormPopup');
+    const transferForm = document.getElementById('transferForm');
+    const closePopupBtn = document.getElementById('closePopupBtn');
+    const magicEmployees = document.getElementById('magicEmployees');
+    const personNameInput = document.getElementById('personName');
+
+    let toolDocs = [];
+    let filteredDocs = [];
+    let employeeNames = [];
+
+    // Populate employees datalist ONLY with those in employees collection in this project
+    function loadEmployees() {
+      onSnapshot(collection(db, "employees"), (snapshot) => {
+        employeeNames = [];
+        magicEmployees.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const emp = docSnap.data();
+          const nameStr = [emp.name, emp.surname].filter(Boolean).join(' ');
+          employeeNames.push(nameStr);
+          const opt = document.createElement('option');
+          opt.value = nameStr;
+          magicEmployees.appendChild(opt);
+        });
+        // Debug: see loaded employee names
+        console.log("Loaded employeeNames:", employeeNames);
+      });
+    }
+    loadEmployees();
+
+    // Populate checkboxes from Firestore, with IDs (COLLECTION tools-2)
+    onSnapshot(collection(db, "tools-2"), (snapshot) => {
+      toolDocs = [];
+      snapshot.forEach(docSnap => {
+        const t = docSnap.data();
+        const id = docSnap.id;
+        toolDocs.push({ id, ...t });
+      });
+      filteredDocs = toolDocs;
+      renderToolsCheckboxList(filteredDocs);
+    });
+
+    function renderToolsCheckboxList(list) {
+      toolsListDiv.innerHTML = "";
+      list.forEach(t => {
+        // If not in warehouse, add a red background class
+        const isAssigned = (t.location || "").trim().toLowerCase() !== "warehouse";
+        const div = document.createElement('div');
+        div.className = "radio" + (isAssigned ? " radio-assigned" : "");
+        div.innerHTML = `
+          <label>
+            <input type="checkbox" name="tools[]" value="${t.id}" />
+            &nbsp;&nbsp;${t.bin ? `T-${t.bin}` : t.id} --> ${t.name || "Unnamed"}
+          </label>
+        `;
+        toolsListDiv.appendChild(div);
+      });
+    }
+
+    // Select all/deselect all logic
+    selectAllBtn.onclick = function() {
+      toolsListDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+    };
+    deselectAllBtn.onclick = function() {
+      toolsListDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    };
+
+    // Improved search: fuzzy/partial match for any word in relevant fields
+    function doBulkSearch() {
+      const val = bulkSearchInput.value.trim().toLowerCase();
+      if (!val) {
+        filteredDocs = toolDocs;
+      } else {
+        filteredDocs = toolDocs.filter(t => {
+          return [t.bin, t.name, t.currentHolder, t.location].some(field => {
+            if (!field) return false;
+            return field.toLowerCase().split(/\s+/).some(word =>
+              word.startsWith(val) || word.includes(val)
+            );
+          });
+        });
+      }
+      renderToolsCheckboxList(filteredDocs);
+    }
+    bulkSearchInput.addEventListener('input', doBulkSearch);
+    bulkSearchBtn.onclick = doBulkSearch;
+
+    // Show selected tools in right panel and open popup for transfer info
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const selectedIDs = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+      bulkToolsList.innerHTML = "";
+      if (selectedIDs.length === 0) {
+        bulkResultDiv.style.display = "none";
+        return;
+      }
+      selectedIDs.forEach(id => {
+        const t = toolDocs.find(x => x.id === id);
+        const li = document.createElement('li');
+        li.textContent = `${t ? (t.name || "Unnamed") : id} [${t ? t.bin : ''}]`;
+        bulkToolsList.appendChild(li);
+      });
+      bulkResultDiv.style.display = "";
+      overlay.style.display = popup.style.display = "block";
+      popup.selectedIDs = selectedIDs;
+    });
+
+    closePopupBtn.onclick = function() {
+      overlay.style.display = popup.style.display = "none";
+      transferForm.reset();
+    };
+
+    // Normalize function: trims and lowercases for flexible matching
+    function normalize(str) {
+      return (str || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    // When transfer form is submitted, update all selected tools AND log history
+    transferForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const personName = transferForm.personName.value.trim();
+      const location = transferForm.location.value.trim();
+      if (!personName || !location || !popup.selectedIDs) return;
+
+      // Debug: show attempted name and valid names
+      console.log("Trying to assign to:", personName);
+      console.log("Valid employees for matching:", employeeNames);
+
+      // Only allow assignment if personName matches those in employees list (case/space-insensitive)
+      const normalizedInput = normalize(personName);
+      const normalizedList = employeeNames.map(normalize);
+
+      if (!normalizedList.includes(normalizedInput)) {
+        alert("You can only assign to a person who is an employee in the system!\n\nYou entered: " + personName + "\nValid employees are:\n" + employeeNames.join('\n'));
+        return;
+      }
+
+      let count = 0;
+      for (const id of popup.selectedIDs) {
+        try {
+          const toolRef = doc(db, "tools-2", id);
+          const toolDoc = await getDoc(toolRef);
+          const prev = toolDoc.exists() ? toolDoc.data() : {};
+
+          await updateDoc(toolRef, {
+            currentHolder: personName,
+            location: location
+          });
+          count++;
+
+          await addDoc(collection(db, "tool_transfers"), {
+            date: serverTimestamp(),
+            tool: prev.name || "",
+            bin: prev.bin || "",
+            fromPerson: prev.currentHolder || "",
+            fromLocation: prev.location || "",
+            toPerson: personName,
+            toLocation: location
+          });
+        } catch (err) {
+          alert(`Error updating tool ${id}: ` + err);
+        }
+      }
+      alert(`Updated ${count} tool(s) with new holder and location!`);
+      overlay.style.display = popup.style.display = "none";
+      transferForm.reset();
+      form.reset();
+      bulkResultDiv.style.display = "none";
+      bulkToolsList.innerHTML = "";
+    });
+
+    form.addEventListener('reset', function() {
+      setTimeout(() => { bulkResultDiv.style.display = "none"; bulkToolsList.innerHTML = ""; }, 100);
+    });
+  </script>
+</body>
+</html>

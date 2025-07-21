@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMS | Personnel Expenses Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.06); margin: 40px auto; padding: 30px; }
+    .panel-heading { background: #1976d2; color: #fff; padding: 18px 24px; font-size: 1.18rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    #toggle-form-btn {
+      margin-bottom: 16px; background: #1976d2; color: #fff; border: none;
+      font-size: 15px; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
+      transition: background 0.2s;
+    }
+    #toggle-form-btn:hover { background: #125195; }
+    .controls-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 15px; }
+    .week-selector { padding: 7px 10px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
+    .download-btn {
+      background:  #1976d2;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .download-btn:hover { background: #2d669f; }
+    form { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; margin-bottom: 22px; }
+    form label { font-weight: bold; }
+    form input, form select, form button { padding: 7px 12px; font-size: 15px; border-radius: 4px; border: 1px solid #bbb; }
+    form input[type="date"] { min-width: 140px;}
+    form input[type="text"], form input[type="number"], form select { min-width: 100px;}
+    form button { background: #1976d2; color: #fff; border: none; cursor: pointer; font-weight: bold;}
+    form button:hover { background: #0d47a1;}
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 11px 10px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .hide { display: none !important; }
+    #expense-form-error { color: rgb(208, 208, 208); font-size: 0.97rem; margin-bottom: 7px; }
+    .company-summary-row {
+      margin-bottom: 18px;
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding-left: 12px;
+      padding-bottom: 10px;
+    }
+    .company-summary-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f1f6ff;
+      border: 2px solid #1976d2;
+      border-radius: 8px;
+      min-width: 120px;
+      max-width: 160px;
+      box-shadow: 0 2px 8px #1976d218;
+      padding: 10px 20px 8px 20px;
+      margin-right: 4px;
+      margin-bottom: 8px;
+      font-size: 1.07em;
+    }
+    .company-summary-card .company-label {
+      font-weight: bold;
+      color: #1976d2;
+      font-size: 1.12em;
+      margin-bottom: 7px;
+    }
+    .company-summary-card .company-cost {
+      font-weight: bold;
+      color: #000000;
+      font-size: 1.25em;
+      background: #fff;
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin-top: 3px;
+    }
+    .total-row {font-weight:bold; background:#f9eee2;}
+    .total-row td {border-top: 2px solid #d1e4fc;}
+    .pdf-heading-main {
+      color: #1976d2;
+      font-size: 1.7em;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-align:center;
+    }
+    .pdf-heading-sub {
+      color: #333;
+      font-size: 1.19em;
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      margin-bottom: 18px;
+      text-align:center;
+    }
+    @media (max-width: 900px) {
+      .panel { padding: 5vw 2vw; }
+      form { flex-direction: column; gap: 8px;}
+      table th, table td { white-space: nowrap; }
+      .company-summary-row { flex-direction: column; gap: 10px;}
+      .company-summary-card { min-width:unset; max-width:unset; width:100%; }
+      .controls-bar { flex-direction: column; gap: 10px;}
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="panel" id="panel-to-export">
+    <div class="panel-heading">Personnel & Daily Expenses Tracker</div>
+    <div class="controls-bar">
+      <button id="toggle-form-btn" type="button">Add Entry</button>
+      <label>
+        Week:
+        <select id="week-selector" class="week-selector"></select>
+      </label>
+      <button id="download-week-btn" class="download-btn" type="button">Download Weekly Report</button>
+    </div>
+    <form id="expense-form" autocomplete="off" class="hide">
+      <div><label for="exp-date">Date</label><br><input type="date" id="exp-date"></div>
+      <div><label for="exp-personnel">Personnel</label><br><input type="text" id="exp-personnel"></div>
+      <div><label for="exp-purpose">Purpose</label><br><input type="text" id="exp-purpose"></div>
+      <div>
+        <label for="exp-company">Company</label><br>
+        <select id="exp-company">
+          <option value="">--Choose--</option>
+          <option value="FPS">FPS</option>
+          <option value="HML">HML</option>
+          <option value="HL">HL</option>
+          <option value="HFL">HFL</option>
+          <option value="HEL">HEL</option>
+        </select>
+      </div>
+      <div><label for="exp-taskid">Task ID</label><br><input type="text" id="exp-taskid"></div>
+      <div><label for="exp-location">Location</label><br><input type="text" id="exp-location"></div>
+      <div><label for="exp-transport">Transport</label><br><input type="number" id="exp-transport" min="0" value="0" step="any"></div>
+      <div><label for="exp-airtime">Airtime</label><br><input type="number" id="exp-airtime" min="0" value="0" step="any"></div>
+      <div><label for="exp-lunch">Lunch</label><br><input type="number" id="exp-lunch" min="0" value="0" step="any"></div>
+      <div style="align-self: flex-end;">
+        <button type="submit">Add Entry</button>
+      </div>
+      <div id="expense-form-error"></div>
+    </form>
+
+    <div class="company-summary-row" id="company-summary"></div>
+    <div class="table-responsive">
+      <table id="expenses-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Personnel</th>
+            <th>Purpose</th>
+            <th>Company</th>
+            <th>Task ID</th>
+            <th>Location</th>
+            <th>Transport</th>
+            <th>Airtime</th>
+            <th>Lunch</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="expenses-table-body"></tbody>
+        <tfoot>
+          <tr class="total-row" id="expenses-table-total-row"></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      Timestamp,
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    // --- Firebase ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- Elements ---
+    const expenseForm = document.getElementById("expense-form");
+    const expensesTableBody = document.getElementById("expenses-table-body");
+    const expensesTableTotalRow = document.getElementById("expenses-table-total-row");
+    const formError = document.getElementById("expense-form-error");
+    const toggleFormBtn = document.getElementById("toggle-form-btn");
+    const companySummaryDiv = document.getElementById("company-summary");
+    const weekSelector = document.getElementById("week-selector");
+    const downloadWeekBtn = document.getElementById("download-week-btn");
+    const panelToExport = document.getElementById("panel-to-export");
+
+    // --- Show/Hide Form Logic ---
+    let formVisible = false;
+    expenseForm.classList.add("hide");
+    toggleFormBtn.textContent = "Add Entry";
+    toggleFormBtn.onclick = function() {
+      formVisible = !formVisible;
+      expenseForm.classList.toggle("hide", !formVisible);
+      toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Entry";
+    };
+
+    // --- Add Entry Handler ---
+    expenseForm.onsubmit = async function(e) {
+      e.preventDefault();
+      formError.textContent = "";
+
+      const dateVal = document.getElementById("exp-date").value;
+      const personnelVal = document.getElementById("exp-personnel").value.trim();
+      const purposeVal = document.getElementById("exp-purpose").value.trim();
+      const companyVal = document.getElementById("exp-company").value.trim();
+      const taskIdVal = document.getElementById("exp-taskid").value.trim();
+      const locationVal = document.getElementById("exp-location").value.trim();
+      const transportVal = parseFloat(document.getElementById("exp-transport").value) || 0;
+      const airtimeVal = parseFloat(document.getElementById("exp-airtime").value) || 0;
+      const lunchVal = parseFloat(document.getElementById("exp-lunch").value) || 0;
+
+      try {
+        await addDoc(collection(db, "PersonnelExpenses"), {
+          date: dateVal,
+          personnel: personnelVal,
+          purpose: purposeVal,
+          company: companyVal,
+          taskId: taskIdVal,
+          location: locationVal,
+          transport: transportVal,
+          airtime: airtimeVal,
+          lunch: lunchVal,
+          createdAt: Timestamp.now()
+        });
+        expenseForm.reset();
+      } catch (err) {
+        formError.textContent = "Error saving entry: " + (err.message || err);
+      }
+    };
+
+    // --- Week Logic ---
+    function getWeekNumber(d) {
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return weekNo;
+    }
+    function getWeekYear(date) {
+      // Returns { week: <int>, year: <int> }
+      let d = new Date(date);
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return {week: weekNo, year: d.getUTCFullYear()};
+    }
+    function currentWeekYear() {
+      const today = new Date();
+      return getWeekYear(today);
+    }
+    function fillWeekSelector(minYear = 2023) {
+      let options = "";
+      const nowY = (new Date()).getFullYear();
+      const nowW = getWeekNumber(new Date());
+      for (let y = nowY; y >= minYear; y--) {
+        let maxW = (y === nowY) ? nowW : 53;
+        for (let w = maxW; w >= 1; w--) {
+          options += `<option value="${y}-${w}"${y===nowY&&w===nowW?' selected':''}>Week ${w}, ${y}</option>`;
+        }
+      }
+      weekSelector.innerHTML = options;
+    }
+    fillWeekSelector();
+
+    // --- Real-time Table Sync ---
+    let allExpenses = [];
+    onSnapshot(
+      collection(db, "PersonnelExpenses"),
+      (snapshot) => {
+        allExpenses = [];
+        snapshot.forEach(docSnap => {
+          const exp = docSnap.data();
+          if (exp.date) exp._weekyear = getWeekYear(exp.date);
+          allExpenses.push(exp);
+        });
+        renderSummaryBar();
+        renderTable();
+      }
+    );
+
+    function renderSummaryBar() {
+      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
+      const companies = ["FPS", "HML", "HL", "HFL", "HEL"];
+      const totals = {};
+      companies.forEach(c => totals[c] = 0);
+      allExpenses.forEach(exp => {
+        if (exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear) {
+          if (companies.includes(exp.company)) {
+            const t = (parseFloat(exp.lunch) || 0) + (parseFloat(exp.transport) || 0);
+            totals[exp.company] += t;
+          }
+        }
+      });
+      let html = "";
+      companies.forEach(c => {
+        html += `<div class="company-summary-card">
+          <span class="company-label">${c}</span>
+          <span class="company-cost">ZMW ${totals[c].toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})}</span>
+        </div>`;
+      });
+      companySummaryDiv.innerHTML = html;
+    }
+
+    function getSaturdayOfWeek(year, week) {
+      let d = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+      let day = d.getUTCDay();
+      let isoSat = new Date(d);
+      isoSat.setUTCDate(d.getUTCDate() + (6 - (day === 0 ? 7 : day)));
+      return isoSat;
+    }
+
+    function renderTable() {
+      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
+      let filtered = allExpenses.filter(exp =>
+        exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear
+      );
+      // SORT ASCENDING BY DATE
+      filtered.sort((a, b) => {
+        const da = new Date(a.date || 0);
+        const db = new Date(b.date || 0);
+        if (isNaN(da) && isNaN(db)) return 0;
+        if (isNaN(da)) return 1;
+        if (isNaN(db)) return -1;
+        if (da.getTime() === db.getTime()) {
+          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        }
+        return da - db;
+      });
+
+      expensesTableBody.innerHTML = "";
+      let sumTransport = 0, sumAirtime = 0, sumLunch = 0, sumTotal = 0;
+      filtered.forEach(exp => {
+        const tval = (parseFloat(exp.transport) || 0) + (parseFloat(exp.airtime) || 0) + (parseFloat(exp.lunch) || 0);
+        sumTransport += parseFloat(exp.transport) || 0;
+        sumAirtime += parseFloat(exp.airtime) || 0;
+        sumLunch += parseFloat(exp.lunch) || 0;
+        sumTotal += tval;
+        const tRow = document.createElement("tr");
+        tRow.innerHTML = `
+          <td>${exp.date ? formatDate(exp.date) : "-"}</td>
+          <td>${exp.personnel || "-"}</td>
+          <td>${exp.purpose || "-"}</td>
+          <td>${exp.company || "-"}</td>
+          <td>${exp.taskId || "-"}</td>
+          <td>${exp.location || "-"}</td>
+          <td>${exp.transport !== undefined ? exp.transport : ""}</td>
+          <td>${exp.airtime !== undefined ? exp.airtime : ""}</td>
+          <td>${exp.lunch !== undefined ? exp.lunch : ""}</td>
+          <td>${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+        `;
+        expensesTableBody.appendChild(tRow);
+      });
+
+      const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
+      const satString = formatDate(satDate.toISOString().split("T")[0]);
+      expensesTableTotalRow.innerHTML = `
+        <td>${satString}<br><b>TOTAL</b></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+        <td>${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+        <td>${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+        <td>${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+      `;
+    }
+
+    function getSelectedWeekYear() {
+      const val = weekSelector.value || "";
+      const [y, w] = val.split("-");
+      return {year: parseInt(y,10)||currentWeekYear().year, week: parseInt(w,10)||currentWeekYear().week};
+    }
+
+    weekSelector.addEventListener("change", ()=>{
+      renderSummaryBar(); renderTable();
+    });
+
+    function formatDate(isoDateStr) {
+      const date = new Date(isoDateStr);
+      if (isNaN(date.getTime())) return isoDateStr;
+      const dd = String(date.getUTCDate()).padStart(2, '0');
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const yyyy = date.getUTCFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // --- Download Weekly Report Logic ---
+    downloadWeekBtn.onclick = function() {
+      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
+      let pdfHTML = `
+        <div style="font-family: Arial, sans-serif; max-width: 1100px;">
+          <div class="pdf-heading-main">Lunch and Transport Rations</div>
+          <div class="pdf-heading-sub">WEEK ${selectedWeek}, ${selectedYear}</div>
+          <div class="company-summary-row" style="margin-bottom:10px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;">
+      `;
+
+      const companies = ["FPS", "HML", "HL", "HFL", "HEL"];
+      const totals = {};
+      companies.forEach(c => totals[c] = 0);
+
+      let filtered = allExpenses.filter(exp =>
+        exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear
+      );
+      filtered.forEach(exp => {
+        if (companies.includes(exp.company)) {
+          const t = (parseFloat(exp.lunch) || 0) + (parseFloat(exp.transport) || 0);
+          totals[exp.company] += t;
+        }
+      });
+      companies.forEach(c => {
+        pdfHTML += `
+          <div class="company-summary-card" style="display:flex;flex-direction:column;align-items:center;background:#f1f6ff;border:2px solid #1976d2;border-radius:8px;min-width:120px;max-width:160px;box-shadow:0 2px 8px #1976d218;padding:10px 20px 8px 20px;margin-right:4px;margin-bottom:8px;font-size:1.07em;">
+            <span class="company-label" style="font-weight:bold;color:#1976d2;font-size:1.12em;margin-bottom:7px;">${c}</span>
+            <span class="company-cost" style="font-weight:bold;color:#b71c1c;font-size:1.25em;background:#fff;border-radius:6px;border:1.5px solid #b71c1c;padding:2px 8px;margin-top:3px;">ZMW ${totals[c].toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})}</span>
+          </div>
+        `;
+      });
+      pdfHTML += `</div>`;
+
+      pdfHTML += `
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Date</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Personnel</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Purpose</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Company</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Task ID</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Location</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Transport</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Airtime</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Lunch</th>
+              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;white-space:nowrap;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      let sumTransport = 0, sumAirtime = 0, sumLunch = 0, sumTotal = 0;
+      filtered.sort((a, b) => {
+        const da = new Date(a.date || 0);
+        const db = new Date(b.date || 0);
+        if (isNaN(da) && isNaN(db)) return 0;
+        if (isNaN(da)) return 1;
+        if (isNaN(db)) return -1;
+        if (da.getTime() === db.getTime()) {
+          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        }
+        return da - db;
+      });
+      filtered.forEach(exp => {
+        const tval = (parseFloat(exp.transport) || 0) + (parseFloat(exp.airtime) || 0) + (parseFloat(exp.lunch) || 0);
+        sumTransport += parseFloat(exp.transport) || 0;
+        sumAirtime += parseFloat(exp.airtime) || 0;
+        sumLunch += parseFloat(exp.lunch) || 0;
+        sumTotal += tval;
+        pdfHTML += `
+          <tr>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.date ? formatDate(exp.date) : "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.personnel || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.purpose || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.company || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.taskId || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.location || "-"}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.transport !== undefined ? exp.transport : ""}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.airtime !== undefined ? exp.airtime : ""}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${exp.lunch !== undefined ? exp.lunch : ""}</td>
+            <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          </tr>
+        `;
+      });
+      const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
+      const satString = formatDate(satDate.toISOString().split("T")[0]);
+      pdfHTML += `
+          </tbody>
+          <tfoot>
+            <tr class="total-row" style="font-weight:bold;background:#f9eee2;">
+              <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${satString}<br><b>TOTAL</b></td>
+              <td style="border:1px solid #eee;"></td>
+              <td style="border:1px solid #eee;"></td>
+              <td style="border:1px solid #eee;"></td>
+              <td style="border:1px solid #eee;"></td>
+              <td style="border:1px solid #eee;"></td>
+              <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:8px 6px;border:1px solid #eee;white-space:nowrap;text-align:left;">${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      `;
+
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = pdfHTML;
+      document.body.appendChild(tempDiv);
+
+      html2pdf().from(tempDiv).set({
+        margin: 0.6,
+        filename: `lunch-transport-rations-week${selectedWeek}-${selectedYear}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+      }).save().then(() => {
+        document.body.removeChild(tempDiv);
+      });
+    };
+  </script>
+</body>
+</html>

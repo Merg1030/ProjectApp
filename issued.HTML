@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issued Items Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c2f38;
+            color: #e0e0e0;
+            margin: 20px;
+        }
+
+        h2, h3 {
+            color: #f1f1f1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #444;
+            color: #e0e0e0;
+        }
+
+        td {
+            background-color: #333;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            margin: 5px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #444;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h2>Issued Items Tracker</h2>
+
+    <div class="button-container">
+        <label for="itemFilter">Item:</label>
+        <input type="text" id="itemFilter" oninput="applyFilters()">
+        <label for="dayFilter">Day:</label>
+        <input type="number" id="dayFilter" min="1" max="31" onchange="applyFilters()">
+        <label for="monthFilter">Month:</label>
+        <input type="number" id="monthFilter" min="1" max="12" onchange="applyFilters()">
+        <button onclick="clearFilters()">Clear Filters</button>
+    </div>
+
+    <h3>Issued Items</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date Issued</th>
+                <th>Issued To</th>
+                <th>Task ID</th>
+                <th>Item</th>
+                <th>Quantity Issued</th>
+            </tr>
+        </thead>
+        <tbody id="issuedItems"></tbody>
+    </table>
+
+    <script>
+        // Load the issued items from localStorage when the page loads
+        let issuedItems = JSON.parse(localStorage.getItem('issuedItems')) || [];
+
+        // Load filter values from localStorage
+        let itemFilter = localStorage.getItem('itemFilter') || '';
+        let dayFilter = localStorage.getItem('dayFilter') || '';
+        let monthFilter = localStorage.getItem('monthFilter') || '';
+
+        // Set filter values in the input fields
+        document.getElementById('itemFilter').value = itemFilter;
+        document.getElementById('dayFilter').value = dayFilter;
+        document.getElementById('monthFilter').value = monthFilter;
+
+        // Function to display issued items
+        function displayIssuedItems(items) {
+            let table = document.getElementById('issuedItems');
+            table.innerHTML = ''; // Clear existing rows
+            items.forEach(item => {
+                let row = table.insertRow();
+                row.insertCell(0).textContent = item.issueDate;
+                row.insertCell(1).textContent = item.personName;
+                row.insertCell(2).textContent = item.taskID;
+                row.insertCell(3).textContent = item.itemName;
+                row.insertCell(4).textContent = item.issueQuantity;
+            });
+        }
+
+        // Function to apply filters independently
+        function applyFilters() {
+            let itemFilter = document.getElementById('itemFilter').value.trim().toLowerCase();
+            let dayFilter = document.getElementById('dayFilter').value.trim();
+            let monthFilter = document.getElementById('monthFilter').value.trim();
+
+            // Store filter values in localStorage
+            localStorage.setItem('itemFilter', itemFilter);
+            localStorage.setItem('dayFilter', dayFilter);
+            localStorage.setItem('monthFilter', monthFilter);
+
+            let filteredItems = issuedItems.filter(item => {
+                let itemNameMatch = itemFilter === '' || item.itemName.toLowerCase().includes(itemFilter);
+                let date = new Date(item.issueDate);
+                let dayMatch = dayFilter === '' || date.getDate() == dayFilter;
+                let monthMatch = monthFilter === '' || (date.getMonth() + 1) == monthFilter;
+                return itemNameMatch && dayMatch && monthMatch;
+            });
+
+            displayIssuedItems(filteredItems);
+        }
+
+        // Function to clear filters and display all issued items
+        function clearFilters() {
+            document.getElementById('itemFilter').value = '';
+            document.getElementById('dayFilter').value = '';
+            document.getElementById('monthFilter').value = '';
+            localStorage.removeItem('itemFilter');
+            localStorage.removeItem('dayFilter');
+            localStorage.removeItem('monthFilter');
+            displayIssuedItems(issuedItems);
+        }
+
+        // Function to add a new issued item
+        function addIssuedItem(issueDate, personName, taskID, itemName, issueQuantity) {
+            let newItem = {
+                issueDate: issueDate,
+                personName: personName,
+                taskID: taskID,
+                itemName: itemName,
+                issueQuantity: issueQuantity
+            };
+            issuedItems.push(newItem);
+            localStorage.setItem('issuedItems', JSON.stringify(issuedItems));
+            applyFilters(); // Update the display with the new item included
+        }
+
+        // Example issued items for testing
+        addIssuedItem('2025-02-20', 'John Doe', '123', 'Hammer', 2);
+        addIssuedItem('2025-02-19', 'Jane Smith', '124', 'Drill', 1);
+
+        // Apply filters when the page loads
+        applyFilters();
+    </script>
+</body>
+</html>

@@ -1,0 +1,949 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Location Transfer History</title>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+   html, body {
+  font-family: 'Open Sans', Arial, sans-serif;
+  background: #111827;
+  margin: 0;
+  padding: 0;
+  color: #e5e7eb;
+}
+
+#wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  background: #1f2937;
+  color: #e5e7eb;
+  min-height: 38px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 1001;
+}
+
+.navbar .navbar-header {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.navbar .navbar-brand {
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 1rem;
+  text-decoration: none;
+  margin-right: 24px;
+}
+
+.navbar .navbar-brand:hover {
+  color: #60a5fa;
+}
+
+.btn-danger {
+  background: #dc2626 !important;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 12px;
+  margin-left: 6px;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #b91c1c !important;
+}
+
+.user-info {
+  color: #9ca3af;
+  padding: 9px 18px 3px 18px;
+  font-size: 12px;
+  float: right;
+}
+
+#page-wrapper {
+  margin-top: 38px;
+  padding: 12px;
+  background: #1e293b;
+  min-height: calc(100vh - 38px);
+}
+
+.panel {
+  background: #1f2937;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  margin-bottom: 18px;
+  border: 1px solid #374151;
+}
+
+.panel-heading {
+  background: #111827;
+  color: #3b82f6;
+  padding: 11px 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 6px 6px 0 0;
+  margin: 0;
+}
+
+.panel-body {
+  padding: 12px;
+}
+
+.filter-bar {
+  margin-bottom: 9px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.filter-bar label {
+  font-weight: 600;
+  margin-right: 4px;
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.filter-bar select,
+.filter-bar input[type="date"],
+.filter-bar input[type="week"] {
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #4b5563;
+  font-size: 12px;
+  min-width: 75px;
+  background: #1e293b;
+  color: #f9fafb;
+  height: 22px;
+}
+
+.filter-bar .clear-btn {
+  background: #f59e0b;
+  border: none;
+  border-radius: 3px;
+  color: #111827;
+  padding: 3px 7px;
+  margin-left: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.filter-bar .clear-btn:hover {
+  background: #d97706;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  max-height: 54vh;
+  position: relative;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #1f2937;
+  margin-bottom: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+  table-layout: auto;
+}
+
+th, td {
+  padding: 7px 5px;
+  text-align: left;
+  font-size: 12px;
+  color: #f3f4f6;
+}
+
+th {
+  background: #1e40af;
+  color: #f8fafc;
+  font-weight: 700;
+  border-right: 1px solid #374151;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+th:last-child {
+  border-right: none;
+}
+
+tr {
+  transition: background 0.14s;
+}
+
+tr:nth-child(even) {
+  background: #111827;
+}
+
+tr:hover {
+  background: #172554;
+}
+
+td:first-child, th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #1e3a8a;
+  color: #f1f5f9;
+}
+
+th:first-child {
+  z-index: 3;
+}
+
+/* Buttons */
+.edit-btn {
+  padding: 2px 8px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 2px;
+  font-size: 11px;
+}
+
+.edit-btn:hover {
+  background: #1d4ed8;
+}
+
+.reverse-btn {
+  padding: 2px 8px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 3px;
+  font-size: 11px;
+}
+
+.reverse-btn:hover {
+  background: #991b1b;
+}
+
+/* Input */
+.mh-input {
+  width: 38px;
+  padding: 2px;
+  border-radius: 3px;
+  border: 1px solid #6b7280;
+  background: #111827;
+  color: #f3f4f6;
+  font-size: 11px;
+}
+
+.mh-save-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  margin-left: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.mh-save-btn:hover {
+  background: #1e3a8a;
+}
+
+.mh-saved-text {
+  color: #10b981;
+  font-size: 11px;
+  margin-left: 7px;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .navbar {
+    min-height: 28px;
+  }
+
+  .navbar .navbar-header {
+    padding: 0 3px;
+  }
+
+  .navbar .navbar-brand {
+    font-size: 0.85rem;
+  }
+
+  #page-wrapper {
+    padding: 3px 0;
+  }
+
+  .panel-body {
+    padding: 2px 0;
+  }
+
+  .panel-heading {
+    font-size: 0.9rem;
+    padding: 8px 4px;
+  }
+
+  th, td {
+    padding: 4px 2px;
+    font-size: 10px;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .table-responsive {
+    max-height: 30vh;
+  }
+
+  .mh-input {
+    width: 28px;
+    font-size: 9px;
+  }
+
+  .mh-save-btn {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+}
+.btn.btn-outline{
+  color: white;
+  margin-right: 20px;
+}
+
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <nav class="navbar" role="navigation">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">
+                <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a>IMS Portal</a>
+        <span class="user-info" style="margin-left:auto;">
+          Welcome Christopher Chishela&nbsp; 
+        </span>
+      </div>
+    </nav>
+    <div id="page-wrapper">
+      <div id="page-inner">
+        <h2 style="margin-top:0;">Location Transfer History</h2>
+        <hr />
+        <div class="row">
+          <div class="col-md-12">
+            <div class="panel panel-default sticky-panel">
+              <div class="panel-heading">
+                All Transfer Events
+              </div>
+              <div class="panel-body">
+                <div class="filter-bar">
+                  <label for="employee-filter">Employee:</label>
+                  <select id="employee-filter">
+                    <option value="">All</option>
+                  </select>
+                  <label for="location-filter">Location:</label>
+                  <select id="location-filter">
+                    <option value="">All</option>
+                  </select>
+                  <label for="date-filter">Date:</label>
+                  <input type="date" id="date-filter" />
+                  <label for="week-filter">Week:</label>
+                  <input type="week" id="week-filter" />
+                  <button class="clear-btn" id="clear-filter" style="display:none;">Clear</button>
+                </div>
+                <div id="total-week-hours-bar" class="total-week-hours-bar" style="display:none;"></div>
+                <div id="total-hours-bar" class="total-hours-bar" style="display:none;"></div>
+                <div id="mh-total-bar" class="total-mh-cost-bar" style="display:none;"></div>
+                <div class="table-responsive">
+                  <table>
+                    <thead>
+                      <tr id="table-header-row">
+                        <th>#</th>
+                        <th>EMPLOYEE ID</th>
+                        <th>NAME</th>
+                        <th>PROJECT NAME</th>
+                        <th>LOCATION</th>
+                        <th>TASK ID</th>
+                        <th>TASK DESCRIPTION</th>
+                        <th>STATUS</th>
+                        <th>TRANSFER DATE</th>
+                        <th>MH</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="transfer-history-table">
+                    </tbody>
+                  </table>
+                </div>
+                <div id="table-message"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="edit-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="modal-close" id="close-modal-btn" title="Close">&times;</button>
+      <h3 style="margin-top:0;margin-bottom:17px;">Edit Transfer Date/Time</h3>
+      <div id="edit-modal-error"></div>
+      <form id="edit-modal-form">
+        <label for="edit-transferAt">Transfer Date/Time:</label>
+        <input type="datetime-local" id="edit-transferAt" required />
+        <div class="modal-actions" style="display:flex;align-items:center;gap:12px;">
+          <button type="button" class="delete-btn" id="delete-entry-btn" style="margin-right:auto;">Delete</button>
+          <button type="button" class="cancel-btn" id="cancel-edit-btn">Cancel</button>
+          <button type="submit" class="save-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, getDoc, doc, updateDoc, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById('transfer-history-table');
+    const tableMsg = document.getElementById('table-message');
+    const employeeFilter = document.getElementById('employee-filter');
+    const locationFilter = document.getElementById('location-filter');
+    const dateFilter = document.getElementById('date-filter');
+    const weekFilter = document.getElementById('week-filter');
+    const clearFilterBtn = document.getElementById('clear-filter');
+    const mhTotalBar = document.getElementById('mh-total-bar');
+    const totalHoursBar = document.getElementById('total-hours-bar');
+    const totalWeekHoursBar = document.getElementById('total-week-hours-bar');
+
+    const editModal = document.getElementById('edit-modal');
+    const editTransferAtInput = document.getElementById('edit-transferAt');
+    const editModalForm = document.getElementById('edit-modal-form');
+    const editModalError = document.getElementById('edit-modal-error');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const deleteEntryBtn = document.getElementById('delete-entry-btn');
+    let currentEditDocId = null;
+
+    // Caches for employees, tasks, and projects
+    let employeeCache = {};
+    let taskCache = {};
+    let projectCache = {};
+    let transferDocs = [];
+
+    async function batchFetchEmployeesTasksProjects() {
+      const uniqueEmployeeIds = new Set();
+      const uniqueTaskIds = new Set();
+      const uniqueProjectIds = new Set();
+      for (const docObj of transferDocs) {
+        const d = docObj.data;
+        if (d.employeeId) uniqueEmployeeIds.add(d.employeeId);
+        if (d.taskId) uniqueTaskIds.add(d.taskId);
+        if (d.projectId) uniqueProjectIds.add(d.projectId);
+      }
+      const missingEmpIds = [...uniqueEmployeeIds].filter(id => !(id in employeeCache));
+      await Promise.all(missingEmpIds.map(async (id) => {
+        try {
+          const snap = await getDoc(doc(db, "employees", id));
+          if (snap.exists()) employeeCache[id] = snap.data();
+        } catch {}
+      }));
+      const missingTaskIds = [...uniqueTaskIds].filter(id => !(id in taskCache));
+      await Promise.all(missingTaskIds.map(async (id) => {
+        try {
+          const snap = await getDoc(doc(db, "projectTasks", id));
+          if (snap.exists()) taskCache[id] = snap.data();
+        } catch {}
+      }));
+      const missingProjectIds = [...uniqueProjectIds].filter(id => id && !(id in projectCache));
+      await Promise.all(missingProjectIds.map(async (id) => {
+        try {
+          const snap = await getDoc(doc(db, "projectDashboard", id));
+          if (snap.exists()) projectCache[id] = snap.data();
+        } catch {}
+      }));
+    }
+
+    async function fillEmployeeDropdown() {
+      employeeFilter.innerHTML = '<option value="">All</option>';
+      const ids = new Set(transferDocs.map(d => d.data.employeeId).filter(Boolean));
+      const options = [];
+      for (const id of ids) {
+        const emp = employeeCache[id];
+        if (!emp) continue;
+        const label = [emp.empId, emp.name, emp.surname].filter(Boolean).join(' - ');
+        options.push({ value: id, label });
+      }
+      options.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+      for (const opt of options) {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        employeeFilter.appendChild(option);
+      }
+    }
+
+    async function fillLocationDropdown() {
+      locationFilter.innerHTML = '<option value="">All</option>';
+      const locationsSet = new Set();
+      for (const docObj of transferDocs) {
+        let loc = docObj.data.location || "";
+        if ((!loc || loc === "-") && docObj.data.taskId && taskCache[docObj.data.taskId]) {
+          const task = taskCache[docObj.data.taskId];
+          if (task.location) loc = task.location;
+        }
+        if (loc && loc !== "-") locationsSet.add(loc);
+      }
+      const sorted = Array.from(locationsSet).sort();
+      for (const loc of sorted) {
+        const option = document.createElement('option');
+        option.value = loc;
+        option.textContent = loc;
+        locationFilter.appendChild(option);
+      }
+    }
+
+    function restoreFilters() {
+      try {
+        const persisted = JSON.parse(localStorage.getItem('ims_transfer_filters')) || {};
+        if (persisted.employee && employeeFilter.querySelector(`option[value="${persisted.employee}"]`)) {
+          employeeFilter.value = persisted.employee;
+        } else {
+          employeeFilter.value = '';
+        }
+        if (persisted.location && locationFilter.querySelector(`option[value="${persisted.location}"]`)) {
+          locationFilter.value = persisted.location;
+        } else {
+          locationFilter.value = '';
+        }
+        dateFilter.value = persisted.date || '';
+        weekFilter.value = persisted.week || '';
+        clearFilterBtn.style.display = (employeeFilter.value || locationFilter.value || dateFilter.value || weekFilter.value) ? '' : 'none';
+      } catch {
+        employeeFilter.value = '';
+        locationFilter.value = '';
+        dateFilter.value = '';
+        weekFilter.value = '';
+        clearFilterBtn.style.display = 'none';
+      }
+    }
+
+    function saveFilters() {
+      try {
+        localStorage.setItem('ims_transfer_filters', JSON.stringify({
+          employee: employeeFilter.value,
+          location: locationFilter.value,
+          date: dateFilter.value,
+          week: weekFilter.value
+        }));
+        clearFilterBtn.style.display = (employeeFilter.value || locationFilter.value || dateFilter.value || weekFilter.value) ? '' : 'none';
+      } catch {}
+    }
+
+    employeeFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
+    locationFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
+    dateFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
+    weekFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
+
+    clearFilterBtn.addEventListener('click', () => {
+      employeeFilter.value = '';
+      locationFilter.value = '';
+      dateFilter.value = '';
+      weekFilter.value = '';
+      saveFilters();
+      renderTable();
+    });
+
+    async function saveMH(docId, newMH, inputEl, saveBtn, rowObj, updateTotalCost) {
+      saveBtn.style.display = "none";
+      inputEl.disabled = true;
+      try {
+        await updateDoc(doc(db, "locationHistory", docId), { mh: newMH });
+        rowObj.mh = String(newMH);
+        if (typeof updateTotalCost === "function") updateTotalCost();
+      } catch (e) {
+        alert("Failed to save MH. Try again.");
+        saveBtn.style.display = "";
+        inputEl.disabled = false;
+      }
+    }
+
+    function formatDate(ts) {
+      if (!ts) return "-";
+      const d = ts.toDate();
+      return d.toLocaleDateString() + " " + d.toLocaleTimeString();
+    }
+
+    // --- Week Filter Helpers ---
+    function getWeekStartEnd(weekString) {
+      // weekString is "YYYY-Wnn" (e.g. "2025-W27")
+      if (!weekString) return null;
+      const [year, week] = weekString.split('-W').map(Number);
+      if (!year || !week) return null;
+      // Start: Monday
+      const simple = new Date(year, 0, 1 + (week - 1) * 7);
+      const dayOfWeek = simple.getDay();
+      const weekStart = new Date(simple);
+      if (dayOfWeek <= 4) {
+        weekStart.setDate(simple.getDate() - simple.getDay() + 1);
+      } else {
+        weekStart.setDate(simple.getDate() + 8 - simple.getDay());
+      }
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekStart.setHours(0,0,0,0);
+      weekEnd.setHours(23,59,59,999);
+      return { start: weekStart, end: weekEnd };
+    }
+    // ---
+
+    async function renderTable() {
+      tableBody.innerHTML = "";
+      let rowNum = 1;
+      const selectedEmp = employeeFilter.value;
+      const selectedLoc = locationFilter.value;
+      const selectedDate = dateFilter.value ? new Date(dateFilter.value) : null;
+      const selectedWeek = weekFilter.value;
+
+      let weekRange = getWeekStartEnd(selectedWeek);
+
+      let rows = [];
+      for (const docObj of transferDocs) {
+        if (docObj.data.reversed) continue;
+        const data = docObj.data;
+        if (selectedEmp && data.employeeId !== selectedEmp) continue;
+
+        let empId = "-", name = "-", surname = "-";
+        if (data.employeeId && employeeCache[data.employeeId]) {
+          const emp = employeeCache[data.employeeId];
+          empId = emp.empId || "-";
+          name = emp.name || "-";
+          surname = emp.surname || "-";
+        }
+        let location = data.location || "-";
+        let projectName = "-";
+        if (data.projectId && projectCache[data.projectId]) {
+          projectName = projectCache[data.projectId].name || "-";
+        }
+        if ((location === "-" || !location) && data.taskId && taskCache[data.taskId]) {
+          const task = taskCache[data.taskId];
+          if (task.location) location = task.location;
+        }
+        if (selectedLoc && location !== selectedLoc) continue;
+
+        let transferDate = data.transferredAt ? data.transferredAt.toDate() : null;
+        // If week filter is set, ignore date filter
+        if (selectedWeek && weekRange && transferDate) {
+          if (transferDate < weekRange.start || transferDate > weekRange.end) continue;
+        } else if (selectedDate) {
+          if (!transferDate) continue;
+          const tY = transferDate.getFullYear(), tM = transferDate.getMonth(), tD = transferDate.getDate();
+          const sY = selectedDate.getFullYear(), sM = selectedDate.getMonth(), sD = selectedDate.getDate();
+          if (!(tY === sY && tM === sM && tD === sD)) continue;
+        }
+
+        rows.push({
+          docObj,
+          empId,
+          name,
+          surname,
+          projectName,
+          location,
+          taskId: data.taskId || '-',
+          taskDescription: data.taskDescription || '-',
+          status: data.status,
+          transferDate: data.transferredAt,
+          transferDateDisplay: data.transferredAt ? formatDate(data.transferredAt) : "-",
+          hasReverse: data.employeeId && data.previousLocation,
+          mh: data.mh !== undefined && data.mh !== null ? String(data.mh) : ""
+        });
+      }
+
+      // Sort by transferDate ascending
+      rows.sort((a, b) => {
+        let aDate = a.transferDate ? a.transferDate.toDate ? a.transferDate.toDate() : a.transferDate : null;
+        let bDate = b.transferDate ? b.transferDate.toDate ? b.transferDate.toDate() : b.transferDate : null;
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+        return aDate - bDate;
+      });
+
+      // --- TOTAL COST AND TOTAL HOURS ---
+      let totalCost = 0;
+      let totalHours = 0;
+      let weekHours = 0;
+      for (const row of rows) {
+        if (row.mh && !isNaN(row.mh)) {
+          totalCost += Number(row.mh) * 20;
+          totalHours += Number(row.mh);
+        }
+      }
+
+      // Calculate weekHours if week filter is set, otherwise, weekHours = totalHours
+      if (selectedWeek && weekRange) {
+        weekHours = rows
+          .filter(row => {
+            if (!row.transferDate) return false;
+            const d = row.transferDate.toDate ? row.transferDate.toDate() : row.transferDate;
+            return d >= weekRange.start && d <= weekRange.end;
+          })
+          .reduce((sum, row) => sum + (row.mh && !isNaN(row.mh) ? Number(row.mh) : 0), 0);
+      } else {
+        weekHours = totalHours;
+      }
+
+      if (rows.length > 0) {
+        if (selectedWeek && weekRange) {
+          totalWeekHoursBar.style.display = "";
+          totalWeekHoursBar.textContent = `Total Hours Worked for Selected Week: ${weekHours.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} Hrs`;
+        } else {
+          totalWeekHoursBar.style.display = "none";
+        }
+        mhTotalBar.style.display = "";
+        mhTotalBar.textContent = "Total Cost for All Man Hours: K" + totalCost.toFixed(2) + " ZMW";
+        totalHoursBar.style.display = "";
+        totalHoursBar.textContent = "Total Hours Worked: " + totalHours.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + " Hrs";
+      } else {
+        mhTotalBar.style.display = "none";
+        totalHoursBar.style.display = "none";
+        totalWeekHoursBar.style.display = "none";
+      }
+      // --- END TOTAL COST/HOURS ---
+
+      for (const row of rows) {
+        const statusOptions = ["started", "ongoing", "completed", "pending", "Unavailable"];
+        const statusSelect = document.createElement("select");
+        let dropdownClass = "status-default";
+        switch ((row.status || '').toLowerCase()) {
+          case "started": dropdownClass = "status-started"; break;
+          case "ongoing": dropdownClass = "status-ongoing"; break;
+          case "completed": dropdownClass = "status-completed"; break;
+          case "pending": dropdownClass = "status-pending"; break;
+          case "unavailable": dropdownClass = "status-unavailable"; break;
+        }
+        statusSelect.className = `status-dropdown ${dropdownClass}`;
+        statusOptions.forEach(opt => {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+          if ((row.status || '').toLowerCase() === opt.toLowerCase()) option.selected = true;
+          statusSelect.appendChild(option);
+        });
+        statusSelect.dataset.docid = row.docObj.id;
+
+        statusSelect.addEventListener('change', async function() {
+          const docId = this.dataset.docid;
+          const newStatus = this.value;
+          try {
+            await updateDoc(doc(db, "locationHistory", docId), { status: newStatus });
+            let cls = "status-default";
+            switch (newStatus.toLowerCase()) {
+              case "started": cls = "status-started"; break;
+              case "ongoing": cls = "status-ongoing"; break;
+              case "completed": cls = "status-completed"; break;
+              case "pending": cls = "status-pending"; break;
+              case "unavailable": cls = "status-unavailable"; break;
+            }
+            this.className = `status-dropdown ${cls}`;
+          } catch (e) {
+            alert("Failed to update status. Try again.");
+            this.value = row.status || '';
+          }
+        });
+
+        const mhTd = document.createElement("td");
+        const mhInput = document.createElement("input");
+        mhInput.type = "number";
+        mhInput.className = "mh-input";
+        mhInput.placeholder = "Hrs";
+        mhInput.min = "0";
+        mhInput.value = row.mh;
+        mhInput.title = "Enter man hours";
+        const mhSaveBtn = document.createElement("button");
+        mhSaveBtn.textContent = "Save";
+        mhSaveBtn.type = "button";
+        mhSaveBtn.className = "mh-save-btn";
+        mhSaveBtn.style.display = "none";
+        mhInput.addEventListener("input", function() {
+          if (mhInput.value !== String(row.mh)) {
+            mhSaveBtn.style.display = "";
+          } else {
+            mhSaveBtn.style.display = "none";
+          }
+        });
+        mhSaveBtn.addEventListener("click", () => {
+          const value = mhInput.value.trim();
+          if (value === "") return alert("Please enter a value for MH.");
+          if (isNaN(value) || Number(value) < 0) return alert("Invalid MH value.");
+          saveMH(row.docObj.id, Number(value), mhInput, mhSaveBtn, row, renderTable);
+        });
+        mhTd.appendChild(mhInput);
+        mhTd.appendChild(mhSaveBtn);
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-btn";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => {
+          showEditModal(row.docObj.id, row.transferDate ? row.transferDate.toDate() : null);
+        });
+
+        const reverseBtn = document.createElement("button");
+        reverseBtn.className = "reverse-btn";
+        reverseBtn.textContent = "Reverse";
+        reverseBtn.addEventListener("click", async () => {
+          if (!confirm("Are you sure you want to reverse this transfer?")) return;
+          await reverseTransfer(row.docObj);
+        });
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${rowNum++}</td>
+          <td>${row.empId}</td>
+          <td>${row.name} ${row.surname}</td>
+          <td>${row.projectName}</td>
+          <td>${row.location}</td>
+          <td>${row.taskId}</td>
+          <td>${row.taskDescription}</td>
+          <td></td>
+          <td>${row.transferDateDisplay}</td>
+          <td></td>
+          <td></td>
+        `;
+        tr.children[7].appendChild(statusSelect);
+        tr.children[9].replaceWith(mhTd);
+        tr.children[10].appendChild(editBtn);
+        if (row.hasReverse) {
+          tr.children[10].appendChild(reverseBtn);
+        }
+        tableBody.appendChild(tr);
+      }
+
+      if (rowNum === 1) tableMsg.innerHTML = "<div>No transfer events found.</div>";
+      else tableMsg.innerHTML = "";
+    }
+
+    function showEditModal(docId, currentValue) {
+      currentEditDocId = docId;
+      editModalError.textContent = "";
+      if (currentValue && !isNaN(currentValue.getTime())) {
+        let iso = currentValue.toISOString().slice(0,16);
+        editTransferAtInput.value = iso;
+      } else {
+        editTransferAtInput.value = "";
+      }
+      editModal.style.display = 'flex';
+      setTimeout(() => editTransferAtInput.focus(), 120);
+    }
+    function hideEditModal() {
+      editModal.style.display = 'none';
+      currentEditDocId = null;
+      editTransferAtInput.value = "";
+      editModalError.textContent = "";
+    }
+    closeModalBtn.onclick = hideEditModal;
+    cancelEditBtn.onclick = hideEditModal;
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) hideEditModal();
+    });
+
+    editModalForm.onsubmit = async function(e) {
+      e.preventDefault();
+      editModalError.textContent = "";
+      if (!currentEditDocId) return;
+      const dtStr = editTransferAtInput.value;
+      if (!dtStr) {
+        editModalError.textContent = "Please select a date and time.";
+        return;
+      }
+      let newDate;
+      try {
+        newDate = new Date(dtStr);
+        if (isNaN(newDate.getTime())) throw new Error();
+      } catch {
+        editModalError.textContent = "Invalid date/time format.";
+        return;
+      }
+      try {
+        await updateDoc(doc(db, "locationHistory", currentEditDocId), {
+          transferredAt: Timestamp.fromDate(newDate)
+        });
+        hideEditModal();
+      } catch (err) {
+        editModalError.textContent = "Failed to update. " + (err.message || "");
+      }
+    };
+
+    deleteEntryBtn.onclick = async function() {
+      if (!currentEditDocId) return;
+      if (!confirm("Are you sure you want to permanently delete this transfer entry?")) return;
+      editModalError.textContent = "";
+      try {
+        await deleteDoc(doc(db, "locationHistory", currentEditDocId));
+        hideEditModal();
+      } catch (err) {
+        editModalError.textContent = "Failed to delete entry. " + (err.message || "");
+      }
+    };
+
+    async function reverseTransfer(docObj) {
+      const { employeeId, previousLocation } = docObj.data;
+      if (!employeeId || !previousLocation) {
+        alert("Cannot reverse: missing employee or previous location info.");
+        return;
+      }
+      try {
+        await updateDoc(doc(db, "employees", employeeId), { 
+          workLocation: previousLocation,
+          location: previousLocation 
+        });
+        await updateDoc(doc(db, "locationHistory", docObj.id), { reversed: true });
+        alert("Transfer reversed, employee returned to previous location.");
+      } catch (e) {
+        alert("Failed to reverse transfer: " + e.message);
+      }
+    }
+
+    onSnapshot(query(collection(db, "locationHistory"), orderBy("transferredAt", "desc")), async (snapshot) => {
+      transferDocs = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        data: docSnap.data()
+      }));
+      await batchFetchEmployeesTasksProjects();
+      await fillEmployeeDropdown();
+      await fillLocationDropdown();
+      restoreFilters();
+      await renderTable();
+    });
+  </script>
+</body>
+</html>

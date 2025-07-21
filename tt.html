@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Inventory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #search {
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #ffffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #333;
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tool Inventory</h1>
+
+    <div class="search-container">
+        <input type="text" id="search" placeholder="Search for tools..." onkeyup="searchTable()">
+    </div>
+
+    <table id="toolTable">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Tool Name</th>
+                <th>Current Holder</th>
+                <th>Current Location</th>
+            </tr>
+        </thead>
+        <tbody id="toolTableBody">
+            <!-- Rows will be populated dynamically -->
+            <tr>
+                <td>14HP-02</td>
+                <td>14p hummer</td>
+                <td>chris</td>
+                <td>warehouse</td>
+            </tr>
+            <tr>
+                <td>16HP</td>
+                <td>16P Hummer</td>
+                <td>chris</td>
+                <td>warehouse</td>
+            </tr>
+            <tr>
+                <td>STR-02</td>
+                <td>3M Strategy</td>
+                <td>chris</td>
+                <td>warehouse</td>
+            </tr>
+            <tr>
+                <td>STR-01</td>
+                <td>1M Strategy</td>
+                <td>chris</td>
+                <td>warehouse</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Firebase and Firestore Scripts -->
+    <script type="module">
+        // Import Firebase and Firestore
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Reference to the tools collection
+        const toolsCollection = collection(db, "tools");
+
+        // Function to load tools from Firestore
+        function loadTools() {
+            onSnapshot(toolsCollection, (snapshot) => {
+                const toolTableBody = document.getElementById("toolTableBody");
+
+                snapshot.forEach((doc) => {
+                    const tool = doc.data();
+                    addToolToTable(tool);
+                });
+            });
+        }
+
+        // Function to add a tool to the table
+        function addToolToTable(tool) {
+            const toolTableBody = document.getElementById("toolTableBody");
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${tool.code}</td>
+                <td>${tool.name}</td>
+                <td>${tool.holder}</td>
+                <td>${tool.location}</td>
+            `;
+
+            toolTableBody.appendChild(row);
+        }
+
+        // Load tools when the page loads
+        window.onload = loadTools;
+    </script>
+
+    <!-- Search Functionality -->
+    <script>
+        function searchTable() {
+            let input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("search");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("toolTable");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td");
+                let match = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            match = true;
+                            break;
+                        }
+                    }
+                }
+                if (match) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+        // Inactivity timeout
+        let inactivityTimeout;
+        function resetInactivityTimeout() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                logout();
+            }, 600000); // 10 minutes
+        }
+
+        // Set up inactivity timer
+        resetInactivityTimeout();
+        document.addEventListener('mousemove', resetInactivityTimeout);
+        document.addEventListener('keypress', resetInactivityTimeout);
+        document.addEventListener('click', resetInactivityTimeout);
+        document.addEventListener('touchstart', resetInactivityTimeout);
+
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+    </script>
+
+</body>
+</html>

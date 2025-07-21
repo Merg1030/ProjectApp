@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Planner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        .form-container input,
+        .form-container select,
+        .form-container button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 22px);
+        }
+
+        .form-container button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .edit-button {
+            background-color: #ffc107;
+            color: #fff;
+        }
+
+        .edit-button:hover {
+            background-color: #e0a800;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Work Planner</h1>
+
+        <div class="form-container">
+            <input type="text" id="taskDescription" placeholder="Task Description" required>
+            <select id="taskPriority" required>
+                <option value="">Select Priority</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <input type="date" id="taskDueDate" required>
+            <select id="taskStatus" required>
+                <option value="">Select Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="In Progress">In Progress</option>
+            </select>
+            <button onclick="addTask()">Add Task</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Task Description</th>
+                    <th>Priority</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody">
+                <!-- Tasks will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let tasks = [];
+
+        function addTask() {
+            const taskDescription = document.getElementById('taskDescription').value;
+            const taskPriority = document.getElementById('taskPriority').value;
+            const taskDueDate = document.getElementById('taskDueDate').value;
+            const taskStatus = document.getElementById('taskStatus').value;
+
+            if (taskDescription && taskPriority && taskDueDate && taskStatus) {
+                const task = {
+                    id: new Date().getTime(),
+                    description: taskDescription,
+                    priority: taskPriority,
+                    dueDate: taskDueDate,
+                    status: taskStatus
+                };
+
+                tasks.push(task);
+                renderTasks();
+                resetForm();
+            } else {
+                alert('Please fill out all fields.');
+            }
+        }
+
+        function renderTasks() {
+            const taskTableBody = document.getElementById('taskTableBody');
+            taskTableBody.innerHTML = '';
+
+            tasks.forEach(task => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${task.description}</td>
+                    <td>${task.priority}</td>
+                    <td>${task.dueDate}</td>
+                    <td>${task.status}</td>
+                    <td class="actions">
+                        <button class="edit-button" onclick="editTask(${task.id})">Edit</button>
+                        <button class="delete-button" onclick="deleteTask(${task.id})">Delete</button>
+                    </td>
+                `;
+
+                taskTableBody.appendChild(row);
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskPriority').value = '';
+            document.getElementById('taskDueDate').value = '';
+            document.getElementById('taskStatus').value = '';
+        }
+
+        function editTask(id) {
+            const task = tasks.find(task => task.id === id);
+            if (task) {
+                document.getElementById('taskDescription').value = task.description;
+                document.getElementById('taskPriority').value = task.priority;
+                document.getElementById('taskDueDate').value = task.dueDate;
+                document.getElementById('taskStatus').value = task.status;
+
+                deleteTask(id);
+            }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            renderTasks();
+        }
+    </script>
+</body>
+</html>

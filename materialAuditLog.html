@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Material Audit Log</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; max-width: 1200px; padding: 30px; }
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    .filter-group { margin-bottom: 18px; }
+    .filter-label { font-weight: bold; margin-right: 8px; }
+    .filter-input, .filter-select { padding: 7px 12px; font-size: 15px; border-radius: 4px; border: 1px solid #bbb; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .success { color: #16a085; font-weight: bold; }
+    .danger { color: #e74c3c; font-weight: bold; }
+    .info { color: #2980b9; font-weight: bold; }
+    .action-badge { border-radius: 3px; padding: 2px 8px; font-size: 14px; margin-right: 6px; }
+    .action-badge.add { background: #eafaf1; color: #16a085; border: 1px solid #b9f6ca; }
+    .action-badge.restock { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+    .action-badge.edit { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+    .current-stock { font-weight: bold; color: #1abc9c; }
+    .back-link { margin-bottom: 18px; display: inline-block; color: #2980b9; text-decoration: underline; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">Material Audit Log</div>
+    <span class="back-link" id="backBtn">&larr; Back</span>
+    <div class="filter-group">
+      <label class="filter-label" for="materialNameFilter">Filter by Material Name:</label>
+      <select id="materialNameFilter" class="filter-select">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date/Time</th>
+            <th>Material Name</th>
+            <th>Action</th>
+            <th>Quantity (Change)</th>
+            <th>Old Stock</th>
+            <th>New Stock</th>
+            <th>Current Stock</th>
+            <th>Unit Price</th>
+            <th>Category</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody id="audit-log-body"></tbody>
+      </table>
+    </div>
+    <div id="table-message"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- BACK BUTTON ---
+    const backBtn = document.getElementById('backBtn');
+    backBtn.onclick = function () {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = "addMaterial.html";
+      }
+    };
+
+    let currentStockMap = {};
+    let allLogs = [];
+    let uniqueMaterialNames = new Set();
+
+    // Fill filter dropdown from logs
+    function updateMaterialNameFilter() {
+      const filter = document.getElementById('materialNameFilter');
+      // Save the old value to keep selection after reload
+      const prevValue = filter.value;
+      filter.innerHTML = '<option value="">All</option>';
+      Array.from(uniqueMaterialNames).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        filter.appendChild(option);
+      });
+      if ([...uniqueMaterialNames].includes(prevValue)) {
+        filter.value = prevValue;
+      }
+    }
+
+    async function loadCurrentStocks() {
+      const materialsSnapshot = await getDocs(collection(db, "materials"));
+      currentStockMap = {};
+      materialsSnapshot.forEach(doc => {
+        const m = doc.data();
+        currentStockMap[doc.id] = m.quantity !== undefined ? m.quantity : "-";
+      });
+    }
+
+    function renderTable(filteredLogs) {
+      const tableBody = document.getElementById('audit-log-body');
+      tableBody.innerHTML = "";
+      let row = 1;
+      filteredLogs.forEach(log => {
+        // Determine action and qty
+        let actionLabel = "", qtyChange = "-", oldStock = "-", newStock = "-";
+        if (log.action === "add") {
+          actionLabel = `<span class="action-badge add">Added</span>`;
+          qtyChange = log.addedQuantity !== undefined ? "+" + log.addedQuantity : "-";
+          oldStock = "-";
+          newStock = log.addedQuantity !== undefined ? log.addedQuantity : "-";
+        } else if (log.action === "restock") {
+          actionLabel = `<span class="action-badge restock">Restocked</span>`;
+          qtyChange = log.restockedQuantity !== undefined ? "+" + log.restockedQuantity : "-";
+          oldStock = log.oldQuantity !== undefined ? log.oldQuantity : "-";
+          newStock = log.newQuantity !== undefined ? log.newQuantity : "-";
+        }
+        // find current stock from materials collection
+        let currentStock = "-";
+        if (log.materialId && currentStockMap[log.materialId] !== undefined) {
+          currentStock = currentStockMap[log.materialId];
+        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row++}</td>
+          <td>${log.timestamp && log.timestamp.toDate ? log.timestamp.toDate().toLocaleString() : '-'}</td>
+          <td>${log.materialName || '-'}</td>
+          <td>${actionLabel}</td>
+          <td>${qtyChange}</td>
+          <td>${oldStock}</td>
+          <td>${newStock}</td>
+          <td class="current-stock">${currentStock}</td>
+          <td>${log.unitPrice !== undefined ? log.unitPrice : '-'}</td>
+          <td>${log.category || '-'}</td>
+          <td>${log.location || '-'}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    async function renderAuditLog() {
+      await loadCurrentStocks();
+      const filter = document.getElementById('materialNameFilter');
+      onSnapshot(
+        query(collection(db, "materialAuditLog"), orderBy("timestamp", "desc")),
+        (snapshot) => {
+          allLogs = [];
+          uniqueMaterialNames = new Set();
+          snapshot.forEach(doc => {
+            const log = doc.data();
+            allLogs.push(log);
+            if (log.materialName) uniqueMaterialNames.add(log.materialName);
+          });
+          updateMaterialNameFilter();
+          // Filter and render
+          const selectedMaterial = filter.value;
+          let filteredLogs = allLogs;
+          if (selectedMaterial) {
+            filteredLogs = allLogs.filter(log => log.materialName === selectedMaterial);
+          }
+          renderTable(filteredLogs);
+        }
+      );
+      // React to filter changes
+      document.getElementById('materialNameFilter').addEventListener('change', function() {
+        const selectedMaterial = this.value;
+        let filteredLogs = allLogs;
+        if (selectedMaterial) {
+          filteredLogs = allLogs.filter(log => log.materialName === selectedMaterial);
+        }
+        renderTable(filteredLogs);
+      });
+    }
+    renderAuditLog();
+  </script>
+</body>
+</html>

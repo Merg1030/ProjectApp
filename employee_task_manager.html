@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Job Tracking System</title>
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-color: #4a6fa5;
+            --border-color: #333;
+            --hover-color: #2a2a2a;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .app-container {
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin: 0;
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover-color);
+        }
+
+        .workers-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .worker-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .worker-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .worker-card.active {
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .worker-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .worker-title {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .jobs-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .jobs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .current-worker {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .add-job-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .repeat-job-btn {
+            background: var(--warning-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-job-btn:hover, .repeat-job-btn:hover {
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--hover-color);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--hover-color);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 1.1em;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .edit-btn:hover {
+            color: var(--warning-color);
+        }
+
+        .delete-btn:hover {
+            color: var(--error-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .shared-job-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .repeat-job-section {
+            margin-top: 15px;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Light mode */
+        body.light-mode {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --hover-color: #f0f0f0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .worker-role-filter {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .role-filter-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8em;
+        }
+        
+        .role-filter-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .role-filter-btn:hover {
+            background: var(--hover-color);
+        }
+        
+        .month-filter {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .month-filter label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+        
+        .month-filter select {
+            width: auto;
+            padding: 8px 12px;
+        }
+        
+        .reset-filter-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-filter-btn:hover {
+            background: var(--hover-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Worker Job Tracking System</h1>
+            <button class="theme-toggle" id="themeToggle">Dark Mode</button>
+        </header>
+
+        <div class="worker-role-filter" id="roleFilter">
+            <button class="role-filter-btn active" data-role="all">All Roles</button>
+            <!-- Role filters will be added dynamically -->
+        </div>
+
+        <div class="month-filter" id="monthFilter">
+            <label for="monthSelect">Filter by Month:</label>
+            <select id="monthSelect">
+                <option value="">All Months</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <button class="reset-filter-btn" id="resetFilterBtn">Reset Filters</button>
+        </div>
+
+        <div class="workers-list" id="workersList">
+            <!-- Worker cards will be added here dynamically -->
+        </div>
+
+        <div class="jobs-container">
+            <div class="jobs-header">
+                <div class="current-worker" id="currentWorker">Select a worker to view their jobs</div>
+                <div class="job-actions">
+                    <button class="repeat-job-btn" id="repeatJobBtn">Repeat Job</button>
+                    <button class="add-job-btn" id="addJobBtn">Add New Job</button>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Job Number</th>
+                        <th>Task Description</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="jobsTableBody">
+                    <!-- Jobs will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Job Modal -->
+    <div class="modal" id="jobModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Job</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <form id="jobForm">
+                <input type="hidden" id="jobId">
+                <input type="hidden" id="workerId">
+                <div class="form-group">
+                    <label for="jobDate">Date</label>
+                    <input type="date" id="jobDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="jobNumber">Job Number</label>
+                    <input type="text" id="jobNumber" required readonly>
+                    <div class="error-message" id="jobNumberError">This job number already exists in the system</div>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Task Description</label>
+                    <textarea id="taskDescription" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Repeat Job Modal -->
+    <div class="modal" id="repeatJobModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Repeat Existing Job</h2>
+                <button class="close-modal" id="closeRepeatModal">&times;</button>
+            </div>
+            <form id="repeatJobForm">
+                <div class="form-group">
+                    <label for="repeatJobSelect">Select Job to Repeat</label>
+                    <select id="repeatJobSelect" class="repeat-job-select" required>
+                        <option value="">Select a job to repeat</option>
+                        <!-- Options will be added dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="repeatJobDate">New Date</label>
+                    <input type="date" id="repeatJobDate" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelRepeatBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="repeatBtn">Repeat Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+   <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyClOZGykyDEgqssG423M6CLLKZ8sxrtAFk",
+        authDomain: "shop-a24bc.firebaseapp.com",
+        projectId: "shop-a24bc",
+        storageBucket: "shop-a24bc.appspot.com",
+        messagingSenderId: "405250859058",
+        appId: "1:405250859058:web:01e3c07ad2139c4f5d1c2b",
+        measurementId: "G-NX2KK1ZXG1"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const employeeWorkTrackerCollection = collection(db, "employeeWorkTracker");
+
+    // DOM Elements
+    const themeToggle = document.getElementById('themeToggle');
+    const workersList = document.getElementById('workersList');
+    const currentWorker = document.getElementById('currentWorker');
+    const addJobBtn = document.getElementById('addJobBtn');
+    const repeatJobBtn = document.getElementById('repeatJobBtn');
+    const jobsTableBody = document.getElementById('jobsTableBody');
+    const jobModal = document.getElementById('jobModal');
+    const repeatJobModal = document.getElementById('repeatJobModal');
+    const closeModal = document.getElementById('closeModal');
+    const closeRepeatModal = document.getElementById('closeRepeatModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const jobForm = document.getElementById('jobForm');
+    const repeatJobForm = document.getElementById('repeatJobForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
+    const jobIdInput = document.getElementById('jobId');
+    const workerIdInput = document.getElementById('workerId');
+    const jobDateInput = document.getElementById('jobDate');
+    const jobNumberInput = document.getElementById('jobNumber');
+    const taskDescriptionInput = document.getElementById('taskDescription');
+    const locationInput = document.getElementById('location');
+    const jobNumberError = document.getElementById('jobNumberError');
+    const repeatJobSelect = document.getElementById('repeatJobSelect');
+    const repeatJobDate = document.getElementById('repeatJobDate');
+    const saveBtn = document.getElementById('saveBtn');
+    const repeatBtn = document.getElementById('repeatBtn');
+    const roleFilter = document.getElementById('roleFilter');
+    const monthSelect = document.getElementById('monthSelect');
+    const resetFilterBtn = document.getElementById('resetFilterBtn');
+
+    // State
+    let workers = [];
+    let currentWorkerId = null;
+    let isEditing = false;
+    let allJobs = [];
+    let currentRoleFilter = localStorage.getItem('currentRoleFilter') || 'all';
+    let currentMonthFilter = localStorage.getItem('currentMonthFilter') || '';
+
+    // Your complete team data
+    const teamMembers = [
+        { id: '1', name: 'CHISHELA CHRISTOPHER', title: 'PROJECT INVENTORY MANAGER' },
+        { id: '2', name: 'OBERT SIAME', title: 'ELECTRICIAN' },
+        { id: '3', name: 'PETER MAWERE', title: 'ELECTRICIAN' },
+        { id: '4', name: 'DOMINIC SAKALA', title: 'WELDER' },
+        { id: '5', name: 'TEMBEYA SAKALA', title: 'WELDER' },
+        { id: '6', name: 'LUCKSON PHIRI', title: 'GENERAL' },
+        { id: '7', name: 'JOSEPH TEMBO', title: 'PLUMBER' },
+        { id: '8', name: 'MICHEAL LOBELA', title: 'CARPENTER' },
+        { id: '9', name: 'BRIGHTON MATOLOKOSH', title: 'PAINTER' },
+        { id: '10', name: 'AKIM PHIRI', title: 'PLUMBER' },
+        { id: '11', name: 'DABSON DAKA', title: 'BUILDER' },
+        { id: '12', name: 'CAPHAS TEMBO', title: 'GENERAL' },
+        { id: '13', name: 'JAMES DAKA', title: 'BUILDER' },
+        { id: '14', name: 'DANNY MVULA', title: 'BUILDER' },
+        { id: '15', name: 'SAVIOR PHIRI', title: 'CARPENTER' },
+        { id: '16', name: 'CLISHA MAMBILIMA', title: 'GENERAL' },
+        { id: '17', name: 'NICKSON MUMBA', title: 'GARDENER' },
+        { id: '18', name: 'KELVIN SIAME', title: 'GENERAL' }
+    ];
+
+    // Initialize the app
+    function init() {
+        ensureWorkersExist().then(() => {
+            loadWorkers();
+            setupEventListeners();
+            setInitialTheme();
+            applyPersistedFilters();
+        });
+    }
+
+    // Apply persisted filters from localStorage
+    function applyPersistedFilters() {
+        if (currentRoleFilter) {
+            const roleBtn = document.querySelector(`.role-filter-btn[data-role="${currentRoleFilter}"]`);
+            if (roleBtn) {
+                document.querySelectorAll('.role-filter-btn').forEach(btn => btn.classList.remove('active'));
+                roleBtn.classList.add('active');
+            }
+        }
+        
+        if (currentMonthFilter) {
+            monthSelect.value = currentMonthFilter;
+        }
+    }
+
+    // Make sure all workers exist in the database
+    async function ensureWorkersExist() {
+        try {
+            const querySnapshot = await getDocs(employeeWorkTrackerCollection);
+            const existingWorkers = querySnapshot.docs.filter(doc => doc.data().type === 'worker');
+            
+            // Add any missing workers
+            for (const worker of teamMembers) {
+                const exists = existingWorkers.some(existing => existing.id === worker.id);
+                if (!exists) {
+                    await setDoc(doc(employeeWorkTrackerCollection, worker.id), {
+                        type: 'worker',
+                        name: worker.name,
+                        title: worker.title
+                    });
+                }
+            }
+            return true;
+        } catch (error) {
+            console.error("Error ensuring workers exist:", error);
+            return false;
+        }
+    }
+
+    // Load workers from Firestore
+    async function loadWorkers() {
+        try {
+            const querySnapshot = await getDocs(employeeWorkTrackerCollection);
+            workers = [];
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.type === 'worker') {
+                    workers.push({
+                        id: doc.id,
+                        name: data.name,
+                        title: data.title,
+                        jobs: []
+                    });
+                }
+            });
+            
+            // Load jobs after workers are loaded
+            await loadJobs();
+            renderWorkers();
+            setupRoleFilters();
+            
+        } catch (error) {
+            console.error("Error loading workers:", error);
+            alert("Error loading workers. Please check console for details.");
+        }
+    }
+
+    // Load jobs from Firestore
+    async function loadJobs() {
+        try {
+            const jobsQuery = query(employeeWorkTrackerCollection, where("type", "==", "job"));
+            const querySnapshot = await getDocs(jobsQuery);
+            
+            allJobs = [];
+            querySnapshot.forEach((doc) => {
+                const job = doc.data();
+                job.id = doc.id;
+                allJobs.push(job);
+            });
+            
+            // Assign jobs to workers
+            workers.forEach(worker => {
+                worker.jobs = allJobs.filter(job => job.workerId === worker.id);
+            });
+            
+            renderWorkers();
+            setupRoleFilters();
+            
+            // If there's a selected worker, show their jobs
+            if (currentWorkerId) {
+                renderJobs();
+                highlightSelectedWorker();
+            }
+        } catch (error) {
+            console.error("Error loading jobs:", error);
+            alert("Error loading jobs. Please check console for details.");
+        }
+    }
+
+    // Setup role filters
+    function setupRoleFilters() {
+        // Get all unique roles
+        const roles = [...new Set(workers.map(worker => worker.title))];
+        
+        // Clear existing filters (except "All")
+        const existingFilters = Array.from(roleFilter.querySelectorAll('.role-filter-btn'));
+        existingFilters.forEach(btn => {
+            if (btn.dataset.role !== 'all') {
+                btn.remove();
+            }
+        });
+        
+        // Add role filters
+        roles.forEach(role => {
+            const btn = document.createElement('button');
+            btn.className = 'role-filter-btn';
+            btn.dataset.role = role.toLowerCase();
+            btn.textContent = role;
+            roleFilter.appendChild(btn);
+        });
+        
+        // Set active filter
+        document.querySelectorAll('.role-filter-btn').forEach(btn => {
+            if (btn.dataset.role === currentRoleFilter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // Render worker cards based on current filter
+    function renderWorkers() {
+        workersList.innerHTML = '';
+        
+        const filteredWorkers = currentRoleFilter === 'all' 
+            ? workers 
+            : workers.filter(worker => worker.title.toLowerCase() === currentRoleFilter);
+        
+        filteredWorkers.forEach(worker => {
+            // Filter jobs by month if month filter is active
+            let jobsToShow = worker.jobs;
+            if (currentMonthFilter) {
+                jobsToShow = worker.jobs.filter(job => {
+                    const jobMonth = job.date.split('-')[1];
+                    return jobMonth === currentMonthFilter;
+                });
+            }
+            
+            // Count unique job numbers (not counting repeats of the same job number)
+            const uniqueJobNumbers = [...new Set(jobsToShow.map(job => job.jobNumber))];
+            const uniqueJobCount = uniqueJobNumbers.length;
+            
+            const workerCard = document.createElement('div');
+            workerCard.className = 'worker-card';
+            workerCard.dataset.id = worker.id;
+            workerCard.innerHTML = `
+                <div class="worker-name">${worker.name}</div>
+                <div class="worker-title">${worker.title}</div>
+                <div style="margin-top: 5px; font-size: 0.8em; color: var(--text-secondary)">
+                    ${uniqueJobCount} ${uniqueJobCount === 1 ? 'job' : 'jobs'}
+                </div>
+            `;
+            workersList.appendChild(workerCard);
+        });
+    }
+
+    // Render jobs table
+    function renderJobs() {
+        if (!currentWorkerId) {
+            jobsTableBody.innerHTML = '<tr><td colspan="5">Select a worker to view their jobs</td></tr>';
+            currentWorker.textContent = 'Select a worker to view their jobs';
+            return;
+        }
+
+        const worker = workers.find(w => w.id === currentWorkerId);
+        if (!worker) return;
+
+        currentWorker.textContent = `${worker.name} (${worker.title})`;
+
+        let jobsToShow = worker.jobs;
+        
+        // Apply month filter if active
+        if (currentMonthFilter) {
+            jobsToShow = jobsToShow.filter(job => {
+                const jobMonth = job.date.split('-')[1];
+                return jobMonth === currentMonthFilter;
+            });
+        }
+
+        if (jobsToShow.length === 0) {
+            jobsTableBody.innerHTML = '<tr><td colspan="5">No jobs found for this worker</td></tr>';
+            return;
+        }
+
+        // Sort jobs by date then by job number
+        jobsToShow.sort((a, b) => {
+            if (a.date === b.date) {
+                return a.jobNumber.localeCompare(b.jobNumber);
+            }
+            return new Date(b.date) - new Date(a.date); // Newest first
+        });
+
+        jobsTableBody.innerHTML = '';
+        jobsToShow.forEach(job => {
+            const row = document.createElement('tr');
+            row.dataset.id = job.id;
+            row.innerHTML = `
+                <td>${formatDate(job.date)}</td>
+                <td>${job.jobNumber}</td>
+                <td>${job.taskDescription}</td>
+                <td>${job.location}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${job.id}">✏️</button>
+                    <button class="action-btn delete-btn" data-id="${job.id}">🗑️</button>
+                </td>
+            `;
+            jobsTableBody.appendChild(row);
+        });
+    }
+
+    // Format date for display
+    function formatDate(dateString) {
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    // Highlight selected worker card
+    function highlightSelectedWorker() {
+        document.querySelectorAll('.worker-card').forEach(card => {
+            if (card.dataset.id === currentWorkerId) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+    }
+
+    // Get unique job numbers with their descriptions for the current month filter
+    function getUniqueJobsForRepeat() {
+        const uniqueJobs = [];
+        const seenJobNumbers = new Set();
+        
+        allJobs.forEach(job => {
+            // Apply month filter if active
+            if (currentMonthFilter) {
+                const jobMonth = job.date.split('-')[1];
+                if (jobMonth !== currentMonthFilter) return;
+            }
+            
+            if (!seenJobNumbers.has(job.jobNumber)) {
+                seenJobNumbers.add(job.jobNumber);
+                uniqueJobs.push({
+                    jobNumber: job.jobNumber,
+                    taskDescription: job.taskDescription,
+                    location: job.location
+                });
+            }
+        });
+        
+        return uniqueJobs;
+    }
+
+    // Generate the next job number for a given date
+    function generateNextJobNumber(date) {
+        // Extract month and day from date (format: YYYY-MM-DD)
+        const dateParts = date.split('-');
+        const monthDay = `${dateParts[1].padStart(2, '0')}-`;
+        
+        // Find all jobs for this month
+        const monthJobs = allJobs.filter(job => {
+            const jobMonth = job.date.split('-')[1];
+            return jobMonth === dateParts[1];
+        });
+        
+        if (monthJobs.length === 0) {
+            return `${monthDay}001`;
+        }
+        
+        // Find the highest job number for this month
+        const jobNumbers = monthJobs.map(job => {
+            const numPart = job.jobNumber.split('-')[1];
+            return parseInt(numPart, 10);
+        });
+        
+        const maxJobNumber = Math.max(...jobNumbers);
+        const nextJobNumber = (maxJobNumber + 1).toString().padStart(3, '0');
+        
+        return `${monthDay}${nextJobNumber}`;
+    }
+
+    // Check if job number already exists in the system
+    function isJobNumberDuplicate(jobNumber, currentJobId = null) {
+        return allJobs.some(job => 
+            job.jobNumber === jobNumber &&
+            job.id !== currentJobId
+        );
+    }
+
+    // Populate the repeat job select dropdown with unique job numbers
+    function populateRepeatJobSelect() {
+        repeatJobSelect.innerHTML = '<option value="">Select a job to repeat</option>';
+        const uniqueJobs = getUniqueJobsForRepeat();
+        
+        uniqueJobs.forEach(job => {
+            const option = document.createElement('option');
+            option.value = job.jobNumber; // Using job number as value
+            option.dataset.description = job.taskDescription;
+            option.dataset.location = job.location;
+            option.textContent = `${job.jobNumber} - ${job.taskDescription}`;
+            repeatJobSelect.appendChild(option);
+        });
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+        // Theme toggle
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Worker selection
+        workersList.addEventListener('click', e => {
+            const workerCard = e.target.closest('.worker-card');
+            if (workerCard) {
+                currentWorkerId = workerCard.dataset.id;
+                highlightSelectedWorker();
+                renderJobs();
+            }
+        });
+
+        // Role filter selection
+        roleFilter.addEventListener('click', e => {
+            const filterBtn = e.target.closest('.role-filter-btn');
+            if (filterBtn) {
+                currentRoleFilter = filterBtn.dataset.role;
+                localStorage.setItem('currentRoleFilter', currentRoleFilter);
+                document.querySelectorAll('.role-filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                filterBtn.classList.add('active');
+                renderWorkers();
+            }
+        });
+
+        // Month filter selection
+        monthSelect.addEventListener('change', () => {
+            currentMonthFilter = monthSelect.value;
+            localStorage.setItem('currentMonthFilter', currentMonthFilter);
+            renderWorkers();
+            if (currentWorkerId) {
+                renderJobs();
+            }
+        });
+
+        // Reset filters
+        resetFilterBtn.addEventListener('click', () => {
+            currentRoleFilter = 'all';
+            currentMonthFilter = '';
+            localStorage.setItem('currentRoleFilter', currentRoleFilter);
+            localStorage.setItem('currentMonthFilter', currentMonthFilter);
+            monthSelect.value = '';
+            document.querySelectorAll('.role-filter-btn').forEach(btn => {
+                if (btn.dataset.role === 'all') {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            renderWorkers();
+            if (currentWorkerId) {
+                renderJobs();
+            }
+        });
+
+        // Add job button
+        addJobBtn.addEventListener('click', () => {
+            if (!currentWorkerId) {
+                alert('Please select a worker first');
+                return;
+            }
+            openAddJobModal();
+        });
+
+        // Repeat job button
+        repeatJobBtn.addEventListener('click', () => {
+            if (!currentWorkerId) {
+                alert('Please select a worker first');
+                return;
+            }
+            openRepeatJobModal();
+        });
+
+        // Job table actions (edit/delete)
+        jobsTableBody.addEventListener('click', e => {
+            if (e.target.classList.contains('edit-btn')) {
+                const jobId = e.target.dataset.id;
+                openEditJobModal(jobId);
+            } else if (e.target.classList.contains('delete-btn')) {
+                const jobId = e.target.dataset.id;
+                deleteJob(jobId);
+            }
+        });
+
+        // Modal controls
+        closeModal.addEventListener('click', closeJobModal);
+        closeRepeatModal.addEventListener('click', closeRepeatJobModal);
+        cancelBtn.addEventListener('click', closeJobModal);
+        cancelRepeatBtn.addEventListener('click', closeRepeatJobModal);
+        jobForm.addEventListener('submit', handleJobFormSubmit);
+        repeatJobForm.addEventListener('submit', handleRepeatJobFormSubmit);
+        
+        // Auto-generate job number when date changes
+        jobDateInput.addEventListener('change', () => {
+            if (!isEditing) {
+                jobNumberInput.value = generateNextJobNumber(jobDateInput.value);
+            }
+        });
+        
+        // Validate job number when it changes
+        jobNumberInput.addEventListener('input', () => {
+            validateJobNumber();
+        });
+    }
+
+    // Validate job number (check for duplicates)
+    function validateJobNumber() {
+        const jobNumber = jobNumberInput.value;
+        const currentJobId = jobIdInput.value;
+
+        if (!jobNumber) {
+            jobNumberError.style.display = 'none';
+            return true;
+        }
+
+        const isDuplicate = isJobNumberDuplicate(jobNumber, currentJobId);
+        
+        if (isDuplicate) {
+            jobNumberError.style.display = 'block';
+            return false;
+        } else {
+            jobNumberError.style.display = 'none';
+            return true;
+        }
+    }
+
+    // Open add job modal
+    function openAddJobModal() {
+        isEditing = false;
+        modalTitle.textContent = 'Add New Job';
+        jobForm.reset();
+        jobIdInput.value = '';
+        workerIdInput.value = currentWorkerId;
+        jobNumberError.style.display = 'none';
+        
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        jobDateInput.value = today;
+        
+        // Generate initial job number
+        jobNumberInput.value = generateNextJobNumber(today);
+        
+        jobModal.style.display = 'flex';
+    }
+
+    // Open repeat job modal
+    function openRepeatJobModal() {
+        // Populate repeat job select with unique job numbers
+        populateRepeatJobSelect();
+        
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        repeatJobDate.value = today;
+        
+        repeatJobModal.style.display = 'flex';
+    }
+
+    // Open edit job modal
+    function openEditJobModal(jobId) {
+        const job = allJobs.find(j => j.id === jobId);
+        if (!job) return;
+
+        isEditing = true;
+        modalTitle.textContent = 'Edit Job';
+        jobForm.reset();
+        jobNumberError.style.display = 'none';
+        
+        // Fill form with job data
+        jobIdInput.value = job.id;
+        workerIdInput.value = job.workerId;
+        jobDateInput.value = job.date;
+        jobNumberInput.value = job.jobNumber;
+        taskDescriptionInput.value = job.taskDescription;
+        locationInput.value = job.location;
+        
+        jobModal.style.display = 'flex';
+    }
+
+    // Close job modal
+    function closeJobModal() {
+        jobModal.style.display = 'none';
+    }
+
+    // Close repeat job modal
+    function closeRepeatJobModal() {
+        repeatJobModal.style.display = 'none';
+    }
+
+    // Handle job form submission
+    async function handleJobFormSubmit(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!validateJobNumber()) {
+            return;
+        }
+
+        const worker = workers.find(w => w.id === currentWorkerId);
+        if (!worker) return;
+
+        const jobData = {
+            type: 'job',
+            workerId: currentWorkerId,
+            date: jobDateInput.value,
+            jobNumber: jobNumberInput.value,
+            taskDescription: taskDescriptionInput.value,
+            location: locationInput.value
+        };
+
+        try {
+            // Show loading state
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="loading"></span> Saving...';
+
+            if (isEditing) {
+                // Update existing job
+                const jobId = jobIdInput.value;
+                await setDoc(doc(employeeWorkTrackerCollection, jobId), jobData);
+            } else {
+                // Add new job
+                const jobId = Date.now().toString();
+                await setDoc(doc(employeeWorkTrackerCollection, jobId), jobData);
+            }
+
+            // Reload jobs after save
+            await loadJobs();
+            closeJobModal();
+        } catch (error) {
+            console.error("Error saving job:", error);
+            alert("Error saving job. Please check console for details.");
+        } finally {
+            // Reset button state
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+        }
+    }
+
+    // Handle repeat job form submission
+    async function handleRepeatJobFormSubmit(e) {
+        e.preventDefault();
+        
+        const selectedJobNumber = repeatJobSelect.value;
+        const newDate = repeatJobDate.value;
+        
+        if (!selectedJobNumber || !newDate) {
+            return;
+        }
+        
+        // Find the first job with this number to get the details
+        const originalJob = allJobs.find(j => j.jobNumber === selectedJobNumber);
+        if (!originalJob) return;
+
+        try {
+            // Show loading state
+            repeatBtn.disabled = true;
+            repeatBtn.innerHTML = '<span class="loading"></span> Repeating...';
+
+            // Create a new job with the same details but new date
+            const newJob = {
+                type: 'job',
+                workerId: currentWorkerId,
+                date: newDate,
+                jobNumber: selectedJobNumber,
+                taskDescription: originalJob.taskDescription,
+                location: originalJob.location
+            };
+
+            const newJobId = Date.now().toString();
+            await setDoc(doc(employeeWorkTrackerCollection, newJobId), newJob);
+
+            // Reload jobs after save
+            await loadJobs();
+            closeRepeatJobModal();
+        } catch (error) {
+            console.error("Error repeating job:", error);
+            alert("Error repeating job. Please check console for details.");
+        } finally {
+            // Reset button state
+            repeatBtn.disabled = false;
+            repeatBtn.textContent = 'Repeat Job';
+        }
+    }
+
+    // Delete job
+    async function deleteJob(jobId) {
+        if (!confirm('Are you sure you want to delete this job?')) return;
+
+        try {
+            await deleteDoc(doc(employeeWorkTrackerCollection, jobId));
+            await loadJobs();
+        } catch (error) {
+            console.error("Error deleting job:", error);
+            alert("Error deleting job. Please check console for details.");
+        }
+    }
+
+    // Theme management
+    function setInitialTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    }
+
+    function setTheme(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('light-mode');
+            themeToggle.textContent = 'Dark Mode';
+        } else {
+            document.body.classList.remove('light-mode');
+            themeToggle.textContent = 'Light Mode';
+        }
+        localStorage.setItem('theme', theme);
+    }
+
+    // Initialize the app
+    init();
+</script>
+</body>
+</html>

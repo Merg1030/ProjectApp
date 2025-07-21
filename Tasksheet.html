@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Sheet</title>
+    <style>
+            body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #eeeeee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background-color:#333;
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: #1e1e1e;
+        }
+
+        /* Date Input Styles */
+        input[type="date"] {
+            background-color: #121212;
+            color: gray;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        /* Form Styles */
+        .form-container {
+            display: none; /* Keep form hidden by default */
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+        }
+
+        .form-container input,
+        .form-container select,
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+        }
+
+        .form-container button {
+            background-color:#333;
+            color: #e9e9eb;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #4b68dc;
+        }
+
+        /* Button Styles */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff8f8;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-container button:hover {
+            background-color: #4b68dc;
+        }
+
+        /* Filter Dropdown Styles */
+        .filter-dropdown {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background-color: #333;
+            color: #ffffff;
+            width: 100%;
+        }
+        .complete-button{
+            background-color:#333 ;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Sheet</h1>
+
+        <!-- Filter Dropdowns -->
+        <select class="filter-dropdown" id="filter-status-dropdown" onchange="applyFilters()">
+            <option value="">Filter by status...</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="on hold">On Hold</option>
+        </select>
+
+        <select class="filter-dropdown" id="filter-project-dropdown" onchange="applyFilters()">
+            <option value="">Filter by project name...</option>
+            <option value="Hazida Limited">Hazida Limited</option>
+            <option value="Hazida Motors">Hazida Motors</option>
+            <option value="Hazida Foods">Hazida Foods</option>
+            <option value="Siganature lounge">Siganature lounge</option>
+            <option value="Freight and Passengers">Freight and Passengers</option>
+            <option value="Lumumba Showroom Ezone">Lumumba Showroom Ezone</option>
+            <option value="Manda Hill Ezone Store">Manda Hill Ezone Store</option>
+            <option value="Cento Ezone Store">Cento Ezone Store</option>
+            <option value="Cosmopolitan Ezone Store">Cosmopolitan Ezone Store</option>
+            <option value="Trident Ezone Store">Trident Ezone Store</option>
+            <option value="Kitwe Ezone Store">Kitwe Ezone Store</option>
+            <option value="Livingstone Ezone Store">Livingstone Ezone Store</option>
+            <option value="Mr Mussa">Mr Mussa</option>
+            <option value="Mr Ebrahim">Mr Ebrahim</option>
+            <option value="Madam Shirin">Madam Shirin</option>
+            <option value="Mr Ishmil">Mr Ishmil</option>
+            <option value="Mr Shabbir">Mr Shabbir</option>
+            <option value="Mr Riaz">Mr Riaz</option>
+            <option value="Mr Faiyaz">Mr Faiyaz</option>
+            <option value="Northmeads Flats 1">Northmeads Flats 1</option>
+            <option value="Northmeads Flats 2">Northmeads Flats 2</option>
+            <option value="Fields Works">Fields Works</option>
+        </select>
+
+        <!-- Button Container -->
+        <div class="button-container">
+            <button class="toggle-button" onclick="toggleForm()">Show/Hide Form</button>
+            <button class="view-completed-button" onclick="viewCompletedTasks()">View Completed Tasks</button>
+            <button class="cost-button" onclick="viewCost()">Cost</button>
+        </div>
+
+        <!-- Task Input Form -->
+        <div class="form-container" id="form-container">
+            <h2>Add New Task</h2>
+            <form id="task-form">
+                <input type="text" id="task-id" placeholder="Task ID" required>
+                <select id="project-name" required>
+                    <option value="">Select Project</option>
+                    <option value="Hazida Limited">Hazida Limited</option>
+                    <option value="Hazida Motors">Hazida Motors</option>
+                    <option value="Hazida Foods">Hazida Foods</option>
+                    <option value="Siganature lounge">Siganature lounge</option>
+                    <option value="Freight and Passengers">Freight and Passengers</option>
+                    <option value="Lumumba Showroom Ezone">Lumumba Showroom Ezone</option>
+                    <option value="Manda Hill Ezone Store">Manda Hill Ezone Store</option>
+                    <option value="Cento Ezone Store">Cento Ezone Store</option>
+                    <option value="Cosmopolitan Ezone Store">Cosmopolitan Ezone Store</option>
+                    <option value="Trident Ezone Store">Trident Ezone Store</option>
+                    <option value="Kitwe Ezone Store">Kitwe Ezone Store</option>
+                    <option value="Livingstone Ezone Store">Livingstone Ezone Store</option>
+                    <option value="Mr Mussa">Mr Mussa</option>
+                    <option value="Mr Ebrahim">Mr Ebrahim</option>
+                    <option value="Madam Shirin">Madam Shirin</option>
+                    <option value="Mr Ishmil">Mr Ishmil</option>
+                    <option value="Mr Shabbir">Mr Shabbir</option>
+                    <option value="Mr Riaz">Mr Riaz</option>
+                    <option value="Mr Faiyaz">Mr Faiyaz</option>
+                    <option value="Northmeads Flats 1">Northmeads Flats 1</option>
+                    <option value="Northmeads Flats 2">Northmeads Flats 2</option>
+                    <option value="Fields Works">Fields Works</option>
+                </select>
+                <input type="text" id="task-description" placeholder="Task Description" required>
+                <input type="text" id="fault" placeholder="Fault">
+                <input type="text" id="location" placeholder="Location">
+                <select id="priority" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+                <button type="submit">Add Task</button>
+            </form>
+        </div>
+
+        <!-- Task Table -->
+        <table id="task-table">
+            <thead>
+                <tr>
+                    <th>Task ID</th>
+                    <th>Project Name</th>
+                    <th>Task Description</th>
+                    <th>Fault</th>
+                    <th>Location</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Duration (days)</th>
+                    <th>Labor Cost</th>
+                    <th>Material Cost</th>
+                    <th>Total Cost</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, getDoc, deleteDoc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Reference to the tasks collection
+        const tasksCollection = collection(db, 'tasks');
+        const completedTasksCollection = collection(db, 'completed_tasks');
+
+        // Create a query to order tasks by creation time in descending order
+        const tasksQuery = query(tasksCollection, orderBy('createdAt', 'desc'));
+
+        // Real-time listener for tasks
+        onSnapshot(tasksQuery, (snapshot) => {
+            const taskTableBody = document.querySelector('#task-table tbody');
+            taskTableBody.innerHTML = ''; // Clear existing rows
+
+            snapshot.forEach(doc => {
+                const task = doc.data();
+                const row = document.createElement('tr');
+                const taskId = doc.id;
+
+                row.innerHTML = `
+                    <td>${task.TaskID || ''}</td>
+                    <td>${task.ProjectName || ''}</td>
+                    <td>${task.TaskDescription || ''}</td>
+                    <td>${task.Fault || ''}</td>
+                    <td>${task.Location || ''}</td>
+                    <td>${task.Priority || ''}</td>
+                    <td contenteditable="true" onblur="updateTask('${taskId}', 'Status', this.innerText)">${task.Status || ''}</td>
+                    <td contenteditable="true" onblur="updateTask('${taskId}', 'AssignedTo', this.innerText)">${task.AssignedTo || ''}</td>
+                    <td><input type="date" value="${task.StartDate || ''}" onchange="updateTask('${taskId}', 'StartDate', this.value)" style="background-color: #121212; color: gray;"></td>
+                    <td><input type="date" value="${task.EndDate || ''}" onchange="updateTask('${taskId}', 'EndDate', this.value)" style="background-color: #121212; color: gray;"></td>
+                    <td contenteditable="true" onblur="updateTask('${taskId}', 'Duration', this.innerText)">${task.Duration || ''}</td>
+                    <td contenteditable="true" onblur="updateTask('${taskId}', 'LaborCost', this.innerText); calculateTotalCost('${taskId}')">${task.LaborCost || ''}</td>
+                    <td contenteditable="true" onblur="updateTask('${taskId}', 'MaterialCost', this.innerText); calculateTotalCost('${taskId}')">${task.MaterialCost || ''}</td>
+                    <td id="total-cost-${taskId}">${task.TotalCost || ''}</td>
+                    <td><button class="complete-button" onclick="completeTask('${taskId}', this)">Complete Task</button></td>
+                `;
+
+                taskTableBody.appendChild(row);
+            });
+
+            // Save data to local storage
+            localStorage.setItem('tasks', JSON.stringify(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))));
+        });
+
+        // Add Task Form Submission
+        const taskForm = document.getElementById('task-form');
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent page reload
+
+            // Get form values
+            const task = {
+                TaskID: taskForm['task-id'].value,
+                ProjectName: taskForm['project-name'].value,
+                TaskDescription: taskForm['task-description'].value,
+                Fault: taskForm['fault'].value,
+                Location: taskForm['location'].value,
+                Priority: taskForm['priority'].value,
+                Status: 'inactive', // Set status as 'inactive'
+                createdAt: new Date() // Add creation time
+            };
+
+            // Add task to Firestore and local storage
+            try {
+                const docRef = await addDoc(tasksCollection, task);
+                task.id = docRef.id; // Add Firestore doc ID to task
+                saveTaskToLocal(task); // Save task to local storage
+                taskForm.reset(); // Clear the form
+                alert('Task added successfully!');
+                toggleForm(); // Hide the form after task is added
+            } catch (error) {
+                console.error('Error adding task: ', error);
+                alert('Failed to add task. Please try again.');
+            }
+        });
+
+        // Save task to local storage
+        const saveTaskToLocal = (task) => {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.push(task);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        };
+
+        // Function to update task in Firestore and local storage
+        window.updateTask = async (taskId, field, value) => {
+            const taskRef = doc(db, 'tasks', taskId);
+
+            try {
+                await updateDoc(taskRef, {
+                    [field]: value
+                });
+                console.log(`Task ${taskId} field ${field} updated to ${value}`);
+
+                // Update task in local storage
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                const taskIndex = tasks.findIndex(task => task.id === taskId);
+                if (taskIndex !== -1) {
+                    tasks[taskIndex][field] = value;
+                    localStorage.setItem('tasks', JSON.stringify(tasks));
+                }
+
+                // If labor cost or material cost is updated, update total cost
+                if (field === 'LaborCost' || field === 'MaterialCost') {
+                    calculateTotalCost(taskId);
+                }
+            } catch (error) {
+                console.error('Error updating task: ', error);
+            }
+        };
+
+        // Function to calculate and update total cost in Firestore and local storage
+        window.calculateTotalCost = async (taskId) => {
+            const taskRef = doc(db, 'tasks', taskId);
+
+            try {
+                const taskDoc = await getDoc(taskRef);
+                const taskData = taskDoc.data();
+                const laborCost = parseFloat(taskData.LaborCost);
+                const materialCost = parseFloat(taskData.MaterialCost);
+
+                if (!isNaN(laborCost) && !isNaN(materialCost)) {
+                    const totalCost = laborCost + materialCost;
+                    await updateDoc(taskRef, {
+                        TotalCost: totalCost
+                    });
+
+                    // Update total cost in local storage
+                    const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                    const taskIndex = tasks.findIndex(task => task.id === taskId);
+                    if (taskIndex !== -1) {
+                        tasks[taskIndex].TotalCost = totalCost;
+                        localStorage.setItem('tasks', JSON.stringify(tasks));
+                    }
+
+                    document.getElementById(`total-cost-${taskId}`).innerText = totalCost;
+                    console.log(`Task ${taskId} total cost updated to ${totalCost}`);
+                } else {
+                    document.getElementById(`total-cost-${taskId}`).innerText = '';
+                }
+            } catch (error) {
+                console.error('Error calculating total cost: ', error);
+            }
+        };
+
+        // Function to complete a task and move it to completed tasks
+        window.completeTask = async (taskId, button) => {
+            const taskRef = doc(db, 'tasks', taskId);
+            const completedTaskRef = doc(db, 'completed_tasks', taskId);
+
+            try {
+                const taskDoc = await getDoc(taskRef);
+                const taskData = taskDoc.data();
+
+                // Check if all fields are filled
+                const requiredFields = ['TaskID', 'ProjectName', 'TaskDescription', 'Fault', 'Location', 'Priority', 'Status', 'AssignedTo', 'StartDate', 'EndDate', 'Duration', 'LaborCost', 'MaterialCost', 'TotalCost'];
+                for (const field of requiredFields) {
+                    if (!taskData[field]) {
+                        alert(`Cannot complete task. The field ${field} is empty.`);
+                        return;
+                    }
+                }
+
+                // Add task to completed tasks collection
+                await setDoc(completedTaskRef, taskData);
+
+                // Delete task from tasks collection
+                await deleteDoc(taskRef);
+
+                // Remove the row from the table
+                const row = button.closest('tr');
+                row.remove();
+
+                // Remove task from local storage
+                const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                const updatedTasks = tasks.filter(task => task.id !== taskId);
+                localStorage.setItem('tasks', JSON.stringify(updatedTasks));                console.log(`Task ${taskId} completed and moved to completed tasks.`);
+            } catch (error) {
+                console.error('Error completing task: ', error);
+            }
+        };
+
+        // Function to apply filters by status and project name
+        window.applyFilters = () => {
+            const filterStatusDropdown = document.getElementById('filter-status-dropdown');
+            const filterProjectDropdown = document.getElementById('filter-project-dropdown');
+
+            const filterStatusValue = filterStatusDropdown.value.toLowerCase();
+            const filterProjectValue = filterProjectDropdown.value.toLowerCase();
+            const rows = document.querySelectorAll('#task-table tbody tr');
+
+            // Save filter values to local storage
+            localStorage.setItem('filterStatus', filterStatusValue);
+            localStorage.setItem('filterProject', filterProjectValue);
+
+            rows.forEach(row => {
+                const statusCell = row.querySelector('td:nth-child(7)');
+                const statusText = statusCell ? statusCell.innerText.toLowerCase() : '';
+
+                const projectCell = row.querySelector('td:nth-child(2)');
+                const projectText = projectCell ? projectCell.innerText.toLowerCase() : '';
+
+                if ((filterStatusValue === "" || statusText.includes(filterStatusValue)) &&
+                    (filterProjectValue === "" || projectText.includes(filterProjectValue))) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        };
+
+        // Function to load filter values from local storage and apply them
+        const loadFilters = () => {
+            const filterStatusValue = localStorage.getItem('filterStatus') || '';
+            const filterProjectValue = localStorage.getItem('filterProject') || '';
+
+            document.getElementById('filter-status-dropdown').value = filterStatusValue;
+            document.getElementById('filter-project-dropdown').value = filterProjectValue;
+
+            applyFilters();
+        };
+
+        // Load filters when the page loads
+        window.addEventListener('load', loadFilters);
+
+        // Function to view completed tasks
+        window.viewCompletedTasks = () => {
+            window.location.href = 'completedTasks.html';
+        };
+
+        // Function to view cost
+        window.viewCost = () => {
+            window.location.href = 'Taskexpens.html';
+        };
+
+        // Placeholder functions for Inventory button
+        window.viewInventory = () => {
+            alert('Inventory button clicked!');
+        };
+
+        // Sync local storage with Firestore when online
+        window.addEventListener('online', () => {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.forEach(async task => {
+                const taskRef = doc(db, 'tasks', task.id);
+                const taskDoc = await getDoc(taskRef);
+
+                if (!taskDoc.exists()) {
+                    await setDoc(taskRef, task);
+                    console.log(`Task ${task.id} synced to Firestore`);
+                }
+            });
+        });
+    </script>
+      <script>
+        // Toggle Form Visibility
+        function toggleForm() {
+            const formContainer = document.getElementById('form-container');
+            if (formContainer.style.display === 'none' || formContainer.style.display === '') {
+                formContainer.style.display = 'block';
+            } else {
+                formContainer.style.display = 'none';
+            }
+        }
+
+        // Load filters when the page loads
+        window.addEventListener('load', loadFilters);
+        // Inactivity timeout
+        let inactivityTimeout;
+        function resetInactivityTimeout() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                logout();
+            }, 600000); // 10 minutes
+        }
+
+        // Set up inactivity timer
+        resetInactivityTimeout();
+        document.addEventListener('mousemove', resetInactivityTimeout);
+        document.addEventListener('keypress', resetInactivityTimeout);
+        document.addEventListener('click', resetInactivityTimeout);
+        document.addEventListener('touchstart', resetInactivityTimeout);
+
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

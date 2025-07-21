@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0;
+            background: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        .filter, .form-container, .archive-section, .button-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .filter input, .form-container input, .form-container select, .form-container button, .archive-section input, .archive-section button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 22px);
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .total {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 18px;
+        }
+
+        .download-button, .archive-button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .download-button:hover, .archive-button:hover {
+            background-color: #218838;
+        }
+
+        .remove-button {
+            background-color: #ff4d4d;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background-color: #ff3333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Expense Report</h1>
+        <div class="button-container">
+            <button class="download-button" onclick="addRow()">Add Another Transaction</button>
+            <button class="download-button" onclick="addTransactions()">Add Transactions</button>
+            <button class="archive-button" onclick="archiveMonthlyTransactions()">Archive Monthly Transactions</button>
+            <button class="archive-button" onclick="viewArchivedMonths()">View Archived Months</button>
+            <button class="download-button" onclick="downloadPDF()">Download PDF</button>
+        </div>
+        <div class="filter">
+            <label for="taskFilter">Filter by Task:</label>
+            <input type="text" id="taskFilter" placeholder="Enter Task" oninput="filterTasks()">
+        </div>
+        <div class="form-container">
+            <h2>Add New Transactions</h2>
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>ENTRY ID</th>
+                        <th>DATE</th>
+                        <th>PARTICULAR</th>
+                        <th>TASK</th>
+                        <th>SUPPLIER</th>
+                        <th>VAT</th>
+                        <th>PROJECT</th>
+                        <th>PAYEE</th>
+                        <th>QTY</th>
+                        <th>AMOUNT</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionTableBody">
+                    <tr>
+                        <td><input type="text" class="entry-id" placeholder="Entry ID" required></td>
+                        <td><input type="date" class="date" required></td>
+                        <td><input type="text" class="particular" placeholder="Particular" required></td>
+                        <td><input type="text" class="task" placeholder="Task" required></td>
+                        <td><input type="text" class="supplier" placeholder="Supplier" required></td>
+                        <td>
+                            <select class="vat">
+                                <option value="No">No</option>
+                                <option value="Yes">Yes</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="project" required>
+                                <option value="Hazida Limited">Hazida Limited</option>
+                                <option value="Hazida Motors">Hazida Motors</option>
+                                <option value="Hazida Foods">Hazida Foods</option>
+                                <option value="Siganature lounge">Siganature lounge</option>
+                                <option value="Freight and Passengers">Freight and Passengers</option>
+                                <option value="Lumumba Showroom Ezone">Lumumba Showroom Ezone</option>
+                                <option value="Manda Hill Ezone Store">Manda Hill Ezone Store</option>
+                                <option value="Cento Ezone Store">Cento Ezone Store</option>
+                                <option value="Cosmopolitan Ezone Store">Cosmopolitan Ezone Store</option>
+                                <option value="Trident Ezone Store">Trident Ezone Store</option>
+                                <option value="Kitwe Ezone Store">Kitwe Ezone Store</option>
+                                <option value="Livingstone Ezone Store">Livingstone Ezone Store</option>
+                                <option value="Mr Mussa">Mr Mussa</option>
+                                <option value="Mr Ebrahim">Mr Ebrahim</option>
+                                <option value="Madam Shirin">Madam Shirin</option>
+                                <option value="Mr Ishmil">Mr Ishmil</option>
+                                <option value="Mr Shabbir">Mr Shabbir</option>
+                                <option value="Mr Riaz">Mr Riaz</option>
+                                <option value="Mr Faiyaz">Mr Faiyaz</option>
+                                <option value="Northmeads Flats 1">Northmeads Flats 1</option>
+                                <option value="Northmeads Flats 2">Northmeads Flats 2</option>
+                                <option value="Fields Works">Fields Works</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="payee" required>
+                                <option value="Hazida Limited">Hazida Limited</option>
+                                <option value="Freight and Passengers">Freight and Passengers</option>
+                                <option value="Hazida Motors">Hazida Motors</option>
+                                <option value="Hazida Motors">Hazida Ezone Limited</option>
+                            </select>
+                        </td>
+                        <td><input type="number" class="qty" placeholder="Qty" required></td>
+                        <td><input type="number" class="amount" placeholder="Amount" required></td>
+                        <td><button type="button" class="remove-button" onclick="removeRow(this)">Remove</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <table id="expenseTable">
+            <thead>
+                <tr>
+                    <th>ENTRY ID</th>
+                    <th>DATE</th>
+                    <th>PARTICULAR</th>
+                    <th>TASK</th>
+                    <th>SUPPLIER</th>
+                    <th>VAT</th>
+                    <th>PROJECT</th>
+                    <th>PAYEE</th>
+                    <th>QTY</th>
+                    <th>AMOUNT</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Existing transactions -->
+            </tbody>
+        </table>
+        <div class="total">
+            Total Cost: <span id="totalCost">0</span>
+        </div>
+        <div class="archive-section">
+            <label for="archiveMonth">Enter Month to Archive:</label>
+            <input type="month" id="archiveMonth">
+        </div>
+        <div class="form-container">
+            <label for="downloadEntryId">Enter Entry ID to Download:</label>
+            <input type="text" id="downloadEntryId" placeholder="e.g., en-394">
+        </div>
+        <div id="archivedMonthsContainer" class="form-container" style="display: none;">
+            <h2>Archived Months</h2>
+            <ul id="archivedMonthsList"></ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        function addRow() {
+            const row = `
+                <tr>
+                    <td><input type="text" class="entry-id" placeholder="Entry ID" required></td>
+                    <td><input type="date" class="date" required></td>
+                    <td><input type="text" class="particular" placeholder="Particular" required></td>
+                    <td><input type="text" class="task" placeholder="Task" required></td>
+                    <td><input type="text" class="supplier" placeholder="Supplier" required></td>
+                    <td>
+                        <select class="vat">
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="project" required>
+                            <option value="Hazida Limited">Hazida Limited</option>
+                            <option value="Hazida Motors">Hazida Motors</option>
+                            <option value="Hazida Foods">Hazida Foods</option>
+                            <option value="Siganature lounge">Siganature lounge</option>
+                            <option value="Freight and Passengers">Freight and Passengers</option>
+                            <option value="Lumumba Showroom Ezone">Lumumba Showroom Ezone</option>
+                            <option value="Manda Hill Ezone Store">Manda Hill Ezone Store</option>
+                            <option value="Cento Ezone Store">Cento Ezone Store</option>
+                            <option value="Cosmopolitan Ezone Store">Cosmopolitan Ezone Store</option>
+                            <option value="Trident Ezone Store">Trident Ezone Store</option>
+                            <option value="Kitwe Ezone Store">Kitwe Ezone Store</option>
+                            <option value="Livingstone Ezone Store">Livingstone Ezone Store</option>
+                            <option value="Mr Mussa">Mr Mussa</option>
+                            <option value="Mr Ebrahim">Mr Ebrahim</option>
+                            <option value="Madam Shirin">Madam Shirin</option>
+                            <option value="Mr Ishmil">Mr Ishmil</option>
+                            <option value="Mr Shabbir">Mr Shabbir</option>
+                            <option value="Mr Riaz">Mr Riaz</option>
+                            <option value="Mr Faiyaz">Mr Faiyaz</option>
+                            <option value="Northmeads Flats 1">Northmeads Flats 1</option>
+                            <option value="Northmeads Flats 2">Northmeads Flats 2</option>
+                            <option value="Fields Works">Fields Works</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="payee" required>
+                            <option value="Hazida Limited">Hazida Limited</option>
+                            <option value="Freight and Passengers">Freight and Passengers</option>
+                            <option value="Hazida Motors">Hazida Motors</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="qty" placeholder="Qty" required></td>
+                    <td><input type="number" class="amount" placeholder="Amount" required></td>
+                    <td><button type="button" class="remove-button" onclick="removeRow(this)">Remove</button></td>
+                </tr>
+            `;
+            document.getElementById('transactionTableBody').insertAdjacentHTML('beforeend', row);
+        }
+
+        function removeRow(button) {
+            button.parentNode.parentNode.remove();
+        }
+
+        function addTransactions() {
+            const rows = document.querySelectorAll('#transactionTableBody tr');
+            rows.forEach(row => {
+                const entryId = row.querySelector('.entry-id').value;
+                const date = row.querySelector('.date').value;
+                const particular = row.querySelector('.particular').value;
+                const task = row.querySelector('.task').value;
+                const supplier = row.querySelector('.supplier').value;
+                const vat = row.querySelector('.vat').value;
+                const project = row.querySelector('.project').value;
+                const payee = row.querySelector('.payee').value;
+                const qty = parseInt(row.querySelector('.qty').value);
+                const amount = parseFloat(row.querySelector('.amount').value);
+                const total = qty * amount;
+
+                const newRow = `
+                    <tr>
+                        <td>${entryId}</td>
+                        <td>${date}</td>
+                        <td>${particular}</td>
+                        <td>${task}</td>
+                        <td>${supplier}</td>
+                        <td>${vat}</td>
+                        <td>${project}</td>
+                        <td>${payee}</td>
+                        <td>${qty}</td>
+                        <td>${amount.toFixed(2)}</td>
+                        <td>${total.toFixed(2)}</td>
+                    </tr>
+                `;
+                document.querySelector('#expenseTable tbody').insertAdjacentHTML('beforeend', newRow);
+            });
+            updateTotalCost();
+            document.getElementById('transactionTableBody').innerHTML = ''; // clear the transaction table
+        }
+
+        function updateTotalCost() {
+            const rows = document.querySelectorAll('#expenseTable tbody tr');
+            let totalCost = 0;
+            rows.forEach(row => {
+                const total = parseFloat(row.cells[10].innerText);
+                if (!isNaN(total)) {
+                    totalCost += total;
+                }
+            });
+            document.getElementById('totalCost').innerText = totalCost.toFixed(2);
+        }
+
+        function filterTasks() {
+            const filter = document.getElementById('taskFilter').value.toUpperCase();
+            const rows = document.getElementById('expenseTable').getElementsByTagName('tr');
+            for (let i = 1; i < rows.length; i++) {
+                let cell = rows[i].getElementsByTagName('td')[3]; // task column index
+                if (cell) {
+                    let txtValue = cell.textContent || cell.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'pt', 'a4');
+            const entryId = document.getElementById('downloadEntryId').value;
+            const rows = document.querySelectorAll(`#expenseTable tbody tr`);
+            const filteredRows = Array.from(rows).filter(row => row.cells[0].innerText === entryId);
+
+            if (filteredRows.length === 0) {
+                alert(`No transactions found with Entry ID ${entryId}.`);
+                return;
+            }
+
+            doc.text('Expense Report', 14, 16);
+            doc.autoTable({
+                head: [['ENTRY ID', 'DATE', 'PARTICULAR', 'TASK', 'SUPPLIER', 'VAT', 'PROJECT', 'PAYEE', 'QTY', 'AMOUNT', 'TOTAL']],
+                body: filteredRows.map(row => Array.from(row.cells).map(cell => cell.innerText)),
+                startY: 40,
+                theme: 'grid'
+            });
+
+            const totalCost = filteredRows.reduce((acc, row) => acc + parseFloat(row.cells[10].innerText), 0);
+            doc.text(`Total Amount: ${totalCost.toFixed(2)}`, 14, doc.lastAutoTable.finalY + 20);
+
+            doc.save(`expense_report_${entryId}.pdf`);
+        }
+
+        function archiveMonthlyTransactions() {
+            const archiveMonth = document.getElementById('archiveMonth').value;
+            if (!archiveMonth) {
+                alert('Please select a month to archive.');
+                return;
+            }
+
+            const month = new Date(archiveMonth).getMonth() + 1;
+            const year = new Date(archiveMonth).getFullYear();
+            const rows = document.querySelectorAll('#expenseTable tbody tr');
+            const archivedRows = [];
+
+            rows.forEach(row => {
+                const date = new Date(row.cells[1].innerText);
+                if (date.getMonth() + 1 === month && date.getFullYear() === year) {
+                    archivedRows.push(row);
+                    row.remove();
+                }
+            });
+
+            if (archivedRows.length > 0) {
+                const archiveKey = `archived_${year}_${month}`;
+                localStorage.setItem(archiveKey, JSON.stringify(archivedRows.map(row => ({
+                    entryId: row.cells[0].innerText,
+                    date: row.cells[1].innerText,
+                    particular: row.cells[2].innerText,
+                    task: row.cells[3].innerText,
+                    supplier: row.cells[4].innerText,
+                    vat: row.cells[5].innerText,
+                    project: row.cells[6].innerText,
+                    payee: row.cells[7].innerText,
+                    qty: row.cells[8].innerText,
+                    amount: row.cells[9].innerText,
+                    total: row.cells[10].innerText
+                }))));
+                updateTotalCost();
+                alert(`Transactions for ${archiveMonth} archived successfully.`);
+            } else {
+                alert(`No transactions found for ${archiveMonth}.`);
+            }
+        }
+
+        function viewArchivedMonths() {
+            const archivedMonthsList = document.getElementById('archivedMonthsList');
+            archivedMonthsList.innerHTML = '';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('archived_')) {
+                    const [_, year, month] = key.split('_');
+                    const date = new Date(year, month - 1);
+                    const listItem = document.createElement('li');
+                    listItem.textContent = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+                    archivedMonthsList.appendChild(listItem);
+
+                    // Add download button for each archived month
+                    const downloadButton = document.createElement('button');
+                    downloadButton.textContent = 'Download';
+                    downloadButton.classList.add('download-button');
+                    downloadButton.onclick = () => downloadArchivedMonth(year, month);
+                    listItem.appendChild(downloadButton);
+                }
+            }
+            document.getElementById('archivedMonthsContainer').style.display = 'block';
+        }
+
+        function downloadArchivedMonth(year, month) {
+            const archiveKey = `archived_${year}_${month}`;
+            const archivedData = JSON.parse(localStorage.getItem(archiveKey));
+
+            if (!archivedData) {
+                alert(`No archived data found for ${year}-${month}.`);
+                return;
+            }
+
+            let csvContent = "ENTRY ID,DATE,PARTICULAR,TASK,SUPPLIER,VAT,PROJECT,PAYEE,QTY,AMOUNT,TOTAL\n";
+            archivedData.forEach(row => {
+                csvContent += `${row.entryId},${row.date},${row.particular},${row.task},${row.supplier},${row.vat},${row.project},${row.payee},${row.qty},${row.amount},${row.total}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `archived_transactions_${year}_${month}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

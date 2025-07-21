@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMS | Material Usage History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; padding: 30px;}
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 10px 18px;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-label { font-weight: bold; margin-right: 8px; }
+    .filter-select, .filter-input { padding: 7px 12px; font-size: 15px; border-radius: 4px; border: 1px solid #bbb; }
+    .total-container {
+      font-weight: bold;
+      font-size: 1.08rem;
+      color: #1565c0;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    .edit-btn { padding: 5px 14px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .edit-btn:hover { background: #0d47a1; }
+    .reverse-btn { padding: 5px 14px; background: #b71c1c; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .reverse-btn[disabled] { background: #ccc; color: #888; cursor: not-allowed; }
+    .reverse-btn:hover:not([disabled]) { background: #d32f2f; }
+    .modal {
+      display: none; position: fixed; z-index: 99;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.3); align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #fff; border-radius: 7px; padding: 28px 28px 18px 28px; min-width: 300px; box-shadow: 0 2px 14px rgba(0,0,0,0.10);
+      position: relative;
+    }
+    .modal-content label { font-weight: bold; display: block; margin-bottom: 8px; }
+    .modal-content input[type="datetime-local"] { width: 100%; padding: 7px 10px; font-size: 16px; margin-bottom: 14px; border: 1px solid #bbb; border-radius: 4px; }
+    .modal-actions { text-align: right; display: flex; align-items: center; gap: 10px; }
+    .modal-actions button { margin-left: 8px; padding: 6px 18px; border: none; border-radius: 4px; font-size: 15px; }
+    .modal-actions .save-btn { background: #1976d2; color: #fff; }
+    .modal-actions .cancel-btn { background: #ccc; color: #222; }
+    .modal-actions .reverse-btn { background: #b71c1c; color: #fff; margin-left: auto; }
+    .modal-actions .save-btn:hover { background: #125195; }
+    .modal-actions .cancel-btn:hover { background: #888; }
+    .modal-actions .reverse-btn:hover:not([disabled]) { background: #d32f2f; }
+    .modal-actions .reverse-btn[disabled] { background: #ccc; color: #888; cursor: not-allowed; }
+    .modal-close { position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 22px; cursor: pointer; color: #888; }
+    .modal-close:hover { color: #222; }
+    #edit-modal-error { color: #c00; font-size: 0.97rem; margin-bottom: 7px; }
+    .btn.btn-outline{color: white; margin-right: 20PX;}
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading"><a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a> Usage/Assignment History</div>
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label" for="materialFilter">Material:</label>
+        <select id="materialFilter" class="filter-select">
+          <option value="">All</option>
+        </select>
+        <label class="filter-label" for="projectFilter">Project:</label>
+        <select id="projectFilter" class="filter-select">
+          <option value="">All</option>
+        </select>
+        <label class="filter-label" for="taskIdFilter">Task ID:</label>
+        <input id="taskIdFilter" class="filter-input" placeholder="Filter by Task ID"/>
+        <label class="filter-label" for="monthFilter">Month:</label>
+        <select id="monthFilter" class="filter-select">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="total-container">
+        TOTAL AMOUNT: <span id="total-assigned-value">-</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Material</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Amount</th>
+            <th>Project</th>
+            <th>Task ID</th>
+            <th>Task Description</th>
+            <th>Location</th>
+            <th>Assigned Personnel</th>
+            <th>Assigned At</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody id="usage-table-body"></tbody>
+      </table>
+    </div>
+    <div id="table-message"></div>
+  </div>
+
+  <!-- Edit Date/Time + Reverse Modal -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-modal-btn" title="Close">&times;</button>
+      <h3 style="margin-top:0;margin-bottom:17px;">Edit Assigned Date/Time</h3>
+      <div id="edit-modal-error"></div>
+      <form id="edit-modal-form">
+        <label for="edit-assignedAt">Assigned At:</label>
+        <input type="datetime-local" id="edit-assignedAt" required />
+        <div class="modal-actions">
+          <button type="button" class="reverse-btn" id="reverse-btn" data-docid="" data-materialid="" data-qty="">Reverse</button>
+          <button type="button" class="cancel-btn" id="cancel-edit-btn">Cancel</button>
+          <button type="submit" class="save-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      onSnapshot,
+      query,
+      orderBy,
+      getDoc,
+      doc,
+      updateDoc,
+      Timestamp,
+      runTransaction
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById('usage-table-body');
+    const materialFilter = document.getElementById('materialFilter');
+    const projectFilter = document.getElementById('projectFilter');
+    const taskIdFilter = document.getElementById('taskIdFilter');
+    const monthFilter = document.getElementById('monthFilter');
+    const totalAssignedValueCell = document.getElementById('total-assigned-value');
+
+    // Modal elements
+    const editModal = document.getElementById('edit-modal');
+    const editAssignedAtInput = document.getElementById('edit-assignedAt');
+    const editModalForm = document.getElementById('edit-modal-form');
+    const editModalError = document.getElementById('edit-modal-error');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const reverseBtn = document.getElementById('reverse-btn');
+
+    let allUsages = [];
+    let uniqueMaterials = new Set();
+    let uniqueProjects = new Set();
+    let uniqueMonths = new Set();
+
+    // For modal state
+    let currentEditDocId = null;
+    let currentMaterialId = null;
+    let currentQty = null;
+    let reverseDisabled = false;
+
+    // Local storage keys
+    const STORAGE_KEYS = {
+      material: "ims_material_filter",
+      project: "ims_project_filter",
+      taskId: "ims_taskid_filter",
+      month: "ims_month_filter"
+    };
+
+    function renderTable(usages) {
+      tableBody.innerHTML = "";
+      let row = 1;
+      let totalAssigned = 0;
+      usages.forEach(u => {
+        let projectName = u.projectName || "-";
+        let unitPrice = u.unitPrice !== undefined ? u.unitPrice : "-";
+        let amount = "-";
+        if (unitPrice !== "-" && u.quantity !== undefined) {
+          amount = parseFloat(unitPrice) * parseFloat(u.quantity);
+          totalAssigned += amount;
+          amount = amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+        }
+        let assignedPersonnel = u.assignedToName || "-";
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row}</td>
+          <td>${u.materialName || '-'}</td>
+          <td>${u.category || '-'}</td>
+          <td>${u.quantity || '-'}</td>
+          <td>${unitPrice !== "-" ? unitPrice : '-'}</td>
+          <td>${amount}</td>
+          <td>${projectName}</td>
+          <td>${u.taskId || '-'}</td>
+          <td>${u.taskDescription || '-'}</td>
+          <td>${u.location || '-'}</td>
+          <td>${assignedPersonnel}</td>
+          <td>${u.assignedAt ? u.assignedAt.toDate().toLocaleString() : '-'}</td>
+          <td>
+            <button class="edit-btn"
+              data-docid="${u._docId}"
+              data-current="${u.assignedAt ? u.assignedAt.toDate().toISOString().slice(0,16) : ''}"
+              data-materialid="${u.materialId || ''}"
+              data-qty="${u.quantity || 0}"
+              ${u.reversed ? "data-reversed='true'" : ""}
+            >Edit</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+        row++;
+      });
+
+      totalAssignedValueCell.textContent = totalAssigned ? totalAssigned.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-";
+
+      // Bind edit buttons (now includes reverse)
+      Array.from(tableBody.querySelectorAll('.edit-btn')).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const docId = btn.getAttribute('data-docid');
+          const currentVal = btn.getAttribute('data-current');
+          const materialId = btn.getAttribute('data-materialid');
+          const qty = btn.getAttribute('data-qty');
+          const isReversed = btn.getAttribute('data-reversed') === 'true';
+          showEditModal(docId, currentVal, materialId, qty, isReversed);
+        });
+      });
+    }
+
+    // Populate filter dropdowns
+    function updateMaterialFilter() {
+      const prevValue = getPersistedFilter("material");
+      materialFilter.innerHTML = `<option value="">All</option>`;
+      Array.from(uniqueMaterials).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        materialFilter.appendChild(option);
+      });
+      if ([...uniqueMaterials].includes(prevValue)) {
+        materialFilter.value = prevValue;
+      }
+    }
+
+    function updateProjectFilter() {
+      const prevValue = getPersistedFilter("project");
+      projectFilter.innerHTML = `<option value="">All</option>`;
+      Array.from(uniqueProjects).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        projectFilter.appendChild(option);
+      });
+      if ([...uniqueProjects].includes(prevValue)) {
+        projectFilter.value = prevValue;
+      }
+    }
+
+    function updateMonthFilter() {
+      const prevValue = getPersistedFilter("month");
+      monthFilter.innerHTML = `<option value="">All</option>`;
+      Array.from(uniqueMonths).sort((a, b) => b.localeCompare(a)).forEach(m => {
+        const option = document.createElement('option');
+        option.value = m;
+        option.textContent = m;
+        monthFilter.appendChild(option);
+      });
+      if ([...uniqueMonths].includes(prevValue)) {
+        monthFilter.value = prevValue;
+      }
+    }
+
+    // Persist and get filters
+    function persistFilter(name, value) {
+      localStorage.setItem(STORAGE_KEYS[name], value);
+    }
+    function getPersistedFilter(name) {
+      return localStorage.getItem(STORAGE_KEYS[name]) || "";
+    }
+
+    // Main snapshot
+    onSnapshot(query(collection(db, "materialsUsage"), orderBy("assignedAt", "desc")), async (snapshot) => {
+      allUsages = [];
+      uniqueMaterials = new Set();
+      uniqueProjects = new Set();
+      uniqueMonths = new Set();
+      const projectCache = {};
+      const materialCache = {};
+
+      const usageDocs = snapshot.docs;
+      for (const docSnap of usageDocs) {
+        const u = docSnap.data();
+        if (u.materialName) uniqueMaterials.add(u.materialName);
+        if (u.assignedAt && u.assignedAt.toDate) {
+          const d = u.assignedAt.toDate();
+          const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          uniqueMonths.add(monthStr);
+        }
+        if (u.projectId) {
+          if (!projectCache[u.projectId]) {
+            try {
+              const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
+              if (projSnap.exists()) {
+                projectCache[u.projectId] = projSnap.data().name || "-";
+              } else {
+                projectCache[u.projectId] = "-";
+              }
+            } catch { projectCache[u.projectId] = "-"; }
+          }
+        }
+        if (u.projectId) {
+          if (!projectCache[u.projectId]) {
+            try {
+              const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
+              if (projSnap.exists()) {
+                projectCache[u.projectId] = projSnap.data().name || "-";
+              } else {
+                projectCache[u.projectId] = "-";
+              }
+            } catch { projectCache[u.projectId] = "-"; }
+          }
+        }
+        if (u.materialId) {
+          if (!materialCache[u.materialId]) {
+            try {
+              const matSnap = await getDoc(doc(db, "materials", u.materialId));
+              if (matSnap.exists()) {
+                materialCache[u.materialId] = matSnap.data().unitPrice !== undefined ? matSnap.data().unitPrice : "-";
+              } else {
+                materialCache[u.materialId] = "-";
+              }
+            } catch { materialCache[u.materialId] = "-"; }
+          }
+        }
+      }
+
+      usageDocs.forEach(docSnap => {
+        const u = docSnap.data();
+        let usage = { ...u };
+        usage._docId = docSnap.id;
+        if (u.projectId) usage.projectName = projectCache[u.projectId] || "-";
+        if (u.projectId) uniqueProjects.add(projectCache[u.projectId] || "-");
+        if (u.materialId) usage.unitPrice = materialCache[u.materialId] !== undefined ? materialCache[u.materialId] : "-";
+        if (u.assignedAt && u.assignedAt.toDate) {
+          const d = u.assignedAt.toDate();
+          usage._month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+        allUsages.push(usage);
+      });
+
+      updateMaterialFilter();
+      updateProjectFilter();
+      updateMonthFilter();
+      restoreFiltersFromStorage();
+      applyFiltersAndRender();
+    });
+
+    // Filtering function (HIDE reversed entries)
+    function applyFiltersAndRender() {
+      let filtered = allUsages;
+      filtered = filtered.filter(u => !u.reversed);
+
+      const selectedMaterial = materialFilter.value;
+      const selectedProject = projectFilter.value;
+      const taskIdValue = taskIdFilter.value.trim().toLowerCase();
+      const selectedMonth = monthFilter.value;
+
+      if (selectedMaterial) {
+        filtered = filtered.filter(u => u.materialName === selectedMaterial);
+      }
+      if (selectedProject) {
+        filtered = filtered.filter(u => u.projectName === selectedProject);
+      }
+      if (taskIdValue) {
+        filtered = filtered.filter(u => (u.taskId || "").toLowerCase().includes(taskIdValue));
+      }
+      if (selectedMonth) {
+        filtered = filtered.filter(u => u._month === selectedMonth);
+      }
+      renderTable(filtered);
+    }
+
+    // Restore persisted filters on load
+    function restoreFiltersFromStorage() {
+      const mV = getPersistedFilter("material");
+      const pV = getPersistedFilter("project");
+      const tV = getPersistedFilter("taskId");
+      const moV = getPersistedFilter("month");
+      if (mV) materialFilter.value = mV;
+      if (pV) projectFilter.value = pV;
+      if (tV) taskIdFilter.value = tV;
+      if (moV) monthFilter.value = moV;
+    }
+
+    materialFilter.addEventListener('change', function() {
+      persistFilter("material", materialFilter.value);
+      applyFiltersAndRender();
+    });
+    projectFilter.addEventListener('change', function() {
+      persistFilter("project", projectFilter.value);
+      applyFiltersAndRender();
+    });
+    taskIdFilter.addEventListener('input', function() {
+      persistFilter("taskId", taskIdFilter.value);
+      applyFiltersAndRender();
+    });
+    monthFilter.addEventListener('change', function() {
+      persistFilter("month", monthFilter.value);
+      applyFiltersAndRender();
+    });
+    window.addEventListener('DOMContentLoaded', () => {
+      restoreFiltersFromStorage();
+      applyFiltersAndRender();
+    });
+
+    // --- Modal edit + reverse logic ---
+    function showEditModal(docId, currentValue, materialId, qty, isReversed) {
+      currentEditDocId = docId;
+      currentMaterialId = materialId;
+      currentQty = qty;
+      reverseDisabled = !!isReversed;
+      editModalError.textContent = "";
+      editAssignedAtInput.value = currentValue || "";
+
+      reverseBtn.setAttribute('data-docid', docId);
+      reverseBtn.setAttribute('data-materialid', materialId);
+      reverseBtn.setAttribute('data-qty', qty);
+      reverseBtn.disabled = reverseDisabled;
+      reverseBtn.textContent = reverseDisabled ? "Reversed" : "Reverse";
+
+      editModal.classList.add('active');
+      setTimeout(() => editAssignedAtInput.focus(), 120);
+    }
+    function hideEditModal() {
+      editModal.classList.remove('active');
+      currentEditDocId = null;
+      currentMaterialId = null;
+      currentQty = null;
+      reverseBtn.disabled = false;
+      editModalError.textContent = "";
+      editAssignedAtInput.value = "";
+    }
+    closeModalBtn.onclick = hideEditModal;
+    cancelEditBtn.onclick = hideEditModal;
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) hideEditModal();
+    });
+
+    editModalForm.onsubmit = async function(e) {
+      e.preventDefault();
+      editModalError.textContent = "";
+      if (!currentEditDocId) return;
+      const dtStr = editAssignedAtInput.value;
+      if (!dtStr) {
+        editModalError.textContent = "Please select a date and time.";
+        return;
+      }
+      let newDate;
+      try {
+        newDate = new Date(dtStr);
+        if (isNaN(newDate.getTime())) throw new Error();
+      } catch {
+        editModalError.textContent = "Invalid date/time format.";
+        return;
+      }
+      try {
+        await updateDoc(doc(db, "materialsUsage", currentEditDocId), {
+          assignedAt: Timestamp.fromDate(newDate)
+        });
+        hideEditModal();
+      } catch (err) {
+        editModalError.textContent = "Failed to update. " + (err.message || "");
+      }
+    };
+
+    reverseBtn.onclick = async function() {
+      const docId = reverseBtn.getAttribute('data-docid');
+      const materialId = reverseBtn.getAttribute('data-materialid');
+      const qty = parseFloat(reverseBtn.getAttribute('data-qty'));
+      if (!docId || !materialId || !qty) {
+        alert("Invalid entry for reversal.");
+        return;
+      }
+      if (reverseBtn.disabled) return;
+      if (!confirm(`Are you sure you want to reverse this entry?\nRestored Qty: ${qty}`)) return;
+      try {
+        await runTransaction(db, async (transaction) => {
+          const usageRef = doc(db, "materialsUsage", docId);
+          const matRef = doc(db, "materials", materialId);
+          const usageSnap = await transaction.get(usageRef);
+          const matSnap = await transaction.get(matRef);
+          if (!usageSnap.exists()) throw new Error("Usage not found");
+          if (!matSnap.exists()) throw new Error("Material not found");
+          if (usageSnap.data().reversed) throw new Error("Already reversed!");
+          let prevQty = matSnap.data().quantity || 0;
+          transaction.update(matRef, { quantity: prevQty + qty });
+          transaction.update(usageRef, { reversed: true, reversedAt: Timestamp.now() });
+        });
+        alert("Entry reversed and quantity restored!");
+        hideEditModal();
+      } catch (err) {
+        alert("Failed to reverse: " + (err.message || err));
+      }
+    };
+  </script>
+</body>
+</html>

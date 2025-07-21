@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Closed Sales</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .filter-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #28a745;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyClOZGykyDEgqssG423M6CLLKZ8sxrtAFk",
+            authDomain: "shop-a24bc.firebaseapp.com",
+            projectId: "shop-a24bc",
+            storageBucket: "shop-a24bc.firebasestorage.app",
+            messagingSenderId: "405250859058",
+            appId: "1:405250859058:web:27a464f5fef792cf5d1c2b",
+            measurementId: "G-CRY40TTYX2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const closedSalesCollection = collection(db, "closedSalesData");
+
+            async function displaySales(data) {
+                const tableBody = document.querySelector('table tbody');
+                tableBody.innerHTML = '';
+
+                data.forEach(sale => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${sale.date}</td>
+                        <td>${sale.code}</td>
+                        <td>${sale.itemName}</td>
+                        <td>${sale.quantity}</td>
+                        <td>${sale.price}</td>
+                        <td>${sale.amount.toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            async function filterSales() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                let salesQuery = closedSalesCollection;
+                if (startDate) {
+                    salesQuery = query(salesQuery, where("date", ">=", startDate));
+                }
+                if (endDate) {
+                    salesQuery = query(salesQuery, where("date", "<=", endDate));
+                }
+
+                const querySnapshot = await getDocs(salesQuery);
+                const filteredData = [];
+                querySnapshot.forEach(doc => {
+                    filteredData.push(doc.data());
+                });
+
+                displaySales(filteredData);
+            }
+
+            document.getElementById('startDate').addEventListener('change', filterSales);
+            document.getElementById('endDate').addEventListener('change', filterSales);
+
+            const querySnapshot = await getDocs(closedSalesCollection);
+            const closedSalesData = [];
+            querySnapshot.forEach(doc => {
+                closedSalesData.push(doc.data());
+            });
+
+            displaySales(closedSalesData); // Initial display
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Closed Sales</h2>
+        <div class="filter-container">
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate">
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Code</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Closed sales data will be populated here from Firestore -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

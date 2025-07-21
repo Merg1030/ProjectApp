@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMS | Weekly Purchases Table Entry</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; padding: 30px;}
+    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
+    .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .form-row label { font-weight: bold; }
+    .form-row input, .form-row select { padding: 7px 12px; font-size: 15px; border-radius: 4px; border: 1px solid #bbb; min-width: 120px;}
+    .form-row button { background: #1976d2; color: #fff; border: none; font-size: 15px; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+    .form-row button:hover { background: #125195; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
+    th { font-weight: 700; }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    #form-error { color: #c00; font-size: 0.97rem; margin-bottom: 7px; }
+    #toggle-form-btn {
+      margin-bottom: 16px; background: #1976d2; color: #fff; border: none;
+      font-size: 15px; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
+      transition: background 0.2s;
+    }
+    #toggle-form-btn:hover { background: #125195; }
+    .search-bar-container {
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .search-bar-container input[type="text"] {
+      padding: 8px 14px;
+      font-size: 16px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      min-width: 250px;
+      flex: 1;
+    }
+    .search-bar-container .fa-search {
+      color: #888;
+      font-size: 18px;
+    }
+    .readonly { background: #f5f5f5; color: #888; }
+    .hide { display: none !important; }
+    .pdf-btn-bar {
+      margin-bottom: 18px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .pdf-btn-bar label { font-weight: bold; font-size: 15px;}
+    .pdf-btn-bar input[type="date"] { font-size: 15px; padding: 7px 12px; border-radius: 4px; border: 1px solid #bbb;}
+    .pdf-btn-bar button { background: #4895ef; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .pdf-btn-bar button:hover { background: #4361ee; }
+    @media (max-width: 900px) {
+      .panel { padding: 3vw 1vw; }
+      table th, table td { white-space: nowrap; }
+      .form-row { flex-direction: column; }
+      .search-bar-container input[type="text"] { min-width: 110px; }
+      .pdf-btn-bar { flex-direction: column; align-items: stretch; gap: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">Weekly Purchases Table Entry</div>
+    <button id="toggle-form-btn" type="button">Add Entry</button>
+    <div class="search-bar-container">
+      <i class="fa fa-search"></i>
+      <input type="text" id="expenses-search" placeholder="Search by any field...">
+    </div>
+    <form id="expenses-form" autocomplete="off" class="hide">
+      <div class="form-row">
+        <div>
+          <label for="date">Date</label><br>
+          <input type="date" id="date" required>
+        </div>
+        <div>
+          <label for="particular">Particular</label><br>
+          <input type="text" id="particular" required>
+        </div>
+        <div>
+          <label for="project">Project</label><br>
+          <select id="project" required>
+            <option value="">--Choose Project--</option>
+          </select>
+        </div>
+        <div>
+          <label for="taskdesc">Task Description</label><br>
+          <select id="taskdesc" required disabled>
+            <option value="">--Choose Project First--</option>
+          </select>
+        </div>
+        <div>
+          <label for="taskid">Task ID</label><br>
+          <input type="text" id="taskid" required readonly class="readonly">
+        </div>
+        <div>
+          <label for="supplier">Supplier</label><br>
+          <input type="text" id="supplier" required>
+        </div>
+        <div>
+          <label for="payee">Payee</label><br>
+          <select id="payee" required>
+            <option value="">--Choose Payee--</option>
+            <option value="Hazida Limited">Hazida Limited</option>
+            <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
+            <option value="Freight and passengers Limited">Freight and passengers Limited</option>
+            <option value="Hazida motors limited">Hazida motors limited</option>
+          </select>
+        </div>
+        <div>
+          <label for="qty">Qty</label><br>
+          <input type="number" min="1" id="qty" required>
+        </div>
+        <div>
+          <label for="amount">Amount</label><br>
+          <input type="number" min="0" id="amount" required>
+        </div>
+        <div>
+          <label for="total">Total</label><br>
+          <input type="number" id="total" readonly class="readonly">
+        </div>
+        <div style="align-self: flex-end;">
+          <button type="submit">Save Entry</button>
+        </div>
+      </div>
+      <div id="form-error"></div>
+    </form>
+
+    <div class="pdf-btn-bar">
+      <label>Select Week (Monday):</label>
+      <input type="date" id="week-monday" />
+      <button id="generate-pdf-btn" type="button"><i class="fa fa-file-pdf-o"></i> Weekly PDF Report</button>
+    </div>
+
+    <div class="table-responsive">
+      <table id="expenses-table">
+        <thead>
+          <tr>
+            <th>DATE</th>
+            <th>PARTICULAR</th>
+            <th>PROJECT</th>
+            <th>TASK DESCRIPTION</th>
+            <th>TASK ID</th>
+            <th>SUPPLIER</th>
+            <th>PAYEE</th>
+            <th>QTY</th>
+            <th>AMOUNT</th>
+            <th>TOTAL</th>
+            <th>BALANCE</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- jsPDF & autotable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+  <!-- Firestore scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      Timestamp,
+      getDocs,
+      where
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- Elements ---
+    const expensesForm = document.getElementById("expenses-form");
+    const tableBody = document.getElementById("table-body");
+    const formError = document.getElementById("form-error");
+    const toggleFormBtn = document.getElementById("toggle-form-btn");
+    const projectSelect = document.getElementById("project");
+    const taskDescSelect = document.getElementById("taskdesc");
+    const taskIdInput = document.getElementById("taskid");
+    const qtyInput = document.getElementById("qty");
+    const amountInput = document.getElementById("amount");
+    const totalInput = document.getElementById("total");
+    const searchInput = document.getElementById("expenses-search");
+    const weekMondayInput = document.getElementById("week-monday");
+    const generatePdfBtn = document.getElementById("generate-pdf-btn");
+
+    // Hide/unhide form logic
+    let formVisible = false;
+    expensesForm.classList.add("hide");
+    toggleFormBtn.textContent = "Add Entry";
+    toggleFormBtn.onclick = function() {
+      formVisible = !formVisible;
+      expensesForm.classList.toggle("hide", !formVisible);
+      toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Entry";
+    };
+
+    // Load projects into dropdown and cache project info
+    let projectInfo = {};
+    function loadProjectsForDropdown() {
+      onSnapshot(collection(db, "projectDashboard"), (snap) => {
+        let html = `<option value="">--Choose Project--</option>`;
+        projectInfo = {};
+        snap.forEach(doc => {
+          const data = doc.data();
+          html += `<option value="${doc.id}">${data.name}</option>`;
+          projectInfo[doc.id] = data.name;
+        });
+        projectSelect.innerHTML = html;
+      }, (err) => {
+        projectSelect.innerHTML = `<option value="">--Error Loading Projects--</option>`;
+        projectSelect.disabled = true;
+      });
+    }
+    loadProjectsForDropdown();
+
+    // When project is selected, load tasks for that project and populate Task Description
+    projectSelect.addEventListener("change", async function() {
+      const projId = projectSelect.value;
+      taskDescSelect.innerHTML = "";
+      taskDescSelect.disabled = true;
+      taskIdInput.value = "";
+      if (!projId) {
+        taskDescSelect.innerHTML = `<option value="">--Choose Project First--</option>`;
+        return;
+      }
+
+      // Query for tasks for this project
+      const tasksQuery = query(
+        collection(db, "projectTasks"),
+        where("projectId", "==", projId)
+      );
+      const snapshot = await getDocs(tasksQuery);
+
+      if (snapshot.empty) {
+        taskDescSelect.innerHTML = `<option value="">--No Tasks--</option>`;
+        return;
+      }
+
+      let options = `<option value="">--Choose Task Description--</option>`;
+      let taskMap = {};
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.taskId && data.taskDescription) {
+          options += `<option value="${data.taskDescription}">${data.taskDescription}</option>`;
+          taskMap[data.taskDescription] = data.taskId;
+        }
+      });
+      taskDescSelect.innerHTML = options;
+      taskDescSelect.disabled = false;
+      taskDescSelect._idMap = taskMap;
+    });
+
+    // When a Task Description is chosen, auto-populate task id
+    taskDescSelect.addEventListener("change", function() {
+      const taskDesc = this.value;
+      const map = this._idMap || {};
+      taskIdInput.value = (taskDesc && map[taskDesc]) ? map[taskDesc] : "";
+    });
+
+    // Auto-calculate total (qty * amount) in real-time
+    function updateTotalInForm() {
+      const qty = parseFloat(qtyInput.value);
+      const amount = parseFloat(amountInput.value);
+      if (!isNaN(qty) && !isNaN(amount)) {
+        totalInput.value = (qty * amount).toFixed(2);
+      } else {
+        totalInput.value = "";
+      }
+    }
+    qtyInput.addEventListener('input', updateTotalInForm);
+    amountInput.addEventListener('input', updateTotalInForm);
+
+    // --- Week Filtering Persistence ---
+    function getCurrentMonday() {
+      const now = new Date();
+      const day = now.getDay();
+      const diffToMonday = (day === 0 ? -6 : 1) - day;
+      now.setDate(now.getDate() + diffToMonday);
+      return now.toISOString().slice(0,10);
+    }
+
+    // On load, set weekMondayInput to localStorage if exists, else current week
+    if (localStorage.getItem('selectedWeekMonday')) {
+      weekMondayInput.value = localStorage.getItem('selectedWeekMonday');
+    } else {
+      weekMondayInput.value = getCurrentMonday();
+    }
+
+    weekMondayInput.addEventListener("change", function() {
+      localStorage.setItem('selectedWeekMonday', this.value);
+      filterAndRenderForSelectedWeek();
+    });
+
+    function getMondayAndSaturday(selectedMonday) {
+      const monday = new Date(selectedMonday);
+      const saturday = new Date(monday);
+      saturday.setDate(monday.getDate() + 5);
+      return {
+        monday: monday.toISOString().slice(0,10),
+        saturday: saturday.toISOString().slice(0,10)
+      };
+    }
+    function filterAndRenderForSelectedWeek() {
+      const selectedMonday = weekMondayInput.value;
+      if (!selectedMonday) {
+        renderTable(globalEntries);
+        return;
+      }
+      const { monday, saturday } = getMondayAndSaturday(selectedMonday);
+      const weekEntries = globalEntries.filter(entry => {
+        if (!entry.date) return false;
+        return entry.date >= monday && entry.date <= saturday;
+      });
+      renderTable(weekEntries);
+    }
+
+    // --- Search Logic (within filtered week) ---
+    let globalEntries = [];
+    function renderTable(entries) {
+      tableBody.innerHTML = "";
+      let runningTotal = 0;
+      entries.forEach(data => {
+        const rowTotal = (parseFloat(data.qty) || 0) * (parseFloat(data.amount) || 0);
+        runningTotal += rowTotal;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${data.date || "-"}</td>
+          <td>${data.particular || "-"}</td>
+          <td>${data.project || "-"}</td>
+          <td>${data.taskdesc || "-"}</td>
+          <td>${data.taskid || "-"}</td>
+          <td>${data.supplier || "-"}</td>
+          <td>${data.payee || "-"}</td>
+          <td>${data.qty || "-"}</td>
+          <td>${data.amount || "-"}</td>
+          <td>${rowTotal ? rowTotal.toFixed(2) : "-"}</td>
+          <td>${runningTotal ? runningTotal.toFixed(2) : "-"}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      if (entries.length > 0) {
+        const tr = document.createElement("tr");
+        tr.style.fontWeight = "bold";
+        tr.innerHTML = `
+          <td></td>
+          <td>TOTAL</td>
+          <td colspan="8"></td>
+          <td>${runningTotal.toFixed(2)}</td>
+        `;
+        tableBody.appendChild(tr);
+      }
+    }
+    function filterEntries(searchString) {
+      searchString = (searchString || "").toLowerCase().trim();
+      const selectedMonday = weekMondayInput.value;
+      if (!selectedMonday) {
+        renderTable(globalEntries);
+        return;
+      }
+      const { monday, saturday } = getMondayAndSaturday(selectedMonday);
+      const weekEntries = globalEntries.filter(entry => {
+        if (!entry.date) return false;
+        return entry.date >= monday && entry.date <= saturday;
+      });
+      if (!searchString) {
+        renderTable(weekEntries);
+        return;
+      }
+      const filtered = weekEntries.filter(data =>
+        Object.values(data).some(val =>
+          (val !== null && val !== undefined && val.toString().toLowerCase().includes(searchString))
+        )
+      );
+      renderTable(filtered);
+    }
+    searchInput.addEventListener("input", (e) => {
+      filterEntries(e.target.value);
+    });
+
+    // Listen for real-time updates
+    onSnapshot(
+      query(collection(db, "ExpensesEntryTable"), orderBy("createdAt")),
+      (snapshot) => {
+        globalEntries = [];
+        snapshot.forEach(doc => {
+          globalEntries.push(doc.data());
+        });
+        filterAndRenderForSelectedWeek();
+      }
+    );
+
+    // Save entry to Firestore and update table
+    expensesForm.onsubmit = async (e) => {
+      e.preventDefault();
+      formError.textContent = "";
+
+      const date = document.getElementById("date").value;
+      const particular = document.getElementById("particular").value.trim();
+      const projectId = projectSelect.value;
+      const project = projectId && projectInfo[projectId] ? projectInfo[projectId] : "";
+      const taskdesc = taskDescSelect.value;
+      const taskid = taskIdInput.value.trim();
+      const supplier = document.getElementById("supplier").value.trim();
+      const payee = document.getElementById("payee").value;
+      const qty = parseFloat(qtyInput.value);
+      const amount = parseFloat(amountInput.value);
+      const total = parseFloat(totalInput.value);
+
+      if (!date || !particular || !project || !taskdesc || !taskid || !supplier || !payee || isNaN(qty) || isNaN(amount) || total === "" || isNaN(total)) {
+        formError.textContent = "Please fill all fields correctly.";
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "ExpensesEntryTable"), {
+          date,
+          particular,
+          project,
+          taskdesc,
+          taskid,
+          supplier,
+          payee,
+          qty,
+          amount,
+          total,
+          createdAt: Timestamp.now()
+        });
+        expensesForm.reset();
+        taskDescSelect.innerHTML = `<option value="">--Choose Project First--</option>`;
+        taskDescSelect.disabled = true;
+        taskIdInput.value = "";
+        totalInput.value = "";
+      } catch (err) {
+        formError.textContent = "Error saving entry: " + (err.message || err);
+      }
+    };
+
+    // --- PDF Weekly Report Logic ---
+    generatePdfBtn.onclick = function() {
+      const selectedMonday = weekMondayInput.value;
+      if (!selectedMonday) {
+        alert("Please select a Monday date for the week.");
+        return;
+      }
+      const { monday, saturday } = getMondayAndSaturday(selectedMonday);
+      const weekEntries = globalEntries.filter(entry => {
+        if (!entry.date) return false;
+        return entry.date >= monday && entry.date <= saturday;
+      });
+
+      if (!weekEntries.length) {
+        alert("No purchases found for the selected week.");
+        return;
+      }
+
+      // Prepare PDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const weekLabel = `${monday} to ${saturday}`;
+      doc.text(`Weekly Purchases Report: ${weekLabel}`, 14, 18);
+
+      let runningTotal = 0;
+      const rows = weekEntries.map((data, idx) => {
+        const rowTotal = (parseFloat(data.qty) || 0) * (parseFloat(data.amount) || 0);
+        runningTotal += rowTotal;
+        return [
+          idx + 1,
+          data.date || "",
+          data.particular || "",
+          data.project || "",
+          data.taskdesc || "",
+          data.taskid || "",
+          data.supplier || "",
+          data.payee || "",
+          data.qty || "",
+          data.amount || "",
+          rowTotal ? rowTotal.toFixed(2) : "",
+          runningTotal ? runningTotal.toFixed(2) : ""
+        ];
+      });
+
+      doc.autoTable({
+        head: [[
+          "#", "Date", "Particular", "Project", "Task Desc", "Task ID", "Supplier", "Payee", "Qty", "Amount", "Total", "Balance"
+        ]],
+        body: rows,
+        startY: 28,
+        styles: { fontSize: 9 }
+      });
+
+      doc.save(`Weekly_Purchases_${weekLabel}.pdf`);
+    };
+  </script>
+</body>
+</html>

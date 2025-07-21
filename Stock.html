@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory List</title>
+  <style>
+    /* Dark Mode Styling */
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    th {
+      background-color: #333;
+      color: #ffffff;
+    }
+
+    tr:hover {
+      background-color: #1e1e1e;
+    }
+
+    button {
+      background-color: #8e8f91;
+      color: #121212;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #4d7aff;
+    }
+
+    #issueForm {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #issueForm input, #issueForm select {
+      padding: 10px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background-color: #1e1e1e;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Inventory List</h1>
+
+  <!-- Buttons -->
+  <button id="addProductButton">Add New Product</button>
+  <button id="issueProductButton">Issue Product</button>
+  <button id="restockProductButton" onclick="window.location.href='Restock.html'">Restock Product</button>
+
+  <!-- Form to Issue Product -->
+  <div id="issueForm">
+    <h2>Issue Product</h2>
+    <form id="issueProductForm">
+      <input type="date" id="issueDate" required>
+      <input type="text" id="taskId" placeholder="Task ID" required>
+      <input type="text" id="person" placeholder="Person" required>
+      <select id="productSelect" required>
+        <!-- Options will be populated dynamically -->
+      </select>
+      <input type="number" id="requestedQty" placeholder="Requested Quantity" required>
+      <button type="submit">Issue</button>
+    </form>
+  </div>
+
+  <!-- Table to Display Inventory -->
+  <table id="inventoryTable">
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Received Qty</th>
+        <th>Requested Qty</th>
+        <th>Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Data will be populated dynamically -->
+    </tbody>
+  </table>
+
+  <script type="module">
+    // Import Firebase and Firestore
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load Inventory Data from Firestore
+    async function loadInventory() {
+      const querySnapshot = await getDocs(collection(db, "inventory"));
+      const inventoryTable = document.getElementById('inventoryTable').getElementsByTagName('tbody')[0];
+      inventoryTable.innerHTML = ""; // Clear existing rows
+
+      const inventoryData = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        inventoryData.push(data);
+      });
+
+      // Sort inventory data alphabetically by product name
+      inventoryData.sort((a, b) => a.productName.localeCompare(b.productName));
+
+      for (const data of inventoryData) {
+        // Fetching requested quantity for each product
+        const requestedQtyQuery = query(collection(db, "materialHistory"), where("product", "==", data.productName));
+        const requestedQtySnapshot = await getDocs(requestedQtyQuery);
+
+        let totalRequestedQty = 0;
+        requestedQtySnapshot.forEach((requestedDoc) => {
+          totalRequestedQty += requestedDoc.data().requestedQty;
+        });
+
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+          <td>${data.productName}</td>
+          <td>${data.receivedQty}</td>
+          <td>${totalRequestedQty}</td>
+          <td>${data.receivedQty - totalRequestedQty}</td>
+        `;
+        inventoryTable.appendChild(newRow);
+      }
+    }
+
+    // Add New Product to Firestore
+    document.getElementById('addProductButton').addEventListener('click', async () => {
+      const productName = prompt("Enter Product Name:");
+      if (productName) {
+        const receivedQty = parseInt(prompt("Enter Received Quantity:")) || 0;
+
+        try {
+          await addDoc(collection(db, "inventory"), {
+            productName,
+            receivedQty,
+          });
+          alert("Product added successfully!");
+          loadInventory(); // Refresh the table
+        } catch (error) {
+          console.error("Error adding product: ", error);
+        }
+      }
+    });
+
+    // Show Issue Form
+    document.getElementById('issueProductButton').addEventListener('click', async () => {
+      document.getElementById('issueForm').style.display = 'block';
+      const productSelect = document.getElementById('productSelect');
+      productSelect.innerHTML = ""; // Clear existing options
+
+      const querySnapshot = await getDocs(collection(db, "inventory"));
+      const productOptions = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        productOptions.push(data);
+      });
+
+      // Sort product options alphabetically by product name
+      productOptions.sort((a, b) => a.productName.localeCompare(b.productName));
+
+      for (const data of productOptions) {
+        const option = document.createElement('option');
+        option.value = data.productName;
+        option.textContent = data.productName;
+        productSelect.appendChild(option);
+      }
+    });
+
+    // Issue Product
+    document.getElementById('issueProductForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const issueDate = document.getElementById('issueDate').value;
+      const taskId = document.getElementById('taskId').value;
+      const person = document.getElementById('person').value;
+      const product = document.getElementById('productSelect').value;
+      const requestedQty = parseInt(document.getElementById('requestedQty').value);
+
+      try {
+        // Add to materialHistory collection
+        await addDoc(collection(db, "materialHistory"), {
+          date: issueDate,
+          taskId,
+          person,
+          product,
+          requestedQty,
+        });
+
+        alert("Product issued successfully!");
+        loadInventory(); // Refresh the table
+        document.getElementById('issueForm').style.display = 'none'; // Hide the form
+      } catch (error) {
+        console.error("Error issuing product: ", error);
+      }
+    });
+
+    // Load Inventory Data on Page Load
+    loadInventory();
+    // Inactivity timeout
+        let inactivityTimeout;
+        function resetInactivityTimeout() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(() => {
+                logout();
+            }, 600000); // 10 minutes
+        }
+
+        // Set up inactivity timer
+        resetInactivityTimeout();
+        document.addEventListener('mousemove', resetInactivityTimeout);
+        document.addEventListener('keypress', resetInactivityTimeout);
+        document.addEventListener('click', resetInactivityTimeout);
+        document.addEventListener('touchstart', resetInactivityTimeout);
+
+        // Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable specific keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c')) || e.key === 'F12') {
+                e.preventDefault();
+            }
+        });
+  </script>
+</body>
+</html>

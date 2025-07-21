@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Add Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-analytics.js"></script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penta Construction Login</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: url('Photos/CANVA.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .login-container {
+      background: rgba(8, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 300px;
+    }
+
+    .login {
+      display: block;
+      margin: 0 auto 20px;
+      width: 150px;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .password-container input {
+      padding-right: 40px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 1.2em;
+      color: #ccc;
+    }
+
+    .warning {
+      color: red;
+      margin-top: 10px;
+      display: none;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .penta {
+      color: white;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Initialize Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",
+      authDomain: "project-app-58ff6.firebaseapp.com",
+      databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com",
+      projectId: "project-app-58ff6",
+      storageBucket: "project-app-58ff6.appspot.com",
+      messagingSenderId: "586923989952",
+      appId: "1:586923989952:web:72b300dbc00d830e2e4625",
+      measurementId: "G-HV80KTBWSR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const analytics = getAnalytics(app);
+
+    // Function to handle login
+    async function login() {
+      const username = document.getElementById("username").value.trim().toLowerCase();
+      const password = document.getElementById("password").value;
+      const warningMessage = document.getElementById("warningMessage");
+
+      const validUsers = [
+        { username: "faiyaz mulla", password: "PENTACON" },
+        { username: "chishela", password: "PENTACON" }
+      ];
+
+      const isValid = validUsers.some(user => user.username === username && user.password === password);
+
+      if (isValid) {
+        console.log("Valid login detected, redirecting to dashboard...");
+
+        // Save login attempt data to Firebase
+        const loginRef = ref(database, 'loginAttempts');
+        push(loginRef, {
+          username: username,
+          timestamp: new Date().toISOString()
+        });
+
+        // Replace current history entry and prevent forward navigation
+        window.history.replaceState(null, null, window.location.href);
+        window.location.href = 'dashboard.html';
+        
+        // Add another state to prevent forward navigation
+        setTimeout(() => {
+          window.history.pushState(null, null, 'dashboard.html');
+        }, 0);
+      } else {
+        console.log("Invalid login attempt");
+        warningMessage.style.display = "block"; // Show warning message
+      }
+    }
+
+    // Function to toggle password visibility
+    function togglePasswordVisibility() {
+      const passwordField = document.getElementById("password");
+      const toggleIcon = document.getElementById("togglePasswordIcon");
+
+      if (passwordField.type === "password") {
+        passwordField.type = "text";
+        toggleIcon.textContent = "🙈"; // Change to "hide" icon
+      } else {
+        passwordField.type = "password";
+        toggleIcon.textContent = "👁️"; // Change to "show" icon
+      }
+    }
+
+    // Export functions to global scope
+    window.login = login;
+    window.togglePasswordVisibility = togglePasswordVisibility;
+  </script>
+</head>
+
+<body>
+  <div class="login-container">
+    <img class="login" src="Photos/logo.png" alt="Penta Construction Logo">
+    <p class="penta">PENTA CONSTRUCTION</p>
+    <input type="text" id="username" placeholder="User Name">
+    <div class="password-container">
+      <input type="password" id="password" placeholder="Password">
+      <span class="toggle-password" id="togglePasswordIcon" onclick="togglePasswordVisibility()">👁️</span>
+    </div>
+    <p class="warning" id="warningMessage">Invalid username or password. Please try again.</p>
+    <button onclick="login()">Login</button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Work Hours</title>
+    <!-- Include Chart.js and jsPDF libraries from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <style>
+        canvas {
+            width: 100% !important; /* Make the chart width responsive */
+            max-width: 600px; /* Limit maximum width */
+            height: auto; /* Adjust the height proportionally */
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        #chartContainer {
+            overflow-x: auto; /* Allow horizontal scrolling */
+        }
+        body {
+            font-family: Arial, sans-serif; /* Better font for readability */
+        }
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Work Hours by Employees</h1>
+
+    <!-- Container for the chart -->
+    <div id="chartContainer">
+        <canvas id="hoursChart" width="400" height="300"></canvas>
+    </div>
+
+    <!-- Buttons -->
+    <button onclick="downloadPDF()">Download as PDF</button>
+    <button onclick="clearChart()">Clear Data for New Month</button>
+
+    <script>
+        // Data for the chart
+        const employees = [
+            "BRIGHTON MATOLOKOSH", "CAPHAS TEMBO", "CLISHA MAMBILIMA", "DABSON DAKA", "DANNY MVULA", 
+            "JAMES DAKA", "JOSEPH TEMBO", "LUCKSON PHIRI", "MICHEAL LOBELA", "OBERT SIAME", 
+            "DOMINIC SAKALA", "PETER MAWERE", "SAVIOUR PHIRI", "TEMBEYA SAKALA", "KELVIN SIAME"
+        ];
+        let actualWork = [0, 20, 0, 30, 0, 50, 45, 40, 0, 35, 40, 60, 0, 55, 50];
+        const maxHours = 180; // Maximum hours one should work in a month
+
+        // Calculate remaining work hours
+        let remainingWork = actualWork.map(work => maxHours - work);
+
+        // Create the stacked horizontal bar chart
+        const ctx = document.getElementById('hoursChart').getContext('2d');
+
+        const hoursChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: employees,
+                datasets: [
+                    {
+                        label: 'Actual Work',
+                        data: actualWork,
+                        backgroundColor: 'skyblue',
+                        borderColor: 'blue',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Remaining Work',
+                        data: remainingWork,
+                        backgroundColor: 'orange',
+                        borderColor: 'darkorange',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y', // Make the chart horizontal
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    legend: {
+                        position: 'top'
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: function(value, context) {
+                            const total = maxHours;
+                            const actual = actualWork[context.dataIndex];
+                            return `${actual} hours out of ${total}`;
+                        }
+                    }
+                },
+                responsive: true,
+                scales: {
+                    x: {
+                        stacked: true,
+                        beginAtZero: true
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            maxRotation: 0, // Prevent the labels from rotating
+                            minRotation: 0
+                        }
+                    }
+                }
+            },
+            plugins: [
+                {
+                    id: 'customLabels',
+                    afterDatasetsDraw(chart) {
+                        const { ctx, data } = chart;
+                        ctx.save();
+
+                        data.datasets[0].data.forEach((actual, index) => {
+                            const total = maxHours;
+                            const text = `${actual} hours out of ${total}`;
+                            const meta = chart.getDatasetMeta(0);
+                            const bar = meta.data[index];
+                            const position = bar.tooltipPosition();
+                            ctx.fillStyle = 'black';
+                            ctx.fillText(text, position.x + 10, position.y);
+                        });
+
+                        ctx.restore();
+                    }
+                }
+            ]
+        });
+
+        // Function to download the chart as a PDF
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            pdf.text('Work Hours by Employees', 10, 10);
+            pdf.addImage(hoursChart.toBase64Image(), 'PNG', 10, 20, 180, 100);
+            pdf.save('Employee_Work_Hours.pdf');
+        }
+
+        // Function to clear the chart data for a new month
+        function clearChart() {
+            actualWork = Array(employees.length).fill(0);
+            remainingWork = actualWork.map(work => maxHours - work);
+
+            hoursChart.data.datasets[0].data = actualWork;
+            hoursChart.data.datasets[1].data = remainingWork;
+            hoursChart.update();
+        }
+    </script>
+</body>
+</html>

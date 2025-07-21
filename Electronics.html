@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electronics Inventory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .toggle-button {
+            margin-bottom: 20px;
+        }
+        .form-container {
+            display: none; /* Hidden by default */
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyClOZGykyDEgqssG423M6CLLKZ8sxrtAFk",
+            authDomain: "shop-a24bc.firebaseapp.com",
+            projectId: "shop-a24bc",
+            storageBucket: "shop-a24bc.firebasestorage.app",
+            messagingSenderId: "405250859058",
+            appId: "1:405250859058:web:27a464f5fef792cf5d1c2b",
+            measurementId: "G-CRY40TTYX2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const inventoryCollection = collection(db, "electronicsInventoryData");
+
+            async function displayInventory() {
+                const inventoryTableBody = document.querySelector('#inventoryTable tbody');
+                inventoryTableBody.innerHTML = '';
+
+                const querySnapshot = await getDocs(inventoryCollection);
+                querySnapshot.forEach((doc) => {
+                    const item = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.code}</td>
+                        <td>${item.name}</td>
+                        <td>${item.price}</td>
+                        <td>${item.stock}</td>
+                        <td>${item.sold || 0}</td>
+                    `;
+                    inventoryTableBody.appendChild(row);
+                });
+            }
+
+            function toggleForm() {
+                const formContainer = document.querySelector('.form-container');
+                if (formContainer.style.display === 'none' || formContainer.style.display === '') {
+                    formContainer.style.display = 'block';
+                    document.querySelector('.toggle-button').textContent = 'Hide Form';
+                } else {
+                    formContainer.style.display = 'none';
+                    document.querySelector('.toggle-button').textContent = 'Show Form';
+                }
+            }
+
+            async function addItem(event) {
+                event.preventDefault();
+
+                const code = document.querySelector('#itemCode').value.trim().toUpperCase();
+                const name = document.querySelector('#itemName').value.trim();
+                const price = parseFloat(document.querySelector('#itemPrice').value);
+                const stock = parseInt(document.querySelector('#itemStock').value);
+
+                const newItem = { code, name, price, stock, sold: 0 };
+
+                // Add new item to Firestore
+                await addDoc(inventoryCollection, newItem);
+
+                displayInventory();
+
+                alert('Item added to inventory!');
+                event.target.reset();
+            }
+
+            displayInventory(); // Display existing inventory
+
+            window.toggleForm = toggleForm;
+            window.addItem = addItem;
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Electronics Inventory</h2>
+        <button class="toggle-button" onclick="toggleForm()">Show Form</button>
+        <div class="form-container">
+            <form onsubmit="addItem(event);">
+                <label for="itemCode">Item Code:</label>
+                <input type="text" id="itemCode" name="itemCode" required>
+                <label for="itemName">Item Name:</label>
+                <input type="text" id="itemName" name="itemName" required>
+                <label for="itemPrice">Item Price:</label>
+                <input type="number" id="itemPrice" name="itemPrice" step="0.01" required>
+                <label for="itemStock">Item Stock:</label>
+                <input type="number" id="itemStock" name="itemStock" required>
+                <button type="submit">Add Item</button>
+            </form>
+        </div>
+        
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>Product Code</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Sold</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Inventory data will be populated here from Firestore -->
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

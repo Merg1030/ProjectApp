@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firestore Journal</title>
+    <style>
+        /* General body styling */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif; /* Set Arial font */
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0; /* Light text */
+        }
+
+        /* Journal container */
+        .journal-container {
+          
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #1e1e1e; /* Slightly lighter dark mode */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Styling for the journal textarea */
+        textarea {
+            width: 100%;
+            height: 80vh;
+            background-color: #252525; /* Darker area for writing */
+            color: #ffffff; /* White text for notes */
+            border: 1px solid #333; /* Subtle border */
+            border-radius: 4px;
+            padding: 15px;
+            font-family: Arial, sans-serif; /* Set Arial font */
+            font-size: 16px;
+            resize: none; /* Prevent resizing */
+            outline: none; /* No outline on focus */
+            line-height: 1.5; /* Better readability */
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 600px) {
+            .journal-container {
+                margin: 20px;
+                padding: 10px;
+            }
+
+            textarea {
+                font-size: 14px;
+            }
+        }
+        .btn.btn-outline{color: white; margin-right: 20PX;}
+    </style>
+</head>
+<body>
+    <div class="journal-container">
+        <h1><a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a>construction notes</h1>
+        <textarea id="journalTextarea" placeholder="Start writing your journal here..." spellcheck="false"></textarea>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.firebasestorage.app",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Reference to the journal document
+        const journalDocRef = doc(db, "journal", "myJournal"); // Saves all text in a single document called "myJournal"
+
+        // DOM element
+        const journalTextarea = document.getElementById("journalTextarea");
+
+        // Load existing journal content from Firestore
+        const loadJournal = async () => {
+            try {
+                const docSnapshot = await getDoc(journalDocRef);
+                if (docSnapshot.exists()) {
+                    journalTextarea.value = docSnapshot.data().content; // Load content into textarea
+                }
+            } catch (error) {
+                console.error("Error loading journal: ", error);
+            }
+        };
+
+        // Save journal content to Firestore in real-time
+        const saveJournal = async () => {
+            try {
+                const content = journalTextarea.value;
+                await setDoc(journalDocRef, { content }); // Save the entire textarea content
+            } catch (error) {
+                console.error("Error saving journal: ", error);
+            }
+        };
+
+        // Load journal content when the page loads
+        window.addEventListener("load", loadJournal);
+
+        // Save journal content in real-time whenever it changes
+        journalTextarea.addEventListener("input", () => {
+            saveJournal();
+        });
+    </script>
+</body>
+</html>

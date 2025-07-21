@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Project Tasks | Task Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      body { font-family: 'Segoe UI', 'Roboto', sans-serif; background: #181a22; color: #e0e0e0; margin: 0; }
+      .container { margin: 0 auto; padding: 12px; }
+      .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
+      .btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 7px; font-weight: 500; cursor: pointer; text-decoration: none; border: none; font-size: 13px; transition: all 0.2s ease; }
+      .btn-outline { background: none; border: 1.2px solid #33394c; color: #4361ee; }
+      .btn-outline:hover { background: #23263a; }
+      .project-title { font-size: 19px; margin-bottom: 6px; color: #4361ee; font-weight: 600; }
+      .card { background: #23263a; padding: 14px 9px 6px 9px; border-radius: 7px; border: 1px solid #33394c; box-shadow: 0 2px 10px rgba(67, 97, 238, 0.07); margin-bottom: 20px; }
+      .filters-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 7px 7px 7px 7px; background: linear-gradient(90deg, #4361ee 0%, #4cc9f0 100%); border-radius: 7px; box-shadow: 0 1px 8px rgba(67, 97, 238, 0.08); }
+      .search-bar { display: flex; align-items: center; gap: 6px; background: #23263a; border-radius: 18px; padding: 4.5px 12px; box-shadow: 0 1px 4px rgba(67,97,238,0.05); flex: 1 1 200px; min-width: 170px; max-width: 240px; }
+      .search-bar input { border: none; background: none; color: #e0e0e0; font-size: 13.5px; width: 100%; outline: none; }
+      .search-bar i { color: #4361ee; }
+      .filter-group { display: flex; align-items: center; gap: 6px; background: #23263a; border-radius: 18px; padding: 4.5px 13px 4.5px 9px; box-shadow: 0 1px 4px rgba(67,97,238,0.04); flex: 1 1 120px; min-width: 110px; max-width: 185px; }
+      .filter-label { font-size: 13px; font-weight: 600; color: #4361ee; }
+      select { border: 1.2px solid #4361ee; border-radius: 12px; padding: 2.5px 7px; background: #23263a; color: #e0e0e0; font-size: 13px; min-width: 80px; }
+      select:focus { outline: none; border-color: #4cc9f0;}
+      .task-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .task-table th, .task-table td { padding: 6px 4px; border-bottom: 1px solid #33394c; }
+      .task-table th { background: #24263c; font-weight: 600; font-size: 12.7px; text-transform: uppercase; letter-spacing: 0.3px; }
+      .task-table tr:nth-child(even) { background: #1f2233;}
+      .task-table tr:hover { background: #2c314b;}
+      .status-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11.8px; font-weight: 600; }
+      .status-completed { background: rgba(76, 201, 240, 0.1); color: #4cc9f0; border: 1px solid #4cc9f0; }
+      .status-ongoing { background: rgba(248, 150, 30, 0.1); color: #f8961e; border: 1px solid #f8961e; }
+      .status-pending { background: rgba(108, 117, 125, 0.13); color: #6c757d; border: 1px solid #6c757d; }
+      .editable { cursor: pointer; border-radius: 5px; }
+      .editable:hover { background: rgba(67, 97, 238, 0.09);}
+      .editable-input, .editable-select { width: 100%; padding: 2px 4px !important; border-radius: 6px; border: 1.2px solid #4361ee; background: #23263a; color: #e0e0e0; font-size: 13px; }
+      .cost-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11.5px; font-weight: 600; background: rgba(67, 97, 238, 0.1); color: #4361ee; border: 1px solid #4361ee; }
+      .empty-state { text-align: center; padding: 16px; color: #e0e0e0; opacity: 0.7; }
+      .empty-state i { font-size: 34px; opacity: 0.5; }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <div class="header">
+            <a href="dashboard.html" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            <button class="btn btn-outline" id="toggleModeBtn"><i class="fas fa-moon"></i> Dark Mode</button>
+        </div>
+        <div class="filters-bar">
+            <div class="project-title">All Project Tasks</div>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search tasks...">
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Project:</span>
+                <select id="projectFilter"></select>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Status:</span>
+                <select id="statusFilter">
+                    <option value="">All</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="ONGOING">Ongoing</option>
+                    <option value="PENDING">Pending</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Month:</span>
+                <select id="monthFilter">
+                    <option value="">All</option>
+                    <option value="1">Jan</option>
+                    <option value="2">Feb</option>
+                    <option value="3">Mar</option>
+                    <option value="4">Apr</option>
+                    <option value="5">May</option>
+                    <option value="6">Jun</option>
+                    <option value="7">Jul</option>
+                    <option value="8">Aug</option>
+                    <option value="9">Sep</option>
+                    <option value="10">Oct</option>
+                    <option value="11">Nov</option>
+                    <option value="12">Dec</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Year:</span>
+                <select id="yearFilter">
+                    <option value="">All</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header" style="padding: 4px 0 8px 0;">
+                <h2 class="card-title" style="font-size:16px; margin:0; color:#4361ee; font-weight:500">
+                    <i class="fas fa-tasks"></i> All Tasks
+                </h2>
+            </div>
+            <div class="table-responsive">
+                <table class="task-table" id="taskTable">
+                    <thead>
+                        <tr>
+                            <th>PROJECT</th>
+                            <th>TASK ID</th>
+                            <th class="editable">TASK LINE</th>
+                            <th>DESCRIPTION</th>
+                            <th class="editable">ASSIGNED</th>
+                            <th class="editable">LOCATION</th>
+                            <th class="editable">STATUS</th>
+                            <th class="editable">START DATE</th>
+                            <th class="editable">END DATE</th>
+                            <th class="editable">DURATION</th>
+                            <th>MATERIAL COST</th>
+                            <th>MAN COST</th>
+                            <th>TOTAL COST</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskList"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <i class="fas fa-tasks"></i>
+                <p>No tasks found.</p>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+        authDomain: "project-task-588c4.firebaseapp.com",
+        projectId: "project-task-588c4",
+        storageBucket: "project-task-588c4.appspot.com",
+        messagingSenderId: "411882772509",
+        appId: "1:411882772509:web:08d613186c101a99f38ef4",
+        measurementId: "G-JMFLFYEM0F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const toggleModeBtn = document.getElementById('toggleModeBtn');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const monthFilter = document.getElementById('monthFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const projectFilter = document.getElementById('projectFilter');
+    const taskList = document.getElementById('taskList');
+    const emptyState = document.getElementById('emptyState');
+    const body = document.body;
+
+    // Theme toggle
+    toggleModeBtn.addEventListener('click', function() {
+        body.classList.toggle('light-mode');
+        if (body.classList.contains('light-mode')) {
+            this.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+            localStorage.setItem('theme', 'light');
+        } else {
+            this.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+    if (localStorage.getItem('theme') === 'light') {
+        body.classList.add('light-mode');
+        toggleModeBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+    } else {
+        toggleModeBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    function formatCurrency(amount, curr='ZMW') {
+        if (!amount && amount !== 0) return '';
+        const formatter = new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: curr || 'ZMW',
+            minimumFractionDigits: 2
+        });
+        return formatter.format(amount);
+    }
+    function getStatusBadge(status) {
+        if (!status) return '';
+        status = status.toUpperCase();
+        if (status === 'COMPLETED') return 'status-badge status-completed';
+        if (status === 'ONGOING') return 'status-badge status-ongoing';
+        return 'status-badge status-pending';
+    }
+
+    async function loadProjectsForFilter() {
+        const projectSnapshot = await getDocs(collection(db, "projectDashboard"));
+        projectFilter.innerHTML = `<option value="">All Projects</option>`;
+        projectSnapshot.forEach(doc => {
+            const project = doc.data();
+            projectFilter.innerHTML += `<option value="${doc.id}">${project.name || doc.id}</option>`;
+        });
+    }
+
+    function filterTasks(tasks, searchTerm, projectFilterVal, statusFilterVal, monthFilterVal, yearFilterVal) {
+        return tasks.filter(task => {
+            const matchesSearch = !searchTerm ||
+                (task.taskId && task.taskId.toLowerCase().includes(searchTerm)) ||
+                (task.taskDescription && task.taskDescription.toLowerCase().includes(searchTerm)) ||
+                (task.assignedTo && task.assignedTo.toLowerCase().includes(searchTerm)) ||
+                (task.status && task.status.toLowerCase().includes(searchTerm)) ||
+                (task.location && task.location.toLowerCase().includes(searchTerm)) ||
+                (task.comment && task.comment.toLowerCase().includes(searchTerm));
+            const matchesProject = !projectFilterVal || (task.projectId === projectFilterVal);
+            const matchesStatus = !statusFilterVal || (task.status && task.status.toUpperCase() === statusFilterVal.toUpperCase());
+            let matchesMonth = true;
+            if (monthFilterVal) {
+                const monthNum = parseInt(monthFilterVal);
+                if (task.startDate) {
+                    const date = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+                    matchesMonth = date.getMonth() + 1 === monthNum;
+                } else {
+                    matchesMonth = false;
+                }
+            }
+            let matchesYear = true;
+            if (yearFilterVal) {
+                const yearNum = parseInt(yearFilterVal);
+                if (task.startDate) {
+                    const date = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+                    matchesYear = date.getFullYear() === yearNum;
+                } else {
+                    matchesYear = false;
+                }
+            }
+            return matchesSearch && matchesProject && matchesStatus && matchesMonth && matchesYear;
+        });
+    }
+
+    const FILTER_STORAGE_KEY = "all-tasks-filter";
+    function saveFiltersToStorage() {
+        const filters = {
+            search: searchInput.value,
+            status: statusFilter.value,
+            month: monthFilter.value,
+            year: yearFilter.value,
+            project: projectFilter.value
+        };
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    }
+    function loadFiltersFromStorage() {
+        const filters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{}');
+        if (filters.search !== undefined) searchInput.value = filters.search;
+        if (filters.status !== undefined) statusFilter.value = filters.status;
+        if (filters.month !== undefined) monthFilter.value = filters.month;
+        if (filters.year !== undefined) yearFilter.value = filters.year;
+        if (filters.project !== undefined) projectFilter.value = filters.project;
+    }
+
+    let projectNameCache = {};
+
+    function makeEditable(cell, value, fieldName, taskId, isSelect = false, options = []) {
+        cell.innerHTML = '';
+        if (isSelect) {
+            const select = document.createElement('select');
+            select.className = 'editable-select';
+            options.forEach(option => {
+                const optElement = document.createElement('option');
+                optElement.value = option;
+                optElement.textContent = option;
+                if (value && value.toUpperCase() === option.toUpperCase()) {
+                    optElement.selected = true;
+                }
+                select.appendChild(optElement);
+            });
+            select.addEventListener('change', async () => {
+                await updateTaskField(taskId, fieldName, select.value);
+                const badgeClass = getStatusBadge(select.value);
+                cell.innerHTML = `<span class="${badgeClass}">${select.value}</span>`;
+            });
+            cell.appendChild(select);
+            select.focus();
+        } else {
+            const input = document.createElement('input');
+            input.type = (fieldName.includes('Date')) ? 'date'
+                        : (['materialCost'].includes(fieldName)) ? 'number'
+                        : 'text';
+            input.className = 'editable-input';
+            if (fieldName.includes('Date')) {
+                input.value = formatDateForInput(value) || '';
+            } else {
+                input.value = value || '';
+            }
+            if (['materialCost'].includes(fieldName)) {
+                input.step = '0.01';
+            }
+            input.addEventListener('blur', async () => {
+                let newValue = input.value;
+                if (['materialCost'].includes(fieldName)) {
+                    newValue = parseFloat(newValue) || 0;
+                } else if (fieldName.includes('Date') && newValue) {
+                    newValue = new Date(newValue);
+                }
+                await updateTaskField(taskId, fieldName, newValue);
+                if (['materialCost'].includes(fieldName)) {
+                    cell.innerHTML = newValue ? `<span class="cost-badge">${formatCurrency(newValue)}</span>` : '';
+                } else {
+                    cell.textContent = newValue || '';
+                }
+            });
+            input.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    let newValue = input.value;
+                    if (['materialCost'].includes(fieldName)) {
+                        newValue = parseFloat(newValue) || 0;
+                    } else if (fieldName.includes('Date') && newValue) {
+                        newValue = new Date(newValue);
+                    }
+                    await updateTaskField(taskId, fieldName, newValue);
+                    input.blur();
+                }
+            });
+            cell.appendChild(input);
+            input.focus();
+        }
+    }
+
+    async function updateTaskField(taskId, fieldName, value) {
+        try {
+            const taskRef = doc(db, "projectTasks", taskId);
+            if (value === '' && (fieldName === 'assignedTo' || fieldName === 'duration' || fieldName === 'comment' || fieldName === 'location')) {
+                value = null;
+            }
+            await updateDoc(taskRef, {
+                [fieldName]: value,
+                updatedAt: new Date()
+            });
+        } catch (error) {
+            console.error("Error updating task field: ", error);
+            alert("Error updating task. Please try again.");
+        }
+    }
+
+    // MATERIAL + GENERAL EXPENSES COST: Sum from materialsUsage and General expenses for the given taskId
+    let matExpCostUnsubscribers = [];
+    function subscribeMatExpCostForTask(taskId, cb, currency = 'ZMW') {
+        // Subscriptions for both collections
+        let matTotal = 0, expTotal = 0;
+        let matUnsub, expUnsub;
+        // Subscribe to materialsUsage
+        matUnsub = onSnapshot(query(collection(db, "materialsUsage"), where("taskId", "==", taskId)), async (snap) => {
+            let tempTotal = 0;
+            // Gather unit prices
+            const materialCache = {};
+            for (const docSnap of snap.docs) {
+                const d = docSnap.data();
+                if (d.reversed) continue;
+                if (d.materialId && materialCache[d.materialId] === undefined) {
+                    try {
+                        const matSnap = await getDoc(doc(db, "materials", d.materialId));
+                        materialCache[d.materialId] = matSnap.exists() ? matSnap.data().unitPrice : 0;
+                    } catch { materialCache[d.materialId] = 0; }
+                }
+            }
+            snap.forEach(doc => {
+                const d = doc.data();
+                if (d.reversed) return;
+                const qty = Number(d.quantity) || 0;
+                let unit = Number(d.unitPrice) || 0;
+                if ((!d.unitPrice || d.unitPrice === "-") && d.materialId && materialCache[d.materialId] !== undefined) {
+                    unit = Number(materialCache[d.materialId]) || 0;
+                }
+                tempTotal += qty * unit;
+            });
+            matTotal = tempTotal;
+            cb(matTotal + expTotal);
+        });
+        // Subscribe to General expenses
+        expUnsub = onSnapshot(query(collection(db, "General expenses"), where("taskId", "==", taskId)), (snap) => {
+            let tempTotal = 0;
+            snap.forEach(doc => {
+                const d = doc.data();
+                if (typeof d.amount === "number") tempTotal += d.amount;
+            });
+            expTotal = tempTotal;
+            cb(matTotal + expTotal);
+        });
+        return () => { matUnsub && matUnsub(); expUnsub && expUnsub(); };
+    }
+
+    // MAN COST
+    let manCostUnsubscribers = [];
+    function subscribeManCostForTask(taskId, cb, rate = 20) {
+        const q = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
+        return onSnapshot(q, (snap) => {
+            let totalMH = 0;
+            snap.forEach(doc => {
+                const d = doc.data();
+                if (d.mh && !isNaN(d.mh)) {
+                    totalMH += Number(d.mh);
+                }
+            });
+            cb(totalMH * rate);
+        });
+    }
+
+    async function loadAllTasks(searchTerm = '', projectFilterVal = '', statusFilterVal = '', monthFilterVal = '', yearFilterVal = '') {
+        manCostUnsubscribers.forEach(unsub => unsub());
+        manCostUnsubscribers = [];
+        matExpCostUnsubscribers.forEach(unsub => unsub());
+        matExpCostUnsubscribers = [];
+
+        const tasksQuery = query(collection(db, "projectTasks"));
+        onSnapshot(tasksQuery, async (snapshot) => {
+            const tasks = [];
+            snapshot.forEach(doc => {
+                tasks.push({ id: doc.id, ...doc.data() });
+            });
+
+            const projectIds = [...new Set(tasks.map(t => t.projectId).filter(Boolean))];
+            const missingIds = projectIds.filter(pid => !projectNameCache[pid]);
+            if (missingIds.length) {
+                await Promise.all(missingIds.map(async pid => {
+                    const docRef = doc(db, "projectDashboard", pid);
+                    const docSnap = await getDoc(docRef);
+                    projectNameCache[pid] = docSnap.exists() ? (docSnap.data().name || pid) : pid;
+                }));
+            }
+
+            const filteredTasks = filterTasks(tasks, searchInput.value.trim().toLowerCase(), projectFilter.value, statusFilter.value, monthFilter.value, yearFilter.value);
+            renderTasks(filteredTasks);
+        });
+    }
+
+    function renderTasks(tasks) {
+        manCostUnsubscribers.forEach(unsub => unsub());
+        manCostUnsubscribers = [];
+        matExpCostUnsubscribers.forEach(unsub => unsub());
+        matExpCostUnsubscribers = [];
+
+        taskList.innerHTML = '';
+        if (tasks.length === 0) {
+            emptyState.style.display = 'block';
+            return;
+        }
+        emptyState.style.display = 'none';
+        tasks.sort((a, b) => {
+            const ad = a.startDate ? (a.startDate.toDate ? a.startDate.toDate() : new Date(a.startDate)) : 0;
+            const bd = b.startDate ? (b.startDate.toDate ? b.startDate.toDate() : new Date(b.startDate)) : 0;
+            return bd - ad || (projectNameCache[a.projectId] || '').localeCompare(projectNameCache[b.projectId] || '');
+        });
+        tasks.forEach(task => {
+            const currency = task.currency || 'ZMW';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${projectNameCache[task.projectId] || task.projectId || ''}</td>
+                <td>${task.taskId || ''}</td>
+                <td class="editable" data-field="taskLine" data-taskid="${task.id}">${task.taskLine || ''}</td>
+                <td>${task.taskDescription || ''}</td>
+                <td class="editable" data-field="assignedTo" data-taskid="${task.id}">${task.assignedTo || ''}</td>
+                <td class="editable" data-field="location" data-taskid="${task.id}">${task.location || ''}</td>
+                <td class="editable" data-field="status" data-taskid="${task.id}">
+                    <span class="${getStatusBadge(task.status)}">${task.status || ''}</span>
+                </td>
+                <td class="editable" data-field="startDate" data-taskid="${task.id}">${formatDate(task.startDate) || ''}</td>
+                <td class="editable" data-field="endDate" data-taskid="${task.id}">${formatDate(task.endDate) || ''}</td>
+                <td class="editable" data-field="duration" data-taskid="${task.id}">${task.duration || ''}</td>
+                <td class="material-cost-cell" data-taskcode="${task.taskId}"><span style="opacity:0.7">Auto</span></td>
+                <td class="man-cost-cell" data-taskid="${task.id}" data-taskcode="${task.taskId}"><span style="opacity:0.7">Auto</span></td>
+                <td class="total-cost-cell" data-taskid="${task.id}" data-taskcode="${task.taskId}"><span style="opacity:0.7">Auto</span></td>
+            `;
+            taskList.appendChild(tr);
+
+            let matExpCost = 0, manCost = 0;
+            const unsubMatExp = subscribeMatExpCostForTask(task.taskId, (_matExpCost) => {
+                matExpCost = _matExpCost;
+                const matCostCell = tr.querySelector('.material-cost-cell');
+                if (matCostCell) {
+                    matCostCell.innerHTML = `<span class="cost-badge">${formatCurrency(matExpCost, currency)}</span>`;
+                }
+                const totalCostCell = tr.querySelector('.total-cost-cell');
+                if (totalCostCell) {
+                    totalCostCell.innerHTML = `<span class="cost-badge">${formatCurrency(matExpCost + manCost, currency)}</span>`;
+                }
+            }, currency);
+            matExpCostUnsubscribers.push(unsubMatExp);
+
+            const unsubMan = subscribeManCostForTask(task.taskId, (_manCost) => {
+                manCost = _manCost;
+                const manCostCell = tr.querySelector('.man-cost-cell');
+                if (manCostCell) {
+                    manCostCell.innerHTML = `<span class="cost-badge">${formatCurrency(manCost, currency)}</span>`;
+                }
+                const totalCostCell = tr.querySelector('.total-cost-cell');
+                if (totalCostCell) {
+                    totalCostCell.innerHTML = `<span class="cost-badge">${formatCurrency(matExpCost + manCost, currency)}</span>`;
+                }
+            });
+            manCostUnsubscribers.push(unsubMan);
+        });
+        document.querySelectorAll('.editable').forEach(cell => {
+            cell.addEventListener('click', function() {
+                const taskId = this.dataset.taskid;
+                const fieldName = this.dataset.field;
+                let currentValue = this.textContent.trim();
+                if (fieldName === 'status') {
+                    const span = this.querySelector('span');
+                    currentValue = span ? span.textContent.trim() : currentValue;
+                    makeEditable(this, currentValue, fieldName, taskId, true, ['COMPLETED', 'ONGOING', 'PENDING']);
+                } else if (fieldName === 'startDate' || fieldName === 'endDate') {
+                    const taskRef = doc(db, "projectTasks", taskId);
+                    getDoc(taskRef).then(doc => {
+                        const dateValue = doc.exists() ? formatDateForInput(doc.data()[fieldName]) : '';
+                        makeEditable(this, dateValue, fieldName, taskId);
+                    });
+                } else if (['materialCost'].includes(fieldName)) {
+                    const taskRef = doc(db, "projectTasks", taskId);
+                    getDoc(taskRef).then(doc => {
+                        if (doc.exists()) {
+                            const taskData = doc.data();
+                            const val = taskData[fieldName] || '';
+                            makeEditable(this, val, fieldName, taskId);
+                        }
+                    });
+                } else {
+                    makeEditable(this, currentValue, fieldName, taskId);
+                }
+            });
+        });
+    }
+
+    function handleFiltersChange() {
+        saveFiltersToStorage();
+        loadAllTasks(
+            searchInput.value.trim(),
+            projectFilter.value,
+            statusFilter.value,
+            monthFilter.value,
+            yearFilter.value
+        );
+    }
+
+    searchInput.addEventListener('input', handleFiltersChange);
+    projectFilter.addEventListener('change', handleFiltersChange);
+    statusFilter.addEventListener('change', handleFiltersChange);
+    monthFilter.addEventListener('change', handleFiltersChange);
+    yearFilter.addEventListener('change', handleFiltersChange);
+
+    await loadProjectsForFilter();
+    loadFiltersFromStorage();
+    loadAllTasks(
+        searchInput.value.trim(),
+        projectFilter.value,
+        statusFilter.value,
+        monthFilter.value,
+        yearFilter.value
+    );
+    </script>
+</body>
+</html>

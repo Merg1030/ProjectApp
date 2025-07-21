@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMS | Fixed Inventory</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
+    .panel {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(44,62,80,0.04);
+      margin: 40px auto;
+      padding: 30px;
+      position: relative;
+    }
+    .panel-heading {
+      background: #666363;
+      color: #fff;
+      padding: 18px 24px;
+      font-size: 1.16rem;
+      font-weight: bold;
+      border-radius: 8px 8px 0 0;
+      margin: 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .top-actions {
+      margin-bottom: 18px;
+      display: flex;
+      gap: 12px;
+      background: #fff;
+      position: sticky;
+      top: 60px;
+      z-index: 49;
+      padding-top: 6px;
+    }
+    .btn-action {
+      background: #1abc9c;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-action:hover { background: #16a085; }
+    .search-bar {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      position: sticky;
+      top: 110px;
+      z-index: 48;
+      padding-top: 6px;
+    }
+    .search-input {
+      padding: 9px 12px;
+      font-size: 15px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      width: 220px;
+    }
+    .search-btn {
+      padding: 9px 20px;
+      font-size: 15px;
+      border-radius: 4px;
+      border: none;
+      background: #2980b9;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .search-btn:hover { background: #1a5fa0; }
+    .table-responsive {
+      overflow-x: auto;
+      max-height: 68vh;
+      position: relative;
+      background: #fff;
+      border-radius: 0 0 8px 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 1200px;
+      position: relative;
+    }
+    th, td {
+      padding: 14px 12px;
+      text-align: left;
+      font-size: 15px;
+      background: inherit;
+    }
+    th {
+      font-weight: 700;
+      background: #666363;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+    }
+    tr:nth-child(even) { background: #f7fafc; }
+    tr:hover { background: #eafaf1; }
+    td:first-child, th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 61;
+      background: #e5e7eb;
+      color: #2c3e50;
+    }
+    th:first-child { z-index: 62; }
+    #table-message {
+      position: relative;
+      z-index: 20;
+    }
+    @media (max-width: 700px) {
+      .panel { padding: 5px; }
+      .panel-heading { padding: 11px 6px; font-size: 1rem; }
+      .top-actions { flex-direction: column; gap: 8px; top: 49px; }
+      .search-bar { flex-direction: column; align-items: stretch; gap: 5px; top: 130px; }
+      .search-input { width: 100%; }
+      table { min-width: 700px; }
+    }
+    .btn.btn-outline{color: white}
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">Fixed Inventory               <a href="dashboard.html" class="btn btn-outline">
+  <i class="fas fa-arrow-left"></i> Back
+</a></div>
+    <div class="top-actions panel-sticky-top">
+      <a href="K.html" class="btn-action"><i class="fa fa-plus"></i> Add Fixed Inventory</a>
+      <a href="fixedInventoryAuditLog.html" class="btn-action"><i class="fa fa-history"></i> Audit Log</a>
+    </div>
+    <div class="search-bar panel-sticky-top">
+      <input id="searchInput" class="search-input" type="text" placeholder="Search item, code, category, location, came from, brought by, delivery note..."/>
+      <button id="searchBtn" class="search-btn"><i class="fa fa-search"></i> Search</button>
+      <button id="clearBtn" class="search-btn" style="background:#8c9391"><i class="fa fa-times"></i> Clear</button>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Came From</th>
+            <th>Brought By</th>
+            <th>Delivery Note Number</th>
+            <th>Location</th>
+            <th>Added Date</th>
+          </tr>
+        </thead>
+        <tbody id="fixed-inventory-table-body">
+          <!-- Inventory here -->
+        </tbody>
+      </table>
+    </div>
+    <div id="table-message"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById('fixed-inventory-table-body');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    let inventoryData = [];
+
+    function renderInventory(data) {
+      tableBody.innerHTML = "";
+      let row = 1;
+      if(data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#e74c3c;font-weight:bold;">No results found.</td></tr>`;
+        return;
+      }
+      data.forEach(m => {
+        // Only show items not fully issued out (quantity > 0)
+        if (!m.quantity || m.quantity <= 0) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row++}</td>
+          <td>${m.itemCode || '-'}</td>
+          <td>${m.itemName || '-'}</td>
+          <td>${m.category || '-'}</td>
+          <td>${m.quantity || '-'}</td>
+          <td>${m.cameFrom || '-'}</td>
+          <td>${m.broughtBy || '-'}</td>
+          <td>${m.deliveryNoteNumber || '-'}</td>
+          <td>${m.location || '-'}</td>
+          <td>${m.createdAt ? m.createdAt.toDate().toLocaleString() : '-'}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+      // If after filtering, nothing rendered (all 0 quantity), show message:
+      if (tableBody.innerHTML.trim() === "") {
+        tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#e74c3c;font-weight:bold;">No items in stock.</td></tr>`;
+      }
+    }
+
+    function filterInventory() {
+      const q = searchInput.value.trim().toLowerCase();
+      if(!q) {
+        renderInventory(inventoryData);
+        return;
+      }
+      const filtered = inventoryData.filter(m =>
+        (m.itemCode && m.itemCode.toLowerCase().includes(q)) ||
+        (m.itemName && m.itemName.toLowerCase().includes(q)) ||
+        (m.category && m.category.toLowerCase().includes(q)) ||
+        (m.location && m.location.toLowerCase().includes(q)) ||
+        (m.cameFrom && m.cameFrom.toLowerCase().includes(q)) ||
+        (m.broughtBy && m.broughtBy.toLowerCase().includes(q)) ||
+        (m.deliveryNoteNumber && m.deliveryNoteNumber.toLowerCase().includes(q)) ||
+        (m.quantity !== undefined && String(m.quantity).includes(q)) ||
+        (m.createdAt && m.createdAt.toDate().toLocaleString().toLowerCase().includes(q))
+      );
+      renderInventory(filtered);
+    }
+
+    // Search on button click
+    searchBtn.addEventListener("click", filterInventory);
+    // Search on Enter key
+    searchInput.addEventListener("keydown", e => { if(e.key === "Enter") filterInventory(); });
+    // Clear search
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      renderInventory(inventoryData);
+    });
+
+    // Live data from Firestore
+    onSnapshot(query(collection(db, "fixedInventory"), orderBy("createdAt", "desc")), (snapshot) => {
+      inventoryData = [];
+      snapshot.forEach(doc => {
+        inventoryData.push(doc.data());
+      });
+      renderInventory(inventoryData);
+    });
+  </script>
+</body>
+</html>
