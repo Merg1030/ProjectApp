@@ -205,10 +205,6 @@
                         <span class="detail-label">SUPERVISOR:</span>
                         <span class="detail-value">Orscar mushimbi</span>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">DEADLINE:</span>
-                        <span class="detail-value deadline">30 August 2025</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -279,7 +275,7 @@
                                 <th>TASK ID</th>
                                 <th>TASK LINE</th>
                                 <th>DESCRIPTION</th>
-                                <th class="editable">ASSIGNED</th>
+                                <th>ASSIGNED</th>
                                 <th class="editable">STATUS</th>
                                 <th class="editable">START DATE</th>
                                 <th class="editable">END DATE</th>
@@ -324,7 +320,7 @@
 
 <script type="module">
    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-import { getFirestore, doc, collection, query, where, onSnapshot, addDoc, updateDoc, getDocs, getDoc, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { getFirestore, doc, collection, query, where, onSnapshot, addDoc, updateDoc, getDocs, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
 // Debugging function
 function debugLog(message, data = null) {
@@ -666,59 +662,6 @@ async function updateParentTaskStatusIfNeeded(mainTaskId) {
     }
 }
 
-// NEW: Move task to completed collection
-async function moveTaskToCompleted(task) {
-    try {
-        // Add to completed tasks collection
-        await addDoc(collection(db, "completedTasks"), {
-            ...task,
-            completedAt: new Date(),
-            updatedAt: new Date()
-        });
-        
-        // Delete from main tasks collection
-        await deleteDoc(doc(db, "projectTasks", task.id));
-        
-        // Delete all subtasks if any
-        if (task.subTasks && task.subTasks.length > 0) {
-            for (const subTask of task.subTasks) {
-                await deleteDoc(doc(db, "projectTasks", task.id, "subtasks", subTask.id));
-                
-                // Delete all sub-subtasks if any
-                if (subTask.subSubtasks && subTask.subSubtasks.length > 0) {
-                    for (const subSubTask of subTask.subSubtasks) {
-                        await deleteDoc(doc(db, "projectTasks", task.id, "subtasks", subTask.id, "subsubtasks", subSubTask.id));
-                    }
-                }
-            }
-        }
-        
-        debugLog("Task moved to completed successfully", task.taskId);
-    } catch (e) {
-        debugLog("Error moving task to completed", e);
-        alert("Error moving task to completed: " + e.message);
-    }
-}
-
-// NEW: Move task back from completed to main tasks
-async function moveTaskBackFromCompleted(task) {
-    try {
-        // Add back to main tasks collection
-        await addDoc(collection(db, "projectTasks"), {
-            ...task,
-            updatedAt: new Date()
-        });
-        
-        // Delete from completed tasks collection
-        await deleteDoc(doc(db, "completedTasks", task.id));
-        
-        debugLog("Task moved back from completed successfully", task.taskId);
-    } catch (e) {
-        debugLog("Error moving task back from completed", e);
-        alert("Error moving task back from completed: " + e.message);
-    }
-}
-
 async function loadAllTasks() {
     debugLog("Starting to load all tasks");
     
@@ -917,7 +860,7 @@ function makeEditableInput(cell, type, field, inputType='text') {
     input.className = 'editable-input';
     input.setAttribute('data-field', field);
 
-    if (field === 'taskDescription' || field === 'taskId' || field === 'assignedTo') {
+    if (field === 'taskDescription' || field === 'taskId') {
         input.style.textAlign = 'left';
     } else {
         input.style.textAlign = 'center';
@@ -960,22 +903,7 @@ function makeEditableSelect(cell, type, field) {
     cell.appendChild(select);
     select.focus();
     select.onblur = async () => {
-        const newStatus = select.value;
-        await saveEditable(cell, type, field, newStatus);
-        
-        // NEW: Handle moving task between completed and main tasks
-        const taskId = cell.dataset.mainid || cell.dataset.id;
-        const task = allTasks.find(t => t.id === taskId);
-        
-        if (task) {
-            if (newStatus === 'COMPLETED') {
-                // Move to completed tasks
-                await moveTaskToCompleted(task);
-            } else if (val.toUpperCase() === 'COMPLETED' && (newStatus === 'ONGOING' || newStatus === 'PENDING')) {
-                // Move back from completed to main tasks
-                await moveTaskBackFromCompleted(task);
-            }
-        }
+        await saveEditable(cell, type, field, select.value);
     };
     select.onchange = () => select.blur();
 }
@@ -1047,7 +975,7 @@ function renderTasks(tasks) {
             <td>${task.taskId || ''}</td>
             <td>${task.taskLine || ''}</td>
             <td>${task.taskDescription || ''}</td>
-            <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
+            <td>${task.assignedTo || ''}</td>
             <td class="editable" data-type="main" data-field="status" data-id="${task.id}">
                 <span class="${getStatusBadge(task.status)}">${task.status || ''}</span>
             </td>
@@ -1086,7 +1014,7 @@ function renderTasks(tasks) {
                         <td>${sub.taskId || ''}</td>
                         <td></td>
                         <td class="subtask-desc">${sub.taskDescription || ''}</td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
+                        <td>${sub.assignedTo || ''}</td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
                             <span class="${getStatusBadge(sub.status)}">${sub.status || ''}</span>
                         </td>
@@ -1119,7 +1047,7 @@ function renderTasks(tasks) {
                                 <td>${subsub.taskId || ''}</td>
                                 <td></td>
                                 <td class="subtask-desc" style="padding-left:40px">${subsub.taskDescription || ''}</td>
-                                <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${subsub.id}">${subsub.assignedTo || ''}</td>
+                                <td>${subsub.assignedTo || ''}</td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
                                     <span class="${getStatusBadge(subsub.status)}">${subsub.status || ''}</span>
                                 </td>
@@ -1176,8 +1104,8 @@ function renderTasks(tasks) {
             const field = this.dataset.field;
             if (field === 'status') {
                 makeEditableSelect(this, type, field);
-            } else if (field === 'startDate' || field === 'endDate' || field === 'assignedTo') {
-                makeEditableInput(this, type, field, field === 'assignedTo' ? 'text' : 'date');
+            } else if (field === 'startDate' || field === 'endDate') {
+                makeEditableInput(this, type, field, 'date');
             }
         };
     });
