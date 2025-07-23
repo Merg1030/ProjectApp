@@ -5,68 +5,296 @@
   <title>IMS | Material Usage History</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
-    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
-    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto; padding: 30px;}
-    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
-    .filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-      gap: 10px 18px;
-    }
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .filter-label { font-weight: bold; margin-right: 8px; }
-    .filter-select, .filter-input { padding: 7px 12px; font-size: 15px; border-radius: 4px; border: 1px solid #bbb; }
-    .total-container {
-      font-weight: bold;
-      font-size: 1.08rem;
-      color: #1565c0;
-      margin-left: auto;
-      white-space: nowrap;
-    }
-    .table-responsive { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th, td { padding: 14px 12px; text-align: left; font-size: 15px; }
-    th { font-weight: 700; }
-    tr:nth-child(even) { background: #f7fafc; }
-    tr:hover { background: #eafaf1; }
-    .edit-btn { padding: 5px 14px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-    .edit-btn:hover { background: #0d47a1; }
-    .reverse-btn { padding: 5px 14px; background: #b71c1c; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-    .reverse-btn[disabled] { background: #ccc; color: #888; cursor: not-allowed; }
-    .reverse-btn:hover:not([disabled]) { background: #d32f2f; }
-    .modal {
-      display: none; position: fixed; z-index: 99;
-      left: 0; top: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.3); align-items: center; justify-content: center;
-    }
-    .modal.active { display: flex; }
-    .modal-content {
-      background: #fff; border-radius: 7px; padding: 28px 28px 18px 28px; min-width: 300px; box-shadow: 0 2px 14px rgba(0,0,0,0.10);
-      position: relative;
-    }
-    .modal-content label { font-weight: bold; display: block; margin-bottom: 8px; }
-    .modal-content input[type="datetime-local"] { width: 100%; padding: 7px 10px; font-size: 16px; margin-bottom: 14px; border: 1px solid #bbb; border-radius: 4px; }
-    .modal-actions { text-align: right; display: flex; align-items: center; gap: 10px; }
-    .modal-actions button { margin-left: 8px; padding: 6px 18px; border: none; border-radius: 4px; font-size: 15px; }
-    .modal-actions .save-btn { background: #1976d2; color: #fff; }
-    .modal-actions .cancel-btn { background: #ccc; color: #222; }
-    .modal-actions .reverse-btn { background: #b71c1c; color: #fff; margin-left: auto; }
-    .modal-actions .save-btn:hover { background: #125195; }
-    .modal-actions .cancel-btn:hover { background: #888; }
-    .modal-actions .reverse-btn:hover:not([disabled]) { background: #d32f2f; }
-    .modal-actions .reverse-btn[disabled] { background: #ccc; color: #888; cursor: not-allowed; }
-    .modal-close { position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 22px; cursor: pointer; color: #888; }
-    .modal-close:hover { color: #222; }
-    #edit-modal-error { color: #c00; font-size: 0.97rem; margin-bottom: 7px; }
-    .btn.btn-outline{color: white; margin-right: 20PX;}
+   :root {
+  --primary: #4361ee;
+  --primary-light: #4cc9f0;
+  --primary-dark: #7dabffcf;
+  --success: #4cc9f0;
+  --danger: #b90d0d;
+  --warning: #f8961e;
+  --info: #4895ef;
+
+  --gray-100: #1a1a1a;
+  --gray-200: #2c2c2c;
+  --gray-300: #3d3d3d;
+  --gray-400: #4e4e4e;
+  --gray-500: #666;
+  --gray-600: #888;
+  --gray-700: #aaa;
+  --gray-800: #ccc;
+  --gray-900: #f0f0f0;
+
+  --space-xs: 4px;
+  --space-sm: 6px;
+  --space-md: 12px;
+  --space-lg: 20px;
+  --space-xl: 28px;
+
+  --font-size-sm: 11px;
+  --font-size-md: 13px;
+  --font-size-lg: 15px;
+  --font-size-xl: 18px;
+  --font-size-xxl: 22px;
+
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 10px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.7);
+}
+
+body {
+  font-family: 'Open Sans', Arial, sans-serif;
+  background: var(--gray-100);
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--gray-900);
+}
+
+.panel {
+  background: var(--gray-200);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  margin: var(--space-xl) auto;
+  padding: var(--space-lg);
+  max-width: 95%;
+}
+
+.panel-heading {
+  background: var(--gray-400);
+  color: white;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--space-lg)) var(--space-md) calc(-1 * var(--space-lg));
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-weight: bold;
+  margin-right: var(--space-xs);
+  color: var(--gray-800);
+}
+
+.filter-select,
+.filter-input {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-md);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-400);
+  background: var(--gray-300);
+  color: var(--gray-900);
+}
+
+.total-container {
+  font-weight: bold;
+  font-size: var(--font-size-md);
+  color: var(--primary-light);
+  white-space: nowrap;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--gray-200);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+th,
+td {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-md);
+  text-align: left;
+  border-bottom: 1px solid var(--gray-400);
+  color: var(--gray-900);
+}
+
+th {
+  font-weight: 600;
+  background-color: var(--primary-dark);
+  color: white;
+}
+
+tr:nth-child(even) {
+  background: var(--gray-300);
+}
+
+tr:hover {
+  background: var(--gray-400);
+}
+
+.edit-btn,
+.reverse-btn {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-sm);
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+.edit-btn {
+  background: var(--primary);
+}
+
+.edit-btn:hover {
+  background: var(--primary-dark);
+}
+
+.reverse-btn {
+  background: var(--danger);
+}
+
+.reverse-btn:disabled {
+  background: var(--gray-500);
+  color: var(--gray-700);
+  cursor: not-allowed;
+}
+
+.reverse-btn:hover:not([disabled]) {
+  background: #d32f2f;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 99;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--gray-200);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
+  min-width: 300px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  color: var(--gray-900);
+}
+
+.modal-content label {
+  font-weight: bold;
+  margin-bottom: var(--space-xs);
+  display: block;
+  color: var(--gray-800);
+}
+
+.modal-content input[type="datetime-local"] {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--gray-400);
+  border-radius: var(--border-radius-sm);
+  background: var(--gray-300);
+  color: var(--gray-900);
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  text-align: right;
+}
+
+.modal-actions button {
+  padding: var(--space-xs) var(--space-lg);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-sm);
+  border: none;
+  cursor: pointer;
+}
+
+.modal-actions .save-btn {
+  background: var(--primary);
+  color: white;
+}
+
+.modal-actions .save-btn:hover {
+  background: var(--primary-dark);
+}
+
+.modal-actions .cancel-btn {
+  background: var(--gray-400);
+  color: white;
+}
+
+.modal-actions .cancel-btn:hover {
+  background: var(--gray-500);
+}
+
+.modal-actions .reverse-btn {
+  margin-left: auto;
+  background: var(--danger);
+  color: white;
+}
+
+.modal-actions .reverse-btn:hover:not([disabled]) {
+  background: #d32f2f;
+}
+
+.modal-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: white;
+}
+
+#edit-modal-error {
+  color: var(--danger);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.btn.btn-outline {
+  color: white;
+  margin-right: var(--space-lg);
+}
+
+
   </style>
 </head>
 <body>
@@ -314,7 +542,6 @@
       uniqueProjects = new Set();
       uniqueMonths = new Set();
       const projectCache = {};
-      const materialCache = {};
 
       const usageDocs = snapshot.docs;
       for (const docSnap of usageDocs) {
@@ -337,30 +564,6 @@
             } catch { projectCache[u.projectId] = "-"; }
           }
         }
-        if (u.projectId) {
-          if (!projectCache[u.projectId]) {
-            try {
-              const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
-              if (projSnap.exists()) {
-                projectCache[u.projectId] = projSnap.data().name || "-";
-              } else {
-                projectCache[u.projectId] = "-";
-              }
-            } catch { projectCache[u.projectId] = "-"; }
-          }
-        }
-        if (u.materialId) {
-          if (!materialCache[u.materialId]) {
-            try {
-              const matSnap = await getDoc(doc(db, "materials", u.materialId));
-              if (matSnap.exists()) {
-                materialCache[u.materialId] = matSnap.data().unitPrice !== undefined ? matSnap.data().unitPrice : "-";
-              } else {
-                materialCache[u.materialId] = "-";
-              }
-            } catch { materialCache[u.materialId] = "-"; }
-          }
-        }
       }
 
       usageDocs.forEach(docSnap => {
@@ -369,7 +572,8 @@
         usage._docId = docSnap.id;
         if (u.projectId) usage.projectName = projectCache[u.projectId] || "-";
         if (u.projectId) uniqueProjects.add(projectCache[u.projectId] || "-");
-        if (u.materialId) usage.unitPrice = materialCache[u.materialId] !== undefined ? materialCache[u.materialId] : "-";
+        // CRITICAL: Use unitPrice as stored in the usage record only!
+        if (u.unitPrice !== undefined) usage.unitPrice = u.unitPrice;
         if (u.assignedAt && u.assignedAt.toDate) {
           const d = u.assignedAt.toDate();
           usage._month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
