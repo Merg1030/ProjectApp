@@ -5,23 +5,23 @@
   <title>IMS | Material Usage History</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
-   :root {
+    :root {
   --primary: #4361ee;
-  --primary-light: #4cc9f0;
+  --primary-light: #125ed7;
   --primary-dark: #7dabffcf;
-  --success: #4cc9f0;
+  --success: #3b4df0;
   --danger: #b90d0d;
   --warning: #f8961e;
   --info: #4895ef;
 
   --gray-100: #1a1a1a;
   --gray-200: #2c2c2c;
-  --gray-300: #3d3d3d;
-  --gray-400: #4e4e4e;
-  --gray-500: #666;
-  --gray-600: #888;
-  --gray-700: #aaa;
-  --gray-800: #ccc;
+  --gray-300: #2c2c2c;
+  --gray-400: #2c2c2c;
+  --gray-500: #3a3838;
+  --gray-600: #2c2c2c;
+  --gray-700: #2c2c2c;
+  --gray-800:#2c2c2c;
   --gray-900: #f0f0f0;
 
   --space-xs: 4px;
@@ -140,7 +140,7 @@ th {
 }
 
 tr:nth-child(even) {
-  background: var(--gray-300);
+  background: var(--gray-500);
 }
 
 tr:hover {
@@ -293,8 +293,6 @@ tr:hover {
   color: white;
   margin-right: var(--space-lg);
 }
-
-
   </style>
 </head>
 <body>
@@ -542,6 +540,7 @@ tr:hover {
       uniqueProjects = new Set();
       uniqueMonths = new Set();
       const projectCache = {};
+      const materialCache = {};
 
       const usageDocs = snapshot.docs;
       for (const docSnap of usageDocs) {
@@ -564,6 +563,30 @@ tr:hover {
             } catch { projectCache[u.projectId] = "-"; }
           }
         }
+        if (u.projectId) {
+          if (!projectCache[u.projectId]) {
+            try {
+              const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
+              if (projSnap.exists()) {
+                projectCache[u.projectId] = projSnap.data().name || "-";
+              } else {
+                projectCache[u.projectId] = "-";
+              }
+            } catch { projectCache[u.projectId] = "-"; }
+          }
+        }
+        if (u.materialId) {
+          if (!materialCache[u.materialId]) {
+            try {
+              const matSnap = await getDoc(doc(db, "materials", u.materialId));
+              if (matSnap.exists()) {
+                materialCache[u.materialId] = matSnap.data().unitPrice !== undefined ? matSnap.data().unitPrice : "-";
+              } else {
+                materialCache[u.materialId] = "-";
+              }
+            } catch { materialCache[u.materialId] = "-"; }
+          }
+        }
       }
 
       usageDocs.forEach(docSnap => {
@@ -572,8 +595,7 @@ tr:hover {
         usage._docId = docSnap.id;
         if (u.projectId) usage.projectName = projectCache[u.projectId] || "-";
         if (u.projectId) uniqueProjects.add(projectCache[u.projectId] || "-");
-        // CRITICAL: Use unitPrice as stored in the usage record only!
-        if (u.unitPrice !== undefined) usage.unitPrice = u.unitPrice;
+        if (u.materialId) usage.unitPrice = materialCache[u.materialId] !== undefined ? materialCache[u.materialId] : "-";
         if (u.assignedAt && u.assignedAt.toDate) {
           const d = u.assignedAt.toDate();
           usage._month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
