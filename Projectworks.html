@@ -110,6 +110,20 @@
             margin: 0;
             font-size: inherit;
         }
+        .delete-btn {
+            background: #23263a;
+            color: #1d0706;
+            border: 1.5px solid #000000;
+            border-radius: 7px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .delete-btn:hover {
+            background: #f44336;
+            color: white;
+        }
         @media (max-width: 800px) {
             .main-table-wrap { flex-direction: column; }
             .gantt-table-card { max-width: 100%; min-width: 100%; border-radius: 0 0 7px 7px; }
@@ -320,7 +334,7 @@
 
 <script type="module">
    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-import { getFirestore, doc, collection, query, where, onSnapshot, addDoc, updateDoc, getDocs, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { getFirestore, doc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
 // Debugging function
 function debugLog(message, data = null) {
@@ -860,7 +874,7 @@ function makeEditableInput(cell, type, field, inputType='text') {
     input.className = 'editable-input';
     input.setAttribute('data-field', field);
 
-    if (field === 'taskDescription' || field === 'taskId') {
+    if (field === 'taskDescription' || field === 'taskId' || field === 'assignedTo') {
         input.style.textAlign = 'left';
     } else {
         input.style.textAlign = 'center';
@@ -887,7 +901,7 @@ function makeEditableSelect(cell, type, field) {
     const select = document.createElement('select');
     select.className = 'editable-select';
     select.setAttribute('data-field', field);
-    if (field === 'taskDescription' || field === 'taskId') {
+    if (field === 'taskDescription' || field === 'taskId' || field === 'assignedTo') {
         select.style.textAlign = 'left';
     } else {
         select.style.textAlign = 'center';
@@ -947,6 +961,26 @@ async function saveEditable(cell, type, field, newVal) {
     }
 }
 
+async function deleteTask(type, mainId, subId, subSubId) {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+    
+    try {
+        if (type === 'main') {
+            // Delete main task and all its subtasks
+            await deleteDoc(doc(db, "projectTasks", mainId));
+        } else if (type === 'sub') {
+            // Delete subtask and all its sub-subtasks
+            await deleteDoc(doc(db, "projectTasks", mainId, "subtasks", subId));
+        } else if (type === 'subsub') {
+            // Delete sub-subtask
+            await deleteDoc(doc(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks", subSubId));
+        }
+        alert("Task deleted successfully!");
+    } catch (e) {
+        alert("Error deleting task: " + e.message);
+    }
+}
+
 function renderTasks(tasks) {
     taskList.innerHTML = '';
     let visibleCount = 0;
@@ -972,10 +1006,10 @@ function renderTasks(tasks) {
                     <i class="fas fa-${task.expanded ? "caret-down" : "caret-right"}"></i>
                 </span>
             </td>
-            <td>${task.taskId || ''}</td>
-            <td>${task.taskLine || ''}</td>
-            <td>${task.taskDescription || ''}</td>
-            <td>${task.assignedTo || ''}</td>
+            <td class="editable" data-type="main" data-field="taskId" data-id="${task.id}">${task.taskId || ''}</td>
+            <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine || ''}</td>
+            <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription || ''}</td>
+            <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
             <td class="editable" data-type="main" data-field="status" data-id="${task.id}">
                 <span class="${getStatusBadge(task.status)}">${task.status || ''}</span>
             </td>
@@ -989,6 +1023,9 @@ function renderTasks(tasks) {
             <td>
                 <button class="add-subtask-btn action-btn" data-mainid="${task.id}">
                     <i class="fas fa-plus"></i> Subtask
+                </button>
+                <button class="delete-btn" onclick="deleteTask('main', '${task.id}')">
+                    <i class="fas fa-trash"></i>
                 </button>
             </td>
         `;
@@ -1011,10 +1048,10 @@ function renderTasks(tasks) {
                     trSub.classList.add('subtask-row');
                     trSub.innerHTML = `
                         <td class="subtask-arrow">↪</td>
-                        <td>${sub.taskId || ''}</td>
+                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="taskId" data-id="${sub.id}">${sub.taskId || ''}</td>
                         <td></td>
-                        <td class="subtask-desc">${sub.taskDescription || ''}</td>
-                        <td>${sub.assignedTo || ''}</td>
+                        <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}">${sub.taskDescription || ''}</td>
+                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
                             <span class="${getStatusBadge(sub.status)}">${sub.status || ''}</span>
                         </td>
@@ -1028,6 +1065,9 @@ function renderTasks(tasks) {
                         <td>
                             <button class="add-subsubtask-btn action-btn" data-mainid="${task.id}" data-subid="${sub.id}">
                                 <i class="fas fa-plus"></i> Sub-Subtask
+                            </button>
+                            <button class="delete-btn" onclick="deleteTask('sub', '${task.id}', '${sub.id}')">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </td>
                     `;
@@ -1044,10 +1084,10 @@ function renderTasks(tasks) {
                             trSubSub.classList.add('subsubtask-row');
                             trSubSub.innerHTML = `
                                 <td class="subtask-arrow"></td>
-                                <td>${subsub.taskId || ''}</td>
+                                <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskId" data-id="${subsub.id}">${subsub.taskId || ''}</td>
                                 <td></td>
-                                <td class="subtask-desc" style="padding-left:40px">${subsub.taskDescription || ''}</td>
-                                <td>${subsub.assignedTo || ''}</td>
+                                <td class="editable subtask-desc" style="padding-left:40px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${subsub.id}">${subsub.taskDescription || ''}</td>
+                                <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${subsub.id}">${subsub.assignedTo || ''}</td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
                                     <span class="${getStatusBadge(subsub.status)}">${subsub.status || ''}</span>
                                 </td>
@@ -1058,7 +1098,11 @@ function renderTasks(tasks) {
                                 <td><span class="cost-badge">${formatCurrency(subsubManCost)}</span></td>
                                 <td><span class="cost-badge">${formatCurrency(subsubTotalCost)}</span></td>
                                 <td>${subsub.location || ''}</td>
-                                <td></td>
+                                <td>
+                                    <button class="delete-btn" onclick="deleteTask('subsub', '${task.id}', '${sub.id}', '${subsub.id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
                             `;
                             taskList.appendChild(trSubSub);
                         });
@@ -1106,6 +1150,10 @@ function renderTasks(tasks) {
                 makeEditableSelect(this, type, field);
             } else if (field === 'startDate' || field === 'endDate') {
                 makeEditableInput(this, type, field, 'date');
+            } else if (field === 'taskLine') {
+                makeEditableInput(this, type, field, 'number');
+            } else {
+                makeEditableInput(this, type, field);
             }
         };
     });
@@ -1479,6 +1527,9 @@ function renderGanttCalendar(tasks) {
     setInterval(() => {
         renderGanttCalendar(filterTasks(allTasks));
     }, 60000);
+
+    // Make deleteTask function available globally
+    window.deleteTask = deleteTask;
 </script>
 </body>
 </html>
