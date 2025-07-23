@@ -33,9 +33,16 @@
     .assign-form label { font-weight: 600; margin-bottom: 6px; display: block; }
     .assign-form input, .assign-form select { border-radius: 5px; font-size: 1rem; padding: 8px 12px; border: 1px solid #ccc; margin-bottom: 12px; width: 100%; }
     .assign-form input:focus, .assign-form select:focus { border: 1.5px solid #1abc9c; outline: none; }
+    .from-supplier-section { background: #fffbe9; border: 1px solid #ffeb93; border-radius: 8px; padding: 16px 14px; margin-bottom: 25px; }
+    .from-supplier-section label { font-weight: bold; }
+    .from-supplier-section table { background: #fff; border-radius: 7px; border: 1px solid #eee; margin-top: 8px; width: 100%; }
+    .from-supplier-section th, .from-supplier-section td { padding: 7px 6px; border: 1px solid #f7eeb8; text-align: left; }
+    .from-supplier-section input[type="text"], .from-supplier-section input[type="number"] { width: 100%; box-sizing: border-box; }
+    .from-supplier-section .remove-btn { color: #e74c3c; cursor: pointer; border:none; background:none; font-size:1.2em; }
     @media (max-width: 700px) {
       .checkbox { flex-direction: column; align-items: flex-start; }
       .mat-stock-info { margin-left: 0; margin-top: 3px; }
+      .from-supplier-section th, .from-supplier-section td { font-size: 0.94em; }
     }
     @media (max-width: 500px) {
       .navbar { min-height: 40px; } .navbar .navbar-header { padding: 0 6px; } .navbar .navbar-brand { font-size: 1rem; }
@@ -76,6 +83,40 @@
                   <button type="reset" class="btn btn-primary">Reset</button>
                   <div id="form-message"></div>
                 </form>
+                <!-- Assign from supplier section -->
+                <form id="from-supplier-form" class="from-supplier-section" style="display:none;">
+                  <label>
+                    Assign material bought directly from supplier (not in inventory):
+                  </label>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Material</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                        <th>Supplier</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="supplier-table-body">
+                      <tr>
+                        <td><input type="text" id="supplier-mat-name" placeholder="Material Name"></td>
+                        <td><input type="text" id="supplier-mat-category" placeholder="Category"></td>
+                        <td><input type="number" id="supplier-mat-qty" min="1" placeholder="Qty"></td>
+                        <td><input type="number" id="supplier-mat-unitprice" min="0" step="0.01" placeholder="Unit Price"></td>
+                        <td><input type="text" id="supplier-mat-amount" readonly placeholder="Amount" style="background:#f1f1dd"></td>
+                        <td><input type="text" id="supplier-mat-supplier" placeholder="Supplier"></td>
+                        <td><button type="button" id="add-supplier-mat-btn" class="btn-primary">Add</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div id="supplier-list" style="margin-top:10px;"></div>
+                  <button type="button" class="btn btn-default" id="from-supplier-next-btn" style="margin-top:10px;">Next</button>
+                  <button type="button" class="btn btn-primary" id="from-supplier-cancel-btn" style="margin-top:10px;">Cancel</button>
+                  <div id="from-supplier-message"></div>
+                </form>
                 <!-- Project and Task Assignment Form -->
                 <form id="assign-form" class="assign-form" style="display:none;">
                   <h4>Assign Selected Materials to Project Task</h4>
@@ -103,6 +144,10 @@
                   <button type="button" class="btn btn-primary" id="cancel-assign">Cancel</button>
                   <div id="assign-message"></div>
                 </form>
+                <div style="margin-top:18px; font-size:1.09em;">
+                  <button id="show-supplier-form-btn" type="button" class="btn btn-primary" style="margin-top:8px;">Assign bought from supplier (Not in Inventory)</button>
+                  <button id="show-inventory-form-btn" type="button" class="btn btn-primary" style="margin-top:8px;display:none;">Assign from Inventory</button>
+                </div>
               </div>
             </div>
           </div>
@@ -125,7 +170,129 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Fetch materials from Firestore and render as checkboxes + qty input
+    // -- Supplier Material Assignments
+    let supplierMaterials = [];
+    const fromSupplierForm = document.getElementById('from-supplier-form');
+    const supplierMatName = document.getElementById('supplier-mat-name');
+    const supplierMatCategory = document.getElementById('supplier-mat-category');
+    const supplierMatQty = document.getElementById('supplier-mat-qty');
+    const supplierMatUnitPrice = document.getElementById('supplier-mat-unitprice');
+    const supplierMatAmount = document.getElementById('supplier-mat-amount');
+    const supplierMatSupplier = document.getElementById('supplier-mat-supplier');
+    const addSupplierMatBtn = document.getElementById('add-supplier-mat-btn');
+    const supplierList = document.getElementById('supplier-list');
+    const fromSupplierNextBtn = document.getElementById('from-supplier-next-btn');
+    const fromSupplierMsg = document.getElementById('from-supplier-message');
+    const fromSupplierCancelBtn = document.getElementById('from-supplier-cancel-btn');
+    const showSupplierFormBtn = document.getElementById('show-supplier-form-btn');
+    const showInventoryFormBtn = document.getElementById('show-inventory-form-btn');
+
+    // --- Amount auto-calc
+    function updateSupplierAmount() {
+      const qty = parseFloat(supplierMatQty.value);
+      const price = parseFloat(supplierMatUnitPrice.value);
+      if (!isNaN(qty) && !isNaN(price)) {
+        supplierMatAmount.value = (qty * price).toFixed(2);
+      } else {
+        supplierMatAmount.value = '';
+      }
+    }
+    supplierMatQty.addEventListener('input', updateSupplierAmount);
+    supplierMatUnitPrice.addEventListener('input', updateSupplierAmount);
+
+    showSupplierFormBtn.onclick = () => {
+      document.getElementById('material-select-form').style.display = "none";
+      fromSupplierForm.style.display = "block";
+      showSupplierFormBtn.style.display = "none";
+      showInventoryFormBtn.style.display = "";
+    };
+    showInventoryFormBtn.onclick = () => {
+      fromSupplierForm.style.display = "none";
+      document.getElementById('material-select-form').style.display = "";
+      showSupplierFormBtn.style.display = "";
+      showInventoryFormBtn.style.display = "none";
+    };
+    fromSupplierCancelBtn.onclick = () => {
+      fromSupplierForm.style.display = "none";
+      document.getElementById('material-select-form').style.display = "";
+      showSupplierFormBtn.style.display = "";
+      showInventoryFormBtn.style.display = "none";
+      supplierMaterials = [];
+      renderSupplierList();
+      fromSupplierMsg.innerHTML = "";
+      supplierMatName.value = "";
+      supplierMatCategory.value = "";
+      supplierMatQty.value = "";
+      supplierMatUnitPrice.value = "";
+      supplierMatAmount.value = "";
+      supplierMatSupplier.value = "";
+    };
+
+    addSupplierMatBtn.onclick = function() {
+      const name = supplierMatName.value.trim();
+      const category = supplierMatCategory.value.trim();
+      const qty = parseFloat(supplierMatQty.value);
+      const unitPrice = parseFloat(supplierMatUnitPrice.value);
+      const amount = parseFloat(supplierMatAmount.value);
+      const supplier = supplierMatSupplier.value.trim();
+      if (!name || isNaN(qty) || qty <= 0 || isNaN(unitPrice) || !supplier) {
+        fromSupplierMsg.innerHTML = '<span class="error-msg">Please provide material name, category, quantity (>0), unit price, and supplier name.</span>';
+        return;
+      }
+      supplierMaterials.push({ name, category, qty, unitPrice, amount: (qty * unitPrice), supplier });
+      renderSupplierList();
+      fromSupplierMsg.innerHTML = '<span class="success-msg">Added to assignment list!</span>';
+      supplierMatName.value = "";
+      supplierMatCategory.value = "";
+      supplierMatQty.value = "";
+      supplierMatUnitPrice.value = "";
+      supplierMatAmount.value = "";
+      supplierMatSupplier.value = "";
+    };
+
+    function renderSupplierList() {
+      supplierList.innerHTML = "";
+      if (!supplierMaterials.length) return;
+      supplierList.innerHTML = `
+        <table style="width:100%;border:1px solid #f7eeb8;margin-top:8px;">
+          <thead>
+            <tr>
+              <th>Material</th><th>Category</th><th>Quantity</th><th>Unit Price</th><th>Amount</th><th>Supplier</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${supplierMaterials.map((mat, idx) => `
+              <tr>
+                <td>${mat.name}</td>
+                <td>${mat.category}</td>
+                <td>${mat.qty}</td>
+                <td>${mat.unitPrice}</td>
+                <td>${mat.amount ? mat.amount.toFixed(2) : ''}</td>
+                <td>${mat.supplier}</td>
+                <td><button type="button" class="remove-btn" onclick="window.supplierMaterials.splice(${idx},1);window.renderSupplierList();">&#10006;</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    window.supplierMaterials = supplierMaterials;
+    window.renderSupplierList = renderSupplierList;
+
+    fromSupplierNextBtn.onclick = async function() {
+      if (!supplierMaterials.length) {
+        fromSupplierMsg.innerHTML = '<span class="error-msg">Add at least one item to assign.</span>';
+        return;
+      }
+      fromSupplierForm.style.display = "none";
+      assignForm.style.display = "";
+      showInventoryFormBtn.style.display = "";
+      fromSupplierMsg.innerHTML = "";
+      loadProjectsDropdown();
+      loadEmployeesDropdown();
+    };
+
+    // Fetch materials from Firestore and render as checkboxes + qty input (INVENTORY)
     const materialListDiv = document.getElementById('material-checkbox-list');
     let materialsData = [];
     onSnapshot(collection(db, "materials"), (snapshot) => {
@@ -414,6 +581,7 @@
       } catch {}
 
       try {
+        // Assign from inventory
         for (const mat of selectedMaterials) {
           // Double check latest stock
           const matDocRef = doc(db, "materials", mat.id);
@@ -444,12 +612,42 @@
           // Update stock
           await updateDoc(matDocRef, { quantity: stock - mat.qty });
         }
+        // Assign from supplier
+        for (const mat of supplierMaterials) {
+          await addDoc(collection(db, "materialsUsage"), {
+            materialId: null,
+            materialName: mat.name,
+            category: mat.category,
+            unit: "",
+            quantity: mat.qty,
+            unitPrice: mat.unitPrice,
+            amount: mat.amount,
+            supplier: mat.supplier,
+            boughtFromSupplier: true,
+            projectId,
+            taskId: assignTaskId,
+            taskDescription: assignTaskDescription,
+            location,
+            assignedToName: assignedTo,
+            assignedToEmpId: assignedToEmpId,
+            assignedToId: employeeId,
+            assignedAt: serverTimestamp(),
+            mainTaskId,
+            subtaskId: subtaskId || "",
+            subsubtaskId: subsubtaskId || "",
+            assignmentLevel: assignLevel
+          });
+        }
         assignMsg.innerHTML = '<div class="success-msg">Assignment saved successfully!</div>';
         assignForm.reset();
         assignBtn.disabled = true;
+        supplierMaterials = [];
+        renderSupplierList();
         setTimeout(() => {
           assignForm.style.display = "none";
           matForm.style.display = "block";
+          showSupplierFormBtn.style.display = "";
+          showInventoryFormBtn.style.display = "none";
         }, 1200);
       } catch (err) {
         assignMsg.innerHTML = '<div class="error-msg">Error: ' + err.message + '</div>';
