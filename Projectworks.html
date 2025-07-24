@@ -6,99 +6,372 @@
     <title>Project Tasks | Task Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI','Roboto',sans-serif; background: #181a22; color: #e0e0e0; margin: 0; }
-        .container { margin: 0 auto; padding: 8px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 10px; }
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 7px; font-weight: 500; cursor: pointer; text-decoration: none; border: none; font-size: 13px; transition: all 0.2s ease; }
-        .btn-outline { background: none; border: 1.2px solid #33394c; color: #4361ee; }
-        .btn-outline:hover { background: #23263a; }
-        .btn-primary { background: #4361ee; color: #fff; }
-        .btn-primary:hover { background: #3a56d4; }
-        .project-title-sticky { font-size: 19px; font-weight: 700; color: #4cc9f0; margin-bottom: 2px; }
-        .project-title { font-size: 24px; margin-bottom: 15px; color: #4361ee; font-weight: 600; }
-        .filters-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; padding: 5px 5px 5px 8px; background: linear-gradient(90deg, #4361ee 0%, #4cc9f0 100%); border-radius: 7px; box-shadow: 0 1px 8px rgba(67,97,238,0.08); margin-bottom: 9px;}
-        .filter-group { display: flex; align-items: center; gap: 4px; background: #23263a; border-radius: 16px; padding: 3.5px 9px 3.5px 7px; box-shadow: 0 1px 4px rgba(67,97,238,0.04); flex: 1 1 70px; min-width: 70px; max-width: 120px; }
-        .filter-label { font-size: 10px; font-weight: 600; color: #4361ee; }
-        select { border: 1.2px solid #4361ee; border-radius: 10px; padding: 2px 4px; background: #23263a; color: #e0e0e0; font-size: 11px; min-width: 40px; }
-        select:focus { outline: none; border-color: #4cc9f0;}
-        .main-table-wrap { display: flex; flex-direction: row; align-items: stretch; width: 100%; transition: all 0.3s; }
-        .card { background: #23263a; padding: 7px 4px 2px 4px; border-radius: 7px 0 0 7px; border: 1px solid #33394c; box-shadow: 0 2px 10px rgba(67,97,238,0.07); margin-bottom: 0; flex: 1 1 65%; overflow-x: auto; transition: flex-basis 0.3s, width 0.3s; }
-        .card.full-width { border-radius: 7px; flex: 1 1 100% !important; }
-        .table-responsive { width: 100%; overflow-x: auto; }
-        .task-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .task-table th, .task-table td { padding: 4px 2px; border-bottom: 1px solid #33394c; }
-        .task-table th { background: #24263c; font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.3px; position: sticky; top: 0; z-index: 1;}
-        .task-table tr:nth-child(even) { background: #1f2233;}
-        .task-table tr:hover { background: #2c314b;}
-        .status-badge { display: inline-block; padding: 1.5px 5px; border-radius: 7px; font-size: 9.5px; font-weight: 600; }
-        .status-completed { background: rgba(76,201,240,0.1); color: #4cc9f0; border: 1px solid #4cc9f0; }
-        .status-ongoing { background: rgba(248,150,30,0.1); color: #f8961e; border: 1px solid #f8961e; }
-        .status-pending { background: rgba(108,117,125,0.13); color: #6c757d; border: 1px solid #6c757d; }
-        .editable { cursor: pointer; border-radius: 5px; }
-        .editable:hover { background: rgba(67,97,238,0.09);}
+        body { 
+            font-family: 'Segoe UI', 'Roboto', sans-serif; 
+            background: #f5f7fa; 
+            color: #333; 
+            margin: 0; 
+            line-height: 1.5;
+        }
+        .container { 
+            margin: 0 auto; 
+            padding: 15px; 
+            
+        }
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            gap: 10px; 
+        }
+        .btn { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            text-decoration: none; 
+            border: none; 
+            font-size: 14px; 
+            transition: all 0.2s ease; 
+        }
+        .btn-outline { 
+            background: none; 
+            border: 1px solid #d1d5db; 
+            color: #3b82f6; 
+        }
+        .btn-outline:hover { 
+            background: #f3f4f6; 
+        }
+        .btn-primary { 
+            background: #3b82f6; 
+            color: #fff; 
+        }
+        .btn-primary:hover { 
+            background: #2563eb; 
+        }
+        .project-title-sticky { 
+            font-size: 19px; 
+            font-weight: 700; 
+            color: #3b82f6; 
+            margin-bottom: 2px; 
+        }
+        .project-title { 
+            font-size: 24px; 
+            margin-bottom: 15px; 
+            color: #3b82f6; 
+            font-weight: 600; 
+        }
+        .filters-bar { 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 10px; 
+            background: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            margin-bottom: 15px;
+            border: 1px solid #e5e7eb;
+        }
+        .filter-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            background: #f9fafb; 
+            border-radius: 6px; 
+            padding: 6px 12px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            flex: 1 1 100px; 
+            min-width: 100px; 
+            max-width: 160px; 
+        }
+        .filter-label { 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: #6b7280; 
+        }
+        select { 
+            border: 1px solid #d1d5db; 
+            border-radius: 6px; 
+            padding: 5px 8px; 
+            background: #fff; 
+            color: #333; 
+            font-size: 12px; 
+            min-width: 80px; 
+        }
+        select:focus { 
+            outline: none; 
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        .main-table-wrap { 
+            display: flex; 
+            flex-direction: row; 
+            align-items: stretch; 
+            width: 100%; 
+            transition: all 0.3s; 
+            gap: 15px;
+        }
+        .card { 
+            background: #fff; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #e5e7eb; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            margin-bottom: 0; 
+            flex: 1 1 65%; 
+            overflow-x: auto; 
+            transition: flex-basis 0.3s, width 0.3s; 
+        }
+        .card.full-width { 
+            border-radius: 8px; 
+            flex: 1 1 100% !important; 
+        }
+        .table-responsive { 
+            width: 100%; 
+            overflow-x: auto; 
+        }
+        .task-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 13px; 
+        }
+        .task-table th, .task-table td { 
+            padding: 8px 10px; 
+            border-bottom: 1px solid #e5e7eb; 
+            text-align: left;
+        }
+        .task-table th { 
+            background: #f9fafb; 
+            font-weight: 600; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.3px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1;
+            color: #6b7280;
+        }
+        .task-table tr:nth-child(even) { 
+            background: #f9fafb;
+        }
+        .task-table tr:hover { 
+            background: #f3f4f6;
+        }
+        .status-badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            font-weight: 600; 
+        }
+        .status-completed { 
+            background: rgba(16, 185, 129, 0.1); 
+            color: #10b981; 
+            border: 1px solid #10b981; 
+        }
+        .status-ongoing { 
+            background: rgba(245, 158, 11, 0.1); 
+            color: #2d92ea; 
+            border: 1px solid  #2d92ea; 
+        }
+        .status-pending { 
+            background: rgba(107, 114, 128, 0.1); 
+            color: #ffffff; 
+            border: 1px solid #6b7280; 
+        }
+        .editable { 
+            cursor: pointer; 
+            border-radius: 4px; 
+        }
+        .editable:hover { 
+            background: rgba(59, 130, 246, 0.05);
+        }
         .editable-input, .editable-select { 
             width: 100%; 
-            padding: 2px 3px !important; 
+            padding: 6px 8px !important; 
             border-radius: 6px; 
-            border: 1.2px solid #4361ee; 
-            background: #23263a; 
-            color: #e0e0e0; 
-            font-size: 11px; 
-            text-align: center;
+            border: 1px solid #d1d5db; 
+            background: #fff; 
+            color: #333; 
+            font-size: 13px; 
         }
         .editable-input[data-field="taskDescription"], 
-        .editable-input[data-field="taskId"], 
+        .editable-input[data-field="assignedTo"], 
         .editable-select[data-field="taskDescription"], 
-        .editable-select[data-field="taskId"] {
+        .editable-select[data-field="assignedTo"] {
             text-align: left !important;
         }
-        .cost-badge { display: inline-block; padding: 1.5px 5px; border-radius: 7px; font-size: 10px; font-weight: 600; background: rgba(67,97,238,0.1); color: #4361ee; border: 1px solid #4361ee; }
-        .empty-state { text-align: center; padding: 12px; color: #e0e0e0; opacity: 0.7; }
-        .empty-state i { font-size: 20px; opacity: 0.5; }
-        .gantt-table-card { background: #23263a; border-radius: 0 7px 7px 0; border-top: 1px solid #33394c; border-right: 1px solid #33394c; border-bottom: 1px solid #33394c; box-shadow: 0 2px 10px rgba(67,97,238,0.07); margin-bottom: 0; min-width: 220px; max-width: 100%; flex: 1 1 35%; display: flex; flex-direction: column; justify-content: stretch; transition: max-width 0.3s, min-width 0.3s;}
-        .gantt-table-card.hide { display: none !important; }
-        .gantt-table-header { padding: 4px 3px 2px 7px; display: flex; align-items: center; font-size: 12px; color: #4cc9f0; font-weight: 600; justify-content: space-between; }
-        .gantt-table-toggle { color: #4361ee; background: none; border: none; font-size: 18px; cursor: pointer; margin-left: 7px;}
-        .toggle-bar { position: absolute; left: 0; top: 100px; z-index: 50; background: #23263a; color: #4361ee; border: 1px solid #4361ee; border-radius: 0 6px 6px 0; padding: 5px 8px; font-size: 15px; cursor: pointer; min-width: 18px; text-align: center; }
-        .toggle-bar:hover { background: #4361ee; color: #fff; }
-        .gantt-table-scroll { overflow-x: auto; height: 100%; }
-        .gantt-table { width: max-content; border-collapse: collapse; font-size: 10px; height: 100%; min-width: 400px;}
-        .gantt-table th, .gantt-table td { border: 1px solid #33394c; padding: 2px 3px; text-align: center; background: #23263a;}
-        .gantt-table th { background: #181a22; color: #e0e0e0; position: sticky; top: 0; z-index: 2; font-size:10px;}
-        .gantt-bar { background: #4cc9f0; border-radius: 4px; height: 7px; width: 90%; margin: 0 auto;}
-        .gantt-bar-empty { background: transparent; }
-        .gantt-pct { font-weight: bold; font-size: 10px;}
-        .gantt-table tr { height: 22px; }
-        .hide { display: none !important; }
-        .subtask-row td { background: #20223a !important; color: #b0e0ff !important; }
-        .subtask-row td.subtask-desc { padding-left: 24px !important; }
-        .subtask-arrow { text-align: left; padding-left: 10px; color: #4cc9f0; font-size: 15px; }
-        .main-task-expand { cursor: pointer; color: #4361ee; margin-right: 6px; }
-        .subsubtask-row td { background: #181a22 !important; color: #a0e0f0 !important; }
+        .cost-badge { 
+            display: inline-block; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            background: rgba(59, 130, 246, 0.1); 
+            color: #3b82f6; 
+            border: 1px solid #3b82f6; 
+        }
+        .empty-state { 
+            text-align: center; 
+            padding: 30px; 
+            color: #6b7280; 
+        }
+        .empty-state i { 
+            font-size: 24px; 
+            margin-bottom: 10px;
+            color: #d1d5db;
+        }
+        .gantt-table-card { 
+            background: #2d92ea; 
+            border-radius: 8px; 
+            border: 1px solid #e5e7eb; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            margin-bottom: 0; 
+            min-width: 300px; 
+            max-width: 100%; 
+            flex: 1 1 35%; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: stretch; 
+            transition: max-width 0.3s, min-width 0.3s;
+        }
+        .gantt-table-card.hide { 
+            display: none !important; 
+        }
+        .gantt-table-header { 
+            padding: 12px 15px; 
+            display: flex; 
+            align-items: center; 
+            font-size: 14px; 
+            color: #3b82f6; 
+            font-weight: 600; 
+            justify-content: space-between; 
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .gantt-table-toggle { 
+            color: #3b82f6; 
+            background: none; 
+            border: none; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-left: 10px;
+        }
+        .toggle-bar { 
+            position: absolute; 
+            right: -40px; 
+            top: 100px; 
+            z-index: 50; 
+            background: #fff; 
+            color: #3b82f6; 
+            border: 1px solid #3b82f6; 
+            border-radius: 0 6px 6px 0; 
+            padding: 8px 10px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            min-width: 24px; 
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .toggle-bar:hover { 
+            background: #3b82f6; 
+            color: #fff; 
+        }
+        .gantt-table-scroll { 
+            overflow-x: auto; 
+            height: 100%; 
+            padding: 10px;
+        }
+        .gantt-table { 
+            width: max-content; 
+            border-collapse: collapse; 
+            font-size: 12px; 
+            height: 100%; 
+            min-width: 500px;
+        }
+        .gantt-table th, .gantt-table td { 
+            border: 1px solid #000000; 
+            padding: 4px 6px; 
+            text-align: center; 
+            background:  #111827;
+        }
+        .gantt-table th { 
+            background: #111827; 
+            color:  #111827; 
+            position: sticky; 
+            top: 0; 
+            z-index: 2; 
+            font-size: 11px;
+        }
+        .gantt-bar { 
+            background: #3b82f6; 
+            border-radius: 4px; 
+            height: 8px; 
+            width: 90%; 
+            margin: 0 auto;
+        }
+        .gantt-bar-empty { 
+            background: #111827; 
+            border: 1px dashed #111827;
+        }
+        .gantt-pct { 
+            font-weight: bold; 
+            font-size: 11px;
+        }
+        .gantt-table tr { 
+            height: 28px; 
+        }
+        .hide { 
+            display: none !important; 
+        }
+        .subtask-row td { 
+            background:#111827; 
+            color: #ffffff !important; 
+        }
+        .subtask-row td.subtask-desc { 
+            padding-left: 30px !important; 
+        }
+        .subtask-arrow { 
+            text-align: left; 
+            padding-left: 15px; 
+            color: #000000; 
+            font-size: 16px; 
+        }
+        .main-task-expand { 
+            cursor: pointer; 
+            color: #3b82f6; 
+            margin-right: 8px; 
+        }
+        .subsubtask-row td { 
+            background:#111827; 
+            color: #ffffff !important; 
+        }
         .action-btn {
-            background: #23263a;
-            color: #4cc9f0;
-            border: 1.5px solid #4cc9f0;
-            border-radius: 7px;
-            padding: 4px 13px;
-            font-size: 12px;
+            background: #fff;
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.18s, color 0.18s, border 0.18s;
+            transition: background 0.2s, color 0.2s, border 0.2s;
             margin: 2px 0;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            box-shadow: 0 1px 4px rgba(76,201,240,0.06);
         }
         .action-btn i {
-            font-size: 13px;
+            font-size: 14px;
         }
         .action-btn:hover,
         .action-btn:focus {
-            background: #4cc9f0;
-            color: #23263a;
-            border-color: #4361ee;
+            background: #3b82f6;
+            color: #fff;
         }
         .add-subtask-btn,
         .add-subsubtask-btn {
@@ -111,95 +384,181 @@
             font-size: inherit;
         }
         .delete-btn {
-            background: #23263a;
-            color: #1d0706;
-            border: 1.5px solid #000000;
-            border-radius: 7px;
-            padding: 4px 8px;
-            font-size: 12px;
+            background: #000000;
+            color: #000000;
+            border: 1px solid #000000;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 13px;
             cursor: pointer;
-            margin-left: 5px;
+            margin-left: 8px;
+            transition: background 0.2s, color 0.2s;
         }
         .delete-btn:hover {
-            background: #f44336;
+            background: #ef4444;
             color: white;
         }
         @media (max-width: 800px) {
             .main-table-wrap { flex-direction: column; }
-            .gantt-table-card { max-width: 100%; min-width: 100%; border-radius: 0 0 7px 7px; }
-            .card { border-radius: 7px 7px 0 0;}
+            .gantt-table-card { max-width: 100%; min-width: 100%; border-radius: 0 0 8px 8px; }
+            .card { border-radius: 8px 8px 0 0;}
+            .toggle-bar {
+                right: 10px;
+                top: auto;
+                bottom: 10px;
+                border-radius: 6px;
+            }
         }
         .project-info-container {
             margin: 20px 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .project-header-card {
-            background: #23263a;
+            background: #111827;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
         }
         .project-title-line {
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #4361ee;
+            border-bottom: 1px solid #e5e7eb;
         }
         .project-label {
             font-weight: bold;
-            color: #e0e0e0;
+            color: #4b5563;
             font-size: 14px;
         }
         .project-value {
             font-size: 16px;
-            color: #ffffff;
+            color: #111827;
         }
         .project-details-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            gap: 15px;
+            margin-top: 15px;
         }
         .detail-item {
             display: flex;
             align-items: center;
+            gap: 8px;
         }
         .detail-value {
-            color: #e0e0e0;
+            color: #111827;
             margin-left: 5px;
         }
         .current-month-btn {
-            background: #4361ee;
-            color: white;
+            background: #3b82f6;
+            color:#111827;
             border: none;
             border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 10px;
+            padding: 4px 8px;
+            font-size: 12px;
             cursor: pointer;
-            margin-left: 5px;
+            margin-left: 8px;
         }
         .current-month-btn:hover {
-            background: #3a56d4;
+            background: #2563eb;
         }
         .fullscreen-btn {
-            background: #4361ee;
-            color: white;
+            background: #3b82f6;
+            color:#111827;
             border: none;
             border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 10px;
+            padding: 4px 8px;
+            font-size: 12px;
             cursor: pointer;
-            margin-left: 5px;
+            margin-left: 8px;
         }
         .fullscreen-btn:hover {
-            background: #3a56d4;
+            background: #2563eb;
         }
         .today-highlight {
-            background-color: #ff9800 !important;
+            background-color: #f59e0b !important;
             color: #000 !important;
             font-weight: bold;
         }
         .current-month {
-            background-color: rgba(67, 97, 238, 0.2) !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+        
+        /* Dark mode styles */
+        body.dark-mode {
+            background: #1a1c23;
+            color: #e5e7eb;
+        }
+        body.dark-mode .card,
+        body.dark-mode .project-header-card,
+        body.dark-mode .gantt-table-card {
+            background: #252833;
+            border-color: #374151;
+        }
+        body.dark-mode .task-table th,
+        body.dark-mode .gantt-table th {
+            background: #1f2937;
+            color: #9ca3af;
+        }
+        body.dark-mode .task-table tr:nth-child(even),
+        body.dark-mode .subtask-row td {
+            background: #1f2937;
+        }
+        body.dark-mode .task-table tr:hover,
+        body.dark-mode .subsubtask-row td {
+            background: #2a3446;
+        }
+        body.dark-mode .task-table td,
+        body.dark-mode .gantt-table td {
+            border-color: #374151;
+        }
+        body.dark-mode .filter-group,
+        body.dark-mode .filters-bar {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        body.dark-mode select,
+        body.dark-mode .editable-input,
+        body.dark-mode .editable-select {
+            background: #1f2937;
+            border-color: #374151;
+            color: #e5e7eb;
+        }
+        body.dark-mode .empty-state {
+            color: #9ca3af;
+        }
+        body.dark-mode .project-label,
+        body.dark-mode .filter-label {
+            color: #9ca3af;
+        }
+        body.dark-mode .project-value,
+        body.dark-mode .detail-value {
+            color: #e5e7eb;
+        }
+        body.dark-mode .btn-outline {
+            border-color: #374151;
+            color: #3b82f6;
+        }
+        body.dark-mode .btn-outline:hover {
+            background: #1f2937;
+        }
+        body.dark-mode .action-btn {
+            background: #1f2937;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        body.dark-mode .action-btn:hover {
+            background: #3b82f6;
+            color: #fff;
+        }
+        body.dark-mode .delete-btn {
+            background: #1f2937;
+            border-color: #111827;
+            color:  #111827
+        }
+        body.dark-mode .delete-btn:hover {
+            background: #111827;
+            color: #fff;
         }
     </style>
 </head>
@@ -209,15 +568,15 @@
             <div class="project-header-card">
                 <div class="project-details-grid">
                     <div class="detail-item">
-                                       <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>
-                        <span class="detail-label">PROJECT MANAGER:</span>
-                        <span class="detail-value">Christopher chishela</span>
+                        <a href="dashboard.html" class="btn btn-outline">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                        <span class="project-label">PROJECT MANAGER:</span>
+                        <span class="project-value">Christopher chishela</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">SUPERVISOR:</span>
-                        <span class="detail-value">Orscar mushimbi</span>
+                        <span class="project-label">SUPERVISOR:</span>
+                        <span class="project-value">Orscar mushimbi</span>
                     </div>
                 </div>
             </div>
@@ -231,7 +590,7 @@
                     <i class="fas fa-check-circle"></i> Completed Tasks
                 </a>
                 <button class="btn btn-outline" id="toggleModeBtn">
-                    <i class="fas fa-moon"></i> Light Mode
+                    <i class="fas fa-sun"></i> Light Mode
                 </button>
             </div>
         </div>
@@ -276,8 +635,8 @@
         </div>
         <div class="main-table-wrap" id="mainTableWrap" style="position:relative;">
             <div class="card" id="mainCard">
-                <div class="card-header" style="padding: 3px 0 7px 0;">
-                    <h2 class="card-title" style="font-size:13px; margin:0; color:#4361ee; font-weight:500">
+                <div class="card-header" style="padding: 10px 0 15px 0;">
+                    <h2 class="card-title" style="font-size:14px; margin:0; color:#3b82f6; font-weight:500">
                         <i class="fas fa-tasks"></i> All Tasks
                     </h2>
                 </div>
@@ -874,7 +1233,7 @@ function makeEditableInput(cell, type, field, inputType='text') {
     input.className = 'editable-input';
     input.setAttribute('data-field', field);
 
-    if (field === 'taskDescription' || field === 'taskId' || field === 'assignedTo') {
+    if (field === 'taskDescription' || field === 'assignedTo') {
         input.style.textAlign = 'left';
     } else {
         input.style.textAlign = 'center';
@@ -901,7 +1260,7 @@ function makeEditableSelect(cell, type, field) {
     const select = document.createElement('select');
     select.className = 'editable-select';
     select.setAttribute('data-field', field);
-    if (field === 'taskDescription' || field === 'taskId' || field === 'assignedTo') {
+    if (field === 'taskDescription' || field === 'assignedTo') {
         select.style.textAlign = 'left';
     } else {
         select.style.textAlign = 'center';
@@ -1006,7 +1365,7 @@ function renderTasks(tasks) {
                     <i class="fas fa-${task.expanded ? "caret-down" : "caret-right"}"></i>
                 </span>
             </td>
-            <td class="editable" data-type="main" data-field="taskId" data-id="${task.id}">${task.taskId || ''}</td>
+            <td data-id="${task.id}">${task.taskId || ''}</td>
             <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine || ''}</td>
             <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription || ''}</td>
             <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
@@ -1048,7 +1407,7 @@ function renderTasks(tasks) {
                     trSub.classList.add('subtask-row');
                     trSub.innerHTML = `
                         <td class="subtask-arrow">↪</td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="taskId" data-id="${sub.id}">${sub.taskId || ''}</td>
+                        <td data-mainid="${task.id}" data-id="${sub.id}">${sub.taskId || ''}</td>
                         <td></td>
                         <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}">${sub.taskDescription || ''}</td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
@@ -1084,7 +1443,7 @@ function renderTasks(tasks) {
                             trSubSub.classList.add('subsubtask-row');
                             trSubSub.innerHTML = `
                                 <td class="subtask-arrow"></td>
-                                <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskId" data-id="${subsub.id}">${subsub.taskId || ''}</td>
+                                <td data-mainid="${task.id}" data-subid="${sub.id}" data-id="${subsub.id}">${subsub.taskId || ''}</td>
                                 <td></td>
                                 <td class="editable subtask-desc" style="padding-left:40px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${subsub.id}">${subsub.taskDescription || ''}</td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${subsub.id}">${subsub.assignedTo || ''}</td>
@@ -1364,10 +1723,10 @@ function renderGanttCalendar(tasks) {
         else pct = "";
         
         let desc = rowTask.isSubSub
-            ? '<span style="margin-left:32px;color:#b0e0ff;font-size:12px;vertical-align:middle;">↪↪</span> <span style="opacity:.8;">' + rowTask.description + '</span>'
+            ? '<span style="margin-left:32px;color:#64748b;font-size:12px;vertical-align:middle;">↪↪</span> <span style="opacity:.8;">' + rowTask.description + '</span>'
             : rowTask.isSub
-            ? '<span style="margin-left:12px;color:#4cc9f0;font-size:13px;vertical-align:middle;">↪</span> <span style="opacity:.8;">' + rowTask.description + '</span>'
-            : '<span style="font-weight:bold;color:#4361ee;">' + rowTask.description + '</span>';
+            ? '<span style="margin-left:12px;color:#3b82f6;font-size:13px;vertical-align:middle;">↪</span> <span style="opacity:.8;">' + rowTask.description + '</span>'
+            : '<span style="font-weight:bold;color:#3b82f6;">' + rowTask.description + '</span>';
         
         let row = `<tr><td style="text-align:left">${desc}</td>`;
         let start = null, end = null;
@@ -1412,15 +1771,15 @@ function renderGanttCalendar(tasks) {
                                 bar = '<div class="gantt-bar"></div>';
                             } else if (pct === "60%") {
                                 if (isToday) {
-                                    bar = '<div class="gantt-bar" style="background:#ff9800"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#f59e0b"></div>';
                                 } else if (isPast) {
-                                    bar = '<div class="gantt-bar" style="background:#ffe066"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#fcd34d"></div>';
                                 } else {
-                                    bar = '<div class="gantt-bar" style="background:#ffe066;opacity:0.6"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#fcd34d;opacity:0.6"></div>';
                                 }
                             } else {
                                 if (isToday) {
-                                    bar = '<div class="gantt-bar" style="background:#ff9800"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#f59e0b"></div>';
                                 } else if (isPast) {
                                     bar = '<div class="gantt-bar gantt-bar-empty"></div>';
                                 } else {
@@ -1429,18 +1788,18 @@ function renderGanttCalendar(tasks) {
                             }
                         } else if (rowTask.isSub) {
                             if (pct === "100%") {
-                                bar = '<div class="gantt-bar" style="background:#4cc9f0;opacity:.6"></div>';
+                                bar = '<div class="gantt-bar" style="background:#3b82f6;opacity:.6"></div>';
                             } else if (pct === "60%") {
                                 if (isToday) {
-                                    bar = '<div class="gantt-bar" style="background:#2196f3"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#2563eb"></div>';
                                 } else if (isPast) {
-                                    bar = '<div class="gantt-bar" style="background:#90e0ef"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#93c5fd"></div>';
                                 } else {
-                                    bar = '<div class="gantt-bar" style="background:#90e0ef;opacity:0.6"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#93c5fd;opacity:0.6"></div>';
                                 }
                             } else {
                                 if (isToday) {
-                                    bar = '<div class="gantt-bar" style="background:#2196f3"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#2563eb"></div>';
                                 } else if (isPast) {
                                     bar = '<div class="gantt-bar gantt-bar-empty"></div>';
                                 } else {
@@ -1449,18 +1808,18 @@ function renderGanttCalendar(tasks) {
                             }
                         } else if (rowTask.isSubSub) {
                                 if (pct === "100%") {
-                                    bar = '<div class="gantt-bar" style="background:#b0e0ff;opacity:.6"></div>';
+                                    bar = '<div class="gantt-bar" style="background:#64748b;opacity:.6"></div>';
                                 } else if (pct === "60%") {
                                     if (isToday) {
-                                        bar = '<div class="gantt-bar" style="background:#64b5f6"></div>';
+                                        bar = '<div class="gantt-bar" style="background:#475569"></div>';
                                     } else if (isPast) {
-                                        bar = '<div class="gantt-bar" style="background:#caf0f8"></div>';
+                                        bar = '<div class="gantt-bar" style="background:#94a3b8"></div>';
                                     } else {
-                                        bar = '<div class="gantt-bar" style="background:#caf0f8;opacity:0.6"></div>';
+                                        bar = '<div class="gantt-bar" style="background:#94a3b8;opacity:0.6"></div>';
                                     }
                                 } else {
                                     if (isToday) {
-                                        bar = '<div class="gantt-bar" style="background:#64b5f6"></div>';
+                                        bar = '<div class="gantt-bar" style="background:#475569"></div>';
                                     } else if (isPast) {
                                         bar = '<div class="gantt-bar gantt-bar-empty"></div>';
                                     } else {
