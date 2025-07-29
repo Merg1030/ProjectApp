@@ -64,15 +64,29 @@
     .pdf-page-break { page-break-before: always; }
     #report-export-section { overflow: visible !important; }
     .btn.btn-outline{color: white; margin-right: 20PX;}
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid #1976d2;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <div class="panel">
     <div class="panel-heading">
-                <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>IMS Weekly & Monthly Stock & Man Hour Report</div>
+      <a href="dashboard.html" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>IMS Weekly & Monthly Stock & Man Hour Report
+    </div>
     <div class="filter-bar">
       <label for="report-type-select">Report Type:</label>
       <select id="report-type-select">
@@ -119,7 +133,8 @@
       orderBy,
       getDoc,
       doc,
-      getDocs
+      getDocs,
+      where
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -134,12 +149,15 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Cache objects to store fetched data
     let allUsages = [];
     let allTransfers = [];
-    let allTasks = [];
     let materialCache = {};
     let projectCache = {};
+    let taskHourCache = {}; // Cache for task hours
+    let taskMaterialCache = {}; // Cache for task materials
 
+    // Helper functions
     function getWeekNumber(d) {
       d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -147,6 +165,7 @@
       var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
       return weekNo;
     }
+
     function getWeekNumberFromDate(date) {
       const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
       d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -154,9 +173,11 @@
       const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
       return { week: weekNo, year: d.getUTCFullYear() };
     }
+
     function isSameMonthYear(date, month, year) {
       return date.getMonth() === month && date.getFullYear() === year;
     }
+
     function safeProjectName(row) {
       return typeof row.projectName === "string"
         ? row.projectName
@@ -167,12 +188,178 @@
               : '-');
     }
 
+    async function getProjectNameCached(projectId) {
+      if (!projectId) return "-";
+      if (projectCache[projectId]) {
+        return typeof projectCache[projectId] === 'string'
+          ? projectCache[projectId]
+          : (projectCache[projectId].name || '-');
+      }
+      try {
+        const projSnap = await getDoc(doc(db, "projectDashboard", projectId));
+        if (projSnap.exists()) {
+          projectCache[projectId] = projSnap.data().name || "-";
+          return projectCache[projectId];
+        }
+      } catch {}
+      projectCache[projectId] = "-";
+      return "-";
+    }
+
+    // Function to get hours worked for a task
+    async function getHoursForTask(taskId) {
+      if (!taskId) return 0;
+      
+      // Check cache first
+      if (taskHourCache[taskId] !== undefined) {
+        return taskHourCache[taskId];
+      }
+      
+      try {
+        const q = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
+        const snap = await getDocs(q);
+        let sum = 0;
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (d.mh && !isNaN(d.mh)) sum += Number(d.mh);
+        });
+        
+        // Cache the result
+        taskHourCache[taskId] = sum;
+        return sum;
+      } catch (e) {
+        console.error("Error getting hours for task", taskId, e);
+        return 0;
+      }
+    }
+
+    // Function to get material cost for a task
+    async function getMaterialCostForTask(taskId) {
+      if (!taskId) return 0;
+      
+      // Check cache first
+      if (taskMaterialCache[taskId] !== undefined) {
+        return taskMaterialCache[taskId];
+      }
+      
+      try {
+        const q = query(collection(db, "materialsUsage"), where("taskId", "==", taskId));
+        const snap = await getDocs(q);
+        let sum = 0;
+        
+        // For inventory items - we need to get prices from materials collection
+        const materialIds = new Set();
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (d.materialId) materialIds.add(d.materialId);
+        });
+        
+        // Fetch prices for inventory items
+        const materialPriceMap = {};
+        await Promise.all([...materialIds].map(async materialId => {
+          if (!materialCache[materialId]) {
+            const matSnap = await getDoc(doc(db, "materials", materialId));
+            if (matSnap.exists()) {
+              materialCache[materialId] = matSnap.data().unitPrice || 0;
+            }
+          }
+          materialPriceMap[materialId] = materialCache[materialId] || 0;
+        }));
+        
+        // Calculate total cost
+        snap.forEach(doc => {
+          const d = doc.data();
+          if (!d.reversed) {
+            // Inventory items
+            if (d.quantity && d.materialId) {
+              const price = materialPriceMap[d.materialId] || 0;
+              sum += Number(d.quantity) * Number(price);
+            }
+            // Supplier items
+            else if (d.boughtFromSupplier && d.amount) {
+              sum += Number(d.amount);
+            }
+            // Backward compatibility for supplier items without boughtFromSupplier flag
+            else if (d.quantity && d.unitPrice && !d.materialId) {
+              sum += Number(d.quantity) * Number(d.unitPrice);
+            }
+          }
+        });
+        
+        // Cache the result
+        taskMaterialCache[taskId] = sum;
+        return sum;
+      } catch (e) {
+        console.error("Error getting material cost for task", taskId, e);
+        return 0;
+      }
+    }
+
+    // Recursively get all tasks, subtasks, and sub-subtasks for all projects with hours and material costs
+    async function fetchAllTasksFlat() {
+      const mainTaskSnaps = await getDocs(collection(db, "projectTasks"));
+      let all = [];
+      
+      // Process all tasks in parallel for better performance
+      await Promise.all(mainTaskSnaps.docs.map(async (mainDoc) => {
+        const main = { ...mainDoc.data(), _id: mainDoc.id, _type: "main" };
+        main.projectName = await getProjectNameCached(main.projectId);
+        
+        // Get hours and material costs for main task
+        const [hours, materialCost] = await Promise.all([
+          getHoursForTask(main.taskId),
+          getMaterialCostForTask(main.taskId)
+        ]);
+        main._durationHours = hours;
+        main._materialCost = materialCost;
+        
+        all.push(main);
+
+        // Subtasks
+        const subSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks"));
+        await Promise.all(subSnap.docs.map(async (subDoc) => {
+          const sub = { ...subDoc.data(), _id: subDoc.id, _type: "sub", parentTaskId: main.taskId, projectName: main.projectName, projectId: main.projectId };
+          
+          // Get hours and material costs for subtask
+          const [subHours, subMaterialCost] = await Promise.all([
+            getHoursForTask(sub.taskId),
+            getMaterialCostForTask(sub.taskId)
+          ]);
+          sub._durationHours = subHours;
+          sub._materialCost = subMaterialCost;
+          
+          all.push(sub);
+
+          // Subsubtasks
+          const subSubSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks", subDoc.id, "subsubtasks"));
+          await Promise.all(subSubSnap.docs.map(async (subSubDoc) => {
+            const subsub = { ...subSubDoc.data(), _id: subSubDoc.id, _type: "subsub", parentTaskId: sub.taskId, projectName: main.projectName, projectId: main.projectId };
+            
+            // Get hours and material costs for sub-subtask
+            const [subsubHours, subsubMaterialCost] = await Promise.all([
+              getHoursForTask(subsub.taskId),
+              getMaterialCostForTask(subsub.taskId)
+            ]);
+            subsub._durationHours = subsubHours;
+            subsub._materialCost = subsubMaterialCost;
+            
+            all.push(subsub);
+          }));
+        }));
+      }));
+      
+      return all;
+    }
+
+    // Initialize data listeners
     onSnapshot(query(collection(db, "materialsUsage"), orderBy("assignedAt", "desc")), async (snapshot) => {
       allUsages = [];
       materialCache = {};
       projectCache = {};
       const usageDocs = snapshot.docs;
-      for (const docSnap of usageDocs) {
+      
+      // Process in parallel for better performance
+      await Promise.all(usageDocs.map(async (docSnap) => {
         const u = docSnap.data();
         if (u.projectId && !projectCache[u.projectId]) {
           try {
@@ -188,9 +375,7 @@
             else materialCache[u.materialId] = "-";
           } catch { materialCache[u.materialId] = "-"; }
         }
-      }
-      usageDocs.forEach(docSnap => {
-        const u = docSnap.data();
+        
         let usage = { ...u };
         if (u.projectId && projectCache[u.projectId]) usage.projectName = projectCache[u.projectId];
         else if (u.projectName) usage.projectName = u.projectName;
@@ -201,13 +386,15 @@
           usage._week = getWeekNumber(usage._date);
         }
         allUsages.push(usage);
-      });
+      }));
+      
       updateDefaultWeekAndMonth();
     });
 
     onSnapshot(query(collection(db, "locationHistory"), orderBy("transferredAt", "desc")), async (snapshot) => {
       allTransfers = [];
-      const projIds = [];
+      const projIds = new Set();
+      
       snapshot.docs.forEach(docSnap => {
         const d = docSnap.data();
         if (!d.reversed) {
@@ -217,10 +404,12 @@
           }
           d.id = docSnap.id;
           allTransfers.push(d);
-          if (d.projectId) projIds.push(d.projectId);
+          if (d.projectId) projIds.add(d.projectId);
         }
       });
-      await Promise.all([...new Set(projIds)].map(async id => {
+      
+      // Fetch project names in parallel
+      await Promise.all([...projIds].map(async id => {
         if (!projectCache[id]) {
           try {
             const snap = await getDoc(doc(db, "projectDashboard", id));
@@ -228,30 +417,8 @@
           } catch {}
         }
       }));
+      
       updateDefaultWeekAndMonth();
-    });
-
-    onSnapshot(collection(db, "projectTasks"), async (snapshot) => {
-      allTasks = [];
-      for (const docSnap of snapshot.docs) {
-        const t = docSnap.data();
-        t._id = docSnap.id;
-        if (t.projectId && !projectCache[t.projectId]) {
-          try {
-            const projSnap = await getDoc(doc(db, "projectDashboard", t.projectId));
-            if (projSnap.exists()) projectCache[t.projectId] = projSnap.data().name || "-";
-            else projectCache[t.projectId] = "-";
-          } catch { projectCache[t.projectId] = "-"; }
-        }
-        t.projectName = t.projectId && projectCache[t.projectId]
-          ? (typeof projectCache[t.projectId] === 'string'
-              ? projectCache[t.projectId]
-              : (projectCache[t.projectId].name || '-'))
-          : (typeof t.projectName === 'string'
-              ? t.projectName
-              : (t.projectName && t.projectName.name) ? t.projectName.name : '-');
-        allTasks.push(t);
-      }
     });
 
     function updateDefaultWeekAndMonth() {
@@ -277,13 +444,16 @@
       }
     }
 
+    // Report generation variables
     let lastReportHTML = '';
     let lastReportType = '';
     let lastReportPeriod = '';
 
+    // UI event handlers
     const reportTypeSelect = document.getElementById("report-type-select");
     const weekControls = document.getElementById("week-controls");
     const monthControls = document.getElementById("month-controls");
+    
     reportTypeSelect.onchange = function() {
       if (reportTypeSelect.value === "week") {
         weekControls.style.display = "";
@@ -294,6 +464,7 @@
       }
     };
 
+    // Function to get account totals for cash report
     async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear) {
       const expensesCol = collection(db, "General expenses");
       const snap = await getDocs(expensesCol);
@@ -334,310 +505,334 @@
       return { accountTotals, grandTotal, accounts };
     }
 
+    // Main report generation function
     document.getElementById("generate-report-btn").onclick = async function() {
-      let stockTotals = {}, totalStockSpent = 0;
-      const COST_PER_HOUR = 20;
-      let manHourTotals = {}, totalMH = 0, totalMHCost = 0;
-      let periodLabel = "";
-      let filterUsages, filterTransfers;
+      const generateBtn = document.getElementById("generate-report-btn");
+      const originalBtnText = generateBtn.textContent;
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+      
+      // Show loading indicator
+      document.getElementById("report-output").innerHTML = '<div class="loading-spinner"></div><p style="text-align:center;">Generating report, please wait...</p>';
+      
+      try {
+        // Clear caches for fresh data
+        taskHourCache = {};
+        taskMaterialCache = {};
+        
+        // Fetch all tasks with their hours and material costs
+        const allTasksFlat = await fetchAllTasksFlat();
 
-      let forMonth = reportTypeSelect.value === "month";
-      let forWeek = reportTypeSelect.value === "week";
-      let month = forMonth ? parseInt(document.getElementById("month-select").value) : null;
-      let year = forMonth ? parseInt(document.getElementById("year-select").value) : null;
-      let week = forWeek ? parseInt(document.getElementById("week-select").value) : null;
-      let weekYear = forWeek ? parseInt(document.getElementById("week-year-select").value) : null;
+        let stockTotals = {}, totalStockSpent = 0;
+        const COST_PER_HOUR = 20;
+        let manHourTotals = {}, totalMH = 0, totalMHCost = 0;
+        let periodLabel = "";
+        let filterUsages, filterTransfers;
 
-      if (forMonth) {
-        const monthVal = parseInt(document.getElementById("month-select").value);
-        const yearVal = parseInt(document.getElementById("year-select").value);
-        periodLabel = `Month: ${document.getElementById("month-select").options[monthVal].text} ${yearVal}`;
-        filterUsages = allUsages.filter(u => u._date && isSameMonthYear(u._date, monthVal, yearVal));
-        filterTransfers = allTransfers.filter(d => d._date && isSameMonthYear(d._date, monthVal, yearVal));
-      } else {
-        const weekToReport = week;
-        periodLabel = `Week ${weekToReport} (${weekYear})`;
-        filterUsages = allUsages.filter(u => {
-          if (!u._date) return false;
-          const { week: w, year: y } = getWeekNumberFromDate(u._date);
-          return w === weekToReport && y === weekYear;
+        let forMonth = reportTypeSelect.value === "month";
+        let forWeek = reportTypeSelect.value === "week";
+        let month = forMonth ? parseInt(document.getElementById("month-select").value) : null;
+        let year = forMonth ? parseInt(document.getElementById("year-select").value) : null;
+        let week = forWeek ? parseInt(document.getElementById("week-select").value) : null;
+        let weekYear = forWeek ? parseInt(document.getElementById("week-year-select").value) : null;
+
+        if (forMonth) {
+          const monthVal = parseInt(document.getElementById("month-select").value);
+          const yearVal = parseInt(document.getElementById("year-select").value);
+          periodLabel = `Month: ${document.getElementById("month-select").options[monthVal].text} ${yearVal}`;
+          filterUsages = allUsages.filter(u => u._date && isSameMonthYear(u._date, monthVal, yearVal));
+          filterTransfers = allTransfers.filter(d => d._date && isSameMonthYear(d._date, monthVal, yearVal));
+        } else {
+          const weekToReport = week;
+          periodLabel = `Week ${weekToReport} (${weekYear})`;
+          filterUsages = allUsages.filter(u => {
+            if (!u._date) return false;
+            const { week: w, year: y } = getWeekNumberFromDate(u._date);
+            return w === weekToReport && y === weekYear;
+          });
+          filterTransfers = allTransfers.filter(d => {
+            if (!d._date) return false;
+            const { week: w, year: y } = getWeekNumberFromDate(d._date);
+            return w === weekToReport && y === weekYear;
+          });
+        }
+
+        // Get cash report data
+        const {accountTotals, grandTotal, accounts} = await getAccountTotalsForCashReport(
+          month, year, forMonth, week, forWeek, weekYear
+        );
+
+        // Process stock data
+        filterUsages.forEach(u => {
+          if (u.reversed) return;
+          let projectName = "-";
+          if (typeof u.projectName === "string") projectName = u.projectName;
+          else if (u.projectId && projectCache[u.projectId]) {
+            projectName = (typeof projectCache[u.projectId] === "string")
+              ? projectCache[u.projectId]
+              : (projectCache[u.projectId].name || "-");
+          }
+          const qty = parseFloat(u.quantity || 0);
+          const unitPrice = parseFloat(u.unitPrice || 0);
+          const assignedValue = qty * unitPrice;
+          if (!stockTotals[projectName]) stockTotals[projectName] = 0;
+          stockTotals[projectName] += assignedValue;
+          totalStockSpent += assignedValue;
         });
-        filterTransfers = allTransfers.filter(d => {
-          if (!d._date) return false;
-          const { week: w, year: y } = getWeekNumberFromDate(d._date);
-          return w === weekToReport && y === weekYear;
-        });
-      }
 
-      const {accountTotals, grandTotal, accounts} = await getAccountTotalsForCashReport(
-        month, year, forMonth, week, forWeek, weekYear
-      );
-      let cashReportHtml = `
-      <div id="cash-report-section">
-        <h2 style="color:#1976d2;">Cash Received Report</h2>
+        // Process man-hour data
+        filterTransfers.forEach(d => {
+          let projectName = "-";
+          if (d.projectId && projectCache[d.projectId]) {
+            projectName = typeof projectCache[d.projectId] === "string"
+              ? projectCache[d.projectId]
+              : (projectCache[d.projectId].name || "-");
+          }
+          const mh = parseFloat(d.mh || 0);
+          if (!manHourTotals[projectName]) manHourTotals[projectName] = 0;
+          manHourTotals[projectName] += mh;
+          totalMH += mh;
+          totalMHCost += mh * COST_PER_HOUR;
+        });
+
+        const totalCostIncurred = totalStockSpent + totalMHCost;
+
+        // Filter tasks based on report period
+        let completedTasks = [], ongoingTasks = [], pendingTasks = [];
+        if (forMonth) {
+          completedTasks = allTasksFlat.filter(t => {
+            if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
+            let inMonth = false;
+            if (t.startDate) {
+              const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
+              if (sd.getMonth() === month && sd.getFullYear() === year) inMonth = true;
+            }
+            if (t.endDate) {
+              const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
+              if (ed.getMonth() === month && ed.getFullYear() === year) inMonth = true;
+            }
+            return inMonth;
+          });
+        } else if (forWeek) {
+          completedTasks = allTasksFlat.filter(t => {
+            if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
+            let inWeek = false;
+            if (t.startDate) {
+              const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
+              const { week: w, year: y } = getWeekNumberFromDate(sd);
+              if (w === week && y === weekYear) inWeek = true;
+            }
+            if (t.endDate) {
+              const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
+              const { week: w, year: y } = getWeekNumberFromDate(ed);
+              if (w === week && y === weekYear) inWeek = true;
+            }
+            return inWeek;
+          });
+        }
+        
+        // Ongoing and pending tasks show all regardless of period
+        ongoingTasks = allTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing');
+        pendingTasks = allTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending');
+
+        // Generate the report HTML
+        let mainHtml = `<div id="report-export-section">`;
+        
+        // Cash Report Section
+        mainHtml += `
+        <div id="cash-report-section">
+          <h2 style="color:#1976d2;">Cash Received Report</h2>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Account name</th>
+                <th>Total cost incurred</th>
+              </tr>
+            </thead>
+            <tbody>`;
+        accounts.forEach(acc => {
+          mainHtml += `
+            <tr>
+              <td>${acc}</td>
+              <td>${accountTotals[acc].toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+            </tr>`;
+        });
+        mainHtml += `
+            <tr class="total-row">
+              <td>Total</td>
+              <td>${grandTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+            </tr>
+          </tbody>
+          </table>
+        </div>`;
+
+        // Inventory Flow Report
+        mainHtml += `
+        <h2 style="color:#1976d2;">${periodLabel} Out Flow Inventory Report</h2>
+        <div class="total-cost-incurred">Total Cost Incurred: ZMW ${totalCostIncurred.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
+        <h3>Inventory Flow Report</h3>
         <table class="report-table">
           <thead>
             <tr>
-              <th>Account name</th>
-              <th>Total cost incurred</th>
+              <th>Project Name</th>
+              <th>Cost Incurred</th>
             </tr>
           </thead>
           <tbody>`;
-      accounts.forEach(acc => {
-        cashReportHtml += `
-          <tr>
-            <td>${acc}</td>
-            <td>${accountTotals[acc].toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+        Object.entries(stockTotals).forEach(([projectName, value]) => {
+          mainHtml += `<tr>
+            <td>${projectName}</td>
+            <td>${Number(value).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
           </tr>`;
-      });
-      cashReportHtml += `
-          <tr class="total-row">
-            <td>Total</td>
-            <td>${grandTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-          </tr>
+        });
+        mainHtml += `<tr class="total-row">
+          <td>Total Spent</td>
+          <td>${Number(totalStockSpent).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+        </tr>
         </tbody>
+        </table>`;
+
+        // Man Hour Summary
+        mainHtml += `
+        <h3>Man Hour Summary</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>MAN HOUR</th>
+              <th>COST</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        Object.entries(manHourTotals).forEach(([project, mh]) => {
+          mainHtml += `<tr><td>${project}</td><td>${mh}</td><td>${(mh*COST_PER_HOUR).toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`;
+        });
+        mainHtml += `</tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td>Total Spent</td>
+              <td>${totalMH}</td>
+              <td>${totalMHCost.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+            </tr>
+          </tfoot>
+        </table>`;
+
+        // Completed Tasks
+        mainHtml += `
+        <h3>COMPLETED TASKS</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>PROJECT</th>
+              <th>TASK ID</th>
+              <th>TASK DESCRIPTION</th>
+              <th>ASSIGNED</th>
+              <th>LOCATION</th>
+              <th>STATUS</th>
+              <th>START DATE</th>
+              <th>END DATE</th>
+              <th>DURATION (Hrs)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${completedTasks.map(row => `
+              <tr>
+                <td>${safeProjectName(row)}</td>
+                <td>${row.taskId || '-'}</td>
+                <td>${row.taskDescription || '-'}</td>
+                <td>${row.assignedTo || '-'}</td>
+                <td>${row.location || '-'}</td>
+                <td>${row.status || '-'}</td>
+                <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
+                <td>${row._durationHours || '0'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+
+        // Ongoing Tasks
+        mainHtml += `
+        <h3>ONGOING TASKS</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>PROJECT</th>
+              <th>TASK ID</th>
+              <th>TASK DESCRIPTION</th>
+              <th>ASSIGNED</th>
+              <th>LOCATION</th>
+              <th>STATUS</th>
+              <th>START DATE</th>
+              <th>DURATION (Hrs)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ongoingTasks.map(row => `
+              <tr>
+                <td>${safeProjectName(row)}</td>
+                <td>${row.taskId || '-'}</td>
+                <td>${row.taskDescription || '-'}</td>
+                <td>${row.assignedTo || '-'}</td>
+                <td>${row.location || '-'}</td>
+                <td>${row.status || '-'}</td>
+                <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                <td>${row._durationHours || '0'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+
+        // Pending Tasks
+        mainHtml += `
+        <h3>PENDING TASKS</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>PROJECT</th>
+              <th>TASK ID</th>
+              <th>TASK DESCRIPTION</th>
+              <th>ASSIGNED</th>
+              <th>LOCATION</th>
+              <th>STATUS</th>
+              <th>START DATE</th>
+              <th>DURATION (Hrs)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pendingTasks.map(row => `
+              <tr>
+                <td>${safeProjectName(row)}</td>
+                <td>${row.taskId || '-'}</td>
+                <td>${row.taskDescription || '-'}</td>
+                <td>${row.assignedTo || '-'}</td>
+                <td>${row.location || '-'}</td>
+                <td>${row.status || '-'}</td>
+                <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                <td>${row._durationHours || '0'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
         </table>
-      </div>
-      `;
+        </div>`;
 
-      filterUsages.forEach(u => {
-        if (u.reversed) return;
-        let projectName = "-";
-        if (typeof u.projectName === "string") projectName = u.projectName;
-        else if (u.projectId && projectCache[u.projectId]) {
-          projectName = (typeof projectCache[u.projectId] === "string")
-            ? projectCache[u.projectId]
-            : (projectCache[u.projectId].name || "-");
-        }
-        const qty = parseFloat(u.quantity || 0);
-        const unitPrice = parseFloat(u.unitPrice || 0);
-        const assignedValue = qty * unitPrice;
-        if (!stockTotals[projectName]) stockTotals[projectName] = 0;
-        stockTotals[projectName] += assignedValue;
-        totalStockSpent += assignedValue;
-      });
-
-      filterTransfers.forEach(d => {
-        let projectName = "-";
-        if (d.projectId && projectCache[d.projectId]) {
-          projectName = typeof projectCache[d.projectId] === "string"
-            ? projectCache[d.projectId]
-            : (projectCache[d.projectId].name || "-");
-        }
-        const mh = parseFloat(d.mh || 0);
-        if (!manHourTotals[projectName]) manHourTotals[projectName] = 0;
-        manHourTotals[projectName] += mh;
-        totalMH += mh;
-        totalMHCost += mh * COST_PER_HOUR;
-      });
-
-      const totalCostIncurred = totalStockSpent + totalMHCost;
-
-      let completedTasks = [], ongoingTasks = [], pendingTasks = [];
-      if (forMonth) {
-        completedTasks = allTasks.filter(t => {
-          if ((t.status || '').toLowerCase() !== 'completed') return false;
-          let inMonth = false;
-          if (t.startDate) {
-            const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-            if (sd.getMonth() === month && sd.getFullYear() === year) inMonth = true;
-          }
-          if (t.endDate) {
-            const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
-            if (ed.getMonth() === month && ed.getFullYear() === year) inMonth = true;
-          }
-          return inMonth;
-        });
-        ongoingTasks = allTasks.filter(t => {
-          if (!t.startDate) return false;
-          const d = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-          return (t.status || '').toLowerCase() === 'ongoing'
-            && d.getMonth() === month && d.getFullYear() === year;
-        });
-        pendingTasks = allTasks.filter(t => {
-          if (!t.startDate) return false;
-          const d = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-          return (t.status || '').toLowerCase() === 'pending'
-            && d.getMonth() === month && d.getFullYear() === year;
-        });
-      } else if (forWeek) {
-        completedTasks = allTasks.filter(t => {
-          if ((t.status || '').toLowerCase() !== 'completed') return false;
-          let inWeek = false;
-          if (t.startDate) {
-            const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-            const { week: w, year: y } = getWeekNumberFromDate(sd);
-            if (w === week && y === weekYear) inWeek = true;
-          }
-          if (t.endDate) {
-            const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
-            const { week: w, year: y } = getWeekNumberFromDate(ed);
-            if (w === week && y === weekYear) inWeek = true;
-          }
-          return inWeek;
-        });
-        ongoingTasks = allTasks.filter(t => {
-          if (!t.startDate) return false;
-          const d = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-          const { week: w, year: y } = getWeekNumberFromDate(d);
-          return (t.status || '').toLowerCase() === 'ongoing'
-            && w === week && y === weekYear;
-        });
-        pendingTasks = allTasks.filter(t => {
-          if (!t.startDate) return false;
-          const d = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-          const { week: w, year: y } = getWeekNumberFromDate(d);
-          return (t.status || '').toLowerCase() === 'pending'
-            && w === week && y === weekYear;
-        });
+        // Display the report
+        document.getElementById("report-output").innerHTML = mainHtml;
+        lastReportHTML = mainHtml;
+        lastReportType = reportTypeSelect.value;
+        lastReportPeriod = periodLabel;
+        document.getElementById("download-pdf-btn").disabled = false;
+        
+      } catch (error) {
+        console.error("Error generating report:", error);
+        document.getElementById("report-output").innerHTML = `<p style="color:red;">Error generating report: ${error.message}</p>`;
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = originalBtnText;
       }
-
-      let mainHtml = `<div id="report-export-section">`;
-      mainHtml += cashReportHtml;
-      // INVENTORY FLOW REPORT (with heading, table, and total)
-      mainHtml += `
-<h2 style="color:#1976d2;">${periodLabel} Out Flow Inventory Report</h2>
-<div class="total-cost-incurred">Total Cost Incurred: ZMW ${totalCostIncurred.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
-<h3>Inventory Flow Report</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>Project Name</th>
-      <th>Cost Incurred</th>
-    </tr>
-  </thead>
-  <tbody>`;
-      Object.entries(stockTotals).forEach(([projectName, value]) => {
-        mainHtml += `<tr>
-          <td>${projectName}</td>
-          <td>${Number(value).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-        </tr>`;
-      });
-      mainHtml += `<tr class="total-row">
-        <td>Total Spent</td>
-        <td>${Number(totalStockSpent).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-      </tr>
-  </tbody>
-</table>
-<!-- MAN HOUR SUMMARY -->
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>Project</th>
-      <th>MAN HOUR</th>
-      <th>COST</th>
-    </tr>
-  </thead>
-  <tbody>`;
-      Object.entries(manHourTotals).forEach(([project, mh]) => {
-        mainHtml += `<tr><td>${project}</td><td>${mh}</td><td>${(mh*COST_PER_HOUR).toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`;
-      });
-      mainHtml += `</tbody>
-  <tfoot>
-    <tr class="total-row">
-      <td>Total Spent</td>
-      <td>${totalMH}</td>
-      <td>${totalMHCost.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-    </tr>
-  </tfoot>
-</table>
-<!-- COMPLETED TASKS -->
-<h3>COMPLETED TASKS</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>PROJECT</th>
-      <th>TASK ID</th>
-      <th>TASK DESCRIPTION</th>
-      <th>ASSIGNED</th>
-      <th>LOCATION</th>
-      <th>STATUS</th>
-      <th>START DATE</th>
-      <th>END DATE</th>
-      <th>DURATION</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${completedTasks.map(row => `
-      <tr>
-        <td>${safeProjectName(row)}</td>
-        <td>${row.taskId || '-'}</td>
-        <td>${row.taskDescription || '-'}</td>
-        <td>${row.assignedTo || '-'}</td>
-        <td>${row.location || '-'}</td>
-        <td>${row.status || '-'}</td>
-        <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-        <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
-        <td>${row.duration || '-'}</td>
-      </tr>
-    `).join('')}
-  </tbody>
-</table>
-<!-- ONGOING TASKS -->
-<h3>ONGOING TASKS</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>PROJECT</th>
-      <th>TASK ID</th>
-      <th>TASK DESCRIPTION</th>
-      <th>ASSIGNED</th>
-      <th>LOCATION</th>
-      <th>STATUS</th>
-      <th>START DATE</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${ongoingTasks.map(row => `
-      <tr>
-        <td>${safeProjectName(row)}</td>
-        <td>${row.taskId || '-'}</td>
-        <td>${row.taskDescription || '-'}</td>
-        <td>${row.assignedTo || '-'}</td>
-        <td>${row.location || '-'}</td>
-        <td>${row.status || '-'}</td>
-        <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-      </tr>
-    `).join('')}
-  </tbody>
-</table>
-<!-- PENDING TASKS -->
-<h3>PENDING TASKS</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>PROJECT</th>
-      <th>TASK ID</th>
-      <th>TASK DESCRIPTION</th>
-      <th>ASSIGNED</th>
-      <th>LOCATION</th>
-      <th>STATUS</th>
-      <th>START DATE</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${pendingTasks.map(row => `
-      <tr>
-        <td>${safeProjectName(row)}</td>
-        <td>${row.taskId || '-'}</td>
-        <td>${row.taskDescription || '-'}</td>
-        <td>${row.assignedTo || '-'}</td>
-        <td>${row.location || '-'}</td>
-        <td>${row.status || '-'}</td>
-        <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-      </tr>
-    `).join('')}
-  </tbody>
-</table>
-</div>`;
-
-      document.getElementById("report-output").innerHTML = mainHtml;
-      lastReportHTML = mainHtml;
-      lastReportType = reportTypeSelect.value;
-      lastReportPeriod = periodLabel;
-      document.getElementById("download-pdf-btn").disabled = false;
     };
 
+    // PDF download handler
     document.getElementById("download-pdf-btn").onclick = function() {
       if (!lastReportHTML) return;
       const section = document.getElementById("report-export-section");
