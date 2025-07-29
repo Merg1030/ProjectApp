@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -838,12 +839,14 @@ async function getMaterialCostForTaskId(taskId) {
     let sum = 0;
     const snap = await getDocs(q);
     
+    // For inventory items - we need to get prices from materials collection
     const materialIds = new Set();
     snap.forEach(doc => {
         const d = doc.data();
         if (d.materialId) materialIds.add(d.materialId);
     });
     
+    // Fetch prices for inventory items
     const materialPriceMap = {};
     await Promise.all([...materialIds].map(async materialId => {
         const matSnap = await getDoc(doc(db, "materials", materialId));
@@ -852,11 +855,23 @@ async function getMaterialCostForTaskId(taskId) {
         }
     }));
     
+    // Calculate total cost
     snap.forEach(doc => {
         const d = doc.data();
-        if (!d.reversed && d.quantity && d.materialId) {
-            const price = materialPriceMap[d.materialId] || 0;
-            sum += Number(d.quantity) * Number(price);
+        if (!d.reversed) {
+            // Inventory items
+            if (d.quantity && d.materialId) {
+                const price = materialPriceMap[d.materialId] || 0;
+                sum += Number(d.quantity) * Number(price);
+            }
+            // Supplier items
+            else if (d.boughtFromSupplier && d.amount) {
+                sum += Number(d.amount);
+            }
+            // Backward compatibility for supplier items without boughtFromSupplier flag
+            else if (d.quantity && d.unitPrice && !d.materialId) {
+                sum += Number(d.quantity) * Number(d.unitPrice);
+            }
         }
     });
     
