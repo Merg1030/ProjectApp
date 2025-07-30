@@ -3,119 +3,595 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firestore Journal</title>
+    <title>Full Task List Manager</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
     <style>
-        /* General body styling */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif; /* Set Arial font */
-            background-color: #121212; /* Dark background */
-            color: #e0e0e0; /* Light text */
-        }
-
-        /* Journal container */
-        .journal-container {
-          
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #1e1e1e; /* Slightly lighter dark mode */
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Styling for the journal textarea */
-        textarea {
+        html, body {
+            height: 100%;
             width: 100%;
-            height: 80vh;
-            background-color: #252525; /* Darker area for writing */
-            color: #ffffff; /* White text for notes */
-            border: 1px solid #333; /* Subtle border */
-            border-radius: 4px;
-            padding: 15px;
-            font-family: Arial, sans-serif; /* Set Arial font */
-            font-size: 16px;
-            resize: none; /* Prevent resizing */
-            outline: none; /* No outline on focus */
-            line-height: 1.5; /* Better readability */
+            margin: 0;
+            padding: 0;
         }
-
-        /* Responsive design for smaller screens */
-        @media (max-width: 600px) {
-            .journal-container {
-                margin: 20px;
-                padding: 10px;
-            }
-
-            textarea {
-                font-size: 14px;
-            }
+        body {
+            background: #181818;
+            color: #fff;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            min-height: 100vh;
+            width: 100vw;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
-        .btn.btn-outline{color: white; margin-right: 20PX;}
+        .container {
+            width: 100vw;
+            min-height: 100vh;
+            max-width: none;
+            margin: 0;
+            background: #232323;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .container > h1 {
+            padding: 30px 5vw 10px 5vw;
+            color: #4cc9f0;
+            font-weight: 800;
+            font-size: 2rem;
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #toggleFormBtn {
+            margin-top: 10px;
+            margin-left: 5vw;
+            width: calc(100% - 10vw);
+        }
+        .task-form {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 5vw 0 5vw;
+            width: calc(100% - 10vw);
+        }
+        .task-form .form-control {
+            min-width: 110px;
+            flex: 1 1 160px;
+        }
+        .task-form button {
+            min-width: 110px;
+        }
+        .table-section {
+            margin: 32px 0 0 0;
+            width: 100vw;
+            overflow-x: auto;
+            flex: 1;
+        }
+        .section-tabs, .filters-bar {
+            margin: 12px 5vw 0 5vw;
+            width: calc(100% - 10vw);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .section-tabs .btn {
+            margin-right: 10px;
+        }
+        .filters-bar {
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .filters-bar select {
+            background: #232323;
+            color: #fff;
+            border-radius: 5px;
+            border: 1px solid #353535;
+            padding: 5px 10px;
+        }
+        table {
+            width: 100vw;
+            min-width: 700px;
+            border-collapse: collapse;
+            background: #232323;
+            border-radius: 0;
+            overflow: auto;
+            box-shadow: none;
+            margin: 0;
+        }
+        th, td {
+            padding: 14px 10px;
+            border-bottom: 1px solid #353535;
+            vertical-align: middle;
+            text-align: center;
+        }
+        th {
+            background: #4361ee;
+            color: #fff;
+            font-size: 15px;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .badge-dropdown {
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            margin: 0 auto;
+            width: 110px;
+            display: inline-block;
+            transition: box-shadow 0.18s;
+            background: #2d2d2d;
+        }
+        .badge-dropdown:focus { outline: none; box-shadow: 0 0 0 2px #4cc9f0; }
+        .badge-status-completed { background: #4cc9f0; color: #232323; }
+        .badge-status-ongoing { background: #f8961e; color: #232323; }
+        .badge-status-pending { background: #b90d0d; color: #fff; }
+        .badge-priority-High { background: #b90d0d; color: #fff; }
+        .badge-priority-Medium { background: #f8961e; color: #232323; }
+        .badge-priority-Low { background: #4cc9f0; color: #232323; }
+        .badge-category-Work { background: #4361ee; color: #fff; }
+        .badge-category-personal { background: #4895ef; color: #fff; }
+        .badge-category-School { background: #3a0ca3; color: #fff; }
+        .badge-category-Software { background: #f8961e; color: #fff; }
+        .action-btn { background: none; border: none; cursor: pointer; margin: 0 2px; padding: 3px 7px; border-radius: 4px; font-size: 1rem; }
+        .edit-btn { color: #4361ee; }
+        .delete-btn { color: #b90d0d; }
+        .edit-btn:hover, .delete-btn:hover { background: #353535; }
+        .hide { display: none !important; }
+        .dropdown-menu-cell {
+            min-width: 110px;
+            background: #232323;
+            border: 1px solid #353535;
+            border-radius: 7px;
+            position: absolute;
+            z-index: 9999;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 16px rgba(0,0,0,.20);
+        }
+        .dropdown-menu-cell button {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 8px 0;
+            color: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.13s;
+        }
+        .dropdown-menu-cell button:hover { background: #353535; }
+        .cell-dropdown-wrapper { position: relative; display: inline-block; width: 110px; }
+        .cell-editable {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #353535;
+            border-radius: 5px;
+            padding: 3px 7px;
+            font-size: 13px;
+            width: 120px;
+        }
+        .cell-editable:focus { border-color: #4cc9f0; background: #353535; outline: none; }
+        @media (max-width: 1100px) {
+            th, td { font-size: 13px; padding: 10px 5px; }
+            table { font-size: 13px; }
+        }
+        @media (max-width: 900px) {
+            .task-form { flex-direction: column; width: 90vw; margin-left: 5vw; margin-right: 5vw;}
+            .section-tabs, .filters-bar { flex-direction: column; gap: 8px; width: 90vw; margin-left: 5vw; margin-right: 5vw;}
+        }
+        @media (max-width: 700px) {
+            table, .table-section { overflow-x: auto; font-size: 12px; }
+            th, td { min-width: 110px; }
+            .container > h1 { font-size: 1.2rem; padding: 18px 2vw 5px 2vw;}
+            #toggleFormBtn { margin-left: 2vw; width: 96vw;}
+            .task-form, .section-tabs, .filters-bar { margin-left: 2vw; margin-right: 2vw; width: 96vw;}
+        }
     </style>
 </head>
 <body>
-    <div class="journal-container">
-        <h1><a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>construction notes</h1>
-        <textarea id="journalTextarea" placeholder="Start writing your journal here..." spellcheck="false"></textarea>
+<div class="container">
+    <h1><i class="fa-solid fa-list-check"></i> Full Task List Manager</h1>
+    <button class="btn btn-primary" id="toggleFormBtn"><i class="fa-solid fa-plus"></i> Add Task</button>
+    <form id="taskForm" class="task-form" style="display:none;">
+        <input type="text" id="taskDescription" class="form-control" placeholder="Task Description" required>
+        <select id="category" class="form-control" required>
+            <option value="" hidden>Select Category</option>
+            <option value="Work">Work</option>
+            <option value="School">School</option>
+            <option value="personal">Personal</option>
+            <option value="Software">Software</option>
+        </select>
+        <select id="priority" class="form-control" required>
+            <option value="" hidden>Select Priority</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+        <select id="status" class="form-control" required>
+            <option value="" hidden>Select Status</option>
+            <option value="pending">Pending</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+        </select>
+        <input type="text" id="deadLine" class="form-control" placeholder="Dead Line (e.g. 30 July 2025)" required>
+        <input type="text" id="comment" class="form-control" placeholder="Comment / Progress">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Task</button>
+        <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn" style="display:none;"><i class="fa-solid fa-xmark"></i> Cancel</button>
+    </form>
+    <div class="section-tabs">
+        <button class="btn btn-primary" id="showActiveBtn">Active Tasks</button>
+        <button class="btn btn-outline-secondary" id="showCompletedBtn">Completed Tasks</button>
     </div>
+    <div class="filters-bar">
+        <span><i class="fa-solid fa-filter"></i> Filter:</span>
+        <select id="filterCategory">
+            <option value="">All Categories</option>
+            <option value="Work">Work</option>
+            <option value="School">School</option>
+            <option value="personal">Personal</option>
+            <option value="Software">Software</option>
+        </select>
+        <select id="filterPriority">
+            <option value="">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+    </div>
+    <div class="table-section">
+        <table id="taskTable">
+            <thead>
+            <tr>
+                <th>TASK DESCRIPTION</th>
+                <th>CATEGORY</th>
+                <th>PRIORITY</th>
+                <th>STATUS</th>
+                <th>DEAD LINE</th>
+                <th>COMMENT / PROGRESS</th>
+                <th>ACTIONS</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 
-    <script type="module">
-        // Import the functions you need from the Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyClOZGykyDEgqssG423M6CLLKZ8sxrtAFk",
+        authDomain: "shop-a24bc.firebaseapp.com",
+        projectId: "shop-a24bc",
+        storageBucket: "shop-a24bc.appspot.com",
+        messagingSenderId: "405250859058",
+        appId: "1:405250859058:web:01e3c07ad2139c4f5d1c2b",
+        measurementId: "G-NX2KK1ZXG1"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-            authDomain: "project-task-588c4.firebaseapp.com",
-            projectId: "project-task-588c4",
-            storageBucket: "project-task-588c4.firebasestorage.app",
-            messagingSenderId: "411882772509",
-            appId: "1:411882772509:web:08d613186c101a99f38ef4",
-            measurementId: "G-JMFLFYEM0F"
-        };
+    const taskForm = document.getElementById("taskForm");
+    const taskTable = document.getElementById("taskTable").querySelector("tbody");
+    const toggleFormBtn = document.getElementById("toggleFormBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const showActiveBtn = document.getElementById("showActiveBtn");
+    const showCompletedBtn = document.getElementById("showCompletedBtn");
+    const filterCategory = document.getElementById("filterCategory");
+    const filterPriority = document.getElementById("filterPriority");
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    let editingDocId = null;
+    let tasksCache = [];
+    let showCompleted = false;
 
-        // Reference to the journal document
-        const journalDocRef = doc(db, "journal", "myJournal"); // Saves all text in a single document called "myJournal"
+    // Initial sample tasks (only added if DB is empty)
+    const initialTasks = [
+        {
+            taskDescription: "Hazida motors sales entrance door replacement",
+            category: "Work",
+            priority: "High",
+            status: "completed",
+            deadLine: "30 July 2025",
+            comment: "was already done by juilo"
+        },
+        {
+            taskDescription: "directors room kitchen tap to replace",
+            category: "Work",
+            priority: "High",
+            status: "completed",
+            deadLine: "29 July 2025",
+            comment: "sorted out"
+        },
+        {
+            taskDescription: "Mr dashan house db cover",
+            category: "Work",
+            priority: "High",
+            status: "completed",
+            deadLine: "29 July",
+            comment: "peter has gone to cover the db area"
+        },
+        {
+            taskDescription: "Centro mall displace and socket to replace",
+            category: "Work",
+            priority: "High",
+            status: "ongoing",
+            deadLine: "first week of august",
+            comment: "wating on the pic to be send yet to arrange for ie"
+        },
+        {
+            taskDescription: "Fire extinguishers servicing",
+            category: "Work",
+            priority: "High",
+            status: "pending",
+            deadLine: "First week of auguse",
+            comment: "talked to mr hamprey waiting for him to give me a day to make plans with brighton"
+        }
+    ];
 
-        // DOM element
-        const journalTextarea = document.getElementById("journalTextarea");
+    // Persist filters and active/completed tab in localStorage
+    function saveViewState() {
+        localStorage.setItem('taskListStatusTab', showCompleted ? 'completed' : 'active');
+        localStorage.setItem('taskListCategoryFilter', filterCategory.value);
+        localStorage.setItem('taskListPriorityFilter', filterPriority.value);
+    }
+    function loadViewState() {
+        const tab = localStorage.getItem('taskListStatusTab');
+        if (tab === 'completed') {
+            showCompleted = true;
+            showCompletedBtn.classList.add("btn-primary");
+            showCompletedBtn.classList.remove("btn-outline-secondary");
+            showActiveBtn.classList.remove("btn-primary");
+            showActiveBtn.classList.add("btn-outline-secondary");
+        }
+        filterCategory.value = localStorage.getItem('taskListCategoryFilter') || "";
+        filterPriority.value = localStorage.getItem('taskListPriorityFilter') || "";
+    }
 
-        // Load existing journal content from Firestore
-        const loadJournal = async () => {
-            try {
-                const docSnapshot = await getDoc(journalDocRef);
-                if (docSnapshot.exists()) {
-                    journalTextarea.value = docSnapshot.data().content; // Load content into textarea
-                }
-            } catch (error) {
-                console.error("Error loading journal: ", error);
-            }
-        };
+    toggleFormBtn.addEventListener("click", function() {
+        if (taskForm.style.display === "none") {
+            taskForm.reset();
+            editingDocId = null;
+            taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
+            cancelEditBtn.style.display = "none";
+            taskForm.style.display = "flex";
+            toggleFormBtn.innerHTML = '<i class="fa-solid fa-minus"></i> Hide Form';
+        } else {
+            taskForm.style.display = "none";
+            toggleFormBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
+        }
+    });
 
-        // Save journal content to Firestore in real-time
-        const saveJournal = async () => {
-            try {
-                const content = journalTextarea.value;
-                await setDoc(journalDocRef, { content }); // Save the entire textarea content
-            } catch (error) {
-                console.error("Error saving journal: ", error);
-            }
-        };
+    cancelEditBtn.addEventListener("click", function() {
+        taskForm.reset();
+        editingDocId = null;
+        taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
+        cancelEditBtn.style.display = "none";
+    });
 
-        // Load journal content when the page loads
-        window.addEventListener("load", loadJournal);
+    showActiveBtn.addEventListener("click", function() {
+        showCompleted = false;
+        saveViewState();
+        showActiveBtn.classList.add("btn-primary");
+        showActiveBtn.classList.remove("btn-outline-secondary");
+        showCompletedBtn.classList.remove("btn-primary");
+        showCompletedBtn.classList.add("btn-outline-secondary");
+        renderTasks();
+    });
 
-        // Save journal content in real-time whenever it changes
-        journalTextarea.addEventListener("input", () => {
-            saveJournal();
+    showCompletedBtn.addEventListener("click", function() {
+        showCompleted = true;
+        saveViewState();
+        showCompletedBtn.classList.add("btn-primary");
+        showCompletedBtn.classList.remove("btn-outline-secondary");
+        showActiveBtn.classList.remove("btn-primary");
+        showActiveBtn.classList.add("btn-outline-secondary");
+        renderTasks();
+    });
+
+    filterCategory.addEventListener('change', () => { saveViewState(); renderTasks(); });
+    filterPriority.addEventListener('change', () => { saveViewState(); renderTasks(); });
+
+    async function loadTasks() {
+        const snapshot = await getDocs(collection(db, "tasklist"));
+        tasksCache = [];
+        snapshot.forEach((docSnap) => {
+            const t = docSnap.data();
+            tasksCache.push({ id: docSnap.id, ...t });
         });
-    </script>
+        // If DB is empty, add initial sample tasks
+        if (tasksCache.length === 0) {
+            for (const t of initialTasks) await addDoc(collection(db, "tasklist"), t);
+            return loadTasks();
+        }
+        renderTasks();
+    }
+
+    function getBadgeClass(type, value) {
+        return `badge-${type}-${value}`;
+    }
+
+    function renderTasks() {
+        let rows = '';
+        // Filtering logic
+        let filteredTasks = tasksCache.filter(task => showCompleted 
+            ? task.status === "completed"
+            : task.status !== "completed"
+        );
+        if (filterCategory.value) {
+            filteredTasks = filteredTasks.filter(t => t.category === filterCategory.value);
+        }
+        if (filterPriority.value) {
+            filteredTasks = filteredTasks.filter(t => t.priority === filterPriority.value);
+        }
+        if (filteredTasks.length === 0) {
+            rows = '<tr><td colspan="7">No tasks found</td></tr>';
+        } else {
+            filteredTasks.forEach((t) => {
+                rows += `<tr data-id="${t.id}">
+                    <td style="text-align:left;">${t.taskDescription || ""}</td>
+                    <td>
+                        <div class="cell-dropdown-wrapper">
+                            <button class="badge-dropdown ${getBadgeClass('category', t.category || 'Work')}" data-id="${t.id}" data-type="category" tabindex="0">${t.category || ""}</button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-dropdown-wrapper">
+                            <button class="badge-dropdown ${getBadgeClass('priority', t.priority || 'Low')}" data-id="${t.id}" data-type="priority" tabindex="0">${t.priority || ""}</button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-dropdown-wrapper">
+                            <button class="badge-dropdown ${getBadgeClass('status', t.status || 'pending')}" data-id="${t.id}" data-type="status" tabindex="0">${t.status ? t.status.charAt(0).toUpperCase() + t.status.slice(1) : ""}</button>
+                        </div>
+                    </td>
+                    <td>
+                        <input class="cell-editable" type="text" value="${t.deadLine || ''}" data-id="${t.id}" data-field="deadLine" />
+                    </td>
+                    <td style="text-align:left;">
+                        <input class="cell-editable" type="text" value="${t.comment || ''}" data-id="${t.id}" data-field="comment" />
+                    </td>
+                    <td>
+                        <button class="action-btn edit-btn" title="Edit" onclick="window.editTask('${t.id}')"><i class="fa-solid fa-edit"></i></button>
+                        <button class="action-btn delete-btn" title="Delete" onclick="window.deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+        }
+        taskTable.innerHTML = rows;
+
+        // Inline dropdown for category, priority, status
+        document.querySelectorAll('.badge-dropdown').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                document.querySelectorAll('.dropdown-menu-cell').forEach(menu => menu.remove());
+                const type = this.getAttribute('data-type');
+                const id = this.getAttribute('data-id');
+                let options = [];
+                if (type === 'category') options = ["Work", "School", "personal", "Software"];
+                if (type === 'priority') options = ["High", "Medium", "Low"];
+                if (type === 'status') options = ["pending", "ongoing", "completed"];
+                const menu = document.createElement('div');
+                menu.className = 'dropdown-menu-cell';
+                options.forEach(opt => {
+                    const b = document.createElement('button');
+                    b.className = getBadgeClass(type, opt);
+                    b.textContent = type === "status" ? (opt.charAt(0).toUpperCase() + opt.slice(1)) : opt;
+                    b.onclick = async (ev) => {
+                        ev.stopPropagation();
+                        menu.remove();
+                        const task = tasksCache.find(t => t.id === id);
+                        if (task) {
+                            task[type] = opt;
+                            await updateDoc(doc(db, "tasklist", id), task);
+                            saveViewState();
+                            if (type === "status") {
+                                if (!showCompleted && opt === "completed") {
+                                    renderTasks();
+                                    return;
+                                }
+                                if (showCompleted && opt !== "completed") {
+                                    renderTasks();
+                                    return;
+                                }
+                            }
+                            renderTasks();
+                        }
+                    };
+                    menu.appendChild(b);
+                });
+                this.parentNode.appendChild(menu);
+                setTimeout(() => {
+                    document.addEventListener('click', function handler(ev) {
+                        if (!menu.contains(ev.target)) {
+                            menu.remove();
+                            document.removeEventListener('click', handler);
+                        }
+                    });
+                }, 10);
+            };
+        });
+
+        // Inline editing for deadLine and comment
+        document.querySelectorAll('input.cell-editable').forEach(function(inp) {
+            inp.onchange = async function(e) {
+                const id = this.getAttribute('data-id');
+                const field = this.getAttribute('data-field');
+                const val = this.value;
+                const task = tasksCache.find(t => t.id === id);
+                if (task) {
+                    task[field] = val;
+                    await updateDoc(doc(db, "tasklist", id), task);
+                    saveViewState();
+                }
+            };
+            inp.onblur = inp.onchange;
+        });
+    }
+
+    taskForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const taskData = {
+            taskDescription: document.getElementById("taskDescription").value.trim(),
+            category: document.getElementById("category").value,
+            priority: document.getElementById("priority").value,
+            status: document.getElementById("status").value,
+            deadLine: document.getElementById("deadLine").value.trim(),
+            comment: document.getElementById("comment").value.trim()
+        };
+        if (!taskData.taskDescription || !taskData.category || !taskData.priority || !taskData.status || !taskData.deadLine) {
+            alert("Please fill all required fields.");
+            return;
+        }
+        if (editingDocId) {
+            await updateDoc(doc(db, "tasklist", editingDocId), taskData);
+            editingDocId = null;
+            taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
+            cancelEditBtn.style.display = "none";
+        } else {
+            await addDoc(collection(db, "tasklist"), taskData);
+        }
+        taskForm.reset();
+        await loadTasks();
+    });
+
+    window.editTask = function (docId) {
+        const task = tasksCache.find(t => t.id === docId);
+        if (!task) return;
+        document.getElementById("taskDescription").value = task.taskDescription || "";
+        document.getElementById("category").value = task.category || "";
+        document.getElementById("priority").value = task.priority || "";
+        document.getElementById("status").value = task.status || "";
+        document.getElementById("deadLine").value = task.deadLine || "";
+        document.getElementById("comment").value = task.comment || "";
+        editingDocId = docId;
+        taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-save"></i> Update Task';
+        cancelEditBtn.style.display = "inline-block";
+        if (taskForm.style.display === "none") {
+            taskForm.style.display = "flex";
+            toggleFormBtn.innerHTML = '<i class="fa-solid fa-minus"></i> Hide Form';
+        }
+    };
+
+    window.deleteTask = async function (docId) {
+        if (!confirm("Delete this task?")) return;
+        await deleteDoc(doc(db, "tasklist", docId));
+        await loadTasks();
+    };
+
+    // Load persisted view state and tasks
+    loadViewState();
+    loadTasks();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
