@@ -158,6 +158,14 @@
         <input class="form-control" id="availableQty" readonly />
       </div>
       <div class="form-group">
+        <label>Item Code:</label>
+        <input class="form-control" id="selectedItemCode" readonly />
+      </div>
+      <div class="form-group">
+        <label>Came From (Original Source):</label>
+        <input class="form-control" id="selectedItemCameFrom" readonly />
+      </div>
+      <div class="form-group">
         <label>Quantity to Move:</label>
         <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
       </div>
@@ -192,7 +200,6 @@
       <div id="form-message"></div>
     </form>
     <div class="log-section">
-      <!-- Search bar -->
       <div class="search-bar-container">
         <input type="text" class="search-input" id="logSearchInput" placeholder="Search logs by Item, Code, Note, etc...">
         <button type="button" class="search-btn" id="searchBtn"><i class="fa fa-search"></i></button>
@@ -322,6 +329,8 @@
     const itemInfoDiv = document.getElementById('item-info');
     const issueDNoteInput = document.getElementById('issueDNote');
     const transferDNoteInput = document.getElementById('transferDNote');
+    const selectedItemCodeInput = document.getElementById('selectedItemCode');
+    const selectedItemCameFromInput = document.getElementById('selectedItemCameFrom');
     let inventoryMap = {};
     async function loadItems() {
       inventoryMap = {};
@@ -346,6 +355,8 @@
         itemInfoDiv.innerHTML = "";
         issueDNoteInput.value = "";
         transferDNoteInput.value = "";
+        selectedItemCodeInput.value = "";
+        selectedItemCameFromInput.value = "";
         return;
       }
       const m = inventoryMap[id];
@@ -360,6 +371,8 @@
       `;
       issueDNoteInput.value = m.deliveryNoteNumber || '';
       transferDNoteInput.value = m.deliveryNoteNumber || '';
+      selectedItemCodeInput.value = m.itemCode || '';
+      selectedItemCameFromInput.value = m.cameFrom || '';
     });
 
     // Form logic
@@ -385,6 +398,7 @@
         itemCode: m.itemCode || '-',
         category: m.category,
         fromLocation: m.location,
+        cameFrom: m.cameFrom || '-',
         movedQuantity: qtyToMove,
         timestamp: serverTimestamp()
       };
@@ -423,6 +437,8 @@
           itemInfoDiv.innerHTML = "";
           issueDNoteInput.value = "";
           transferDNoteInput.value = "";
+          selectedItemCodeInput.value = "";
+          selectedItemCameFromInput.value = "";
         } catch (err) {
           messageDiv.innerHTML = '<div class="error-msg">Error: ' + (err.message || err) + '</div>';
         }
@@ -457,6 +473,8 @@
           itemInfoDiv.innerHTML = "";
           issueDNoteInput.value = "";
           transferDNoteInput.value = "";
+          selectedItemCodeInput.value = "";
+          selectedItemCameFromInput.value = "";
         } catch (err) {
           messageDiv.innerHTML = '<div class="error-msg">Error: ' + (err.message || err) + '</div>';
         }
@@ -469,6 +487,8 @@
       itemInfoDiv.innerHTML = "";
       issueDNoteInput.value = "";
       transferDNoteInput.value = "";
+      selectedItemCodeInput.value = "";
+      selectedItemCameFromInput.value = "";
     });
 
     // SEARCH BAR LOGIC
@@ -490,7 +510,8 @@
           (m.issuedLocation || '').toLowerCase().includes(term) ||
           (m.deliveryNoteNumber || '').toLowerCase().includes(term) ||
           (m.issueDNote || '').toLowerCase().includes(term) ||
-          (m.issueReason || '').toLowerCase().includes(term)
+          (m.issueReason || '').toLowerCase().includes(term) ||
+          (m.cameFrom || '').toLowerCase().includes(term)
         );
       }
       return filtered;
@@ -524,20 +545,6 @@
     const showIssueOutBtn = document.getElementById('showIssueOutBtn');
     const transfersTable = document.getElementById('transfersTable');
     const issueOutsTable = document.getElementById('issueOutsTable');
-    showTransfersBtn.onclick = function() {
-      showTransfersBtn.classList.add('active');
-      showIssueOutBtn.classList.remove('active');
-      transfersTable.style.display = '';
-      issueOutsTable.style.display = 'none';
-      filterAndRender();
-    };
-    showIssueOutBtn.onclick = function() {
-      showIssueOutBtn.classList.add('active');
-      showTransfersBtn.classList.remove('active');
-      transfersTable.style.display = 'none';
-      issueOutsTable.style.display = '';
-      filterAndRender();
-    };
     const transfersTableBody = document.getElementById('transfers-table-body');
     const issueoutsTableBody = document.getElementById('issueouts-table-body');
     let auditData = [];
@@ -563,6 +570,7 @@
           <td>${m.toLocation || '-'}</td>
           <td>${m.deliveryNoteNumber || '-'}</td>
         `;
+        tr.title = `Item Code: ${m.itemCode || '-'}\nCame From: ${m.cameFrom || '-'}`;
         transfersTableBody.appendChild(tr);
       });
     }
@@ -590,6 +598,7 @@
           <td>${m.issueDNote || m.deliveryNoteNumber || '-'}</td>
           <td>${m.issueReason || '-'}</td>
         `;
+        tr.title = `Item Code: ${m.itemCode || '-'}\nCame From: ${m.cameFrom || '-'}`;
         issueoutsTableBody.appendChild(tr);
       });
     }
