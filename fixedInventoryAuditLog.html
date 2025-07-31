@@ -89,7 +89,6 @@
     .action-badge { border-radius: 3px; padding: 2px 8px; font-size: 14px; margin-right: 6px; font-weight: bold;}
     .transfer-badge { background: #eafaf1; color: #16a085; border: 1px solid #b9f6ca; }
     .issueout-badge { background: #fdeaea; color: #c0392b; border: 1px solid #fabcbc; }
-    /* SEARCH BAR */
     .search-bar-container {
       display: flex;
       align-items: center;
@@ -169,14 +168,12 @@
         <label>Quantity to Move:</label>
         <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
       </div>
-      <!-- Transfer fields -->
       <div class="form-group" id="transfer-fields">
         <label>Transfer To (Warehouse/Storage):</label>
         <input class="form-control" name="transferTo" id="transferTo" placeholder="Destination location"/>
         <label style="margin-top:7px;">Delivery Note Number (for Transfer):</label>
         <input class="form-control" name="transferDNote" id="transferDNote" placeholder="Delivery note number for transfer"/>
       </div>
-      <!-- Issue out fields -->
       <div class="hidden" id="issue-fields">
         <div class="form-group">
           <label>Person Issued To:</label>
@@ -266,7 +263,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // FORM SHOW/HIDE LOGIC
     const toggleFormBtn = document.getElementById('toggleFormBtn');
     const transferForm = document.getElementById('transfer-form');
     let formVisible = false;
@@ -286,7 +282,6 @@
       }
     };
 
-    // UI Logic
     const btnTransfer = document.getElementById('btn-transfer');
     const btnIssue = document.getElementById('btn-issue');
     const transferFields = document.getElementById('transfer-fields');
@@ -323,7 +318,6 @@
     }
     setMode("transfer");
 
-    // Load items for selection
     const itemSelect = document.getElementById('itemSelect');
     const availableQty = document.getElementById('availableQty');
     const itemInfoDiv = document.getElementById('item-info');
@@ -347,7 +341,6 @@
     }
     loadItems();
 
-    // Show item info and prefill delivery note number when selected
     itemSelect.addEventListener('change', function() {
       const id = itemSelect.value;
       if (!id || !inventoryMap[id]) {
@@ -375,7 +368,6 @@
       selectedItemCameFromInput.value = m.cameFrom || '';
     });
 
-    // Form logic
     const form = document.getElementById('transfer-form');
     const messageDiv = document.getElementById('form-message');
     form.addEventListener('submit', async function(e) {
@@ -491,7 +483,6 @@
       selectedItemCameFromInput.value = "";
     });
 
-    // SEARCH BAR LOGIC
     const logSearchInput = document.getElementById('logSearchInput');
     const searchBtn = document.getElementById('searchBtn');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
@@ -540,7 +531,6 @@
       }
     });
 
-    // TABLE TOGGLE LOGIC & LIVE AUDIT LOG
     const showTransfersBtn = document.getElementById('showTransfersBtn');
     const showIssueOutBtn = document.getElementById('showIssueOutBtn');
     const transfersTable = document.getElementById('transfersTable');
@@ -602,6 +592,20 @@
         issueoutsTableBody.appendChild(tr);
       });
     }
+    showTransfersBtn.onclick = function() {
+      showTransfersBtn.classList.add('active');
+      showIssueOutBtn.classList.remove('active');
+      transfersTable.style.display = '';
+      issueOutsTable.style.display = 'none';
+      filterAndRender();
+    };
+    showIssueOutBtn.onclick = function() {
+      showIssueOutBtn.classList.add('active');
+      showTransfersBtn.classList.remove('active');
+      transfersTable.style.display = 'none';
+      issueOutsTable.style.display = '';
+      filterAndRender();
+    };
     onSnapshot(query(collection(db, "fixedInventoryAuditLog"), orderBy("timestamp", "desc")), (snapshot) => {
       auditData = [];
       snapshot.forEach(doc => {
@@ -610,7 +614,6 @@
       filterAndRender();
     });
 
-    // Security measures
     document.addEventListener('contextmenu', function (e) {
       e.preventDefault();
     });
