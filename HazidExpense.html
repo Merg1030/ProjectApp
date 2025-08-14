@@ -199,7 +199,6 @@
     .search-bar input[type="text"] {
       padding: 5px 10px;
       border-radius: 4px;
-    
       background: #181A1B;
       color: #e6e6e6;
       font-size: 13px;
@@ -209,7 +208,6 @@
     .week-filter-select, .month-filter-select {
       padding: 5px 10px;
       font-size: 13px;
-   
       background: #585c5e;
       color: #e6e6e6;
       margin-left: 6px;
@@ -229,13 +227,11 @@
       background: #fff;
       color: #000;
       font-size: 13px;
-   
     }
     th, td {
       padding: 8px 6px;
       text-align: left;
       font-size: 13px;
-     
     }
     th { 
       font-weight: 700; 
@@ -410,8 +406,13 @@
     const projectBtnsContainer = document.getElementById("project-btns");
     const projectCollapseBtn = document.getElementById("project-collapse-btn");
 
-    // --- Project Filter State
+    // --- Filter State ---
+    let selectedAccount = localStorage.getItem('ims_selectedAccount') || "";
     let selectedProjectFilter = localStorage.getItem('ims_selectedProject') || ""; // "" = all projects
+    let persistedSearchFilter = localStorage.getItem('ims_searchFilter') || "";
+    let persistedWeekFilter = localStorage.getItem('ims_weekFilter') || "all";
+    let persistedMonthFilter = localStorage.getItem('ims_monthFilter') || "all";
+    let projectBtnsVisible = localStorage.getItem('ims_projectBtnsVisible') !== 'false';
     let checkboxesVisible = false;
     let selectedTransactions = new Set();
 
@@ -433,11 +434,21 @@
         }
       }
       weekFilter.innerHTML = options;
-      weekFilter.selectedIndex = 0;
+      
+      // Set persisted week filter if it exists
+      if (persistedWeekFilter) {
+        const optionExists = Array.from(weekFilter.options).some(opt => opt.value === persistedWeekFilter);
+        if (optionExists) {
+          weekFilter.value = persistedWeekFilter;
+        }
+      }
     }
     fillWeekDropdown();
 
-    weekFilter.addEventListener("change", renderTable);
+    weekFilter.addEventListener("change", function() {
+      localStorage.setItem('ims_weekFilter', weekFilter.value);
+      renderTable();
+    });
 
     // --- Month Filter Dropdown ---
     function fillMonthDropdown() {
@@ -453,11 +464,21 @@
         }
       }
       monthFilter.innerHTML = options;
-      monthFilter.selectedIndex = 0;
+      
+      // Set persisted month filter if it exists
+      if (persistedMonthFilter) {
+        const optionExists = Array.from(monthFilter.options).some(opt => opt.value === persistedMonthFilter);
+        if (optionExists) {
+          monthFilter.value = persistedMonthFilter;
+        }
+      }
     }
     fillMonthDropdown();
 
-    monthFilter.addEventListener("change", renderTable);
+    monthFilter.addEventListener("change", function() {
+      localStorage.setItem('ims_monthFilter', monthFilter.value);
+      renderTable();
+    });
 
     // --- Show/Hide Form Logic ---
     let formVisible = false;
@@ -484,11 +505,9 @@
       }
     };
 
-    // --- Persisted Filter Logic ---
-    let selectedAccount = localStorage.getItem('ims_selectedAccount') || "";
-    let persistedSearchFilter = localStorage.getItem('ims_searchFilter') || "";
-
+    // Initialize UI based on persisted filters
     window.addEventListener('DOMContentLoaded', () => {
+      // Set account filter
       accountBtns.forEach((btn) => {
         if (btn.getAttribute("data-account") === selectedAccount) {
           btn.classList.add("selected");
@@ -496,10 +515,19 @@
           btn.classList.remove("selected");
         }
       });
+      
+      // Set search filter
       searchFilter.value = persistedSearchFilter;
+      
+      // Set project filter visibility
+      projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
+      projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
+      projectCollapseBtn.title = projectBtnsVisible ? "Hide Projects" : "Show Projects";
+      
       renderTable();
     });
 
+    // Account filter buttons
     accountBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
         accountBtns.forEach(b => b.classList.remove("selected"));
@@ -511,9 +539,6 @@
     });
 
     // --- Collapsible Project Filter Buttons ---
-    let projectBtnsVisible = localStorage.getItem('ims_projectBtnsVisible') !== 'false';
-    projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
-    projectCollapseBtn.title = projectBtnsVisible ? "Hide Projects" : "Show Projects";
     projectCollapseBtn.onclick = function() {
       projectBtnsVisible = !projectBtnsVisible;
       projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
