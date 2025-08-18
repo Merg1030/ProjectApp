@@ -7,14 +7,27 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <!-- Modal for image viewing -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" />
   <style>
+    :root {
+      --primary: #1976d2;
+      --primary-dark: #1453a3;
+      --danger: #b71c1c;
+      --danger-dark: #7b1212;
+      --warning: #c9821c;
+      --text: #222;
+      --light-bg: #f5f7fa;
+      --card-bg: #fff;
+      --border: #e0e4e9;
+    }
     html, body {
       min-height: 100vh;
       width: 100vw;
       margin: 0;
       padding: 0;
-      background: #f5f7fa;
-      color: #222;
+      background: var(--light-bg);
+      color: var(--text);
       font-family: 'Segoe UI', Arial, sans-serif;
       box-sizing: border-box;
     }
@@ -24,12 +37,12 @@
       flex-direction: column;
       align-items: center;
       width: 100vw;
-      background: #fff;
+      background: var(--card-bg);
       padding: 0;
     }
     .welcome {
       font-size: 1.1em;
-      color: #1976d2;
+      color: var(--primary);
       text-align: center;
       margin: 22px 0 8px;
       letter-spacing: 0.5px;
@@ -41,7 +54,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #f5f7fa;
+      background: var(--light-bg);
       box-shadow: 0 2px 8px #0001;
       padding: 0 3vw 0 3vw;
       margin-bottom: 0;
@@ -49,13 +62,13 @@
     }
     .header-bar h2 {
       margin: 0;
-      color: #1976d2;
+      color: var(--primary);
       font-weight: 700;
       font-size: 1.25em;
       letter-spacing: 1px;
     }
     .btn-logout, .btn-toggle {
-      background: #1976d2;
+      background: var(--primary);
       color: #fff;
       border: none;
       border-radius: 7px;
@@ -68,22 +81,22 @@
       box-shadow: 0 2px 8px #0001;
     }
     .btn-logout {
-      background: #b71c1c;
+      background: var(--danger);
     }
-    .btn-toggle:hover { background: #1358a7; }
-    .btn-logout:hover { background: #7b1212; }
+    .btn-toggle:hover { background: var(--primary-dark); }
+    .btn-logout:hover { background: var(--danger-dark); }
     .form-container {
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 13px;
       box-shadow: 0 4px 28px #0002;
       max-width: 98vw;
       width: 460px;
       margin: 20px auto 10px;
       padding: 18px 14px 12px;
-      color: #222;
-      border: 1px solid #e0e4e9;
+      color: var(--text);
+      border: 1px solid var(--border);
     }
-    label { font-weight: bold; margin-top: 10px; display: block; color: #1976d2;}
+    label { font-weight: bold; margin-top: 10px; display: block; color: var(--primary);}
     input, textarea, select {
       width: 100%;
       padding: 10px 12px;
@@ -92,14 +105,14 @@
       border: 1.2px solid #b5c4d6;
       border-radius: 7px;
       font-size: 1em;
-      color: #222;
+      color: var(--text);
       margin-bottom: 4px;
       transition: border 0.18s;
       box-sizing: border-box;
     }
     input:focus, textarea:focus, select:focus {
       outline: none;
-      border-color: #1976d2;
+      border-color: var(--primary);
       background: #fff;
     }
     textarea { resize: vertical; min-height: 42px; }
@@ -107,7 +120,7 @@
       margin-top: 18px;
       padding: 12px 0;
       width: 100%;
-      background: #1976d2;
+      background: var(--primary);
       border: none;
       color: #fff;
       font-size: 1.07em;
@@ -116,28 +129,36 @@
       font-weight: 600;
       transition: background .18s;
     }
-    .btn-submit:hover { background: #1453a3; }
+    .btn-submit:hover { background: var(--primary-dark); }
+    
+    /* Improved Grid Layout */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 20px;
       margin: 0 auto 40px;
-      max-width: 1200px;
+      max-width: 1400px;
       width: 100vw;
       padding: 0 4vw 20px;
     }
+    
+    /* Enhanced Card Design */
     .card {
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 13px;
       box-shadow: 0 2px 18px 0 #0001;
-      border: 1.5px solid #e0e4e9;
-      color: #222;
+      border: 1.5px solid var(--border);
+      color: var(--text);
       cursor: pointer;
-      transition: box-shadow 0.18s, border 0.13s;
+      transition: transform 0.2s, box-shadow 0.2s;
       position: relative;
       overflow: hidden;
       width: 100%;
       min-width: 0;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
     }
     .card.collapsed .card-details { display: none; }
     .card-summary {
@@ -145,87 +166,355 @@
       font-size: 1.09em;
       background: #f2f6fb;
       padding: 17px 15px 10px;
-      border-bottom: 1px solid #e0e4e9;
-      color: #1976d2;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
       letter-spacing: 0.5px;
       user-select: none;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
     }
-    .card-summary span {
-      margin-right: 8px;
-      color: #444;
-      font-size: 0.98em;
-      font-weight: 400;
+    .card-summary .company {
+      font-weight: 700;
+      color: var(--primary);
+      flex: 1;
+      min-width: 120px;
+    }
+    .card-summary .location {
+      color: #555;
+      font-size: 0.95em;
+      flex: 1;
+      min-width: 100px;
     }
     .card .deadline {
-      color: #c9821c;
-      margin-left: 4px;
-      font-size: 0.99em;
+      color: var(--warning);
+      font-size: 0.95em;
       font-weight: 500;
+      white-space: nowrap;
     }
     .status {
       font-weight: bold;
       padding: 4px 13px;
       border-radius: 6px;
       display: inline-block;
-      margin-top: 8px;
-      font-size: 0.99em;
+      margin-top: 0;
+      font-size: 0.95em;
       letter-spacing: 0.5px;
       background: #e3f2fd;
-      color: #1976d2;
+      color: var(--primary);
       border: 1px solid #bcdffb;
+      white-space: nowrap;
     }
     .Good { background: #e2fbe7; color: #1976d2; border-color: #bcebc6; }
     .Fair { background: #fffbe2; color: #a3921a; border-color: #fbeab7; }
     .Bad { background: #ffeaea; color: #a32d2d; border-color: #fbbcbc; }
     .VeryBad { background: #ffe7ec; color: #b71c1c; border-color: #ffb4c7; }
-    .images img, .situation img, .quotations img {
-      max-width: 99px;
-      max-height: 80px;
-      margin: 5px 7px 5px 0;
+    
+    /* Improved Image Gallery */
+    .images-container {
+      margin: 15px 0;
+    }
+    .images-section {
+      margin-bottom: 15px;
+    }
+    .images-section h4 {
+      margin: 0 0 8px 0;
+      color: var(--primary);
+      font-size: 0.95em;
+    }
+    .images-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .images-grid a {
+      display: block;
+      width: 100px;
+      height: 80px;
       border-radius: 7px;
-      border: 1px solid #e0e4e9;
+      overflow: hidden;
+      border: 1px solid var(--border);
       background: #f8fafc;
+      position: relative;
     }
-    .images, .situation, .quotations {
-      margin-top: 9px;
-      margin-bottom: 5px;
-      overflow-x: auto;
-      white-space: nowrap;
+    .images-grid a img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.2s;
     }
-    .comment-section { margin-top: 15px; border-top: 1px solid #e0e4e9; padding-top: 12px; }
-    .comment-list { margin-bottom: 10px; }
+    .images-grid a:hover img {
+      transform: scale(1.05);
+    }
+    .pdf-thumbnail {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      color: var(--primary);
+      font-size: 0.8em;
+      text-align: center;
+      padding: 5px;
+    }
+    
+    /* Card Details Layout */
+    .card-details {
+      padding: 15px 18px 7px;
+    }
+    .detail-row {
+      display: flex;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .detail-col {
+      flex: 1;
+      min-width: 150px;
+      margin-right: 15px;
+    }
+    .detail-col:last-child {
+      margin-right: 0;
+    }
+    .detail-row p {
+      margin: 5px 0;
+    }
+    .detail-row b {
+      color: var(--primary);
+    }
+    
+    /* Comments Section */
+    .comment-section { 
+      margin-top: 15px; 
+      border-top: 1px solid var(--border); 
+      padding-top: 12px; 
+    }
+    .comment-list { 
+      margin-bottom: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
     .comment-list p {
       margin: 3px 0;
-      padding: 6px 12px;
+      padding: 8px 12px;
       background: #f2f6fb;
       border-radius: 5px;
       font-size: 0.96em;
-      color: #1976d2;
+      color: var(--primary);
+      border-left: 3px solid var(--primary);
     }
-    .comment-form textarea { width: 100%; min-height: 40px; margin-bottom: 7px; }
+    .comment-form textarea { 
+      width: 100%; 
+      min-height: 60px; 
+      margin-bottom: 7px; 
+    }
     .comment-form button {
-      background: #1976d2;
+      background: var(--primary);
       color: #fff;
       border: none;
       border-radius: 5px;
-      padding: 7px 22px;
+      padding: 8px 22px;
       cursor: pointer;
       font-size: 0.97em;
       font-weight: 600;
       margin-top: 2px;
+      transition: background 0.2s;
     }
-    .comment-form button:hover { background: #1453a3;}
+    .comment-form button:hover { 
+      background: var(--primary-dark);
+    }
+    
+    /* Issue List */
+    .issues-list {
+      margin: 10px 0;
+    }
+    .issue-item {
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--primary);
+    }
+    .issue-item h4 {
+      margin: 0 0 5px 0;
+      color: var(--primary);
+      font-size: 0.95em;
+    }
+    .issue-item p {
+      margin: 5px 0;
+      font-size: 0.9em;
+    }
+    .add-issue-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 0.9em;
+      cursor: pointer;
+      margin-top: 5px;
+      display: inline-block;
+    }
+    .add-issue-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    /* Admin Dashboard */
+    .dashboard-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .dashboard-title {
+      color: var(--primary);
+      font-size: 1.5em;
+      font-weight: 600;
+    }
+    .dashboard-stats {
+      display: flex;
+      gap: 15px;
+    }
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      min-width: 150px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 5px 0;
+    }
+    .stat-label {
+      font-size: 0.9em;
+      color: #666;
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 20px;
+    }
+    .admin-sidebar {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+    }
+    .admin-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .admin-nav li {
+      margin-bottom: 10px;
+    }
+    .admin-nav a {
+      display: block;
+      padding: 8px 12px;
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.2s;
+    }
+    .admin-nav a:hover, .admin-nav a.active {
+      background: #f0f7ff;
+      color: var(--primary);
+    }
+    .admin-content {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    
+    /* Modal for image viewing */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      overflow: auto;
+    }
+    .modal-content {
+      margin: auto;
+      display: block;
+      max-width: 90%;
+      max-height: 90%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #bbb;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 900px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
     @media (max-width: 700px) {
       .header-bar, .welcome {
         padding-left: 0;
         padding-right: 0;
         font-size: 0.95em;
       }
-      .form-container { max-width: 99vw; border-radius: 0; padding: 12px 3vw 8px; }
-      .grid { padding: 0 1vw 16px; gap: 13px; }
+      .form-container { 
+        max-width: 99vw; 
+        border-radius: 0; 
+        padding: 12px 3vw 8px; 
+      }
+      .grid { 
+        padding: 0 1vw 16px; 
+        gap: 13px; 
+        grid-template-columns: 1fr;
+      }
       .card { border-radius: 7px; }
-      .card-summary { padding: 13px 11px 8px; font-size: 1em;}
-      input, textarea, select { font-size: 1em; padding: 8px 7px;}
+      .card-summary { 
+        padding: 13px 11px 8px; 
+        font-size: 1em;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .card-summary .company,
+      .card-summary .location {
+        min-width: 100%;
+      }
+      input, textarea, select { 
+        font-size: 1em; 
+        padding: 8px 7px;
+      }
+      .detail-col {
+        min-width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
@@ -235,45 +524,128 @@
     <button class="btn-logout" onclick="logout()">Logout</button>
   </div>
   <div class="welcome" id="welcome"></div>
-  <button class="btn-toggle" id="addBtn" onclick="toggleForm()">+ Add New Assessment</button>
-  <div class="form-container" id="formContainer" style="display: none;">
-    <form id="assessmentForm">
-      <label>Company</label>
-      <input type="text" id="company" required>
-      <label>Location</label>
-      <input type="text" id="location" required>
-      <label>Assessed By</label>
-      <input type="text" id="assessedBy" required>
-      <label>Witness Name</label>
-      <input type="text" id="witness" required>
-      <label>Time of Assessment</label>
-      <input type="datetime-local" id="time" required>
-      <label>Deadline</label>
-      <input type="date" id="deadline" required>
-      <label>Issue</label>
-      <textarea id="issue" required></textarea>
-      <label>Impact on Users & Company</label>
-      <textarea id="impact" required></textarea>
-      <label>Status</label>
-      <select id="status" required>
-        <option value="Good">Good</option>
-        <option value="Fair">Fair</option>
-        <option value="Bad">Bad</option>
-        <option value="VeryBad">Very Bad</option>
-      </select>
-      <label>Upload Pictures (Optional)</label>
-      <input type="file" id="images" multiple accept="image/*">
-      <label>Situation Pictures (Optional, update anytime)</label>
-      <input type="file" id="situationPics" multiple accept="image/*">
-      <label>Quotations (Optional, update anytime)</label>
-      <input type="file" id="quotations" multiple accept="image/*,application/pdf">
-      <label>Comment (Optional)</label>
-      <textarea id="comment"></textarea>
-      <button type="submit" class="btn-submit">Save Assessment</button>
-      <div id="formError" style="color: #b71c1c; margin-top: 8px; font-size:0.99em;"></div>
-    </form>
+  
+  <div id="userView">
+    <button class="btn-toggle" id="addBtn" onclick="toggleForm()">+ Add New Assessment</button>
+    <div class="form-container" id="formContainer" style="display: none;">
+      <form id="assessmentForm">
+        <label>Company</label>
+        <input type="text" id="company" required>
+        
+        <label>Location</label>
+        <input type="text" id="location" required>
+        
+        <label>Assessed By</label>
+        <input type="text" id="assessedBy" required>
+        
+        <label>Witness Name</label>
+        <input type="text" id="witness" required>
+        
+        <label>Time of Assessment</label>
+        <input type="datetime-local" id="time" required>
+        
+        <label>Deadline</label>
+        <input type="date" id="deadline" required>
+        
+        <div id="issuesContainer">
+          <div class="issue-input">
+            <label>Issue</label>
+            <textarea class="issue-text" required></textarea>
+            
+            <label>Impact on Users & Company</label>
+            <textarea class="impact-text" required></textarea>
+            
+            <label>Status</label>
+            <select class="status-select" required>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Bad">Bad</option>
+              <option value="VeryBad">Very Bad</option>
+            </select>
+          </div>
+        </div>
+        
+        <button type="button" class="add-issue-btn" onclick="addIssueField()">+ Add Another Issue</button>
+        
+        <label>Upload Pictures (Optional)</label>
+        <input type="file" id="images" multiple accept="image/*">
+        
+        <label>Situation Pictures (Optional, update anytime)</label>
+        <input type="file" id="situationPics" multiple accept="image/*">
+        
+        <label>Quotations (Optional, update anytime)</label>
+        <input type="file" id="quotations" multiple accept="image/*,application/pdf">
+        
+        <label>Comment (Optional)</label>
+        <textarea id="comment"></textarea>
+        
+        <button type="submit" class="btn-submit">Save Assessment</button>
+        <div id="formError" style="color: var(--danger); margin-top: 8px; font-size:0.99em;"></div>
+      </form>
+    </div>
+    <div class="grid" id="assessments"></div>
   </div>
-  <div class="grid" id="assessments"></div>
+  
+  <div id="adminView" style="display: none;">
+    <div class="dashboard-container">
+      <div class="dashboard-header">
+        <div class="dashboard-title">Admin Dashboard</div>
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="totalAssessments">0</div>
+            <div class="stat-label">Total Assessments</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="pendingAssessments">0</div>
+            <div class="stat-label">Pending</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="admin-grid">
+        <div class="admin-sidebar">
+          <ul class="admin-nav">
+            <li><a href="#" class="active" onclick="showAdminSection('dashboard')">Dashboard</a></li>
+            <li><a href="#" onclick="showAdminSection('assessments')">All Assessments</a></li>
+            <li><a href="#" onclick="showAdminSection('reports')">Reports</a></li>
+          </ul>
+        </div>
+        
+        <div class="admin-content">
+          <div id="dashboardSection">
+            <h3>Overview</h3>
+            <p>Welcome to the admin dashboard. Here you can view all assessments and generate reports.</p>
+            <div id="recentActivity" style="margin-top: 20px;">
+              <h4>Recent Activity</h4>
+              <div id="activityList"></div>
+            </div>
+          </div>
+          
+          <div id="assessmentsSection" style="display: none;">
+            <h3>All Assessments</h3>
+            <div class="grid" id="adminAssessments"></div>
+          </div>
+          
+          <div id="reportsSection" style="display: none;">
+            <h3>Reports</h3>
+            <div>
+              <button class="btn-toggle" onclick="generateReport('all')">Generate Full Report</button>
+              <button class="btn-toggle" onclick="generateReport('pending')">Pending Issues Report</button>
+              <button class="btn-toggle" onclick="generateReport('critical')">Critical Issues Report</button>
+            </div>
+            <div id="reportOutput" style="margin-top: 20px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Image Modal -->
+  <div id="imageModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+  </div>
+
   <script>
     // ---- FIREBASE SETUP ----
     const firebaseConfig = {
@@ -289,224 +661,709 @@
     const db = firebase.firestore();
 
     // ---- USER ----
+    const ADMIN_USERS = ['faiyaz', 'chishe']; // Case insensitive
+    
     function getCurrentUser() {
       return localStorage.getItem('currentUser') || null;
     }
+    
+    function isAdmin(user) {
+      if (!user) return false;
+      return ADMIN_USERS.includes(user.toLowerCase());
+    }
+    
     function logout() {
       localStorage.removeItem('currentUser');
       location.href = "login.html";
     }
+    
     // ---- UI/UX ----
     function showWelcome(user) {
       let name = user.trim().split(" ");
       name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
-      document.getElementById('welcome').innerHTML = `WELCOME <span style="color:#1976d2">${name.toUpperCase()}</span>`;
+      document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
+      
+      // Show appropriate view based on user role
+      if (isAdmin(user)) {
+        document.getElementById('userView').style.display = 'none';
+        document.getElementById('adminView').style.display = 'block';
+        loadAdminDashboard();
+      } else {
+        document.getElementById('userView').style.display = 'block';
+        document.getElementById('adminView').style.display = 'none';
+      }
     }
+    
     // ---- FORM TOGGLE ----
     function toggleForm() {
       const fc = document.getElementById("formContainer");
       fc.style.display = fc.style.display === "none" ? "block" : "none";
     }
-
-    // ---- IMAGE READ ----
+    
+    // ---- MULTIPLE ISSUES SYSTEM ----
+    function addIssueField() {
+      const container = document.getElementById('issuesContainer');
+      const newIssue = document.createElement('div');
+      newIssue.className = 'issue-input';
+      newIssue.innerHTML = `
+        <label>Additional Issue</label>
+        <textarea class="issue-text" required></textarea>
+        
+        <label>Impact on Users & Company</label>
+        <textarea class="impact-text" required></textarea>
+        
+        <label>Status</label>
+        <select class="status-select" required>
+          <option value="Good">Good</option>
+          <option value="Fair">Fair</option>
+          <option value="Bad">Bad</option>
+          <option value="VeryBad">Very Bad</option>
+        </select>
+        
+        <button type="button" class="add-issue-btn" style="background: var(--danger);" 
+                onclick="this.parentElement.remove()">- Remove Issue</button>
+      `;
+      container.appendChild(newIssue);
+    }
+    
+    // ---- IMAGE HANDLING ----
     function dataUrlFromFile(file) {
       return new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
+        reader.onload = e => resolve({
+          data: e.target.result,
+          type: file.type,
+          name: file.name
+        });
         reader.readAsDataURL(file);
       });
     }
-
+    
+    // Open image in modal
+    function openImageModal(src) {
+      const modal = document.getElementById('imageModal');
+      const modalImg = document.getElementById('modalImage');
+      modal.style.display = "block";
+      modalImg.src = src;
+    }
+    
+    function closeModal() {
+      document.getElementById('imageModal').style.display = "none";
+    }
+    
+    // Close modal when clicking outside image
+    window.onclick = function(event) {
+      const modal = document.getElementById('imageModal');
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+    
     // ---- ASSESSMENT CRUD ----
     let userAssessments = [];
-    let unsubscribe = null;
-
+    let allAssessments = [];
+    let unsubscribeUser = null;
+    let unsubscribeAdmin = null;
+    
     function listenAssessments() {
       const user = getCurrentUser();
-      if (unsubscribe) unsubscribe();
-      // DEBUG: Show all docs for this user in the console
-      unsubscribe = db.collection("ASSEMEMNT NAME")
+      if (!user) return;
+      
+      if (unsubscribeUser) unsubscribeUser();
+      if (unsubscribeAdmin) unsubscribeAdmin();
+      
+      // User-specific assessments
+      unsubscribeUser = db.collection("ASSESSMENTS")
+        .where("username", "==", user)
         .onSnapshot(snapshot => {
           userAssessments = [];
           snapshot.forEach(doc => {
             const data = doc.data();
             data._id = doc.id;
-            // Fix: ensure arrays are always arrays (for old records)
-            data.images = Array.isArray(data.images) ? data.images : [];
-            data.situationPics = Array.isArray(data.situationPics) ? data.situationPics : [];
-            data.quotations = Array.isArray(data.quotations) ? data.quotations : [];
-            data.comments = Array.isArray(data.comments) ? data.comments : [];
-            // Only push if username matches (case-insensitive)
-            if (data.username && user && data.username.toLowerCase() === user.toLowerCase()) {
-              userAssessments.push(data);
-            }
+            processAssessmentData(data);
+            userAssessments.push(data);
           });
           renderAssessments();
         });
+      
+      // Admin listens to all assessments
+      if (isAdmin(user)) {
+        unsubscribeAdmin = db.collection("ASSESSMENTS")
+          .onSnapshot(snapshot => {
+            allAssessments = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              data._id = doc.id;
+              processAssessmentData(data);
+              allAssessments.push(data);
+            });
+            updateAdminStats();
+            renderAdminAssessments();
+          });
+      }
     }
-
+    
+    function processAssessmentData(data) {
+      // Ensure arrays exist and are properly formatted
+      data.images = Array.isArray(data.images) ? data.images : [];
+      data.situationPics = Array.isArray(data.situationPics) ? data.situationPics : [];
+      data.quotations = Array.isArray(data.quotations) ? data.quotations : [];
+      data.comments = Array.isArray(data.comments) ? data.comments : [];
+      data.issues = Array.isArray(data.issues) ? data.issues : [];
+      
+      // For backward compatibility - migrate single issue to issues array
+      if (data.issue && data.impact && data.status && data.issues.length === 0) {
+        data.issues.push({
+          issue: data.issue,
+          impact: data.impact,
+          status: data.status
+        });
+      }
+      
+      return data;
+    }
+    
     // ---- RENDER CARDS GRID ----
     function renderAssessments() {
       const container = document.getElementById("assessments");
       container.innerHTML = "";
-      userAssessments.forEach((a, index) => {
-        // Summary line
-        const summary = `
-          <div class="card-summary">
-            <span>${a.company || ""}</span>
-            <span>${a.location || ""}</span>
-            <span class="deadline">Deadline: ${a.deadline || ""}</span>
-            <span class="status ${a.status ? a.status.replace(" ","") : ""}">${a.status || ""}</span>
-          </div>
-        `;
-        // Details
-        let imagesHTML = (a.images || []).map(url =>
-          `<img src="${url}" alt="Assessment Image">`).join('');
-        let situationHTML = (a.situationPics || []).map(url =>
-          `<img src="${url}" alt="Situation Image">`).join('');
-        let quotationsHTML = (a.quotations || []).map(q =>
-          q.type && q.type.startsWith('image/') ?
-            `<img src="${q.data}" alt="Quotation Image">`
-            : (q.type && q.type.includes('pdf') ?
-              `<a href="${q.data}" target="_blank">PDF Quotation</a>` : '')
-        ).join('');
-        const comments = a.comments || [];
-        let commentsHTML = '<div class="comment-list">';
-        comments.forEach(c => { commentsHTML += `<p>${c}</p>`; });
-        commentsHTML += '</div>';
-        let commentForm = `
-          <form class="comment-form" onsubmit="return addComment('${a._id}', this);event.stopPropagation();">
-            <textarea required placeholder="Add comment..."></textarea>
-            <button type="submit">Add Comment</button>
-          </form>
-        `;
-        const details = `
-          <div class="card-details" style="padding: 15px 18px 7px;">
-            <p><b>Assessed By:</b> ${a.assessedBy || ""}</p>
-            <p><b>Witness:</b> ${a.witness || ""}</p>
-            <p><b>Time:</b> ${a.time || ""}</p>
-            <p><b>Deadline:</b> ${a.deadline || ""}</p>
-            <p><b>Issue:</b> ${a.issue || ""}</p>
-            <p><b>Impact:</b> ${a.impact || ""}</p>
-            <p>
-              <b>Status:</b>
-              <span class="status ${a.status ? a.status.replace(" ","") : ""}">${a.status || ""}</span>
-            </p>
-            <div class="images"><b>Initial Attachments:</b><br>${imagesHTML}</div>
-            <div class="situation"><b>Situation Pics:</b><br>${situationHTML}</div>
-            <div class="quotations"><b>Quotations:</b><br>${quotationsHTML}</div>
-            <div class="comment-section">
-              <label>Comments</label>
-              ${commentsHTML}
-              ${commentForm}
-            </div>
-          </div>
-        `;
-        const card = `
-          <div class="card collapsed" id="card-${index}" onclick="toggleCardDetails(${index})">
-            ${summary}
-            ${details}
-          </div>
-        `;
-        container.insertAdjacentHTML("beforeend", card);
-      });
-      // Add collapsed class to all
-      userAssessments.forEach((_,i) => {
-        const card = document.getElementById('card-'+i);
-        if(card) card.classList.add('collapsed');
+      
+      userAssessments.forEach((assessment, index) => {
+        container.appendChild(createAssessmentCard(assessment, index, false));
       });
     }
-    // Card expand/collapse logic
-    function toggleCardDetails(idx) {
-      const card = document.getElementById('card-'+idx);
-      if(card) card.classList.toggle('collapsed');
+    
+    function renderAdminAssessments() {
+      const container = document.getElementById("adminAssessments");
+      if (!container) return;
+      
+      container.innerHTML = "";
+      
+      allAssessments.forEach((assessment, index) => {
+        container.appendChild(createAssessmentCard(assessment, index, true));
+      });
     }
-    window.toggleCardDetails = toggleCardDetails;
-
+    
+    function createAssessmentCard(assessment, index, isAdminView) {
+      // Process the assessment data
+      assessment = processAssessmentData(assessment);
+      
+      // Summary line
+      const summary = document.createElement('div');
+      summary.className = 'card-summary';
+      summary.innerHTML = `
+        <div class="company">${assessment.company || "No Company"}</div>
+        <div class="location">${assessment.location || "No Location"}</div>
+        <div class="deadline">Deadline: ${assessment.deadline || "None"}</div>
+        ${isAdminView ? `<div class="assessor">By: ${assessment.username || "Unknown"}</div>` : ''}
+        <div class="status ${getWorstStatus(assessment) || ""}">${getWorstStatus(assessment) || "No Status"}</div>
+      `;
+      
+      // Create card element
+      const card = document.createElement('div');
+      card.className = 'card collapsed';
+      card.id = `card-${index}`;
+      
+      // Add click handler to toggle details
+      card.addEventListener('click', function(e) {
+        // Don't toggle if clicking on a link or button
+        if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+        this.classList.toggle('collapsed');
+      });
+      
+      // Details section
+      const details = document.createElement('div');
+      details.className = 'card-details';
+      
+      // Basic info
+      const infoRow = document.createElement('div');
+      infoRow.className = 'detail-row';
+      infoRow.innerHTML = `
+        <div class="detail-col">
+          <p><b>Assessed By:</b> ${assessment.assessedBy || "Unknown"}</p>
+          <p><b>Witness:</b> ${assessment.witness || "None"}</p>
+        </div>
+        <div class="detail-col">
+          <p><b>Time:</b> ${assessment.time || "Unknown"}</p>
+          <p><b>Deadline:</b> ${assessment.deadline || "None"}</p>
+        </div>
+      `;
+      details.appendChild(infoRow);
+      
+      // Issues list
+      if (assessment.issues && assessment.issues.length > 0) {
+        const issuesContainer = document.createElement('div');
+        issuesContainer.className = 'issues-list';
+        
+        assessment.issues.forEach((issue, i) => {
+          const issueElement = document.createElement('div');
+          issueElement.className = 'issue-item';
+          issueElement.innerHTML = `
+            <h4>Issue #${i+1}</h4>
+            <p><b>Description:</b> ${issue.issue || "No description"}</p>
+            <p><b>Impact:</b> ${issue.impact || "No impact specified"}</p>
+            <p><b>Status:</b> <span class="status ${issue.status || ""}">${issue.status || "Unknown"}</span></p>
+          `;
+          issuesContainer.appendChild(issueElement);
+        });
+        
+        details.appendChild(issuesContainer);
+      }
+      
+      // Images sections
+      const imagesContainer = document.createElement('div');
+      imagesContainer.className = 'images-container';
+      
+      // Initial images
+      if (assessment.images && assessment.images.length > 0) {
+        const imagesSection = document.createElement('div');
+        imagesSection.className = 'images-section';
+        imagesSection.innerHTML = '<h4>Initial Attachments</h4><div class="images-grid"></div>';
+        
+        assessment.images.forEach(img => {
+          const imgLink = document.createElement('a');
+          imgLink.href = '#';
+          imgLink.onclick = (e) => { e.preventDefault(); openImageModal(img.data); };
+          imgLink.innerHTML = `<img src="${img.data}" alt="Assessment Image">`;
+          imagesSection.querySelector('.images-grid').appendChild(imgLink);
+        });
+        
+        imagesContainer.appendChild(imagesSection);
+      }
+      
+      // Situation pics
+      if (assessment.situationPics && assessment.situationPics.length > 0) {
+        const situationSection = document.createElement('div');
+        situationSection.className = 'images-section';
+        situationSection.innerHTML = '<h4>Situation Pictures</h4><div class="images-grid"></div>';
+        
+        assessment.situationPics.forEach(img => {
+          const imgLink = document.createElement('a');
+          imgLink.href = '#';
+          imgLink.onclick = (e) => { e.preventDefault(); openImageModal(img.data); };
+          imgLink.innerHTML = `<img src="${img.data}" alt="Situation Image">`;
+          situationSection.querySelector('.images-grid').appendChild(imgLink);
+        });
+        
+        imagesContainer.appendChild(situationSection);
+      }
+      
+      // Quotations
+      if (assessment.quotations && assessment.quotations.length > 0) {
+        const quotationsSection = document.createElement('div');
+        quotationsSection.className = 'images-section';
+        quotationsSection.innerHTML = '<h4>Quotations</h4><div class="images-grid"></div>';
+        
+        assessment.quotations.forEach(quote => {
+          const quoteElement = document.createElement('a');
+          
+          if (quote.type && quote.type.startsWith('image/')) {
+            quoteElement.href = '#';
+            quoteElement.onclick = (e) => { e.preventDefault(); openImageModal(quote.data); };
+            quoteElement.innerHTML = `<img src="${quote.data}" alt="Quotation Image">`;
+          } else if (quote.type && quote.type.includes('pdf')) {
+            quoteElement.href = quote.data;
+            quoteElement.target = '_blank';
+            quoteElement.className = 'pdf-thumbnail';
+            quoteElement.innerHTML = 'PDF Document<br>' + (quote.name || 'Quotation');
+          } else {
+            quoteElement.href = quote.data;
+            quoteElement.target = '_blank';
+            quoteElement.className = 'pdf-thumbnail';
+            quoteElement.innerHTML = 'Document<br>' + (quote.name || 'Quotation');
+          }
+          
+          quotationsSection.querySelector('.images-grid').appendChild(quoteElement);
+        });
+        
+        imagesContainer.appendChild(quotationsSection);
+      }
+      
+      details.appendChild(imagesContainer);
+      
+      // Comments section
+      const commentsSection = document.createElement('div');
+      commentsSection.className = 'comment-section';
+      
+      // Comments list
+      const commentList = document.createElement('div');
+      commentList.className = 'comment-list';
+      
+      if (assessment.comments && assessment.comments.length > 0) {
+        assessment.comments.forEach(comment => {
+          const commentElement = document.createElement('p');
+          commentElement.textContent = comment;
+          commentList.appendChild(commentElement);
+        });
+      } else {
+        commentList.innerHTML = '<p>No comments yet</p>';
+      }
+      
+      commentsSection.appendChild(commentList);
+      
+      // Comment form
+      if (!isAdminView) {
+        const commentForm = document.createElement('form');
+        commentForm.className = 'comment-form';
+        commentForm.innerHTML = `
+          <textarea required placeholder="Add comment..."></textarea>
+          <button type="submit">Add Comment</button>
+        `;
+        
+        commentForm.onsubmit = function(e) {
+          e.preventDefault();
+          const textarea = this.querySelector('textarea');
+          const comment = textarea.value.trim();
+          if (comment) {
+            addComment(assessment._id, comment);
+            textarea.value = '';
+          }
+          return false;
+        };
+        
+        commentsSection.appendChild(commentForm);
+      }
+      
+      details.appendChild(commentsSection);
+      
+      // Add all elements to card
+      card.appendChild(summary);
+      card.appendChild(details);
+      
+      return card;
+    }
+    
+    function getWorstStatus(assessment) {
+      if (!assessment.issues || assessment.issues.length === 0) {
+        return assessment.status || 'Good'; // Default if no status
+      }
+      
+      const statusPriority = {
+        'VeryBad': 4,
+        'Bad': 3,
+        'Fair': 2,
+        'Good': 1
+      };
+      
+      let worstStatus = 'Good';
+      let highestPriority = 1;
+      
+      assessment.issues.forEach(issue => {
+        const priority = statusPriority[issue.status] || 1;
+        if (priority > highestPriority) {
+          highestPriority = priority;
+          worstStatus = issue.status;
+        }
+      });
+      
+      return worstStatus;
+    }
+    
     // ---- ADD ASSESSMENT ----
     document.getElementById("assessmentForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const user = getCurrentUser();
-      const company = document.getElementById("company").value;
-      const location = document.getElementById("location").value;
-      const assessedBy = document.getElementById("assessedBy").value;
-      const witness = document.getElementById("witness").value;
-      const time = document.getElementById("time").value;
-      const deadline = document.getElementById("deadline").value;
-      const issue = document.getElementById("issue").value;
-      const impact = document.getElementById("impact").value;
-      const status = document.getElementById("status").value;
+      if (!user) {
+        alert("You must be logged in to submit an assessment");
+        return;
+      }
+      
+      // Collect form data
+      const formData = {
+        username: user,
+        company: document.getElementById("company").value,
+        location: document.getElementById("location").value,
+        assessedBy: document.getElementById("assessedBy").value,
+        witness: document.getElementById("witness").value,
+        time: document.getElementById("time").value,
+        deadline: document.getElementById("deadline").value,
+        comments: [],
+        createdAt: new Date()
+      };
+      
+      // Collect issues from all issue fields
+      const issueInputs = document.querySelectorAll('.issue-input');
+      formData.issues = [];
+      
+      for (let i = 0; i < issueInputs.length; i++) {
+        const issue = issueInputs[i].querySelector('.issue-text').value;
+        const impact = issueInputs[i].querySelector('.impact-text').value;
+        const status = issueInputs[i].querySelector('.status-select').value;
+        
+        if (issue && impact && status) {
+          formData.issues.push({
+            issue,
+            impact,
+            status
+          });
+        }
+      }
+      
+      // Check if we have at least one valid issue
+      if (formData.issues.length === 0) {
+        document.getElementById("formError").textContent = "At least one valid issue is required";
+        return;
+      }
+      
+      // Process file uploads
       const images = document.getElementById("images").files;
       const situationPics = document.getElementById("situationPics").files;
       const quotations = document.getElementById("quotations").files;
       const comment = document.getElementById("comment").value;
-      const formError = document.getElementById("formError");
-      formError.textContent = "";
-
+      
+      // Add optional comment
+      if (comment) {
+        formData.comments.push(comment);
+      }
+      
       // Convert files to base64
-      async function filesToUrls(files) {
-        if(!files.length) return [];
-        let arr = [];
-        for(let i=0; i<files.length; i++) {
-          arr.push(await dataUrlFromFile(files[i]));
+      async function processFiles(fileList) {
+        if (!fileList || fileList.length === 0) return [];
+        const promises = [];
+        for (let i = 0; i < fileList.length; i++) {
+          promises.push(dataUrlFromFile(fileList[i]));
         }
-        return arr;
+        return await Promise.all(promises);
       }
-      async function filesToQuots(files) {
-        if(!files.length) return [];
-        let arr = [];
-        for(let i=0; i<files.length; i++) {
-          let url = await dataUrlFromFile(files[i]);
-          arr.push({type: files[i].type, data: url});
-        }
-        return arr;
-      }
-
+      
       try {
-        const [imgArr, sitArr, quotArr] = await Promise.all([
-          filesToUrls(images),
-          filesToUrls(situationPics),
-          filesToQuots(quotations)
+        const [imagesData, situationData, quotationsData] = await Promise.all([
+          processFiles(images),
+          processFiles(situationPics),
+          processFiles(quotations)
         ]);
-        let assessment = {
-          username: user,
-          company, location, assessedBy, witness, time, deadline, issue, impact, status,
-          images: imgArr, situationPics: sitArr, quotations: quotArr,
-          comments: comment ? [comment] : [],
-          createdAt: new Date()
-        };
-        await db.collection("ASSEMEMNT NAME").add(assessment);
+        
+        formData.images = imagesData;
+        formData.situationPics = situationData;
+        formData.quotations = quotationsData;
+        
+        // Save to Firestore
+        await db.collection("ASSESSMENTS").add(formData);
+        
+        // Reset form
         document.getElementById("assessmentForm").reset();
+        document.getElementById("issuesContainer").innerHTML = `
+          <div class="issue-input">
+            <label>Issue</label>
+            <textarea class="issue-text" required></textarea>
+            
+            <label>Impact on Users & Company</label>
+            <textarea class="impact-text" required></textarea>
+            
+            <label>Status</label>
+            <select class="status-select" required>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Bad">Bad</option>
+              <option value="VeryBad">Very Bad</option>
+            </select>
+          </div>
+        `;
         document.getElementById("formContainer").style.display = "none";
+        document.getElementById("formError").textContent = "";
       } catch (err) {
-        formError.textContent = "Error saving assessment: " + (err.message || err);
+        document.getElementById("formError").textContent = "Error saving assessment: " + (err.message || err);
+        console.error("Assessment submission error:", err);
       }
     });
-
+    
     // ---- ADD COMMENT ----
-    window.addComment = async function(docId, form) {
-      const textarea = form.querySelector('textarea');
-      const val = textarea.value.trim();
-      if (!val) return false;
+    async function addComment(docId, commentText) {
+      if (!commentText) return false;
+      
       try {
-        const docRef = db.collection("ASSEMEMNT NAME").doc(docId);
+        const docRef = db.collection("ASSESSMENTS").doc(docId);
         const doc = await docRef.get();
-        let comments = doc.exists && doc.data().comments ? doc.data().comments : [];
-        comments.push(val);
-        await docRef.update({ comments });
-        textarea.value = "";
+        
+        if (doc.exists) {
+          const data = doc.data();
+          const comments = Array.isArray(data.comments) ? data.comments : [];
+          comments.push(commentText);
+          
+          await docRef.update({ comments });
+          return true;
+        } else {
+          console.error("Document not found:", docId);
+          return false;
+        }
       } catch (err) {
+        console.error("Error adding comment:", err);
         alert("Failed to add comment: " + (err.message || err));
+        return false;
       }
-      return false;
     }
-
+    
+    // ---- ADMIN DASHBOARD FUNCTIONS ----
+    function showAdminSection(section) {
+      // Update active nav item
+      document.querySelectorAll('.admin-nav a').forEach(link => {
+        link.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Show selected section
+      document.getElementById('dashboardSection').style.display = 'none';
+      document.getElementById('assessmentsSection').style.display = 'none';
+      document.getElementById('reportsSection').style.display = 'none';
+      
+      document.getElementById(`${section}Section`).style.display = 'block';
+    }
+    
+    function updateAdminStats() {
+      document.getElementById('totalAssessments').textContent = allAssessments.length;
+      
+      const pending = allAssessments.filter(a => {
+        const status = getWorstStatus(a);
+        return status === 'Bad' || status === 'VeryBad';
+      }).length;
+      
+      document.getElementById('pendingAssessments').textContent = pending;
+      
+      // Update recent activity
+      const activityList = document.getElementById('activityList');
+      if (activityList) {
+        activityList.innerHTML = '';
+        
+        // Sort by creation date (newest first)
+        const sortedAssessments = [...allAssessments].sort((a, b) => {
+          return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
+        });
+        
+        // Show 5 most recent
+        sortedAssessments.slice(0, 5).forEach(assessment => {
+          const activityItem = document.createElement('div');
+          activityItem.className = 'issue-item';
+          activityItem.style.marginBottom = '10px';
+          activityItem.innerHTML = `
+            <p><b>${assessment.company || 'Unknown Company'}</b> - ${assessment.location || 'Unknown Location'}</p>
+            <p>Assessed by ${assessment.username || 'Unknown'} on ${formatDate(assessment.createdAt)}</p>
+            <p>Status: <span class="status ${getWorstStatus(assessment)}">${getWorstStatus(assessment)}</span></p>
+          `;
+          activityList.appendChild(activityItem);
+        });
+      }
+    }
+    
+    function formatDate(date) {
+      if (!date) return 'Unknown date';
+      
+      const d = date.toDate ? date.toDate() : new Date(date);
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    }
+    
+    function generateReport(type) {
+      let reportData = [];
+      let reportTitle = '';
+      
+      switch (type) {
+        case 'all':
+          reportTitle = 'All Assessments Report';
+          reportData = [...allAssessments];
+          break;
+        case 'pending':
+          reportTitle = 'Pending Issues Report';
+          reportData = allAssessments.filter(a => {
+            const status = getWorstStatus(a);
+            return status === 'Bad' || status === 'VeryBad';
+          });
+          break;
+        case 'critical':
+          reportTitle = 'Critical Issues Report';
+          reportData = allAssessments.filter(a => getWorstStatus(a) === 'VeryBad');
+          break;
+        default:
+          reportTitle = 'Custom Report';
+          reportData = [];
+      }
+      
+      // Sort by worst status first
+      reportData.sort((a, b) => {
+        const statusPriority = {
+          'VeryBad': 4,
+          'Bad': 3,
+          'Fair': 2,
+          'Good': 1
+        };
+        
+        const aStatus = getWorstStatus(a);
+        const bStatus = getWorstStatus(b);
+        
+        return (statusPriority[bStatus] || 0) - (statusPriority[aStatus] || 0);
+      });
+      
+      // Generate HTML report
+      const reportOutput = document.getElementById('reportOutput');
+      reportOutput.innerHTML = `
+        <h4>${reportTitle} - ${new Date().toLocaleDateString()}</h4>
+        <p>Total items: ${reportData.length}</p>
+        <div id="reportDetails"></div>
+      `;
+      
+      const reportDetails = document.getElementById('reportDetails');
+      
+      if (reportData.length === 0) {
+        reportDetails.innerHTML = '<p>No data found for this report</p>';
+        return;
+      }
+      
+      reportData.forEach(assessment => {
+        const assessmentElement = document.createElement('div');
+        assessmentElement.className = 'issue-item';
+        assessmentElement.style.marginBottom = '15px';
+        
+        let issuesHTML = '';
+        if (assessment.issues && assessment.issues.length > 0) {
+          assessment.issues.forEach((issue, i) => {
+            issuesHTML += `
+              <div style="margin-left: 15px; margin-bottom: 8px;">
+                <p><b>Issue ${i+1}:</b> <span class="status ${issue.status}">${issue.status}</span></p>
+                <p>${issue.issue || 'No description'}</p>
+                <p><b>Impact:</b> ${issue.impact || 'No impact specified'}</p>
+              </div>
+            `;
+          });
+        }
+        
+        assessmentElement.innerHTML = `
+          <h4>${assessment.company || 'Unknown Company'} - ${assessment.location || 'Unknown Location'}</h4>
+          <p>Assessed by: ${assessment.assessedBy || 'Unknown'} (${assessment.username || 'Unknown user'})</p>
+          <p>Date: ${formatDate(assessment.createdAt)}</p>
+          <p>Deadline: ${assessment.deadline || 'None'}</p>
+          <p>Overall Status: <span class="status ${getWorstStatus(assessment)}">${getWorstStatus(assessment)}</span></p>
+          <div style="margin-top: 10px;">
+            <b>Issues:</b>
+            ${issuesHTML || '<p>No issues recorded</p>'}
+          </div>
+          <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
+        `;
+        
+        reportDetails.appendChild(assessmentElement);
+      });
+    }
+    
+    // ---- LOAD ADMIN DASHBOARD ----
+    function loadAdminDashboard() {
+      updateAdminStats();
+      renderAdminAssessments();
+    }
+    
     // ---- INIT ----
     window.onload = function() {
       const user = getCurrentUser();
-      if (!user) { location.href = "login.html"; return; }
+      if (!user) { 
+        location.href = "login.html"; 
+        return; 
+      }
+      
       showWelcome(user);
       listenAssessments();
+      
+      // Close modal with ESC key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
     }
   </script>
 </body>
