@@ -22,7 +22,6 @@
       background: url('Photos/CANVA.jpg') no-repeat center center fixed;
       background-size: cover;
     }
-
     .login-container {
       background: rgba(8, 0, 0, 0.8);
       padding: 20px;
@@ -31,13 +30,11 @@
       text-align: center;
       width: 300px;
     }
-
     .login {
       display: block;
       margin: 0 auto 20px;
       width: 150px;
     }
-
     input[type="text"], input[type="password"] {
       width: 100%;
       padding: 10px;
@@ -46,15 +43,8 @@
       border-radius: 5px;
       box-sizing: border-box;
     }
-
-    .password-container {
-      position: relative;
-    }
-
-    .password-container input {
-      padding-right: 40px;
-    }
-
+    .password-container { position: relative; }
+    .password-container input { padding-right: 40px; }
     .toggle-password {
       position: absolute;
       top: 50%;
@@ -64,13 +54,11 @@
       font-size: 1.2em;
       color: #ccc;
     }
-
     .warning {
       color: red;
       margin-top: 10px;
       display: none;
     }
-
     button {
       display: block;
       width: 100%;
@@ -83,14 +71,8 @@
       font-size: 1em;
       cursor: pointer;
     }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .penta {
-      color: white;
-    }
+    button:hover { background-color: #0056b3; }
+    .penta { color: white; }
   </style>
 
   <!-- Firebase SDK -->
@@ -115,22 +97,21 @@
     const database = getDatabase(app);
     const analytics = getAnalytics(app);
 
-    // Function to handle login
     async function login() {
-      const username = document.getElementById("username").value.trim().toLowerCase();
+      const usernameRaw = document.getElementById("username").value.trim();
+      const username = usernameRaw.toLowerCase();
       const password = document.getElementById("password").value;
       const warningMessage = document.getElementById("warningMessage");
 
-      const validUsers = [
-        { username: "faiyaz mulla", password: "PENTACON" },
-        { username: "chishela", password: "PENTACON" }
+      // List of users for assessment.html
+      const assessmentUsers = [
+        "brighton matolokosh", "caphas tembo", "clisha mambilima", "dabson daka",
+        "danny mvula", "james daka", "joseph tembo", "luckson phiri", "micheal lobela",
+        "obert siame", "dominic sakala", "peter mawere", "saviour phiri", "tembeya sakala", "kelvin siame"
       ];
 
-      const isValid = validUsers.some(user => user.username === username && user.password === password);
-
-      if (isValid) {
-        console.log("Valid login detected, redirecting to dashboard...");
-
+      // Assessment user logic
+      if (assessmentUsers.includes(username) && password === "12345") {
         // Save login attempt data to Firebase
         const loginRef = ref(database, 'loginAttempts');
         push(loginRef, {
@@ -138,18 +119,32 @@
           timestamp: new Date().toISOString()
         });
 
-        // Replace current history entry and prevent forward navigation
-        window.history.replaceState(null, null, window.location.href);
-        window.location.href = 'dashboard.html';
-        
-        // Add another state to prevent forward navigation
-        setTimeout(() => {
-          window.history.pushState(null, null, 'dashboard.html');
-        }, 0);
-      } else {
-        console.log("Invalid login attempt");
-        warningMessage.style.display = "block"; // Show warning message
+        // Store user for assessment.html
+        localStorage.setItem('currentUser', username);
+        window.location.href = 'assessment.html';
+        return;
       }
+
+      // FAIYAZ and CHISHELA (dashboard users)
+      if (
+        (username === "faiyaz mulla" && password === "PENTACON") ||
+        (username === "chishela" && password === "PENTACON")
+      ) {
+        // Save login attempt data to Firebase
+        const loginRef = ref(database, 'loginAttempts');
+        push(loginRef, {
+          username: username,
+          timestamp: new Date().toISOString()
+        });
+
+        // Store user if needed
+        localStorage.setItem('currentUser', username);
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Otherwise,
+      warningMessage.style.display = "block"; // Show warning message
     }
 
     // Function to toggle password visibility
@@ -166,7 +161,6 @@
       }
     }
 
-    // Export functions to global scope
     window.login = login;
     window.togglePasswordVisibility = togglePasswordVisibility;
   </script>
