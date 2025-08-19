@@ -440,6 +440,33 @@
       border-color: var(--primary);
     }
     
+    /* Date Filter Controls */
+    .date-filter {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+      padding: 0 4vw;
+    }
+    .date-filter input {
+      width: 150px;
+      padding: 8px;
+      font-size: 0.9em;
+    }
+    .date-filter button {
+      padding: 8px 16px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .date-filter button:hover {
+      background: var(--primary-dark);
+    }
+    
     /* Modal for image viewing */
     .modal {
       display: none;
@@ -549,6 +576,15 @@
         padding: 6px 12px;
         font-size: 0.8em; /* Reduced from 0.85em */
       }
+      .date-filter {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .date-filter input {
+        width: 80%;
+      max-width: 200px;
+      }
     }
     
     /* Animation for form toggle */
@@ -606,6 +642,13 @@
     <button class="filter-btn" data-filter="resolved">Resolved</button>
   </div>
   
+  <div class="date-filter" id="dateFilter">
+    <input type="date" id="startDate" placeholder="Start Date">
+    <input type="date" id="endDate" placeholder="End Date">
+    <button onclick="applyDateFilter()">Apply Date Filter</button>
+    <button onclick="clearDateFilter()">Clear Filter</button>
+  </div>
+  
   <div id="userView">
     <div class="form-container" id="formContainer" style="display: none;">
       <form id="assessmentForm">
@@ -635,14 +678,14 @@
           <i class="fas fa-plus"></i> Add Another Issue
         </button>
         
-        <label>Upload Pictures (Optional)</label>
-        <input type="file" id="images" multiple accept="image/*">
+        <label>Upload Pictures (Optional, max 15MB each)</label>
+        <input type="file" id="images" multiple accept="image/*" onchange="validateFileSize(this)">
         
-        <label>Situation Pictures (Optional, update anytime)</label>
-        <input type="file" id="situationPics" multiple accept="image/*">
+        <label>Situation Pictures (Optional, max 15MB each)</label>
+        <input type="file" id="situationPics" multiple accept="image/*" onchange="validateFileSize(this)">
         
-        <label>Quotations (Optional, update anytime)</label>
-        <input type="file" id="quotations" multiple accept="image/*,application/pdf">
+        <label>Quotations (Optional, max 15MB each)</label>
+        <input type="file" id="quotations" multiple accept="image/*,application/pdf" onchange="validateFileSize(this)">
         
         <label>Comment (Optional)</label>
         <textarea id="comment"></textarea>
@@ -671,6 +714,7 @@
 // ---- CONFIGURATION ----
 const ADMIN_USERS = ['faiyaz mulla', 'christopher'];
 const GENERAL_PASSWORD = '12345';
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB in bytes
 
 // ---- FIREBASE SETUP ----
 const firebaseConfig = {
@@ -696,6 +740,7 @@ function isAdmin(user) {
 function logout() {
   localStorage.removeItem('currentUser');
   localStorage.removeItem('currentFilter');
+  localStorage.removeItem('dateFilter');
   location.href = "index.html";
 }
 function showWelcome(user) {
@@ -704,8 +749,10 @@ function showWelcome(user) {
   document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
   if (isAdmin(user)) {
     document.getElementById('filterControls').style.display = 'flex';
+    document.getElementById('dateFilter').style.display = 'flex';
   } else {
     document.getElementById('filterControls').style.display = 'none';
+    document.getElementById('dateFilter').style.display = 'none';
   }
 }
 
@@ -746,6 +793,19 @@ function resetForm() {
 function cancelEdit() {
   resetForm();
   toggleForm();
+}
+
+// ---- FILE VALIDATION ----
+function validateFileSize(input) {
+  const files = input.files;
+  for (let i = 0; i < files.length; i++) {
+    if (files[i].size > MAX_FILE_SIZE) {
+      alert(`File "${files[i].name}" exceeds the 15MB size limit. Please choose a smaller file.`);
+      input.value = ''; // Clear the input
+      return false;
+    }
+  }
+  return true;
 }
 
 // ---- MULTIPLE ISSUES SYSTEM ----
@@ -813,6 +873,8 @@ window.onclick = function(event) {
 let allAssessments = [];
 let unsubscribe = null;
 let currentFilter = localStorage.getItem('currentFilter') || 'all';
+let dateFilter = JSON.parse(localStorage.getItem('dateFilter')) || {};
+
 function listenAssessments() {
   const user = getCurrentUser();
   if (!user) return;
@@ -841,6 +903,7 @@ function listenAssessments() {
     });
     renderAssessments();
     updateFilterButtons();
+    updateDateFilterInputs();
   }, error => {
     console.error("Error loading assessments:", error);
     document.getElementById("assessments").innerHTML = `
@@ -872,6 +935,12 @@ function renderAssessments() {
   const container = document.getElementById("assessments");
   container.innerHTML = "";
   let filteredAssessments = filterAssessments(allAssessments);
+  
+  // Apply date filter if set
+  if (dateFilter.startDate || dateFilter.endDate) {
+    filteredAssessments = applyDateFilterToAssessments(filteredAssessments);
+  }
+  
   if (filteredAssessments.length === 0) {
     container.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">No assessments found</p>';
     return;
@@ -891,6 +960,22 @@ function filterAssessments(assessments) {
     default: return assessments;
   }
 }
+function applyDateFilterToAssessments(assessments) {
+  const startDate = dateFilter.startDate ? new Date(dateFilter.startDate) : null;
+  const endDate = dateFilter.endDate ? new Date(dateFilter.endDate) : null;
+  
+  if (startDate) startDate.setHours(0, 0, 0, 0);
+  if (endDate) endDate.setHours(23, 59, 59, 999);
+  
+  return assessments.filter(assessment => {
+    const assessmentDate = assessment.createdAt?.toDate ? assessment.createdAt.toDate() : new Date(assessment.createdAt);
+    
+    if (startDate && assessmentDate < startDate) return false;
+    if (endDate && assessmentDate > endDate) return false;
+    
+    return true;
+  });
+}
 function updateFilterButtons() {
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -898,6 +983,14 @@ function updateFilterButtons() {
       btn.classList.add('active');
     }
   });
+}
+function updateDateFilterInputs() {
+  if (dateFilter.startDate) {
+    document.getElementById('startDate').value = dateFilter.startDate;
+  }
+  if (dateFilter.endDate) {
+    document.getElementById('endDate').value = dateFilter.endDate;
+  }
 }
 function createAssessmentCard(assessment, index) {
   assessment = processAssessmentData(assessment);
@@ -1077,6 +1170,37 @@ function formatDateTime(dateString) {
   } catch (e) {
     return dateString;
   }
+}
+
+// ---- DATE FILTER FUNCTIONS ----
+function applyDateFilter() {
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  
+  // Validate dates
+  if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+    alert('Start date cannot be after end date');
+    return;
+  }
+  
+  dateFilter = {
+    startDate: startDate || null,
+    endDate: endDate || null
+  };
+  
+  // Save to localStorage
+  localStorage.setItem('dateFilter', JSON.stringify(dateFilter));
+  
+  // Re-render assessments
+  renderAssessments();
+}
+
+function clearDateFilter() {
+  dateFilter = {};
+  document.getElementById('startDate').value = '';
+  document.getElementById('endDate').value = '';
+  localStorage.removeItem('dateFilter');
+  renderAssessments();
 }
 
 // ---- ASSESSMENT ACTIONS ----
@@ -1268,6 +1392,11 @@ document.getElementById("assessmentForm").addEventListener("submit", async funct
       if (!fileList || fileList.length === 0) return [];
       const promises = [];
       for (let i = 0; i < fileList.length; i++) {
+        // Check file size again before processing
+        if (fileList[i].size > MAX_FILE_SIZE) {
+          alert(`File "${fileList[i].name}" exceeds the 15MB size limit and will not be uploaded.`);
+          continue;
+        }
         promises.push(dataUrlFromFile(fileList[i]));
       }
       return await Promise.all(promises);
