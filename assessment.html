@@ -24,6 +24,8 @@
       --light-bg: #f5f7fa;
       --card-bg: #fff;
       --border: #e0e4e9;
+      --approved-color: #2e7d32;
+      --resolved-color: #1565c0;
     }
     html, body {
       min-height: 100vh;
@@ -48,7 +50,7 @@
       font-size: 1.1em;
       color: var(--primary);
       text-align: center;
-      margin: 22px 0 8px;
+      margin: 0;
       letter-spacing: 0.5px;
       font-weight: 600;
       width: 100vw;
@@ -63,7 +65,7 @@
       justify-content: space-between;
       background: var(--primary);
       color: white;
-      padding: 0 3vw 0 3vw;
+      padding: 0 3vw;
       margin-bottom: 0;
       min-height: 54px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -75,7 +77,11 @@
       font-size: 1.25em;
       letter-spacing: 1px;
     }
-    .btn-logout, .btn-toggle {
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
       background: var(--secondary);
       color: #fff;
       border: none;
@@ -83,16 +89,27 @@
       padding: 9px 18px;
       font-size: 0.95em;
       font-weight: 600;
-      margin: 13px 0;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn i {
+      font-size: 1.1em;
     }
     .btn-logout {
       background: var(--danger);
     }
     .btn-toggle:hover { background: var(--secondary-dark); }
     .btn-logout:hover { background: #c62828; }
+    .btn-success {
+      background: var(--success);
+    }
+    .btn-info {
+      background: var(--info);
+    }
     .form-container {
       background: var(--card-bg);
       border-radius: 8px;
@@ -121,7 +138,7 @@
       font-size: 1em;
       color: var(--text);
       margin-bottom: 4px;
-      transition: border 0.18s;
+      transition: all 0.18s;
       box-sizing: border-box;
     }
     input:focus, textarea:focus, select:focus {
@@ -199,6 +216,12 @@
       align-items: center;
       gap: 8px;
     }
+    .card.approved {
+      border-left: 4px solid var(--approved-color);
+    }
+    .card.resolved {
+      border-left: 4px solid var(--resolved-color);
+    }
     .card-summary .company {
       font-weight: 700;
       color: var(--primary);
@@ -234,6 +257,16 @@
     .Fair { background: #fff8e1; color: #ff8f00; border-color: #ffe0b2; }
     .Bad { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
     .VeryBad { background: #fce4ec; color: #ad1457; border-color: #f8bbd0; }
+    .approved-badge {
+      background: #e8f5e9;
+      color: var(--approved-color);
+      border: 1px solid #c8e6c9;
+    }
+    .resolved-badge {
+      background: #e3f2fd;
+      color: var(--resolved-color);
+      border: 1px solid #bbdefb;
+    }
     
     /* Improved Image Gallery */
     .images-container {
@@ -320,6 +353,17 @@
       padding: 10px;
       margin-bottom: 8px;
       border-left: 3px solid var(--primary);
+      transition: all 0.3s;
+    }
+    .issue-item.focused {
+      background: white;
+      box-shadow: 0 0 0 2px var(--primary-light);
+      z-index: 10;
+      position: relative;
+    }
+    .issue-item.blurred {
+      opacity: 0.5;
+      filter: blur(2px);
     }
     .issue-item h4 {
       margin: 0 0 5px 0;
@@ -346,6 +390,16 @@
       background: var(--primary-dark);
       transform: translateY(-1px);
     }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .action-buttons button {
+      padding: 6px 12px;
+      font-size: 0.85em;
+    }
     
     /* Form Error */
     #formError {
@@ -358,11 +412,77 @@
       border-left: 3px solid var(--danger);
     }
     
+    /* Filter Controls */
+    .filter-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9em;
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    /* Modal for image viewing */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      overflow: auto;
+    }
+    .modal-content {
+      margin: auto;
+      display: block;
+      max-width: 90%;
+      max-height: 90%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #bbb;
+    }
+    
     /* Responsive Design */
     @media (max-width: 700px) {
       .header-bar, .welcome {
         padding-left: 3vw;
         padding-right: 3vw;
+      }
+      .header-controls {
+        gap: 6px;
+      }
+      .btn {
+        padding: 8px 12px;
+        font-size: 0.9em;
       }
       .form-container { 
         max-width: 94vw; 
@@ -400,9 +520,12 @@
         margin-right: 0;
         margin-bottom: 10px;
       }
-      .btn-toggle, .btn-logout {
-        padding: 8px 14px;
-        font-size: 0.9em;
+      .filter-controls {
+        gap: 6px;
+      }
+      .filter-btn {
+        padding: 6px 12px;
+        font-size: 0.85em;
       }
     }
     
@@ -414,19 +537,44 @@
     .form-container {
       animation: fadeIn 0.3s ease-out;
     }
+    
+    /* Edit mode styles */
+    .edit-mode .issue-item:not(.focused) {
+      opacity: 0.5;
+      filter: blur(2px);
+    }
+    .edit-mode .issue-item.focused {
+      background: white;
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
   </style>
 </head>
 <body>
   <div class="header-bar">
     <h2>Work Assessment</h2>
-    <button class="btn-logout" onclick="logout()">Logout</button>
+    <div class="header-controls">
+      <button class="btn btn-toggle" id="addBtn" onclick="toggleForm()">
+        <i class="fas fa-plus"></i> Add New
+      </button>
+      <button class="btn btn-logout" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
   </div>
   <div class="welcome" id="welcome"></div>
   
+  <div class="filter-controls" id="filterControls">
+    <button class="filter-btn active" data-filter="all">All Assessments</button>
+    <button class="filter-btn" data-filter="pending">Pending</button>
+    <button class="filter-btn" data-filter="approved">Approved</button>
+    <button class="filter-btn" data-filter="resolved">Resolved</button>
+  </div>
+  
   <div id="userView">
-    <button class="btn-toggle" id="addBtn" onclick="toggleForm()">+ Add New Assessment</button>
     <div class="form-container" id="formContainer" style="display: none;">
       <form id="assessmentForm">
+        <input type="hidden" id="assessmentId">
+        
         <label>Company</label>
         <input type="text" id="company" required>
         
@@ -443,24 +591,12 @@
         <input type="date" id="deadline" required>
         
         <div id="issuesContainer">
-          <div class="issue-input">
-            <label>Issue</label>
-            <textarea class="issue-text" required></textarea>
-            
-            <label>Impact on Users & Company</label>
-            <textarea class="impact-text" required></textarea>
-            
-            <label>Status</label>
-            <select class="status-select" required>
-              <option value="Good">Good</option>
-              <option value="Fair">Fair</option>
-              <option value="Bad">Bad</option>
-              <option value="VeryBad">Very Bad</option>
-            </select>
-          </div>
+          <!-- Issues will be added here -->
         </div>
         
-        <button type="button" class="add-issue-btn" onclick="addIssueField()">+ Add Another Issue</button>
+        <button type="button" class="add-issue-btn" onclick="addIssueField()">
+          <i class="fas fa-plus"></i> Add Another Issue
+        </button>
         
         <label>Upload Pictures (Optional)</label>
         <input type="file" id="images" multiple accept="image/*">
@@ -474,7 +610,14 @@
         <label>Comment (Optional)</label>
         <textarea id="comment"></textarea>
         
-        <button type="submit" class="btn-submit">Save Assessment</button>
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-submit">
+            <i class="fas fa-save"></i> Save Assessment
+          </button>
+          <button type="button" class="btn btn-danger" id="cancelEdit" style="display: none;" onclick="cancelEdit()">
+            <i class="fas fa-times"></i> Cancel Edit
+          </button>
+        </div>
         <div id="formError" style="display: none;"></div>
       </form>
     </div>
@@ -488,6 +631,10 @@
   </div>
 
   <script>
+    // ---- CONFIGURATION ----
+    const ADMIN_USERS = ['faiyaz mulla', 'chishela'];
+    const GENERAL_PASSWORD = '12345'; // You can change this
+    
     // ---- FIREBASE SETUP ----
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
@@ -501,71 +648,101 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ---- USER ----
-    const TEAM_MEMBERS = [
-      "brighton matolokosh", "caphas tembo", "clisha mambilima", "dabson daka",
-      "danny mvula", "james daka", "joseph tembo", "luckson phiri", "micheal lobela",
-      "obert siame", "dominic sakala", "peter mawere", "saviour phiri", "tembeya sakala", "kelvin siame"
-    ];
-    
+    // ---- USER MANAGEMENT ----
     function getCurrentUser() {
       return localStorage.getItem('currentUser') || null;
     }
-    
-    function isTeamMember(user) {
+    function isAdmin(user) {
       if (!user) return false;
-      return TEAM_MEMBERS.includes(user.toLowerCase());
+      return ADMIN_USERS.includes(user.toLowerCase());
     }
-    
     function logout() {
       localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentFilter');
       location.href = "index.html";
     }
-    
-    // ---- UI/UX ----
     function showWelcome(user) {
       let name = user.trim().split(" ");
       name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
       document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
+      if (isAdmin(user)) {
+        document.getElementById('filterControls').style.display = 'flex';
+      } else {
+        document.getElementById('filterControls').style.display = 'none';
+      }
     }
-    
+
     // ---- FORM TOGGLE ----
     function toggleForm() {
       const fc = document.getElementById("formContainer");
-      fc.style.display = fc.style.display === "none" ? "block" : "none";
-      if (fc.style.display === "block") {
-        document.getElementById("addBtn").textContent = "- Cancel";
+      if (fc.style.display === "none") {
+        resetForm();
+        fc.style.display = "block";
+        document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
       } else {
-        document.getElementById("addBtn").textContent = "+ Add New Assessment";
+        fc.style.display = "none";
+        document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add New';
       }
     }
-    
+    function resetForm() {
+      document.getElementById("assessmentForm").reset();
+      document.getElementById("assessmentId").value = "";
+      document.getElementById("issuesContainer").innerHTML = `
+        <div class="issue-input">
+          <label>Issue</label>
+          <textarea class="issue-text" required></textarea>
+          <label>Impact on Users & Company</label>
+          <textarea class="impact-text" required></textarea>
+          <label>Status</label>
+          <select class="status-select" required>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+            <option value="Bad">Bad</option>
+            <option value="VeryBad">Very Bad</option>
+          </select>
+        </div>
+      `;
+      document.getElementById("cancelEdit").style.display = "none";
+      document.getElementById("formError").style.display = "none";
+    }
+    function cancelEdit() {
+      resetForm();
+      toggleForm();
+    }
+
     // ---- MULTIPLE ISSUES SYSTEM ----
-    function addIssueField() {
+    function addIssueField(issueData = null) {
       const container = document.getElementById('issuesContainer');
       const newIssue = document.createElement('div');
       newIssue.className = 'issue-input';
+      let issueValue = '';
+      let impactValue = '';
+      let statusValue = 'Good';
+      if (issueData) {
+        issueValue = issueData.issue || '';
+        impactValue = issueData.impact || '';
+        statusValue = issueData.status || 'Good';
+      }
       newIssue.innerHTML = `
         <label>Additional Issue</label>
-        <textarea class="issue-text" required></textarea>
-        
+        <textarea class="issue-text" required>${issueValue}</textarea>
         <label>Impact on Users & Company</label>
-        <textarea class="impact-text" required></textarea>
-        
+        <textarea class="impact-text" required>${impactValue}</textarea>
         <label>Status</label>
         <select class="status-select" required>
-          <option value="Good">Good</option>
-          <option value="Fair">Fair</option>
-          <option value="Bad">Bad</option>
-          <option value="VeryBad">Very Bad</option>
+          <option value="Good" ${statusValue === 'Good' ? 'selected' : ''}>Good</option>
+          <option value="Fair" ${statusValue === 'Fair' ? 'selected' : ''}>Fair</option>
+          <option value="Bad" ${statusValue === 'Bad' ? 'selected' : ''}>Bad</option>
+          <option value="VeryBad" ${statusValue === 'VeryBad' ? 'selected' : ''}>Very Bad</option>
         </select>
-        
         <button type="button" class="add-issue-btn" style="background: var(--danger);" 
-                onclick="this.parentElement.remove()">- Remove Issue</button>
+                onclick="this.parentElement.remove()">
+          <i class="fas fa-trash"></i> Remove Issue
+        </button>
       `;
       container.appendChild(newIssue);
     }
-    
+
     // ---- IMAGE HANDLING ----
     function dataUrlFromFile(file) {
       return new Promise((resolve) => {
@@ -578,89 +755,52 @@
         reader.readAsDataURL(file);
       });
     }
-    
-    // Open image in modal
     function openImageModal(src) {
       const modal = document.getElementById('imageModal');
       const modalImg = document.getElementById('modalImage');
       modal.style.display = "block";
       modalImg.src = src;
-      
-      // Add modal styles dynamically
-      modal.style.position = 'fixed';
-      modal.style.zIndex = '1000';
-      modal.style.left = '0';
-      modal.style.top = '0';
-      modal.style.width = '100%';
-      modal.style.height = '100%';
-      modal.style.backgroundColor = 'rgba(0,0,0,0.9)';
-      modal.style.overflow = 'auto';
-      
-      modalImg.style.margin = 'auto';
-      modalImg.style.display = 'block';
-      modalImg.style.maxWidth = '90%';
-      modalImg.style.maxHeight = '90%';
-      modalImg.style.position = 'absolute';
-      modalImg.style.top = '50%';
-      modalImg.style.left = '50%';
-      modalImg.style.transform = 'translate(-50%, -50%)';
-      
-      const closeSpan = document.querySelector('.close');
-      closeSpan.style.position = 'absolute';
-      closeSpan.style.top = '15px';
-      closeSpan.style.right = '35px';
-      closeSpan.style.color = '#f1f1f1';
-      closeSpan.style.fontSize = '40px';
-      closeSpan.style.fontWeight = 'bold';
-      closeSpan.style.transition = '0.3s';
-      closeSpan.style.cursor = 'pointer';
     }
-    
     function closeModal() {
       document.getElementById('imageModal').style.display = "none";
     }
-    
-    // Close modal when clicking outside image
     window.onclick = function(event) {
       const modal = document.getElementById('imageModal');
       if (event.target == modal) {
         modal.style.display = "none";
       }
     }
-    
+
     // ---- ASSESSMENT CRUD ----
     let allAssessments = [];
     let unsubscribe = null;
-    
+    let currentFilter = localStorage.getItem('currentFilter') || 'all';
     function listenAssessments() {
       const user = getCurrentUser();
       if (!user) return;
-      
       if (unsubscribe) unsubscribe();
-      
-      // Listen to all assessments for team members
-      unsubscribe = db.collection("ASSESSMENTS")
-        .onSnapshot(snapshot => {
-          allAssessments = [];
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            data._id = doc.id;
-            processAssessmentData(data);
-            allAssessments.push(data);
-          });
-          renderAssessments();
+      let query = db.collection("ASSESSMENTS");
+      if (!isAdmin(user)) {
+        query = query.where("username", "==", user);
+      }
+      unsubscribe = query.onSnapshot(snapshot => {
+        allAssessments = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          data._id = doc.id;
+          processAssessmentData(data);
+          allAssessments.push(data);
         });
+        renderAssessments();
+        updateFilterButtons();
+      });
     }
-    
     function processAssessmentData(data) {
-      // Ensure arrays exist and are properly formatted
       data.images = Array.isArray(data.images) ? data.images : [];
       data.situationPics = Array.isArray(data.situationPics) ? data.situationPics : [];
       data.quotations = Array.isArray(data.quotations) ? data.quotations : [];
       data.comments = Array.isArray(data.comments) ? data.comments : [];
       data.issues = Array.isArray(data.issues) ? data.issues : [];
-      
-      // For backward compatibility - migrate single issue to issues array
       if (data.issue && data.impact && data.status && data.issues.length === 0) {
         data.issues.push({
           issue: data.issue,
@@ -668,61 +808,75 @@
           status: data.status
         });
       }
-      
+      if (!data.status) {
+        data.status = getWorstStatus(data);
+      }
       return data;
     }
-    
-    // ---- RENDER CARDS GRID ----
     function renderAssessments() {
       const container = document.getElementById("assessments");
       container.innerHTML = "";
-      
-      if (allAssessments.length === 0) {
+      let filteredAssessments = filterAssessments(allAssessments);
+      if (filteredAssessments.length === 0) {
         container.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">No assessments found</p>';
         return;
       }
-      
-      // Sort by newest first
-      const sortedAssessments = [...allAssessments].sort((a, b) => {
+      const sortedAssessments = [...filteredAssessments].sort((a, b) => {
         return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
       });
-      
       sortedAssessments.forEach((assessment, index) => {
         container.appendChild(createAssessmentCard(assessment, index));
       });
     }
-    
+    function filterAssessments(assessments) {
+      switch(currentFilter) {
+        case 'pending':
+          return assessments.filter(a => !a.approved && !a.resolved);
+        case 'approved':
+          return assessments.filter(a => a.approved && !a.resolved);
+        case 'resolved':
+          return assessments.filter(a => a.resolved);
+        default:
+          return assessments;
+      }
+    }
+    function updateFilterButtons() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.filter === currentFilter) {
+          btn.classList.add('active');
+        }
+      });
+    }
     function createAssessmentCard(assessment, index) {
-      // Process the assessment data
       assessment = processAssessmentData(assessment);
-      
-      // Summary line
       const summary = document.createElement('div');
       summary.className = 'card-summary';
+      let statusBadges = '';
+      if (assessment.approved) {
+        statusBadges += '<span class="status approved-badge"><i class="fas fa-check-circle"></i> Approved</span> ';
+      }
+      if (assessment.resolved) {
+        statusBadges += '<span class="status resolved-badge"><i class="fas fa-check-double"></i> Resolved</span> ';
+      }
       summary.innerHTML = `
         <div class="company">${assessment.company || "No Company"}</div>
         <div class="location">${assessment.location || "No Location"}</div>
         <div class="deadline">Deadline: ${assessment.deadline || "None"}</div>
-        <div class="status ${getWorstStatus(assessment) || ""}">${getWorstStatus(assessment) || "No Status"}</div>
+        ${statusBadges}
+        <span class="status ${getWorstStatus(assessment) || ""}">${getWorstStatus(assessment) || "No Status"}</span>
       `;
-      
-      // Create card element
       const card = document.createElement('div');
       card.className = 'card collapsed';
+      if (assessment.approved) card.classList.add('approved');
+      if (assessment.resolved) card.classList.add('resolved');
       card.id = `card-${index}`;
-      
-      // Add click handler to toggle details
       card.addEventListener('click', function(e) {
-        // Don't toggle if clicking on a link or button
         if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
         this.classList.toggle('collapsed');
       });
-      
-      // Details section
       const details = document.createElement('div');
       details.className = 'card-details';
-      
-      // Basic info
       const infoRow = document.createElement('div');
       infoRow.className = 'detail-row';
       infoRow.innerHTML = `
@@ -736,37 +890,78 @@
         </div>
       `;
       details.appendChild(infoRow);
-      
-      // Issues list
+      const user = getCurrentUser();
+      if (isAdmin(user)) {
+        const statusRow = document.createElement('div');
+        statusRow.className = 'detail-row';
+        let statusInfo = '';
+        if (assessment.approved) {
+          statusInfo += `<p><b>Approved By:</b> ${assessment.approvedBy || "Unknown"}</p>`;
+          statusInfo += `<p><b>Approved On:</b> ${formatDateTime(assessment.approvedOn) || "Unknown"}</p>`;
+        }
+        if (assessment.resolved) {
+          statusInfo += `<p><b>Resolved By:</b> ${assessment.resolvedBy || "Unknown"}</p>`;
+          statusInfo += `<p><b>Resolved On:</b> ${formatDateTime(assessment.resolvedOn) || "Unknown"}</p>`;
+        }
+        statusRow.innerHTML = statusInfo;
+        if (statusInfo) details.appendChild(statusRow);
+      }
       if (assessment.issues && assessment.issues.length > 0) {
         const issuesContainer = document.createElement('div');
         issuesContainer.className = 'issues-list';
-        
         assessment.issues.forEach((issue, i) => {
           const issueElement = document.createElement('div');
           issueElement.className = 'issue-item';
+          issueElement.dataset.issueIndex = i;
+          let adminControls = '';
+          if (isAdmin(user) && !assessment.resolved) {
+            adminControls = `
+              <div class="action-buttons">
+                <button type="button" class="btn btn-success" onclick="approveIssue('${assessment._id}', ${i}, event)">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+                ${!assessment.approved ? '' : `
+                <button type="button" class="btn btn-info" onclick="resolveAssessment('${assessment._id}', event)">
+                  <i class="fas fa-check-double"></i> Resolve All
+                </button>
+                `}
+              </div>
+            `;
+          }
           issueElement.innerHTML = `
             <h4>Issue #${i+1}</h4>
             <p><b>Description:</b> ${issue.issue || "No description"}</p>
             <p><b>Impact:</b> ${issue.impact || "No impact specified"}</p>
             <p><b>Status:</b> <span class="status ${issue.status || ""}">${issue.status || "Unknown"}</span></p>
+            ${adminControls}
           `;
+          issueElement.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') return;
+            const card = this.closest('.card');
+            const allIssues = card.querySelectorAll('.issue-item');
+            allIssues.forEach(item => {
+              if (item === this) {
+                item.classList.toggle('focused');
+              } else {
+                item.classList.add('blurred');
+              }
+            });
+            if (!card.querySelector('.issue-item.focused')) {
+              allIssues.forEach(item => {
+                item.classList.remove('blurred');
+              });
+            }
+          });
           issuesContainer.appendChild(issueElement);
         });
-        
         details.appendChild(issuesContainer);
       }
-      
-      // Images sections
       const imagesContainer = document.createElement('div');
       imagesContainer.className = 'images-container';
-      
-      // Initial images
       if (assessment.images && assessment.images.length > 0) {
         const imagesSection = document.createElement('div');
         imagesSection.className = 'images-section';
         imagesSection.innerHTML = '<h4>Initial Attachments</h4><div class="images-grid"></div>';
-        
         assessment.images.forEach(img => {
           const imgLink = document.createElement('a');
           imgLink.href = '#';
@@ -774,16 +969,12 @@
           imgLink.innerHTML = `<img src="${img.data}" alt="Assessment Image">`;
           imagesSection.querySelector('.images-grid').appendChild(imgLink);
         });
-        
         imagesContainer.appendChild(imagesSection);
       }
-      
-      // Situation pics
       if (assessment.situationPics && assessment.situationPics.length > 0) {
         const situationSection = document.createElement('div');
         situationSection.className = 'images-section';
         situationSection.innerHTML = '<h4>Situation Pictures</h4><div class="images-grid"></div>';
-        
         assessment.situationPics.forEach(img => {
           const imgLink = document.createElement('a');
           imgLink.href = '#';
@@ -791,19 +982,14 @@
           imgLink.innerHTML = `<img src="${img.data}" alt="Situation Image">`;
           situationSection.querySelector('.images-grid').appendChild(imgLink);
         });
-        
         imagesContainer.appendChild(situationSection);
       }
-      
-      // Quotations
       if (assessment.quotations && assessment.quotations.length > 0) {
         const quotationsSection = document.createElement('div');
         quotationsSection.className = 'images-section';
         quotationsSection.innerHTML = '<h4>Quotations</h4><div class="images-grid"></div>';
-        
         assessment.quotations.forEach(quote => {
           const quoteElement = document.createElement('a');
-          
           if (quote.type && quote.type.startsWith('image/')) {
             quoteElement.href = '#';
             quoteElement.onclick = (e) => { e.preventDefault(); openImageModal(quote.data); };
@@ -819,37 +1005,49 @@
             quoteElement.className = 'pdf-thumbnail';
             quoteElement.innerHTML = 'Document<br>' + (quote.name || 'Quotation');
           }
-          
           quotationsSection.querySelector('.images-grid').appendChild(quoteElement);
         });
-        
         imagesContainer.appendChild(quotationsSection);
       }
-      
       details.appendChild(imagesContainer);
-      
-      // Add all elements to card
+
+      // Action buttons for editing (only for owner or admin)
+      if ((assessment.username === user || isAdmin(user)) && !assessment.resolved) {
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'action-buttons';
+        actionButtons.innerHTML = `
+          <button type="button" class="btn btn-primary" onclick="editAssessment('${assessment._id}', event)">
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          ${isAdmin(user) && !assessment.approved ? `
+          <button type="button" class="btn btn-success" onclick="approveAssessment('${assessment._id}', event)">
+            <i class="fas fa-check"></i> Approve All
+          </button>
+          ` : ''}
+          ${isAdmin(user) && assessment.approved ? `
+          <button type="button" class="btn btn-info" onclick="resolveAssessment('${assessment._id}', event)">
+            <i class="fas fa-check-double"></i> Resolve All
+          </button>
+          ` : ''}
+        `;
+        details.appendChild(actionButtons);
+      }
       card.appendChild(summary);
       card.appendChild(details);
-      
       return card;
     }
-    
     function getWorstStatus(assessment) {
       if (!assessment.issues || assessment.issues.length === 0) {
-        return assessment.status || 'Good'; // Default if no status
+        return assessment.status || 'Good';
       }
-      
       const statusPriority = {
         'VeryBad': 4,
         'Bad': 3,
         'Fair': 2,
         'Good': 1
       };
-      
       let worstStatus = 'Good';
       let highestPriority = 1;
-      
       assessment.issues.forEach(issue => {
         const priority = statusPriority[issue.status] || 1;
         if (priority > highestPriority) {
@@ -857,22 +1055,132 @@
           worstStatus = issue.status;
         }
       });
-      
       return worstStatus;
     }
-    
     function formatDateTime(dateString) {
       if (!dateString) return '';
-      
       try {
-        const date = new Date(dateString);
+        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       } catch (e) {
         return dateString;
       }
     }
-    
-    // ---- ADD ASSESSMENT ----
+    // ---- ASSESSMENT ACTIONS ----
+    async function editAssessment(docId, event) {
+      event.stopPropagation();
+      try {
+        const doc = await db.collection("ASSESSMENTS").doc(docId).get();
+        if (!doc.exists) {
+          alert("Assessment not found");
+          return;
+        }
+        const assessment = doc.data();
+        document.getElementById("assessmentId").value = docId;
+        document.getElementById("company").value = assessment.company || "";
+        document.getElementById("location").value = assessment.location || "";
+        document.getElementById("witness").value = assessment.witness || "";
+        document.getElementById("time").value = assessment.time || "";
+        document.getElementById("deadline").value = assessment.deadline || "";
+        document.getElementById("comment").value = assessment.comments?.join("\n") || "";
+        document.getElementById("issuesContainer").innerHTML = "";
+        if (assessment.issues && assessment.issues.length > 0) {
+          assessment.issues.forEach(issue => {
+            addIssueField(issue);
+          });
+        } else {
+          addIssueField();
+        }
+        document.getElementById("cancelEdit").style.display = "inline-block";
+        document.getElementById("formContainer").style.display = "block";
+        document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
+        document.getElementById("formContainer").scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error("Error editing assessment:", err);
+        alert("Failed to load assessment for editing");
+      }
+    }
+    async function approveAssessment(docId, event) {
+      event.stopPropagation();
+      if (!confirm("Approve this assessment to commence work?")) return;
+      const user = getCurrentUser();
+      if (!user || !isAdmin(user)) {
+        alert("Only admins can approve assessments");
+        return;
+      }
+      try {
+        await db.collection("ASSESSMENTS").doc(docId).update({
+          approved: true,
+          approvedBy: user,
+          approvedOn: new Date()
+        });
+      } catch (err) {
+        console.error("Error approving assessment:", err);
+        alert("Failed to approve assessment");
+      }
+    }
+    async function approveIssue(docId, issueIndex, event) {
+      event.stopPropagation();
+      if (!confirm("Approve this specific issue?")) return;
+      const user = getCurrentUser();
+      if (!user || !isAdmin(user)) {
+        alert("Only admins can approve issues");
+        return;
+      }
+      try {
+        const doc = await db.collection("ASSESSMENTS").doc(docId).get();
+        if (!doc.exists) {
+          alert("Assessment not found");
+          return;
+        }
+        const assessment = doc.data();
+        if (!assessment.issues || issueIndex >= assessment.issues.length) {
+          alert("Issue not found");
+          return;
+        }
+        const issues = [...assessment.issues];
+        issues[issueIndex].approved = true;
+        issues[issueIndex].approvedBy = user;
+        issues[issueIndex].approvedOn = new Date();
+        await db.collection("ASSESSMENTS").doc(docId).update({
+          issues: issues
+        });
+      } catch (err) {
+        console.error("Error approving issue:", err);
+        alert("Failed to approve issue");
+      }
+    }
+    async function resolveAssessment(docId, event) {
+      event.stopPropagation();
+      if (!confirm("Mark this assessment as resolved?")) return;
+      const user = getCurrentUser();
+      if (!user || !isAdmin(user)) {
+        alert("Only admins can resolve assessments");
+        return;
+      }
+      try {
+        await db.collection("ASSESSMENTS").doc(docId).update({
+          resolved: true,
+          resolvedBy: user,
+          resolvedOn: new Date()
+        });
+      } catch (err) {
+        console.error("Error resolving assessment:", err);
+        alert("Failed to resolve assessment");
+      }
+    }
+    // ---- FILTER CONTROLS ----
+    function setupFilterControls() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          currentFilter = this.dataset.filter;
+          localStorage.setItem('currentFilter', currentFilter);
+          renderAssessments();
+          updateFilterButtons();
+        });
+      });
+    }
+    // ---- ADD/UPDATE ASSESSMENT ----
     document.getElementById("assessmentForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const user = getCurrentUser();
@@ -880,8 +1188,6 @@
         alert("You must be logged in to submit an assessment");
         return;
       }
-      
-      // Collect form data
       const formData = {
         username: user,
         company: document.getElementById("company").value,
@@ -890,18 +1196,35 @@
         time: document.getElementById("time").value,
         deadline: document.getElementById("deadline").value,
         comments: [],
-        createdAt: new Date()
+        updatedAt: new Date()
       };
-      
-      // Collect issues from all issue fields
+      const docId = document.getElementById("assessmentId").value;
+      if (docId) {
+        const doc = await db.collection("ASSESSMENTS").doc(docId).get();
+        if (doc.exists) {
+          const existingData = doc.data();
+          formData.createdAt = existingData.createdAt;
+          formData.approved = existingData.approved;
+          formData.approvedBy = existingData.approvedBy;
+          formData.approvedOn = existingData.approvedOn;
+          formData.resolved = existingData.resolved;
+          formData.resolvedBy = existingData.resolvedBy;
+          formData.resolvedOn = existingData.resolvedOn;
+          formData.images = existingData.images || [];
+          formData.situationPics = existingData.situationPics || [];
+          formData.quotations = existingData.quotations || [];
+        }
+      } else {
+        formData.createdAt = new Date();
+        formData.approved = false;
+        formData.resolved = false;
+      }
       const issueInputs = document.querySelectorAll('.issue-input');
       formData.issues = [];
-      
       for (let i = 0; i < issueInputs.length; i++) {
         const issue = issueInputs[i].querySelector('.issue-text').value;
         const impact = issueInputs[i].querySelector('.impact-text').value;
         const status = issueInputs[i].querySelector('.status-select').value;
-        
         if (issue && impact && status) {
           formData.issues.push({
             issue,
@@ -910,27 +1233,19 @@
           });
         }
       }
-      
-      // Check if we have at least one valid issue
       if (formData.issues.length === 0) {
         const errorEl = document.getElementById("formError");
         errorEl.textContent = "At least one valid issue is required";
         errorEl.style.display = 'block';
         return;
       }
-      
-      // Process file uploads
       const images = document.getElementById("images").files;
       const situationPics = document.getElementById("situationPics").files;
       const quotations = document.getElementById("quotations").files;
       const comment = document.getElementById("comment").value;
-      
-      // Add optional comment
       if (comment) {
-        formData.comments.push(comment);
+        formData.comments = comment.split("\n").filter(c => c.trim());
       }
-      
-      // Convert files to base64
       async function processFiles(fileList) {
         if (!fileList || fileList.length === 0) return [];
         const promises = [];
@@ -939,42 +1254,29 @@
         }
         return await Promise.all(promises);
       }
-      
       try {
         const [imagesData, situationData, quotationsData] = await Promise.all([
           processFiles(images),
           processFiles(situationPics),
           processFiles(quotations)
         ]);
-        
-        formData.images = imagesData;
-        formData.situationPics = situationData;
-        formData.quotations = quotationsData;
-        
-        // Save to Firestore
-        await db.collection("ASSESSMENTS").add(formData);
-        
-        // Reset form
-        document.getElementById("assessmentForm").reset();
-        document.getElementById("issuesContainer").innerHTML = `
-          <div class="issue-input">
-            <label>Issue</label>
-            <textarea class="issue-text" required></textarea>
-            
-            <label>Impact on Users & Company</label>
-            <textarea class="impact-text" required></textarea>
-            
-            <label>Status</label>
-            <select class="status-select" required>
-              <option value="Good">Good</option>
-              <option value="Fair">Fair</option>
-              <option value="Bad">Bad</option>
-              <option value="VeryBad">Very Bad</option>
-            </select>
-          </div>
-        `;
+        if (docId) {
+          formData.images = [...formData.images, ...imagesData];
+          formData.situationPics = [...formData.situationPics, ...situationData];
+          formData.quotations = [...formData.quotations, ...quotationsData];
+        } else {
+          formData.images = imagesData;
+          formData.situationPics = situationData;
+          formData.quotations = quotationsData;
+        }
+        if (docId) {
+          await db.collection("ASSESSMENTS").doc(docId).update(formData);
+        } else {
+          await db.collection("ASSESSMENTS").add(formData);
+        }
+        resetForm();
         document.getElementById("formContainer").style.display = "none";
-        document.getElementById("addBtn").textContent = "+ Add New Assessment";
+        document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add New';
         document.getElementById("formError").style.display = "none";
       } catch (err) {
         const errorEl = document.getElementById("formError");
@@ -983,7 +1285,6 @@
         console.error("Assessment submission error:", err);
       }
     });
-    
     // ---- INIT ----
     window.onload = function() {
       const user = getCurrentUser();
@@ -991,11 +1292,9 @@
         location.href = "index.html"; 
         return; 
       }
-      
       showWelcome(user);
+      setupFilterControls();
       listenAssessments();
-      
-      // Close modal with ESC key
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
           closeModal();
@@ -1004,5 +1303,4 @@
     }
   </script>
 </body>
-
 </html>
