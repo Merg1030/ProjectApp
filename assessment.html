@@ -547,6 +547,19 @@
       background: white;
       box-shadow: 0 0 0 2px var(--primary-light);
     }
+    .card.zoomed {
+  z-index: 2;
+  box-shadow: 0 0 0 2px var(--primary-light), 0 5px 30px rgba(0,0,0,0.23);
+  transform: scale(1.01);
+  background: #fff;
+}
+
+.card.blurred {
+  filter: blur(3px) grayscale(40%);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: filter 0.2s, opacity 0.18s;
+}
   </style>
 </head>
 <body>
@@ -630,677 +643,617 @@
     <img class="modal-content" id="modalImage">
   </div>
 
-  <script>
-    // ---- CONFIGURATION ----
-    const ADMIN_USERS = ['faiyaz mulla', 'chishela'];
-    const GENERAL_PASSWORD = '12345'; // You can change this
-    
-    // ---- FIREBASE SETUP ----
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-      authDomain: "project-task-588c4.firebaseapp.com",
-      projectId: "project-task-588c4",
-      storageBucket: "project-task-588c4.appspot.com",
-      messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<script>
+// ---- CONFIGURATION ----
+const ADMIN_USERS = ['faiyaz mulla', 'christopher'];
+const GENERAL_PASSWORD = '12345';
 
-    // ---- USER MANAGEMENT ----
-    function getCurrentUser() {
-      return localStorage.getItem('currentUser') || null;
-    }
-    function isAdmin(user) {
-      if (!user) return false;
-      return ADMIN_USERS.includes(user.toLowerCase());
-    }
-    function logout() {
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('currentFilter');
-      location.href = "index.html";
-    }
-    function showWelcome(user) {
-      let name = user.trim().split(" ");
-      name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
-      document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
-      if (isAdmin(user)) {
-        document.getElementById('filterControls').style.display = 'flex';
-      } else {
-        document.getElementById('filterControls').style.display = 'none';
-      }
-    }
+// ---- FIREBASE SETUP ----
+const firebaseConfig = {
+  apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+  authDomain: "project-task-588c4.firebaseapp.com",
+  projectId: "project-task-588c4",
+  storageBucket: "project-task-588c4.appspot.com",
+  messagingSenderId: "411882772509",
+  appId: "1:411882772509:web:08d613186c101a99f38ef4",
+  measurementId: "G-JMFLFYEM0F"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    // ---- FORM TOGGLE ----
-    function toggleForm() {
-      const fc = document.getElementById("formContainer");
-      if (fc.style.display === "none") {
-        resetForm();
-        fc.style.display = "block";
-        document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
-      } else {
-        fc.style.display = "none";
-        document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add New';
-      }
-    }
-    function resetForm() {
-      document.getElementById("assessmentForm").reset();
-      document.getElementById("assessmentId").value = "";
-      document.getElementById("issuesContainer").innerHTML = `
-        <div class="issue-input">
-          <label>Issue</label>
-          <textarea class="issue-text" required></textarea>
-          <label>Impact on Users & Company</label>
-          <textarea class="impact-text" required></textarea>
-          <label>Status</label>
-          <select class="status-select" required>
-            <option value="Good">Good</option>
-            <option value="Fair">Fair</option>
-            <option value="Bad">Bad</option>
-            <option value="VeryBad">Very Bad</option>
-          </select>
-        </div>
-      `;
-      document.getElementById("cancelEdit").style.display = "none";
-      document.getElementById("formError").style.display = "none";
-    }
-    function cancelEdit() {
-      resetForm();
-      toggleForm();
-    }
+// ---- USER MANAGEMENT ----
+function getCurrentUser() {
+  return localStorage.getItem('currentUser') || null;
+}
+function isAdmin(user) {
+  if (!user) return false;
+  return ADMIN_USERS.includes(user.toLowerCase());
+}
+function logout() {
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('currentFilter');
+  location.href = "index.html";
+}
+function showWelcome(user) {
+  let name = user.trim().split(" ");
+  name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
+  document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
+  if (isAdmin(user)) {
+    document.getElementById('filterControls').style.display = 'flex';
+  } else {
+    document.getElementById('filterControls').style.display = 'none';
+  }
+}
 
-    // ---- MULTIPLE ISSUES SYSTEM ----
-    function addIssueField(issueData = null) {
-      const container = document.getElementById('issuesContainer');
-      const newIssue = document.createElement('div');
-      newIssue.className = 'issue-input';
-      let issueValue = '';
-      let impactValue = '';
-      let statusValue = 'Good';
-      if (issueData) {
-        issueValue = issueData.issue || '';
-        impactValue = issueData.impact || '';
-        statusValue = issueData.status || 'Good';
-      }
-      newIssue.innerHTML = `
-        <label>Additional Issue</label>
-        <textarea class="issue-text" required>${issueValue}</textarea>
-        <label>Impact on Users & Company</label>
-        <textarea class="impact-text" required>${impactValue}</textarea>
-        <label>Status</label>
-        <select class="status-select" required>
-          <option value="Good" ${statusValue === 'Good' ? 'selected' : ''}>Good</option>
-          <option value="Fair" ${statusValue === 'Fair' ? 'selected' : ''}>Fair</option>
-          <option value="Bad" ${statusValue === 'Bad' ? 'selected' : ''}>Bad</option>
-          <option value="VeryBad" ${statusValue === 'VeryBad' ? 'selected' : ''}>Very Bad</option>
-        </select>
-        <button type="button" class="add-issue-btn" style="background: var(--danger);" 
-                onclick="this.parentElement.remove()">
-          <i class="fas fa-trash"></i> Remove Issue
-        </button>
-      `;
-      container.appendChild(newIssue);
-    }
+// ---- FORM TOGGLE ----
+function toggleForm() {
+  const fc = document.getElementById("formContainer");
+  if (fc.style.display === "none") {
+    resetForm();
+    fc.style.display = "block";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
+  } else {
+    fc.style.display = "none";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add New';
+  }
+}
+function resetForm() {
+  document.getElementById("assessmentForm").reset();
+  document.getElementById("assessmentId").value = "";
+  document.getElementById("issuesContainer").innerHTML = `
+    <div class="issue-input">
+      <label>Issue</label>
+      <textarea class="issue-text" required></textarea>
+      <label>Impact on Users & Company</label>
+      <textarea class="impact-text" required></textarea>
+      <label>Status</label>
+      <select class="status-select" required>
+        <option value="Good">Good</option>
+        <option value="Fair">Fair</option>
+        <option value="Bad">Bad</option>
+        <option value="VeryBad">Very Bad</option>
+      </select>
+    </div>
+  `;
+  document.getElementById("cancelEdit").style.display = "none";
+  document.getElementById("formError").style.display = "none";
+}
+function cancelEdit() {
+  resetForm();
+  toggleForm();
+}
 
-    // ---- IMAGE HANDLING ----
-    function dataUrlFromFile(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve({
-          data: e.target.result,
-          type: file.type,
-          name: file.name
-        });
-        reader.readAsDataURL(file);
-      });
-    }
-    function openImageModal(src) {
-      const modal = document.getElementById('imageModal');
-      const modalImg = document.getElementById('modalImage');
-      modal.style.display = "block";
-      modalImg.src = src;
-    }
-    function closeModal() {
-      document.getElementById('imageModal').style.display = "none";
-    }
-    window.onclick = function(event) {
-      const modal = document.getElementById('imageModal');
-      if (event.target == modal) {
-        modal.style.display = "none";
-      }
-    }
+// ---- MULTIPLE ISSUES SYSTEM ----
+function addIssueField(issueData = null) {
+  const container = document.getElementById('issuesContainer');
+  const newIssue = document.createElement('div');
+  newIssue.className = 'issue-input';
+  let issueValue = '';
+  let impactValue = '';
+  let statusValue = 'Good';
+  if (issueData) {
+    issueValue = issueData.issue || '';
+    impactValue = issueData.impact || '';
+    statusValue = issueData.status || 'Good';
+  }
+  newIssue.innerHTML = `
+    <label>Additional Issue</label>
+    <textarea class="issue-text" required>${issueValue}</textarea>
+    <label>Impact on Users & Company</label>
+    <textarea class="impact-text" required>${impactValue}</textarea>
+    <label>Status</label>
+    <select class="status-select" required>
+      <option value="Good" ${statusValue === 'Good' ? 'selected' : ''}>Good</option>
+      <option value="Fair" ${statusValue === 'Fair' ? 'selected' : ''}>Fair</option>
+      <option value="Bad" ${statusValue === 'Bad' ? 'selected' : ''}>Bad</option>
+      <option value="VeryBad" ${statusValue === 'VeryBad' ? 'selected' : ''}>Very Bad</option>
+    </select>
+    <button type="button" class="add-issue-btn" style="background: var(--danger);" 
+            onclick="this.parentElement.remove()">
+      <i class="fas fa-trash"></i> Remove Issue
+    </button>
+  `;
+  container.appendChild(newIssue);
+}
 
-    // ---- ASSESSMENT CRUD ----
-    let allAssessments = [];
-    let unsubscribe = null;
-    let currentFilter = localStorage.getItem('currentFilter') || 'all';
-    function listenAssessments() {
-      const user = getCurrentUser();
-      if (!user) return;
-      if (unsubscribe) unsubscribe();
-      let query = db.collection("ASSESSMENTS");
-      if (!isAdmin(user)) {
-        query = query.where("username", "==", user);
-      }
-      unsubscribe = query.onSnapshot(snapshot => {
-        allAssessments = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          data._id = doc.id;
-          processAssessmentData(data);
-          allAssessments.push(data);
-        });
-        renderAssessments();
-        updateFilterButtons();
-      });
-    }
-    function processAssessmentData(data) {
-      data.images = Array.isArray(data.images) ? data.images : [];
-      data.situationPics = Array.isArray(data.situationPics) ? data.situationPics : [];
-      data.quotations = Array.isArray(data.quotations) ? data.quotations : [];
-      data.comments = Array.isArray(data.comments) ? data.comments : [];
-      data.issues = Array.isArray(data.issues) ? data.issues : [];
-      if (data.issue && data.impact && data.status && data.issues.length === 0) {
-        data.issues.push({
-          issue: data.issue,
-          impact: data.impact,
-          status: data.status
-        });
-      }
-      if (!data.status) {
-        data.status = getWorstStatus(data);
-      }
-      return data;
-    }
-    function renderAssessments() {
-      const container = document.getElementById("assessments");
-      container.innerHTML = "";
-      let filteredAssessments = filterAssessments(allAssessments);
-      if (filteredAssessments.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">No assessments found</p>';
-        return;
-      }
-      const sortedAssessments = [...filteredAssessments].sort((a, b) => {
-        return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
-      });
-      sortedAssessments.forEach((assessment, index) => {
-        container.appendChild(createAssessmentCard(assessment, index));
-      });
-    }
-    function filterAssessments(assessments) {
-      switch(currentFilter) {
-        case 'pending':
-          return assessments.filter(a => !a.approved && !a.resolved);
-        case 'approved':
-          return assessments.filter(a => a.approved && !a.resolved);
-        case 'resolved':
-          return assessments.filter(a => a.resolved);
-        default:
-          return assessments;
-      }
-    }
-    function updateFilterButtons() {
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.filter === currentFilter) {
-          btn.classList.add('active');
-        }
-      });
-    }
-    function createAssessmentCard(assessment, index) {
-      assessment = processAssessmentData(assessment);
-      const summary = document.createElement('div');
-      summary.className = 'card-summary';
-      let statusBadges = '';
-      if (assessment.approved) {
-        statusBadges += '<span class="status approved-badge"><i class="fas fa-check-circle"></i> Approved</span> ';
-      }
-      if (assessment.resolved) {
-        statusBadges += '<span class="status resolved-badge"><i class="fas fa-check-double"></i> Resolved</span> ';
-      }
-      summary.innerHTML = `
-        <div class="company">${assessment.company || "No Company"}</div>
-        <div class="location">${assessment.location || "No Location"}</div>
-        <div class="deadline">Deadline: ${assessment.deadline || "None"}</div>
-        ${statusBadges}
-        <span class="status ${getWorstStatus(assessment) || ""}">${getWorstStatus(assessment) || "No Status"}</span>
-      `;
-      const card = document.createElement('div');
-      card.className = 'card collapsed';
-      if (assessment.approved) card.classList.add('approved');
-      if (assessment.resolved) card.classList.add('resolved');
-      card.id = `card-${index}`;
-      card.addEventListener('click', function(e) {
-        if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
-        this.classList.toggle('collapsed');
-      });
-      const details = document.createElement('div');
-      details.className = 'card-details';
-      const infoRow = document.createElement('div');
-      infoRow.className = 'detail-row';
-      infoRow.innerHTML = `
-        <div class="detail-col">
-          <p><b>Assessed By:</b> ${assessment.username || "Unknown"}</p>
-          <p><b>Witness:</b> ${assessment.witness || "None"}</p>
-        </div>
-        <div class="detail-col">
-          <p><b>Time:</b> ${formatDateTime(assessment.time) || "Unknown"}</p>
-          <p><b>Deadline:</b> ${assessment.deadline || "None"}</p>
-        </div>
-      `;
-      details.appendChild(infoRow);
-      const user = getCurrentUser();
-      if (isAdmin(user)) {
-        const statusRow = document.createElement('div');
-        statusRow.className = 'detail-row';
-        let statusInfo = '';
-        if (assessment.approved) {
-          statusInfo += `<p><b>Approved By:</b> ${assessment.approvedBy || "Unknown"}</p>`;
-          statusInfo += `<p><b>Approved On:</b> ${formatDateTime(assessment.approvedOn) || "Unknown"}</p>`;
-        }
-        if (assessment.resolved) {
-          statusInfo += `<p><b>Resolved By:</b> ${assessment.resolvedBy || "Unknown"}</p>`;
-          statusInfo += `<p><b>Resolved On:</b> ${formatDateTime(assessment.resolvedOn) || "Unknown"}</p>`;
-        }
-        statusRow.innerHTML = statusInfo;
-        if (statusInfo) details.appendChild(statusRow);
-      }
-      if (assessment.issues && assessment.issues.length > 0) {
-        const issuesContainer = document.createElement('div');
-        issuesContainer.className = 'issues-list';
-        assessment.issues.forEach((issue, i) => {
-          const issueElement = document.createElement('div');
-          issueElement.className = 'issue-item';
-          issueElement.dataset.issueIndex = i;
-          let adminControls = '';
-          if (isAdmin(user) && !assessment.resolved) {
-            adminControls = `
-              <div class="action-buttons">
-                <button type="button" class="btn btn-success" onclick="approveIssue('${assessment._id}', ${i}, event)">
-                  <i class="fas fa-check"></i> Approve
-                </button>
-                ${!assessment.approved ? '' : `
-                <button type="button" class="btn btn-info" onclick="resolveAssessment('${assessment._id}', event)">
-                  <i class="fas fa-check-double"></i> Resolve All
-                </button>
-                `}
-              </div>
-            `;
-          }
-          issueElement.innerHTML = `
-            <h4>Issue #${i+1}</h4>
-            <p><b>Description:</b> ${issue.issue || "No description"}</p>
-            <p><b>Impact:</b> ${issue.impact || "No impact specified"}</p>
-            <p><b>Status:</b> <span class="status ${issue.status || ""}">${issue.status || "Unknown"}</span></p>
-            ${adminControls}
-          `;
-          issueElement.addEventListener('click', function(e) {
-            if (e.target.tagName === 'BUTTON') return;
-            const card = this.closest('.card');
-            const allIssues = card.querySelectorAll('.issue-item');
-            allIssues.forEach(item => {
-              if (item === this) {
-                item.classList.toggle('focused');
-              } else {
-                item.classList.add('blurred');
-              }
-            });
-            if (!card.querySelector('.issue-item.focused')) {
-              allIssues.forEach(item => {
-                item.classList.remove('blurred');
-              });
-            }
-          });
-          issuesContainer.appendChild(issueElement);
-        });
-        details.appendChild(issuesContainer);
-      }
-      const imagesContainer = document.createElement('div');
-      imagesContainer.className = 'images-container';
-      if (assessment.images && assessment.images.length > 0) {
-        const imagesSection = document.createElement('div');
-        imagesSection.className = 'images-section';
-        imagesSection.innerHTML = '<h4>Initial Attachments</h4><div class="images-grid"></div>';
-        assessment.images.forEach(img => {
-          const imgLink = document.createElement('a');
-          imgLink.href = '#';
-          imgLink.onclick = (e) => { e.preventDefault(); openImageModal(img.data); };
-          imgLink.innerHTML = `<img src="${img.data}" alt="Assessment Image">`;
-          imagesSection.querySelector('.images-grid').appendChild(imgLink);
-        });
-        imagesContainer.appendChild(imagesSection);
-      }
-      if (assessment.situationPics && assessment.situationPics.length > 0) {
-        const situationSection = document.createElement('div');
-        situationSection.className = 'images-section';
-        situationSection.innerHTML = '<h4>Situation Pictures</h4><div class="images-grid"></div>';
-        assessment.situationPics.forEach(img => {
-          const imgLink = document.createElement('a');
-          imgLink.href = '#';
-          imgLink.onclick = (e) => { e.preventDefault(); openImageModal(img.data); };
-          imgLink.innerHTML = `<img src="${img.data}" alt="Situation Image">`;
-          situationSection.querySelector('.images-grid').appendChild(imgLink);
-        });
-        imagesContainer.appendChild(situationSection);
-      }
-      if (assessment.quotations && assessment.quotations.length > 0) {
-        const quotationsSection = document.createElement('div');
-        quotationsSection.className = 'images-section';
-        quotationsSection.innerHTML = '<h4>Quotations</h4><div class="images-grid"></div>';
-        assessment.quotations.forEach(quote => {
-          const quoteElement = document.createElement('a');
-          if (quote.type && quote.type.startsWith('image/')) {
-            quoteElement.href = '#';
-            quoteElement.onclick = (e) => { e.preventDefault(); openImageModal(quote.data); };
-            quoteElement.innerHTML = `<img src="${quote.data}" alt="Quotation Image">`;
-          } else if (quote.type && quote.type.includes('pdf')) {
-            quoteElement.href = quote.data;
-            quoteElement.target = '_blank';
-            quoteElement.className = 'pdf-thumbnail';
-            quoteElement.innerHTML = 'PDF Document<br>' + (quote.name || 'Quotation');
-          } else {
-            quoteElement.href = quote.data;
-            quoteElement.target = '_blank';
-            quoteElement.className = 'pdf-thumbnail';
-            quoteElement.innerHTML = 'Document<br>' + (quote.name || 'Quotation');
-          }
-          quotationsSection.querySelector('.images-grid').appendChild(quoteElement);
-        });
-        imagesContainer.appendChild(quotationsSection);
-      }
-      details.appendChild(imagesContainer);
-
-      // Action buttons for editing (only for owner or admin)
-      if ((assessment.username === user || isAdmin(user)) && !assessment.resolved) {
-        const actionButtons = document.createElement('div');
-        actionButtons.className = 'action-buttons';
-        actionButtons.innerHTML = `
-          <button type="button" class="btn btn-primary" onclick="editAssessment('${assessment._id}', event)">
-            <i class="fas fa-edit"></i> Edit
-          </button>
-          ${isAdmin(user) && !assessment.approved ? `
-          <button type="button" class="btn btn-success" onclick="approveAssessment('${assessment._id}', event)">
-            <i class="fas fa-check"></i> Approve All
-          </button>
-          ` : ''}
-          ${isAdmin(user) && assessment.approved ? `
-          <button type="button" class="btn btn-info" onclick="resolveAssessment('${assessment._id}', event)">
-            <i class="fas fa-check-double"></i> Resolve All
-          </button>
-          ` : ''}
-        `;
-        details.appendChild(actionButtons);
-      }
-      card.appendChild(summary);
-      card.appendChild(details);
-      return card;
-    }
-    function getWorstStatus(assessment) {
-      if (!assessment.issues || assessment.issues.length === 0) {
-        return assessment.status || 'Good';
-      }
-      const statusPriority = {
-        'VeryBad': 4,
-        'Bad': 3,
-        'Fair': 2,
-        'Good': 1
-      };
-      let worstStatus = 'Good';
-      let highestPriority = 1;
-      assessment.issues.forEach(issue => {
-        const priority = statusPriority[issue.status] || 1;
-        if (priority > highestPriority) {
-          highestPriority = priority;
-          worstStatus = issue.status;
-        }
-      });
-      return worstStatus;
-    }
-    function formatDateTime(dateString) {
-      if (!dateString) return '';
-      try {
-        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      } catch (e) {
-        return dateString;
-      }
-    }
-    // ---- ASSESSMENT ACTIONS ----
-    async function editAssessment(docId, event) {
-      event.stopPropagation();
-      try {
-        const doc = await db.collection("ASSESSMENTS").doc(docId).get();
-        if (!doc.exists) {
-          alert("Assessment not found");
-          return;
-        }
-        const assessment = doc.data();
-        document.getElementById("assessmentId").value = docId;
-        document.getElementById("company").value = assessment.company || "";
-        document.getElementById("location").value = assessment.location || "";
-        document.getElementById("witness").value = assessment.witness || "";
-        document.getElementById("time").value = assessment.time || "";
-        document.getElementById("deadline").value = assessment.deadline || "";
-        document.getElementById("comment").value = assessment.comments?.join("\n") || "";
-        document.getElementById("issuesContainer").innerHTML = "";
-        if (assessment.issues && assessment.issues.length > 0) {
-          assessment.issues.forEach(issue => {
-            addIssueField(issue);
-          });
-        } else {
-          addIssueField();
-        }
-        document.getElementById("cancelEdit").style.display = "inline-block";
-        document.getElementById("formContainer").style.display = "block";
-        document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
-        document.getElementById("formContainer").scrollIntoView({ behavior: 'smooth' });
-      } catch (err) {
-        console.error("Error editing assessment:", err);
-        alert("Failed to load assessment for editing");
-      }
-    }
-    async function approveAssessment(docId, event) {
-      event.stopPropagation();
-      if (!confirm("Approve this assessment to commence work?")) return;
-      const user = getCurrentUser();
-      if (!user || !isAdmin(user)) {
-        alert("Only admins can approve assessments");
-        return;
-      }
-      try {
-        await db.collection("ASSESSMENTS").doc(docId).update({
-          approved: true,
-          approvedBy: user,
-          approvedOn: new Date()
-        });
-      } catch (err) {
-        console.error("Error approving assessment:", err);
-        alert("Failed to approve assessment");
-      }
-    }
-    async function approveIssue(docId, issueIndex, event) {
-      event.stopPropagation();
-      if (!confirm("Approve this specific issue?")) return;
-      const user = getCurrentUser();
-      if (!user || !isAdmin(user)) {
-        alert("Only admins can approve issues");
-        return;
-      }
-      try {
-        const doc = await db.collection("ASSESSMENTS").doc(docId).get();
-        if (!doc.exists) {
-          alert("Assessment not found");
-          return;
-        }
-        const assessment = doc.data();
-        if (!assessment.issues || issueIndex >= assessment.issues.length) {
-          alert("Issue not found");
-          return;
-        }
-        const issues = [...assessment.issues];
-        issues[issueIndex].approved = true;
-        issues[issueIndex].approvedBy = user;
-        issues[issueIndex].approvedOn = new Date();
-        await db.collection("ASSESSMENTS").doc(docId).update({
-          issues: issues
-        });
-      } catch (err) {
-        console.error("Error approving issue:", err);
-        alert("Failed to approve issue");
-      }
-    }
-    async function resolveAssessment(docId, event) {
-      event.stopPropagation();
-      if (!confirm("Mark this assessment as resolved?")) return;
-      const user = getCurrentUser();
-      if (!user || !isAdmin(user)) {
-        alert("Only admins can resolve assessments");
-        return;
-      }
-      try {
-        await db.collection("ASSESSMENTS").doc(docId).update({
-          resolved: true,
-          resolvedBy: user,
-          resolvedOn: new Date()
-        });
-      } catch (err) {
-        console.error("Error resolving assessment:", err);
-        alert("Failed to resolve assessment");
-      }
-    }
-    // ---- FILTER CONTROLS ----
-    function setupFilterControls() {
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          currentFilter = this.dataset.filter;
-          localStorage.setItem('currentFilter', currentFilter);
-          renderAssessments();
-          updateFilterButtons();
-        });
-      });
-    }
-    // ---- ADD/UPDATE ASSESSMENT ----
-    document.getElementById("assessmentForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const user = getCurrentUser();
-      if (!user) {
-        alert("You must be logged in to submit an assessment");
-        return;
-      }
-      const formData = {
-        username: user,
-        company: document.getElementById("company").value,
-        location: document.getElementById("location").value,
-        witness: document.getElementById("witness").value,
-        time: document.getElementById("time").value,
-        deadline: document.getElementById("deadline").value,
-        comments: [],
-        updatedAt: new Date()
-      };
-      const docId = document.getElementById("assessmentId").value;
-      if (docId) {
-        const doc = await db.collection("ASSESSMENTS").doc(docId).get();
-        if (doc.exists) {
-          const existingData = doc.data();
-          formData.createdAt = existingData.createdAt;
-          formData.approved = existingData.approved;
-          formData.approvedBy = existingData.approvedBy;
-          formData.approvedOn = existingData.approvedOn;
-          formData.resolved = existingData.resolved;
-          formData.resolvedBy = existingData.resolvedBy;
-          formData.resolvedOn = existingData.resolvedOn;
-          formData.images = existingData.images || [];
-          formData.situationPics = existingData.situationPics || [];
-          formData.quotations = existingData.quotations || [];
-        }
-      } else {
-        formData.createdAt = new Date();
-        formData.approved = false;
-        formData.resolved = false;
-      }
-      const issueInputs = document.querySelectorAll('.issue-input');
-      formData.issues = [];
-      for (let i = 0; i < issueInputs.length; i++) {
-        const issue = issueInputs[i].querySelector('.issue-text').value;
-        const impact = issueInputs[i].querySelector('.impact-text').value;
-        const status = issueInputs[i].querySelector('.status-select').value;
-        if (issue && impact && status) {
-          formData.issues.push({
-            issue,
-            impact,
-            status
-          });
-        }
-      }
-      if (formData.issues.length === 0) {
-        const errorEl = document.getElementById("formError");
-        errorEl.textContent = "At least one valid issue is required";
-        errorEl.style.display = 'block';
-        return;
-      }
-      const images = document.getElementById("images").files;
-      const situationPics = document.getElementById("situationPics").files;
-      const quotations = document.getElementById("quotations").files;
-      const comment = document.getElementById("comment").value;
-      if (comment) {
-        formData.comments = comment.split("\n").filter(c => c.trim());
-      }
-      async function processFiles(fileList) {
-        if (!fileList || fileList.length === 0) return [];
-        const promises = [];
-        for (let i = 0; i < fileList.length; i++) {
-          promises.push(dataUrlFromFile(fileList[i]));
-        }
-        return await Promise.all(promises);
-      }
-      try {
-        const [imagesData, situationData, quotationsData] = await Promise.all([
-          processFiles(images),
-          processFiles(situationPics),
-          processFiles(quotations)
-        ]);
-        if (docId) {
-          formData.images = [...formData.images, ...imagesData];
-          formData.situationPics = [...formData.situationPics, ...situationData];
-          formData.quotations = [...formData.quotations, ...quotationsData];
-        } else {
-          formData.images = imagesData;
-          formData.situationPics = situationData;
-          formData.quotations = quotationsData;
-        }
-        if (docId) {
-          await db.collection("ASSESSMENTS").doc(docId).update(formData);
-        } else {
-          await db.collection("ASSESSMENTS").add(formData);
-        }
-        resetForm();
-        document.getElementById("formContainer").style.display = "none";
-        document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add New';
-        document.getElementById("formError").style.display = "none";
-      } catch (err) {
-        const errorEl = document.getElementById("formError");
-        errorEl.textContent = "Error saving assessment: " + (err.message || err);
-        errorEl.style.display = 'block';
-        console.error("Assessment submission error:", err);
-      }
+// ---- IMAGE HANDLING ----
+function dataUrlFromFile(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve({
+      data: e.target.result,
+      type: file.type,
+      name: file.name
     });
-    // ---- INIT ----
-    window.onload = function() {
-      const user = getCurrentUser();
-      if (!user) { 
-        location.href = "index.html"; 
-        return; 
-      }
-      showWelcome(user);
-      setupFilterControls();
-      listenAssessments();
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeModal();
-        }
+    reader.readAsDataURL(file);
+  });
+}
+function openImageModal(src) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  modal.style.display = "block";
+  modalImg.src = src;
+}
+function closeModal() {
+  document.getElementById('imageModal').style.display = "none";
+}
+window.onclick = function(event) {
+  const modal = document.getElementById('imageModal');
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+// ---- ASSESSMENT CRUD ----
+let allAssessments = [];
+let unsubscribe = null;
+let currentFilter = localStorage.getItem('currentFilter') || 'all';
+function listenAssessments() {
+  const user = getCurrentUser();
+  if (!user) return;
+  if (unsubscribe) unsubscribe();
+  let query = db.collection("ASSESSMENTS");
+  // Only admins see all assessments
+  if (!isAdmin(user)) {
+    query = query.where("username", "==", user);
+  }
+  unsubscribe = query.onSnapshot(snapshot => {
+    allAssessments = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      data._id = doc.id;
+      processAssessmentData(data);
+      allAssessments.push(data);
+    });
+    renderAssessments();
+    updateFilterButtons();
+  });
+}
+function processAssessmentData(data) {
+  data.images = Array.isArray(data.images) ? data.images : [];
+  data.situationPics = Array.isArray(data.situationPics) ? data.situationPics : [];
+  data.quotations = Array.isArray(data.quotations) ? data.quotations : [];
+  data.comments = Array.isArray(data.comments) ? data.comments : [];
+  data.issues = Array.isArray(data.issues) ? data.issues : [];
+  if (data.issue && data.impact && data.status && data.issues.length === 0) {
+    data.issues.push({
+      issue: data.issue,
+      impact: data.impact,
+      status: data.status
+    });
+  }
+  if (!data.status) {
+    data.status = getWorstStatus(data);
+  }
+  return data;
+}
+function renderAssessments() {
+  const container = document.getElementById("assessments");
+  container.innerHTML = "";
+  let filteredAssessments = filterAssessments(allAssessments);
+  if (filteredAssessments.length === 0) {
+    container.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">No assessments found</p>';
+    return;
+  }
+  const sortedAssessments = [...filteredAssessments].sort((a, b) => {
+    return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
+  });
+  sortedAssessments.forEach((assessment, index) => {
+    container.appendChild(createAssessmentCard(assessment, index));
+  });
+}
+function filterAssessments(assessments) {
+  switch(currentFilter) {
+    case 'pending': return assessments.filter(a => !a.approved && !a.resolved);
+    case 'approved': return assessments.filter(a => a.approved && !a.resolved);
+    case 'resolved': return assessments.filter(a => a.resolved);
+    default: return assessments;
+  }
+}
+function updateFilterButtons() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.filter === currentFilter) {
+      btn.classList.add('active');
+    }
+  });
+}
+function createAssessmentCard(assessment, index) {
+  assessment = processAssessmentData(assessment);
+  const summary = document.createElement('div');
+  summary.className = 'card-summary';
+  let statusBadges = '';
+  if (assessment.approved) statusBadges += '<span class="status approved-badge"><i class="fas fa-check-circle"></i> Approved</span> ';
+  if (assessment.resolved) statusBadges += '<span class="status resolved-badge"><i class="fas fa-check-double"></i> Resolved</span> ';
+  summary.innerHTML = `
+    <div class="company">${assessment.company || "No Company"}</div>
+    <div class="location">${assessment.location || "No Location"}</div>
+    <div class="deadline">Deadline: ${assessment.deadline || "None"}</div>
+    ${statusBadges}
+    <span class="status ${getWorstStatus(assessment) || ""}">${getWorstStatus(assessment) || "No Status"}</span>
+  `;
+  const card = document.createElement('div');
+  card.className = 'card collapsed';
+  if (assessment.approved) card.classList.add('approved');
+  if (assessment.resolved) card.classList.add('resolved');
+  card.id = `card-${index}`;
+  // --- BLUR/ZOOM LOGIC ---
+  card.addEventListener('click', function(e) {
+    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+    const cards = document.querySelectorAll('.card');
+    if (!this.classList.contains('zoomed')) {
+      cards.forEach(cardEl => {
+        if (cardEl !== this) cardEl.classList.add('blurred');
+        else cardEl.classList.add('zoomed');
+      });
+    } else {
+      cards.forEach(cardEl => {
+        cardEl.classList.remove('zoomed', 'blurred');
       });
     }
-  </script>
+    this.classList.toggle('collapsed');
+  });
+  const details = document.createElement('div');
+  details.className = 'card-details';
+  const infoRow = document.createElement('div');
+  infoRow.className = 'detail-row';
+  infoRow.innerHTML = `
+    <div class="detail-col">
+      <p><b>Assessed By:</b> ${assessment.username || "Unknown"}</p>
+      <p><b>Witness:</b> ${assessment.witness || "None"}</p>
+    </div>
+    <div class="detail-col">
+      <p><b>Time:</b> ${formatDateTime(assessment.time) || "Unknown"}</p>
+      <p><b>Deadline:</b> ${assessment.deadline || "None"}</p>
+    </div>
+  `;
+  details.appendChild(infoRow);
+
+  // --- ISSUES ---
+  if (assessment.issues && assessment.issues.length > 0) {
+    const issuesContainer = document.createElement('div');
+    issuesContainer.className = 'issues-list';
+    assessment.issues.forEach((issue, i) => {
+      const issueElement = document.createElement('div');
+      issueElement.className = 'issue-item';
+      issueElement.dataset.issueIndex = i;
+      issueElement.innerHTML = `
+        <h4>Issue #${i+1}</h4>
+        <p><b>Description:</b> ${issue.issue || "No description"}</p>
+        <p><b>Impact:</b> ${issue.impact || "No impact specified"}</p>
+        <p><b>Status:</b> <span class="status ${issue.status || ""}">${issue.status || "Unknown"}</span></p>
+      `;
+      issuesContainer.appendChild(issueElement);
+    });
+    details.appendChild(issuesContainer);
+  }
+
+  // --- IMAGES, SITUATION PICS, QUOTATIONS ---
+  const imagesContainer = document.createElement('div');
+  imagesContainer.className = 'images-container';
+  // Images
+  if (assessment.images && assessment.images.length > 0) {
+    const imagesSection = document.createElement('div');
+    imagesSection.className = 'images-section';
+    imagesSection.innerHTML = '<h4>Initial Attachments</h4><div class="images-grid"></div>';
+    assessment.images.forEach(img => {
+      if (!img || !img.data) return;
+      const imgLink = document.createElement('a');
+      imgLink.href = '#';
+      imgLink.onclick = (e) => { e.preventDefault(); openImageModal(img.data); };
+      imgLink.innerHTML = `<img src="${img.data}" alt="Assessment Image">`;
+      imagesSection.querySelector('.images-grid').appendChild(imgLink);
+    });
+    imagesContainer.appendChild(imagesSection);
+  }
+  // Situation pics
+  if (assessment.situationPics && assessment.situationPics.length > 0) {
+    const situationSection = document.createElement('div');
+    situationSection.className = 'images-section';
+    situationSection.innerHTML = '<h4>Situation Pictures</h4><div class="images-grid"></div>';
+    assessment.situationPics.forEach(img => {
+      if (!img || !img.data) return;
+      const imgLink = document.createElement('a');
+      imgLink.href = '#';
+      imgLink.onclick = (e) => { e.preventDefault(); openImageModal(img.data); };
+      imgLink.innerHTML = `<img src="${img.data}" alt="Situation Image">`;
+      situationSection.querySelector('.images-grid').appendChild(imgLink);
+    });
+    imagesContainer.appendChild(situationSection);
+  }
+  // Quotations
+  if (assessment.quotations && assessment.quotations.length > 0) {
+    const quotationsSection = document.createElement('div');
+    quotationsSection.className = 'images-section';
+    quotationsSection.innerHTML = '<h4>Quotations</h4><div class="images-grid"></div>';
+    assessment.quotations.forEach(quote => {
+      if (!quote || !quote.data) return;
+      const quoteElement = document.createElement('a');
+      if (quote.type && quote.type.startsWith('image/')) {
+        quoteElement.href = '#';
+        quoteElement.onclick = (e) => { e.preventDefault(); openImageModal(quote.data); };
+        quoteElement.innerHTML = `<img src="${quote.data}" alt="Quotation Image">`;
+      } else if (quote.type && quote.type.includes('pdf')) {
+        quoteElement.href = quote.data;
+        quoteElement.target = '_blank';
+        quoteElement.className = 'pdf-thumbnail';
+        quoteElement.innerHTML = 'PDF Document<br>' + (quote.name || 'Quotation');
+      } else {
+        quoteElement.href = quote.data;
+        quoteElement.target = '_blank';
+        quoteElement.className = 'pdf-thumbnail';
+        quoteElement.innerHTML = 'Document<br>' + (quote.name || 'Quotation');
+      }
+      quotationsSection.querySelector('.images-grid').appendChild(quoteElement);
+    });
+    imagesContainer.appendChild(quotationsSection);
+  }
+  details.appendChild(imagesContainer);
+
+  // --- ACTION BUTTONS: everyone can edit, only admins see approve/resolve (for any assessment) ---
+  const user = getCurrentUser();
+  const actionButtons = document.createElement('div');
+  actionButtons.className = 'action-buttons';
+  actionButtons.innerHTML = `
+    <button type="button" class="btn btn-primary" onclick="editAssessment('${assessment._id}', event)">
+      <i class="fas fa-edit"></i> Edit
+    </button>
+    ${isAdmin(user) && !assessment.approved ? `
+    <button type="button" class="btn btn-success" onclick="approveAssessment('${assessment._id}', event)">
+      <i class="fas fa-check"></i> Approve All
+    </button>
+    ` : ''}
+    ${isAdmin(user) && assessment.approved ? `
+    <button type="button" class="btn btn-info" onclick="resolveAssessment('${assessment._id}', event)">
+      <i class="fas fa-check-double"></i> Resolve All
+    </button>
+    ` : ''}
+  `;
+  details.appendChild(actionButtons);
+
+  card.appendChild(summary);
+  card.appendChild(details);
+  return card;
+}
+function getWorstStatus(assessment) {
+  if (!assessment.issues || assessment.issues.length === 0) return assessment.status || 'Good';
+  const statusPriority = { 'VeryBad': 4, 'Bad': 3, 'Fair': 2, 'Good': 1 };
+  let worstStatus = 'Good', highestPriority = 1;
+  assessment.issues.forEach(issue => {
+    const priority = statusPriority[issue.status] || 1;
+    if (priority > highestPriority) {
+      highestPriority = priority;
+      worstStatus = issue.status;
+    }
+  });
+  return worstStatus;
+}
+function formatDateTime(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  } catch (e) {
+    return dateString;
+  }
+}
+
+// ---- ASSESSMENT ACTIONS ----
+async function editAssessment(docId, event) {
+  event.stopPropagation();
+  try {
+    const doc = await db.collection("ASSESSMENTS").doc(docId).get();
+    if (!doc.exists) { alert("Assessment not found"); return; }
+    const assessment = doc.data();
+    document.getElementById("assessmentId").value = docId;
+    document.getElementById("company").value = assessment.company || "";
+    document.getElementById("location").value = assessment.location || "";
+    document.getElementById("witness").value = assessment.witness || "";
+    document.getElementById("time").value = assessment.time || "";
+    document.getElementById("deadline").value = assessment.deadline || "";
+    document.getElementById("comment").value = assessment.comments?.join("\n") || "";
+    document.getElementById("issuesContainer").innerHTML = "";
+    if (assessment.issues && assessment.issues.length > 0) {
+      assessment.issues.forEach(issue => {
+        addIssueField(issue);
+      });
+    } else {
+      addIssueField();
+    }
+    document.getElementById("cancelEdit").style.display = "inline-block";
+    document.getElementById("formContainer").style.display = "block";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
+    document.getElementById("formContainer").scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    console.error("Error editing assessment:", err);
+    alert("Failed to load assessment for editing");
+  }
+}
+async function approveAssessment(docId, event) {
+  event.stopPropagation();
+  if (!confirm("Approve this assessment to commence work?")) return;
+  const user = getCurrentUser();
+  if (!user || !isAdmin(user)) {
+    alert("Only admins can approve assessments");
+    return;
+  }
+  try {
+    await db.collection("ASSESSMENTS").doc(docId).update({
+      approved: true,
+      approvedBy: user,
+      approvedOn: new Date()
+    });
+  } catch (err) {
+    console.error("Error approving assessment:", err);
+    alert("Failed to approve assessment");
+  }
+}
+async function resolveAssessment(docId, event) {
+  event.stopPropagation();
+  if (!confirm("Mark this assessment as resolved?")) return;
+  const user = getCurrentUser();
+  if (!user || !isAdmin(user)) {
+    alert("Only admins can resolve assessments");
+    return;
+  }
+  try {
+    await db.collection("ASSESSMENTS").doc(docId).update({
+      resolved: true,
+      resolvedBy: user,
+      resolvedOn: new Date()
+    });
+  } catch (err) {
+    console.error("Error resolving assessment:", err);
+    alert("Failed to resolve assessment");
+  }
+}
+
+// ---- FILTER CONTROLS ----
+function setupFilterControls() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      currentFilter = this.dataset.filter;
+      localStorage.setItem('currentFilter', currentFilter);
+      renderAssessments();
+      updateFilterButtons();
+    });
+  });
+}
+
+// ---- ADD/UPDATE ASSESSMENT ----
+document.getElementById("assessmentForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const user = getCurrentUser();
+  if (!user) {
+    alert("You must be logged in to submit an assessment");
+    return;
+  }
+  const formData = {
+    username: user,
+    company: document.getElementById("company").value,
+    location: document.getElementById("location").value,
+    witness: document.getElementById("witness").value,
+    time: document.getElementById("time").value,
+    deadline: document.getElementById("deadline").value,
+    comments: [],
+    updatedAt: new Date()
+  };
+  const docId = document.getElementById("assessmentId").value;
+  if (docId) {
+    const doc = await db.collection("ASSESSMENTS").doc(docId).get();
+    if (doc.exists) {
+      const existingData = doc.data();
+      formData.createdAt = existingData.createdAt;
+      formData.approved = !!existingData.approved;
+      if (existingData.approvedBy !== undefined) formData.approvedBy = existingData.approvedBy;
+      if (existingData.approvedOn !== undefined) formData.approvedOn = existingData.approvedOn;
+      formData.resolved = !!existingData.resolved;
+      if (existingData.resolvedBy !== undefined) formData.resolvedBy = existingData.resolvedBy;
+      if (existingData.resolvedOn !== undefined) formData.resolvedOn = existingData.resolvedOn;
+      formData.images = Array.isArray(existingData.images) ? existingData.images.filter(x=>x.data && x.type && x.name) : [];
+      formData.situationPics = Array.isArray(existingData.situationPics) ? existingData.situationPics.filter(x=>x.data && x.type && x.name) : [];
+      formData.quotations = Array.isArray(existingData.quotations) ? existingData.quotations.filter(x=>x.data && x.type && x.name) : [];
+    }
+  } else {
+    formData.createdAt = new Date();
+    formData.approved = false;
+    formData.resolved = false;
+  }
+  const issueInputs = document.querySelectorAll('.issue-input');
+  formData.issues = [];
+  for (let i = 0; i < issueInputs.length; i++) {
+    const issue = issueInputs[i].querySelector('.issue-text').value;
+    const impact = issueInputs[i].querySelector('.impact-text').value;
+    const status = issueInputs[i].querySelector('.status-select').value;
+    if (issue && impact && status) {
+      formData.issues.push({ issue, impact, status });
+    }
+  }
+  if (formData.issues.length === 0) {
+    const errorEl = document.getElementById("formError");
+    errorEl.textContent = "At least one valid issue is required";
+    errorEl.style.display = 'block';
+    return;
+  }
+  const images = document.getElementById("images").files;
+  const situationPics = document.getElementById("situationPics").files;
+  const quotations = document.getElementById("quotations").files;
+  const comment = document.getElementById("comment").value;
+  if (comment) {
+    formData.comments = comment.split("\n").filter(c => c.trim());
+  }
+  async function processFiles(fileList) {
+    if (!fileList || fileList.length === 0) return [];
+    const promises = [];
+    for (let i = 0; i < fileList.length; i++) {
+      promises.push(dataUrlFromFile(fileList[i]));
+    }
+    return await Promise.all(promises);
+  }
+  try {
+    const [imagesData, situationData, quotationsData] = await Promise.all([
+      processFiles(images),
+      processFiles(situationPics),
+      processFiles(quotations)
+    ]);
+    if (docId) {
+      formData.images = [...(formData.images || []), ...imagesData];
+      formData.situationPics = [...(formData.situationPics || []), ...situationData];
+      formData.quotations = [...(formData.quotations || []), ...quotationsData];
+    } else {
+      formData.images = imagesData;
+      formData.situationPics = situationData;
+      formData.quotations = quotationsData;
+    }
+    // REMOVE UNDEFINED FIELDS BEFORE UPDATE/SAVE!
+    Object.keys(formData).forEach(key => {
+      if (formData[key] === undefined) delete formData[key];
+    });
+    if (docId) {
+      await db.collection("ASSESSMENTS").doc(docId).set(formData, {merge: false});
+    } else {
+      await db.collection("ASSESSMENTS").add(formData);
+    }
+    resetForm();
+    document.getElementById("formContainer").style.display = "none";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add New';
+    document.getElementById("formError").style.display = "none";
+  } catch (err) {
+    const errorEl = document.getElementById("formError");
+    errorEl.textContent = "Error saving assessment: " + (err.message || err);
+    errorEl.style.display = 'block';
+    console.error("Assessment submission error:", err);
+  }
+});
+
+// ---- FILTER CONTROLS ----
+function setupFilterControls() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      currentFilter = this.dataset.filter;
+      localStorage.setItem('currentFilter', currentFilter);
+      renderAssessments();
+      updateFilterButtons();
+    });
+  });
+}
+
+// ---- INIT ----
+window.onload = function() {
+  const user = getCurrentUser();
+  if (!user) { 
+    location.href = "index.html"; 
+    return; 
+  }
+  showWelcome(user);
+  setupFilterControls();
+  listenAssessments();
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+}
+</script>
 </body>
 </html>
