@@ -564,7 +564,8 @@
 </head>
 <body>
   <div class="header-bar">
-    <h2>Work Assessment</h2>
+    
+    <h2>PENTA CONSTRUCTION IMS</h2>
     <div class="header-controls">
       <button class="btn btn-toggle" id="addBtn" onclick="toggleForm()">
         <i class="fas fa-plus"></i> Add New
@@ -1150,9 +1151,9 @@ document.getElementById("assessmentForm").addEventListener("submit", async funct
       formData.resolved = !!existingData.resolved;
       if (existingData.resolvedBy !== undefined) formData.resolvedBy = existingData.resolvedBy;
       if (existingData.resolvedOn !== undefined) formData.resolvedOn = existingData.resolvedOn;
-      formData.images = Array.isArray(existingData.images) ? existingData.images.filter(x=>x.data && x.type && x.name) : [];
-      formData.situationPics = Array.isArray(existingData.situationPics) ? existingData.situationPics.filter(x=>x.data && x.type && x.name) : [];
-      formData.quotations = Array.isArray(existingData.quotations) ? existingData.quotations.filter(x=>x.data && x.type && x.name) : [];
+      formData.images = Array.isArray(existingData.images) ? existingData.images : [];
+      formData.situationPics = Array.isArray(existingData.situationPics) ? existingData.situationPics : [];
+      formData.quotations = Array.isArray(existingData.quotations) ? existingData.quotations : [];
     }
   } else {
     formData.createdAt = new Date();
@@ -1190,6 +1191,13 @@ document.getElementById("assessmentForm").addEventListener("submit", async funct
     }
     return await Promise.all(promises);
   }
+  // Helper to filter image/file arrays
+  function filterImageArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(x => x && typeof x === 'object' && 'data' in x && 'type' in x && 'name' in x)
+      .map(x => ({ data: x.data, type: x.type, name: x.name }));
+  }
   try {
     const [imagesData, situationData, quotationsData] = await Promise.all([
       processFiles(images),
@@ -1197,15 +1205,14 @@ document.getElementById("assessmentForm").addEventListener("submit", async funct
       processFiles(quotations)
     ]);
     if (docId) {
-      formData.images = [...(formData.images || []), ...imagesData];
-      formData.situationPics = [...(formData.situationPics || []), ...situationData];
-      formData.quotations = [...(formData.quotations || []), ...quotationsData];
+      formData.images = filterImageArray([...(formData.images || []), ...imagesData]);
+      formData.situationPics = filterImageArray([...(formData.situationPics || []), ...situationData]);
+      formData.quotations = filterImageArray([...(formData.quotations || []), ...quotationsData]);
     } else {
-      formData.images = imagesData;
-      formData.situationPics = situationData;
-      formData.quotations = quotationsData;
+      formData.images = filterImageArray(imagesData);
+      formData.situationPics = filterImageArray(situationData);
+      formData.quotations = filterImageArray(quotationsData);
     }
-    // REMOVE UNDEFINED FIELDS BEFORE UPDATE/SAVE!
     Object.keys(formData).forEach(key => {
       if (formData[key] === undefined) delete formData[key];
     });
@@ -1257,3 +1264,4 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
