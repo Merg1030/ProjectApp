@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Assessment Tracker</title>
+  <title>Work Assessment Tracker</title>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
-  <!-- Modal for image viewing -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" />
   <style>
     :root {
-      --primary: #1976d2;
-      --primary-dark: #1453a3;
-      --danger: #b71c1c;
-      --danger-dark: #7b1212;
-      --warning: #c9821c;
-      --text: #222;
+      /* Construction Theme Colors */
+      --primary: #2a5f8a;
+      --primary-light: #3a7cb9;
+      --primary-dark: #1d4568;
+      --secondary: #f7931e;
+      --secondary-light: #ffae4d;
+      --secondary-dark: #e07c0d;
+      --success: #4CAF50;
+      --danger: #F44336;
+      --warning: #FF9800;
+      --info: #2196F3;
+      --text: #333;
       --light-bg: #f5f7fa;
       --card-bg: #fff;
       --border: #e0e4e9;
@@ -48,47 +52,51 @@
       letter-spacing: 0.5px;
       font-weight: 600;
       width: 100vw;
+      background: var(--light-bg);
+      padding: 10px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .header-bar {
       width: 100vw;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--light-bg);
-      box-shadow: 0 2px 8px #0001;
+      background: var(--primary);
+      color: white;
       padding: 0 3vw 0 3vw;
       margin-bottom: 0;
       min-height: 54px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     .header-bar h2 {
       margin: 0;
-      color: var(--primary);
+      color: white;
       font-weight: 700;
       font-size: 1.25em;
       letter-spacing: 1px;
     }
     .btn-logout, .btn-toggle {
-      background: var(--primary);
+      background: var(--secondary);
       color: #fff;
       border: none;
       border-radius: 7px;
-      padding: 9px 28px;
-      font-size: 1em;
+      padding: 9px 18px;
+      font-size: 0.95em;
       font-weight: 600;
-      margin: 13px 8px;
+      margin: 13px 0;
       cursor: pointer;
       transition: background 0.2s;
-      box-shadow: 0 2px 8px #0001;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .btn-logout {
       background: var(--danger);
     }
-    .btn-toggle:hover { background: var(--primary-dark); }
-    .btn-logout:hover { background: var(--danger-dark); }
+    .btn-toggle:hover { background: var(--secondary-dark); }
+    .btn-logout:hover { background: #c62828; }
     .form-container {
       background: var(--card-bg);
-      border-radius: 13px;
-      box-shadow: 0 4px 28px #0002;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       max-width: 98vw;
       width: 460px;
       margin: 20px auto 10px;
@@ -96,14 +104,20 @@
       color: var(--text);
       border: 1px solid var(--border);
     }
-    label { font-weight: bold; margin-top: 10px; display: block; color: var(--primary);}
+    label { 
+      font-weight: bold; 
+      margin-top: 10px; 
+      display: block; 
+      color: var(--primary);
+      font-size: 0.95em;
+    }
     input, textarea, select {
       width: 100%;
       padding: 10px 12px;
       margin-top: 4px;
       background: #f8fafc;
       border: 1.2px solid #b5c4d6;
-      border-radius: 7px;
+      border-radius: 5px;
       font-size: 1em;
       color: var(--text);
       margin-bottom: 4px;
@@ -114,8 +128,13 @@
       outline: none;
       border-color: var(--primary);
       background: #fff;
+      box-shadow: 0 0 0 2px rgba(42, 95, 138, 0.2);
     }
-    textarea { resize: vertical; min-height: 42px; }
+    textarea { 
+      resize: vertical; 
+      min-height: 42px; 
+      font-family: inherit;
+    }
     .btn-submit {
       margin-top: 18px;
       padding: 12px 0;
@@ -127,15 +146,19 @@
       border-radius: 7px;
       cursor: pointer;
       font-weight: 600;
-      transition: background .18s;
+      transition: all .18s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-    .btn-submit:hover { background: var(--primary-dark); }
+    .btn-submit:hover { 
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
     
     /* Improved Grid Layout */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 20px;
+      gap: 15px;
       margin: 0 auto 40px;
       max-width: 1400px;
       width: 100vw;
@@ -145,12 +168,12 @@
     /* Enhanced Card Design */
     .card {
       background: var(--card-bg);
-      border-radius: 13px;
-      box-shadow: 0 2px 18px 0 #0001;
-      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      border: 1px solid var(--border);
       color: var(--text);
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.2s;
       position: relative;
       overflow: hidden;
       width: 100%;
@@ -158,14 +181,15 @@
     }
     .card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+      border-color: var(--primary-light);
     }
     .card.collapsed .card-details { display: none; }
     .card-summary {
       font-weight: bold;
       font-size: 1.09em;
       background: #f2f6fb;
-      padding: 17px 15px 10px;
+      padding: 15px;
       border-bottom: 1px solid var(--border);
       color: var(--primary);
       letter-spacing: 0.5px;
@@ -195,21 +219,21 @@
     }
     .status {
       font-weight: bold;
-      padding: 4px 13px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 4px;
       display: inline-block;
       margin-top: 0;
-      font-size: 0.95em;
+      font-size: 0.9em;
       letter-spacing: 0.5px;
       background: #e3f2fd;
       color: var(--primary);
       border: 1px solid #bcdffb;
       white-space: nowrap;
     }
-    .Good { background: #e2fbe7; color: #1976d2; border-color: #bcebc6; }
-    .Fair { background: #fffbe2; color: #a3921a; border-color: #fbeab7; }
-    .Bad { background: #ffeaea; color: #a32d2d; border-color: #fbbcbc; }
-    .VeryBad { background: #ffe7ec; color: #b71c1c; border-color: #ffb4c7; }
+    .Good { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+    .Fair { background: #fff8e1; color: #ff8f00; border-color: #ffe0b2; }
+    .Bad { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+    .VeryBad { background: #fce4ec; color: #ad1457; border-color: #f8bbd0; }
     
     /* Improved Image Gallery */
     .images-container {
@@ -232,20 +256,23 @@
       display: block;
       width: 100px;
       height: 80px;
-      border-radius: 7px;
+      border-radius: 5px;
       overflow: hidden;
       border: 1px solid var(--border);
       background: #f8fafc;
       position: relative;
+      transition: all 0.2s;
+    }
+    .images-grid a:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
     }
     .images-grid a img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       transition: transform 0.2s;
-    }
-    .images-grid a:hover img {
-      transform: scale(1.05);
     }
     .pdf-thumbnail {
       display: flex;
@@ -260,7 +287,7 @@
     
     /* Card Details Layout */
     .card-details {
-      padding: 15px 18px 7px;
+      padding: 15px;
     }
     .detail-row {
       display: flex;
@@ -277,54 +304,13 @@
     }
     .detail-row p {
       margin: 5px 0;
+      font-size: 0.95em;
     }
     .detail-row b {
       color: var(--primary);
     }
     
-    /* Comments Section */
-    .comment-section { 
-      margin-top: 15px; 
-      border-top: 1px solid var(--border); 
-      padding-top: 12px; 
-    }
-    .comment-list { 
-      margin-bottom: 10px;
-      max-height: 150px;
-      overflow-y: auto;
-      padding-right: 5px;
-    }
-    .comment-list p {
-      margin: 3px 0;
-      padding: 8px 12px;
-      background: #f2f6fb;
-      border-radius: 5px;
-      font-size: 0.96em;
-      color: var(--primary);
-      border-left: 3px solid var(--primary);
-    }
-    .comment-form textarea { 
-      width: 100%; 
-      min-height: 60px; 
-      margin-bottom: 7px; 
-    }
-    .comment-form button {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 22px;
-      cursor: pointer;
-      font-size: 0.97em;
-      font-weight: 600;
-      margin-top: 2px;
-      transition: background 0.2s;
-    }
-    .comment-form button:hover { 
-      background: var(--primary-dark);
-    }
-    
-    /* Issue List */
+    /* Issues List */
     .issues-list {
       margin: 10px 0;
     }
@@ -354,150 +340,49 @@
       cursor: pointer;
       margin-top: 5px;
       display: inline-block;
+      transition: all 0.2s;
     }
     .add-issue-btn:hover {
       background: var(--primary-dark);
+      transform: translateY(-1px);
     }
     
-    /* Admin Dashboard */
-    .dashboard-container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 20px auto;
-      padding: 0 20px;
-    }
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .dashboard-title {
-      color: var(--primary);
-      font-size: 1.5em;
-      font-weight: 600;
-    }
-    .dashboard-stats {
-      display: flex;
-      gap: 15px;
-    }
-    .stat-card {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      min-width: 150px;
-      text-align: center;
-    }
-    .stat-value {
-      font-size: 1.5em;
-      font-weight: 700;
-      color: var(--primary);
-      margin: 5px 0;
-    }
-    .stat-label {
-      font-size: 0.9em;
-      color: #666;
-    }
-    .admin-grid {
-      display: grid;
-      grid-template-columns: 250px 1fr;
-      gap: 20px;
-    }
-    .admin-sidebar {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 15px;
-    }
-    .admin-nav {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .admin-nav li {
-      margin-bottom: 10px;
-    }
-    .admin-nav a {
-      display: block;
-      padding: 8px 12px;
-      color: var(--text);
-      text-decoration: none;
-      border-radius: 5px;
-      transition: background 0.2s;
-    }
-    .admin-nav a:hover, .admin-nav a.active {
-      background: #f0f7ff;
-      color: var(--primary);
-    }
-    .admin-content {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    
-    /* Modal for image viewing */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.9);
-      overflow: auto;
-    }
-    .modal-content {
-      margin: auto;
-      display: block;
-      max-width: 90%;
-      max-height: 90%;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    .close {
-      position: absolute;
-      top: 15px;
-      right: 35px;
-      color: #f1f1f1;
-      font-size: 40px;
-      font-weight: bold;
-      transition: 0.3s;
-      cursor: pointer;
-    }
-    .close:hover {
-      color: #bbb;
+    /* Form Error */
+    #formError {
+      color: var(--danger);
+      margin-top: 8px;
+      font-size: 0.95em;
+      padding: 8px;
+      background: #ffebee;
+      border-radius: 4px;
+      border-left: 3px solid var(--danger);
     }
     
     /* Responsive Design */
-    @media (max-width: 900px) {
-      .admin-grid {
-        grid-template-columns: 1fr;
-      }
-    }
     @media (max-width: 700px) {
       .header-bar, .welcome {
-        padding-left: 0;
-        padding-right: 0;
-        font-size: 0.95em;
+        padding-left: 3vw;
+        padding-right: 3vw;
       }
       .form-container { 
-        max-width: 99vw; 
+        max-width: 94vw; 
         border-radius: 0; 
         padding: 12px 3vw 8px; 
+        box-shadow: none;
+        border-left: none;
+        border-right: none;
       }
       .grid { 
-        padding: 0 1vw 16px; 
-        gap: 13px; 
+        padding: 0 3vw 16px; 
+        gap: 12px; 
         grid-template-columns: 1fr;
       }
-      .card { border-radius: 7px; }
+      .card { 
+        border-radius: 5px;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+      }
       .card-summary { 
-        padding: 13px 11px 8px; 
+        padding: 12px; 
         font-size: 1em;
         flex-direction: column;
         align-items: flex-start;
@@ -508,19 +393,32 @@
       }
       input, textarea, select { 
         font-size: 1em; 
-        padding: 8px 7px;
+        padding: 8px 10px;
       }
       .detail-col {
         min-width: 100%;
         margin-right: 0;
         margin-bottom: 10px;
       }
+      .btn-toggle, .btn-logout {
+        padding: 8px 14px;
+        font-size: 0.9em;
+      }
+    }
+    
+    /* Animation for form toggle */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .form-container {
+      animation: fadeIn 0.3s ease-out;
     }
   </style>
 </head>
 <body>
   <div class="header-bar">
-    <h2>Assessment Tracker</h2>
+    <h2>Work Assessment</h2>
     <button class="btn-logout" onclick="logout()">Logout</button>
   </div>
   <div class="welcome" id="welcome"></div>
@@ -534,9 +432,6 @@
         
         <label>Location</label>
         <input type="text" id="location" required>
-        
-        <label>Assessed By</label>
-        <input type="text" id="assessedBy" required>
         
         <label>Witness Name</label>
         <input type="text" id="witness" required>
@@ -580,66 +475,12 @@
         <textarea id="comment"></textarea>
         
         <button type="submit" class="btn-submit">Save Assessment</button>
-        <div id="formError" style="color: var(--danger); margin-top: 8px; font-size:0.99em;"></div>
+        <div id="formError" style="display: none;"></div>
       </form>
     </div>
     <div class="grid" id="assessments"></div>
   </div>
-  
-  <div id="adminView" style="display: none;">
-    <div class="dashboard-container">
-      <div class="dashboard-header">
-        <div class="dashboard-title">Admin Dashboard</div>
-        <div class="dashboard-stats">
-          <div class="stat-card">
-            <div class="stat-value" id="totalAssessments">0</div>
-            <div class="stat-label">Total Assessments</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="pendingAssessments">0</div>
-            <div class="stat-label">Pending</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="admin-grid">
-        <div class="admin-sidebar">
-          <ul class="admin-nav">
-            <li><a href="#" class="active" onclick="showAdminSection('dashboard')">Dashboard</a></li>
-            <li><a href="#" onclick="showAdminSection('assessments')">All Assessments</a></li>
-            <li><a href="#" onclick="showAdminSection('reports')">Reports</a></li>
-          </ul>
-        </div>
-        
-        <div class="admin-content">
-          <div id="dashboardSection">
-            <h3>Overview</h3>
-            <p>Welcome to the admin dashboard. Here you can view all assessments and generate reports.</p>
-            <div id="recentActivity" style="margin-top: 20px;">
-              <h4>Recent Activity</h4>
-              <div id="activityList"></div>
-            </div>
-          </div>
-          
-          <div id="assessmentsSection" style="display: none;">
-            <h3>All Assessments</h3>
-            <div class="grid" id="adminAssessments"></div>
-          </div>
-          
-          <div id="reportsSection" style="display: none;">
-            <h3>Reports</h3>
-            <div>
-              <button class="btn-toggle" onclick="generateReport('all')">Generate Full Report</button>
-              <button class="btn-toggle" onclick="generateReport('pending')">Pending Issues Report</button>
-              <button class="btn-toggle" onclick="generateReport('critical')">Critical Issues Report</button>
-            </div>
-            <div id="reportOutput" style="margin-top: 20px;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
+
   <!-- Image Modal -->
   <div id="imageModal" class="modal">
     <span class="close" onclick="closeModal()">&times;</span>
@@ -661,20 +502,24 @@
     const db = firebase.firestore();
 
     // ---- USER ----
-    const ADMIN_USERS = ['faiyaz', 'chishe']; // Case insensitive
+    const TEAM_MEMBERS = [
+      "brighton matolokosh", "caphas tembo", "clisha mambilima", "dabson daka",
+      "danny mvula", "james daka", "joseph tembo", "luckson phiri", "micheal lobela",
+      "obert siame", "dominic sakala", "peter mawere", "saviour phiri", "tembeya sakala", "kelvin siame"
+    ];
     
     function getCurrentUser() {
       return localStorage.getItem('currentUser') || null;
     }
     
-    function isAdmin(user) {
+    function isTeamMember(user) {
       if (!user) return false;
-      return ADMIN_USERS.includes(user.toLowerCase());
+      return TEAM_MEMBERS.includes(user.toLowerCase());
     }
     
     function logout() {
       localStorage.removeItem('currentUser');
-      location.href = "login.html";
+      location.href = "index.html";
     }
     
     // ---- UI/UX ----
@@ -682,22 +527,17 @@
       let name = user.trim().split(" ");
       name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
       document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
-      
-      // Show appropriate view based on user role
-      if (isAdmin(user)) {
-        document.getElementById('userView').style.display = 'none';
-        document.getElementById('adminView').style.display = 'block';
-        loadAdminDashboard();
-      } else {
-        document.getElementById('userView').style.display = 'block';
-        document.getElementById('adminView').style.display = 'none';
-      }
     }
     
     // ---- FORM TOGGLE ----
     function toggleForm() {
       const fc = document.getElementById("formContainer");
       fc.style.display = fc.style.display === "none" ? "block" : "none";
+      if (fc.style.display === "block") {
+        document.getElementById("addBtn").textContent = "- Cancel";
+      } else {
+        document.getElementById("addBtn").textContent = "+ Add New Assessment";
+      }
     }
     
     // ---- MULTIPLE ISSUES SYSTEM ----
@@ -745,6 +585,35 @@
       const modalImg = document.getElementById('modalImage');
       modal.style.display = "block";
       modalImg.src = src;
+      
+      // Add modal styles dynamically
+      modal.style.position = 'fixed';
+      modal.style.zIndex = '1000';
+      modal.style.left = '0';
+      modal.style.top = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.9)';
+      modal.style.overflow = 'auto';
+      
+      modalImg.style.margin = 'auto';
+      modalImg.style.display = 'block';
+      modalImg.style.maxWidth = '90%';
+      modalImg.style.maxHeight = '90%';
+      modalImg.style.position = 'absolute';
+      modalImg.style.top = '50%';
+      modalImg.style.left = '50%';
+      modalImg.style.transform = 'translate(-50%, -50%)';
+      
+      const closeSpan = document.querySelector('.close');
+      closeSpan.style.position = 'absolute';
+      closeSpan.style.top = '15px';
+      closeSpan.style.right = '35px';
+      closeSpan.style.color = '#f1f1f1';
+      closeSpan.style.fontSize = '40px';
+      closeSpan.style.fontWeight = 'bold';
+      closeSpan.style.transition = '0.3s';
+      closeSpan.style.cursor = 'pointer';
     }
     
     function closeModal() {
@@ -760,47 +629,27 @@
     }
     
     // ---- ASSESSMENT CRUD ----
-    let userAssessments = [];
     let allAssessments = [];
-    let unsubscribeUser = null;
-    let unsubscribeAdmin = null;
+    let unsubscribe = null;
     
     function listenAssessments() {
       const user = getCurrentUser();
       if (!user) return;
       
-      if (unsubscribeUser) unsubscribeUser();
-      if (unsubscribeAdmin) unsubscribeAdmin();
+      if (unsubscribe) unsubscribe();
       
-      // User-specific assessments
-      unsubscribeUser = db.collection("ASSESSMENTS")
-        .where("username", "==", user)
+      // Listen to all assessments for team members
+      unsubscribe = db.collection("ASSESSMENTS")
         .onSnapshot(snapshot => {
-          userAssessments = [];
+          allAssessments = [];
           snapshot.forEach(doc => {
             const data = doc.data();
             data._id = doc.id;
             processAssessmentData(data);
-            userAssessments.push(data);
+            allAssessments.push(data);
           });
           renderAssessments();
         });
-      
-      // Admin listens to all assessments
-      if (isAdmin(user)) {
-        unsubscribeAdmin = db.collection("ASSESSMENTS")
-          .onSnapshot(snapshot => {
-            allAssessments = [];
-            snapshot.forEach(doc => {
-              const data = doc.data();
-              data._id = doc.id;
-              processAssessmentData(data);
-              allAssessments.push(data);
-            });
-            updateAdminStats();
-            renderAdminAssessments();
-          });
-      }
     }
     
     function processAssessmentData(data) {
@@ -828,23 +677,22 @@
       const container = document.getElementById("assessments");
       container.innerHTML = "";
       
-      userAssessments.forEach((assessment, index) => {
-        container.appendChild(createAssessmentCard(assessment, index, false));
+      if (allAssessments.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">No assessments found</p>';
+        return;
+      }
+      
+      // Sort by newest first
+      const sortedAssessments = [...allAssessments].sort((a, b) => {
+        return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
+      });
+      
+      sortedAssessments.forEach((assessment, index) => {
+        container.appendChild(createAssessmentCard(assessment, index));
       });
     }
     
-    function renderAdminAssessments() {
-      const container = document.getElementById("adminAssessments");
-      if (!container) return;
-      
-      container.innerHTML = "";
-      
-      allAssessments.forEach((assessment, index) => {
-        container.appendChild(createAssessmentCard(assessment, index, true));
-      });
-    }
-    
-    function createAssessmentCard(assessment, index, isAdminView) {
+    function createAssessmentCard(assessment, index) {
       // Process the assessment data
       assessment = processAssessmentData(assessment);
       
@@ -855,7 +703,6 @@
         <div class="company">${assessment.company || "No Company"}</div>
         <div class="location">${assessment.location || "No Location"}</div>
         <div class="deadline">Deadline: ${assessment.deadline || "None"}</div>
-        ${isAdminView ? `<div class="assessor">By: ${assessment.username || "Unknown"}</div>` : ''}
         <div class="status ${getWorstStatus(assessment) || ""}">${getWorstStatus(assessment) || "No Status"}</div>
       `;
       
@@ -880,11 +727,11 @@
       infoRow.className = 'detail-row';
       infoRow.innerHTML = `
         <div class="detail-col">
-          <p><b>Assessed By:</b> ${assessment.assessedBy || "Unknown"}</p>
+          <p><b>Assessed By:</b> ${assessment.username || "Unknown"}</p>
           <p><b>Witness:</b> ${assessment.witness || "None"}</p>
         </div>
         <div class="detail-col">
-          <p><b>Time:</b> ${assessment.time || "Unknown"}</p>
+          <p><b>Time:</b> ${formatDateTime(assessment.time) || "Unknown"}</p>
           <p><b>Deadline:</b> ${assessment.deadline || "None"}</p>
         </div>
       `;
@@ -981,51 +828,6 @@
       
       details.appendChild(imagesContainer);
       
-      // Comments section
-      const commentsSection = document.createElement('div');
-      commentsSection.className = 'comment-section';
-      
-      // Comments list
-      const commentList = document.createElement('div');
-      commentList.className = 'comment-list';
-      
-      if (assessment.comments && assessment.comments.length > 0) {
-        assessment.comments.forEach(comment => {
-          const commentElement = document.createElement('p');
-          commentElement.textContent = comment;
-          commentList.appendChild(commentElement);
-        });
-      } else {
-        commentList.innerHTML = '<p>No comments yet</p>';
-      }
-      
-      commentsSection.appendChild(commentList);
-      
-      // Comment form
-      if (!isAdminView) {
-        const commentForm = document.createElement('form');
-        commentForm.className = 'comment-form';
-        commentForm.innerHTML = `
-          <textarea required placeholder="Add comment..."></textarea>
-          <button type="submit">Add Comment</button>
-        `;
-        
-        commentForm.onsubmit = function(e) {
-          e.preventDefault();
-          const textarea = this.querySelector('textarea');
-          const comment = textarea.value.trim();
-          if (comment) {
-            addComment(assessment._id, comment);
-            textarea.value = '';
-          }
-          return false;
-        };
-        
-        commentsSection.appendChild(commentForm);
-      }
-      
-      details.appendChild(commentsSection);
-      
       // Add all elements to card
       card.appendChild(summary);
       card.appendChild(details);
@@ -1059,6 +861,17 @@
       return worstStatus;
     }
     
+    function formatDateTime(dateString) {
+      if (!dateString) return '';
+      
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      } catch (e) {
+        return dateString;
+      }
+    }
+    
     // ---- ADD ASSESSMENT ----
     document.getElementById("assessmentForm").addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -1073,7 +886,6 @@
         username: user,
         company: document.getElementById("company").value,
         location: document.getElementById("location").value,
-        assessedBy: document.getElementById("assessedBy").value,
         witness: document.getElementById("witness").value,
         time: document.getElementById("time").value,
         deadline: document.getElementById("deadline").value,
@@ -1101,7 +913,9 @@
       
       // Check if we have at least one valid issue
       if (formData.issues.length === 0) {
-        document.getElementById("formError").textContent = "At least one valid issue is required";
+        const errorEl = document.getElementById("formError");
+        errorEl.textContent = "At least one valid issue is required";
+        errorEl.style.display = 'block';
         return;
       }
       
@@ -1160,198 +974,21 @@
           </div>
         `;
         document.getElementById("formContainer").style.display = "none";
-        document.getElementById("formError").textContent = "";
+        document.getElementById("addBtn").textContent = "+ Add New Assessment";
+        document.getElementById("formError").style.display = "none";
       } catch (err) {
-        document.getElementById("formError").textContent = "Error saving assessment: " + (err.message || err);
+        const errorEl = document.getElementById("formError");
+        errorEl.textContent = "Error saving assessment: " + (err.message || err);
+        errorEl.style.display = 'block';
         console.error("Assessment submission error:", err);
       }
     });
-    
-    // ---- ADD COMMENT ----
-    async function addComment(docId, commentText) {
-      if (!commentText) return false;
-      
-      try {
-        const docRef = db.collection("ASSESSMENTS").doc(docId);
-        const doc = await docRef.get();
-        
-        if (doc.exists) {
-          const data = doc.data();
-          const comments = Array.isArray(data.comments) ? data.comments : [];
-          comments.push(commentText);
-          
-          await docRef.update({ comments });
-          return true;
-        } else {
-          console.error("Document not found:", docId);
-          return false;
-        }
-      } catch (err) {
-        console.error("Error adding comment:", err);
-        alert("Failed to add comment: " + (err.message || err));
-        return false;
-      }
-    }
-    
-    // ---- ADMIN DASHBOARD FUNCTIONS ----
-    function showAdminSection(section) {
-      // Update active nav item
-      document.querySelectorAll('.admin-nav a').forEach(link => {
-        link.classList.remove('active');
-      });
-      event.target.classList.add('active');
-      
-      // Show selected section
-      document.getElementById('dashboardSection').style.display = 'none';
-      document.getElementById('assessmentsSection').style.display = 'none';
-      document.getElementById('reportsSection').style.display = 'none';
-      
-      document.getElementById(`${section}Section`).style.display = 'block';
-    }
-    
-    function updateAdminStats() {
-      document.getElementById('totalAssessments').textContent = allAssessments.length;
-      
-      const pending = allAssessments.filter(a => {
-        const status = getWorstStatus(a);
-        return status === 'Bad' || status === 'VeryBad';
-      }).length;
-      
-      document.getElementById('pendingAssessments').textContent = pending;
-      
-      // Update recent activity
-      const activityList = document.getElementById('activityList');
-      if (activityList) {
-        activityList.innerHTML = '';
-        
-        // Sort by creation date (newest first)
-        const sortedAssessments = [...allAssessments].sort((a, b) => {
-          return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
-        });
-        
-        // Show 5 most recent
-        sortedAssessments.slice(0, 5).forEach(assessment => {
-          const activityItem = document.createElement('div');
-          activityItem.className = 'issue-item';
-          activityItem.style.marginBottom = '10px';
-          activityItem.innerHTML = `
-            <p><b>${assessment.company || 'Unknown Company'}</b> - ${assessment.location || 'Unknown Location'}</p>
-            <p>Assessed by ${assessment.username || 'Unknown'} on ${formatDate(assessment.createdAt)}</p>
-            <p>Status: <span class="status ${getWorstStatus(assessment)}">${getWorstStatus(assessment)}</span></p>
-          `;
-          activityList.appendChild(activityItem);
-        });
-      }
-    }
-    
-    function formatDate(date) {
-      if (!date) return 'Unknown date';
-      
-      const d = date.toDate ? date.toDate() : new Date(date);
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
-    }
-    
-    function generateReport(type) {
-      let reportData = [];
-      let reportTitle = '';
-      
-      switch (type) {
-        case 'all':
-          reportTitle = 'All Assessments Report';
-          reportData = [...allAssessments];
-          break;
-        case 'pending':
-          reportTitle = 'Pending Issues Report';
-          reportData = allAssessments.filter(a => {
-            const status = getWorstStatus(a);
-            return status === 'Bad' || status === 'VeryBad';
-          });
-          break;
-        case 'critical':
-          reportTitle = 'Critical Issues Report';
-          reportData = allAssessments.filter(a => getWorstStatus(a) === 'VeryBad');
-          break;
-        default:
-          reportTitle = 'Custom Report';
-          reportData = [];
-      }
-      
-      // Sort by worst status first
-      reportData.sort((a, b) => {
-        const statusPriority = {
-          'VeryBad': 4,
-          'Bad': 3,
-          'Fair': 2,
-          'Good': 1
-        };
-        
-        const aStatus = getWorstStatus(a);
-        const bStatus = getWorstStatus(b);
-        
-        return (statusPriority[bStatus] || 0) - (statusPriority[aStatus] || 0);
-      });
-      
-      // Generate HTML report
-      const reportOutput = document.getElementById('reportOutput');
-      reportOutput.innerHTML = `
-        <h4>${reportTitle} - ${new Date().toLocaleDateString()}</h4>
-        <p>Total items: ${reportData.length}</p>
-        <div id="reportDetails"></div>
-      `;
-      
-      const reportDetails = document.getElementById('reportDetails');
-      
-      if (reportData.length === 0) {
-        reportDetails.innerHTML = '<p>No data found for this report</p>';
-        return;
-      }
-      
-      reportData.forEach(assessment => {
-        const assessmentElement = document.createElement('div');
-        assessmentElement.className = 'issue-item';
-        assessmentElement.style.marginBottom = '15px';
-        
-        let issuesHTML = '';
-        if (assessment.issues && assessment.issues.length > 0) {
-          assessment.issues.forEach((issue, i) => {
-            issuesHTML += `
-              <div style="margin-left: 15px; margin-bottom: 8px;">
-                <p><b>Issue ${i+1}:</b> <span class="status ${issue.status}">${issue.status}</span></p>
-                <p>${issue.issue || 'No description'}</p>
-                <p><b>Impact:</b> ${issue.impact || 'No impact specified'}</p>
-              </div>
-            `;
-          });
-        }
-        
-        assessmentElement.innerHTML = `
-          <h4>${assessment.company || 'Unknown Company'} - ${assessment.location || 'Unknown Location'}</h4>
-          <p>Assessed by: ${assessment.assessedBy || 'Unknown'} (${assessment.username || 'Unknown user'})</p>
-          <p>Date: ${formatDate(assessment.createdAt)}</p>
-          <p>Deadline: ${assessment.deadline || 'None'}</p>
-          <p>Overall Status: <span class="status ${getWorstStatus(assessment)}">${getWorstStatus(assessment)}</span></p>
-          <div style="margin-top: 10px;">
-            <b>Issues:</b>
-            ${issuesHTML || '<p>No issues recorded</p>'}
-          </div>
-          <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
-        `;
-        
-        reportDetails.appendChild(assessmentElement);
-      });
-    }
-    
-    // ---- LOAD ADMIN DASHBOARD ----
-    function loadAdminDashboard() {
-      updateAdminStats();
-      renderAdminAssessments();
-    }
     
     // ---- INIT ----
     window.onload = function() {
       const user = getCurrentUser();
       if (!user) { 
-        location.href = "login.html"; 
+        location.href = "index.html"; 
         return; 
       }
       
@@ -1367,4 +1004,5 @@
     }
   </script>
 </body>
+
 </html>
