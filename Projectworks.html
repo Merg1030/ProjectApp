@@ -597,6 +597,33 @@
         body.dark-mode .total-row td {
             border-top: 2px solid #374151;
         }
+        
+        /* Search bar styles */
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 6px 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            flex: 1 1 200px;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        .search-input {
+            border: none;
+            background: transparent;
+            padding: 5px;
+            width: 100%;
+            outline: none;
+            color: #333;
+        }
+        body.dark-mode .search-container {
+            background: #1f2937;
+        }
+        body.dark-mode .search-input {
+            color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -635,6 +662,10 @@
             <div class="project-title-sticky" id="projectNameHeader">Project Tasks</div>
         </div>
         <div class="filters-bar">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search all fields...">
+            </div>
             <div class="filter-group"><span class="filter-label">Status:</span>
                 <select id="statusFilter">
                     <option value="">All</option>
@@ -720,13 +751,13 @@
                 </div>
             </div>
             <!-- Table Gantt (side) -->
-            <div class="gantt-table-card" id="ganttTableCard">
+            <div class="gantt-table-card hide" id="ganttTableCard">
                 <div class="gantt-table-header">
                     <span><i class="fas fa-calendar-alt"></i> Gantt Calendar</span>
                     <div>
                         <button class="current-month-btn" id="currentMonthBtn" title="Show current month">Current Month</button>
                         <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle fullscreen"><i class="fas fa-expand"></i></button>
-                        <button class="gantt-table-toggle action-btn" id="toggleGanttBtn" title="Show/hide calendar"><i class="fas fa-eye-slash"></i></button>
+                        <button class="gantt-table-toggle action-btn" id="toggleGanttBtn" title="Show/hide calendar"><i class="fas fa-eye"></i></button>
                     </div>
                 </div>
                 <div class="gantt-table-scroll" id="ganttTableScroll" style="height:100%">
@@ -736,7 +767,7 @@
                     </table>
                 </div>
             </div>
-            <button id="showGanttBtn" class="toggle-bar action-btn hide" title="Show Gantt Calendar"><i class="fas fa-calendar-alt"></i></button>
+            <button id="showGanttBtn" class="toggle-bar action-btn" title="Show Gantt Calendar"><i class="fas fa-calendar-alt"></i></button>
         </div>
     </div>
 
@@ -802,6 +833,7 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 const statusFilter = document.getElementById('statusFilter');
 const monthFilter = document.getElementById('monthFilter');
 const yearFilter = document.getElementById('yearFilter');
+const searchInput = document.getElementById('searchInput');
 const taskList = document.getElementById('taskList');
 const emptyState = document.getElementById('emptyState');
 const ganttCalendarBody = document.getElementById('ganttCalendarBody');
@@ -811,7 +843,7 @@ const toggleModeBtn = document.getElementById('toggleModeBtn');
 const completedTasksBtn = document.getElementById('completedTasksBtn');
 
 // State variables
-let ganttVisible = true;
+let ganttVisible = false; // Changed to false by default
 let showCurrentMonthOnly = false;
 let isFullscreen = false;
 let allTasks = [];
@@ -1160,6 +1192,8 @@ function filterTasks(tasks) {
     const statusVal = statusFilter.value;
     const monthVal = monthFilter.value;
     const yearVal = yearFilter.value;
+    const searchVal = searchInput.value.toLowerCase();
+    
     return tasks.filter(task => {
         // Check status filter
         let matchesStatus = true;
@@ -1195,7 +1229,54 @@ function filterTasks(tasks) {
             }
         }
         
-        return matchesStatus && matchesMonth && matchesYear;
+        // Check search filter
+        let matchesSearch = true;
+        if (searchVal) {
+            matchesSearch = (
+                (task.taskId && task.taskId.toLowerCase().includes(searchVal)) ||
+                (task.taskDescription && task.taskDescription.toLowerCase().includes(searchVal)) ||
+                (task.assignedTo && task.assignedTo.toLowerCase().includes(searchVal)) ||
+                (task.status && task.status.toLowerCase().includes(searchVal)) ||
+                (task.location && task.location.toLowerCase().includes(searchVal)) ||
+                (task.taskLine && task.taskLine.toString().includes(searchVal))
+            );
+            
+            // Check subtasks if main task doesn't match
+            if (!matchesSearch && task.subTasks) {
+                for (const sub of task.subTasks) {
+                    if (
+                        (sub.taskId && sub.taskId.toLowerCase().includes(searchVal)) ||
+                        (sub.taskDescription && sub.taskDescription.toLowerCase().includes(searchVal)) ||
+                        (sub.assignedTo && sub.assignedTo.toLowerCase().includes(searchVal)) ||
+                        (sub.status && sub.status.toLowerCase().includes(searchVal)) ||
+                        (sub.location && sub.location.toLowerCase().includes(searchVal))
+                    ) {
+                        matchesSearch = true;
+                        break;
+                    }
+                    
+                    // Check sub-subtasks if subtask doesn't match
+                    if (!matchesSearch && sub.subSubtasks) {
+                        for (const subsub of sub.subSubtasks) {
+                            if (
+                                (subsub.taskId && subsub.taskId.toLowerCase().includes(searchVal)) ||
+                                (subsub.taskDescription && subsub.taskDescription.toLowerCase().includes(searchVal)) ||
+                                (subsub.assignedTo && subsub.assignedTo.toLowerCase().includes(searchVal)) ||
+                                (subsub.status && subsub.status.toLowerCase().includes(searchVal)) ||
+                                (subsub.location && subsub.location.toLowerCase().includes(searchVal))
+                            ) {
+                                matchesSearch = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (matchesSearch) break;
+                }
+            }
+        }
+        
+        return matchesStatus && matchesMonth && matchesYear && matchesSearch;
     });
 }
 
@@ -1659,7 +1740,7 @@ function renderTasks(tasks) {
     });
 }
 
-// Add task with give target
+// Add task with start date and give target
 addTaskBtn.onclick = async () => {
     const projectName = await getProjectName(projectId);
     const initials = getInitials(projectName);
@@ -1670,6 +1751,15 @@ addTaskBtn.onclick = async () => {
     const assignedTo = prompt("Assigned To:");
     const location = prompt("Location:");
     const taskLine = parseInt(prompt("Task Line (number, optional):") || 0);
+    
+    // Get start date
+    const startDate = prompt("Start Date (YYYY-MM-DD, required):");
+    if (!startDate) {
+        alert("Start date is required!");
+        return;
+    }
+    
+    // Get give target (optional)
     const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
     
     try {
@@ -1681,6 +1771,7 @@ addTaskBtn.onclick = async () => {
             assignedTo,
             location,
             status: "PENDING",
+            startDate: new Date(startDate),
             giveTarget: giveTarget ? new Date(giveTarget) : null,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -2012,10 +2103,12 @@ function renderGanttCalendar(tasks) {
             showGanttBtn.classList.add('hide');
             mainCard.style.flexBasis = '65%';
             ganttTableCard.style.flexBasis = '35%';
+            localStorage.setItem('ganttVisible', 'true');
         } else {
             ganttTableCard.classList.add('hide');
             showGanttBtn.classList.remove('hide');
             mainCard.style.flexBasis = '100%';
+            localStorage.setItem('ganttVisible', 'false');
         }
     }
 
@@ -2023,6 +2116,7 @@ function renderGanttCalendar(tasks) {
     function toggleCurrentMonthView() {
         showCurrentMonthOnly = !showCurrentMonthOnly;
         currentMonthBtn.textContent = showCurrentMonthOnly ? "All Months" : "Current Month";
+        localStorage.setItem('showCurrentMonthOnly', showCurrentMonthOnly.toString());
         renderGanttCalendar(filterTasks(allTasks));
     }
 
@@ -2065,6 +2159,11 @@ function renderGanttCalendar(tasks) {
         renderTasks(filterTasks(allTasks));
         renderGanttCalendar(filterTasks(allTasks));
     });
+    
+    searchInput.addEventListener('input', () => {
+        renderTasks(filterTasks(allTasks));
+        renderGanttCalendar(filterTasks(allTasks));
+    });
 
     toggleGanttBtn.addEventListener('click', toggleGanttVisibility);
     showGanttBtn.addEventListener('click', toggleGanttVisibility);
@@ -2092,10 +2191,25 @@ function renderGanttCalendar(tasks) {
         const savedStatus = localStorage.getItem('taskStatusFilter');
         const savedMonth = localStorage.getItem('taskMonthFilter');
         const savedYear = localStorage.getItem('taskYearFilter');
+        const savedSearch = localStorage.getItem('taskSearchFilter');
+        const savedGanttVisible = localStorage.getItem('ganttVisible');
+        const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
         
         if (savedStatus) statusFilter.value = savedStatus;
         if (savedMonth) monthFilter.value = savedMonth;
         if (savedYear) yearFilter.value = savedYear;
+        if (savedSearch) searchInput.value = savedSearch;
+        if (savedGanttVisible === 'true') {
+            ganttVisible = true;
+            toggleGanttBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            ganttVisible = false;
+            toggleGanttBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+        if (savedShowCurrentMonthOnly === 'true') {
+            showCurrentMonthOnly = true;
+            currentMonthBtn.textContent = "All Months";
+        }
     }
 
     // Save filter states
@@ -2103,6 +2217,7 @@ function renderGanttCalendar(tasks) {
         localStorage.setItem('taskStatusFilter', statusFilter.value);
         localStorage.setItem('taskMonthFilter', monthFilter.value);
         localStorage.setItem('taskYearFilter', yearFilter.value);
+        localStorage.setItem('taskSearchFilter', searchInput.value);
     }
 
     // Load expanded tasks
@@ -2139,6 +2254,18 @@ function renderGanttCalendar(tasks) {
     // Initialize
     loadFilterStates();
     loadExpandedTasks();
+    
+    // Set initial Gantt visibility
+    if (ganttVisible) {
+        ganttTableCard.classList.remove('hide');
+        showGanttBtn.classList.add('hide');
+        mainCard.style.flexBasis = '65%';
+        ganttTableCard.style.flexBasis = '35%';
+    } else {
+        ganttTableCard.classList.add('hide');
+        showGanttBtn.classList.remove('hide');
+        mainCard.style.flexBasis = '100%';
+    }
     
     // Load tasks
     loadAllTasks();
