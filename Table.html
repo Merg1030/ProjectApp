@@ -77,6 +77,29 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .toggle-tasks {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      margin-left: 12px;
+      font-size: 0.97rem;
+    }
+    .toggle-tasks label {
+      font-weight: normal;
+      margin: 0 6px 0 0;
+      color: #222;
+      cursor: pointer;
+    }
+    .toggle-tasks input[type="checkbox"] {
+      accent-color: #1976d2;
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+      margin-right: 3px;
+    }
+    .project-filter-block { margin-left: 10px; }
+    .project-filter-block label { font-weight: 600; margin-right: 6px; }
+    #project-select { padding: 6px 14px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -118,6 +141,16 @@
         <label for="year-select">Year:</label>
         <input type="number" id="year-select" min="2020" max="2100" step="1" style="width:90px;" />
       </div>
+      <div class="project-filter-block">
+        <label for="project-select">Project:</label>
+        <select id="project-select">
+          <option value="">All Projects</option>
+        </select>
+      </div>
+      <div class="toggle-tasks">
+        <label><input type="checkbox" id="show-ongoing-checkbox" checked>Show Ongoing Tasks</label>
+        <label><input type="checkbox" id="show-pending-checkbox" checked>Show Pending Tasks</label>
+      </div>
       <button id="generate-report-btn">Generate Report</button>
       <button id="download-pdf-btn" disabled>Download as PDF</button>
     </div>
@@ -154,10 +187,11 @@
     let allTransfers = [];
     let materialCache = {};
     let projectCache = {};
-    let taskHourCache = {}; // Cache for task hours
-    let taskMaterialCache = {}; // Cache for task materials
+    let taskHourCache = {};
+    let taskMaterialCache = {};
 
-    // Helper functions
+    let projectOptions = {};
+
     function getWeekNumber(d) {
       d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -198,23 +232,22 @@
       try {
         const projSnap = await getDoc(doc(db, "projectDashboard", projectId));
         if (projSnap.exists()) {
-          projectCache[projectId] = projSnap.data().name || "-";
-          return projectCache[projectId];
+          const name = projSnap.data().name || "-";
+          projectCache[projectId] = name;
+          projectOptions[projectId] = name;
+          updateProjectDropdownOptions();
+          return name;
         }
       } catch {}
       projectCache[projectId] = "-";
       return "-";
     }
 
-    // Function to get hours worked for a task
     async function getHoursForTask(taskId) {
       if (!taskId) return 0;
-      
-      // Check cache first
       if (taskHourCache[taskId] !== undefined) {
         return taskHourCache[taskId];
       }
-      
       try {
         const q = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
@@ -223,8 +256,6 @@
           const d = doc.data();
           if (d.mh && !isNaN(d.mh)) sum += Number(d.mh);
         });
-        
-        // Cache the result
         taskHourCache[taskId] = sum;
         return sum;
       } catch (e) {
@@ -233,28 +264,20 @@
       }
     }
 
-    // Function to get material cost for a task
     async function getMaterialCostForTask(taskId) {
       if (!taskId) return 0;
-      
-      // Check cache first
       if (taskMaterialCache[taskId] !== undefined) {
         return taskMaterialCache[taskId];
       }
-      
       try {
         const q = query(collection(db, "materialsUsage"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         let sum = 0;
-        
-        // For inventory items - we need to get prices from materials collection
         const materialIds = new Set();
         snap.forEach(doc => {
           const d = doc.data();
           if (d.materialId) materialIds.add(d.materialId);
         });
-        
-        // Fetch prices for inventory items
         const materialPriceMap = {};
         await Promise.all([...materialIds].map(async materialId => {
           if (!materialCache[materialId]) {
@@ -265,28 +288,21 @@
           }
           materialPriceMap[materialId] = materialCache[materialId] || 0;
         }));
-        
-        // Calculate total cost
         snap.forEach(doc => {
           const d = doc.data();
           if (!d.reversed) {
-            // Inventory items
             if (d.quantity && d.materialId) {
               const price = materialPriceMap[d.materialId] || 0;
               sum += Number(d.quantity) * Number(price);
             }
-            // Supplier items
             else if (d.boughtFromSupplier && d.amount) {
               sum += Number(d.amount);
             }
-            // Backward compatibility for supplier items without boughtFromSupplier flag
             else if (d.quantity && d.unitPrice && !d.materialId) {
               sum += Number(d.quantity) * Number(d.unitPrice);
             }
           }
         });
-        
-        // Cache the result
         taskMaterialCache[taskId] = sum;
         return sum;
       } catch (e) {
@@ -295,77 +311,90 @@
       }
     }
 
-    // Recursively get all tasks, subtasks, and sub-subtasks for all projects with hours and material costs
+    function updateProjectDropdownOptions() {
+      const select = document.getElementById("project-select");
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value="">All Projects</option>';
+      Object.entries(projectOptions)
+        .sort((a, b) => String(a[1]).localeCompare(String(b[1])))
+        .forEach(([id, name]) => {
+          const opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+      if (current && select.querySelector(`[value="${current}"]`)) select.value = current;
+    }
+
     async function fetchAllTasksFlat() {
       const mainTaskSnaps = await getDocs(collection(db, "projectTasks"));
       let all = [];
-      
-      // Process all tasks in parallel for better performance
       await Promise.all(mainTaskSnaps.docs.map(async (mainDoc) => {
         const main = { ...mainDoc.data(), _id: mainDoc.id, _type: "main" };
         main.projectName = await getProjectNameCached(main.projectId);
-        
-        // Get hours and material costs for main task
+        if (main.projectId && main.projectName) projectOptions[main.projectId] = main.projectName;
         const [hours, materialCost] = await Promise.all([
           getHoursForTask(main.taskId),
           getMaterialCostForTask(main.taskId)
         ]);
         main._durationHours = hours;
         main._materialCost = materialCost;
-        
         all.push(main);
-
-        // Subtasks
         const subSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks"));
         await Promise.all(subSnap.docs.map(async (subDoc) => {
           const sub = { ...subDoc.data(), _id: subDoc.id, _type: "sub", parentTaskId: main.taskId, projectName: main.projectName, projectId: main.projectId };
-          
-          // Get hours and material costs for subtask
           const [subHours, subMaterialCost] = await Promise.all([
             getHoursForTask(sub.taskId),
             getMaterialCostForTask(sub.taskId)
           ]);
           sub._durationHours = subHours;
           sub._materialCost = subMaterialCost;
-          
           all.push(sub);
-
-          // Subsubtasks
           const subSubSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks", subDoc.id, "subsubtasks"));
           await Promise.all(subSubSnap.docs.map(async (subSubDoc) => {
             const subsub = { ...subSubDoc.data(), _id: subSubDoc.id, _type: "subsub", parentTaskId: sub.taskId, projectName: main.projectName, projectId: main.projectId };
-            
-            // Get hours and material costs for sub-subtask
             const [subsubHours, subsubMaterialCost] = await Promise.all([
               getHoursForTask(subsub.taskId),
               getMaterialCostForTask(subsub.taskId)
             ]);
             subsub._durationHours = subsubHours;
             subsub._materialCost = subsubMaterialCost;
-            
             all.push(subsub);
           }));
         }));
       }));
-      
+      updateProjectDropdownOptions();
       return all;
     }
 
-    // Initialize data listeners
+    onSnapshot(collection(db, "projectDashboard"), snapshot => {
+      snapshot.docs.forEach(docSnap => {
+        const d = docSnap.data();
+        if (docSnap.id && d.name) {
+          projectOptions[docSnap.id] = d.name;
+        }
+      });
+      updateProjectDropdownOptions();
+    });
+
     onSnapshot(query(collection(db, "materialsUsage"), orderBy("assignedAt", "desc")), async (snapshot) => {
       allUsages = [];
       materialCache = {};
       projectCache = {};
       const usageDocs = snapshot.docs;
-      
-      // Process in parallel for better performance
       await Promise.all(usageDocs.map(async (docSnap) => {
         const u = docSnap.data();
         if (u.projectId && !projectCache[u.projectId]) {
           try {
             const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
-            if (projSnap.exists()) projectCache[u.projectId] = projSnap.data().name || "-";
-            else projectCache[u.projectId] = "-";
+            if (projSnap.exists()) {
+              const name = projSnap.data().name || "-";
+              projectCache[u.projectId] = name;
+              projectOptions[u.projectId] = name;
+            } else {
+              projectCache[u.projectId] = "-";
+            }
           } catch { projectCache[u.projectId] = "-"; }
         }
         if (u.materialId && !materialCache[u.materialId]) {
@@ -375,7 +404,6 @@
             else materialCache[u.materialId] = "-";
           } catch { materialCache[u.materialId] = "-"; }
         }
-        
         let usage = { ...u };
         if (u.projectId && projectCache[u.projectId]) usage.projectName = projectCache[u.projectId];
         else if (u.projectName) usage.projectName = u.projectName;
@@ -387,14 +415,13 @@
         }
         allUsages.push(usage);
       }));
-      
+      updateProjectDropdownOptions();
       updateDefaultWeekAndMonth();
     });
 
     onSnapshot(query(collection(db, "locationHistory"), orderBy("transferredAt", "desc")), async (snapshot) => {
       allTransfers = [];
       const projIds = new Set();
-      
       snapshot.docs.forEach(docSnap => {
         const d = docSnap.data();
         if (!d.reversed) {
@@ -407,17 +434,19 @@
           if (d.projectId) projIds.add(d.projectId);
         }
       });
-      
-      // Fetch project names in parallel
       await Promise.all([...projIds].map(async id => {
         if (!projectCache[id]) {
           try {
             const snap = await getDoc(doc(db, "projectDashboard", id));
-            if (snap.exists()) projectCache[id] = snap.data();
+            if (snap.exists()) {
+              const name = snap.data().name || "-";
+              projectCache[id] = name;
+              projectOptions[id] = name;
+            }
           } catch {}
         }
       }));
-      
+      updateProjectDropdownOptions();
       updateDefaultWeekAndMonth();
     });
 
@@ -444,16 +473,17 @@
       }
     }
 
-    // Report generation variables
     let lastReportHTML = '';
     let lastReportType = '';
     let lastReportPeriod = '';
 
-    // UI event handlers
     const reportTypeSelect = document.getElementById("report-type-select");
     const weekControls = document.getElementById("week-controls");
     const monthControls = document.getElementById("month-controls");
-    
+    const showOngoingCheckbox = document.getElementById("show-ongoing-checkbox");
+    const showPendingCheckbox = document.getElementById("show-pending-checkbox");
+    const projectSelect = document.getElementById("project-select");
+
     reportTypeSelect.onchange = function() {
       if (reportTypeSelect.value === "week") {
         weekControls.style.display = "";
@@ -464,12 +494,13 @@
       }
     };
 
-    // Function to get account totals for cash report
-    async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear) {
+    async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear, projectIdFilter) {
       const expensesCol = collection(db, "General expenses");
       const snap = await getDocs(expensesCol);
-
       let expenses = snap.docs.map(doc => doc.data());
+      if (projectIdFilter) {
+        expenses = expenses.filter(exp => exp.projectId === projectIdFilter);
+      }
       if (forMonth) {
         expenses = expenses.filter(exp => {
           if (!exp.date) return false;
@@ -505,23 +536,22 @@
       return { accountTotals, grandTotal, accounts };
     }
 
-    // Main report generation function
     document.getElementById("generate-report-btn").onclick = async function() {
       const generateBtn = document.getElementById("generate-report-btn");
       const originalBtnText = generateBtn.textContent;
       generateBtn.disabled = true;
       generateBtn.textContent = "Generating...";
-      
-      // Show loading indicator
       document.getElementById("report-output").innerHTML = '<div class="loading-spinner"></div><p style="text-align:center;">Generating report, please wait...</p>';
-      
       try {
-        // Clear caches for fresh data
         taskHourCache = {};
         taskMaterialCache = {};
-        
-        // Fetch all tasks with their hours and material costs
         const allTasksFlat = await fetchAllTasksFlat();
+
+        const showOngoing = showOngoingCheckbox.checked;
+        const showPending = showPendingCheckbox.checked;
+        const projectFilter = projectSelect.value || "";
+        const projectFilterName = projectOptions[projectFilter] || "";
+        const isSpecificProject = !!projectFilter;
 
         let stockTotals = {}, totalStockSpent = 0;
         const COST_PER_HOUR = 20;
@@ -539,12 +569,12 @@
         if (forMonth) {
           const monthVal = parseInt(document.getElementById("month-select").value);
           const yearVal = parseInt(document.getElementById("year-select").value);
-          periodLabel = `Month: ${document.getElementById("month-select").options[monthVal].text} ${yearVal}`;
+          periodLabel = `Month: ${document.getElementById("month-select").options[monthVal].text} ${yearVal}${projectFilterName ? " | Project: " + projectFilterName : ""}`;
           filterUsages = allUsages.filter(u => u._date && isSameMonthYear(u._date, monthVal, yearVal));
           filterTransfers = allTransfers.filter(d => d._date && isSameMonthYear(d._date, monthVal, yearVal));
         } else {
           const weekToReport = week;
-          periodLabel = `Week ${weekToReport} (${weekYear})`;
+          periodLabel = `Week ${weekToReport} (${weekYear})${projectFilterName ? " | Project: " + projectFilterName : ""}`;
           filterUsages = allUsages.filter(u => {
             if (!u._date) return false;
             const { week: w, year: y } = getWeekNumberFromDate(u._date);
@@ -557,12 +587,245 @@
           });
         }
 
-        // Get cash report data
+        // PROJECT SPECIFIC OUTPUT
+        if (isSpecificProject) {
+          filterUsages = filterUsages.filter(u => u.projectId === projectFilter);
+
+          // --- INVENTORY FLOW BREAKDOWN ---
+          let breakdownRows = [];
+          let generalUseTotals = {};
+          let closingBalance = 0;
+
+          filterUsages.slice().sort((a, b) => {
+            let dA = a.assignedAt && a.assignedAt.toDate ? a.assignedAt.toDate() : (a._date || new Date());
+            let dB = b.assignedAt && b.assignedAt.toDate ? b.assignedAt.toDate() : (b._date || new Date());
+            return dA - dB;
+          }).forEach(u => {
+            const dateStr = u.assignedAt && u.assignedAt.toDate ? u.assignedAt.toDate().toLocaleDateString() : "-";
+            const taskId = u.taskId || "-";
+            const name = u.materialName || "-";
+            const qty = Number(u.quantity || 0);
+            const unitPrice = Number(u.unitPrice || 0);
+            const total = qty * unitPrice;
+            breakdownRows.push({ dateStr, taskId, name, qty, unitPrice, total });
+            generalUseTotals[name] = (generalUseTotals[name] || 0) + qty;
+            closingBalance += total;
+          });
+
+          const generalUseArr = Object.entries(generalUseTotals).map(([name, totalUsed]) => ({ name, totalUsed }));
+
+          let mainHtml = `<div id="report-export-section">`;
+
+          mainHtml += `
+            <h2 style="color:#1976d2;">${periodLabel} Inventory Flow Breakdown - ${projectFilterName}</h2>
+            <div class="total-cost-incurred">Total Cost Incurred: ZMW ${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
+            <h3>Break down use</h3>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Task ID</th>
+                  <th>Name</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${breakdownRows.map(r => `
+                  <tr>
+                    <td>${r.dateStr}</td>
+                    <td>${r.taskId}</td>
+                    <td>${r.name}</td>
+                    <td>${r.qty}</td>
+                    <td>${r.unitPrice}</td>
+                    <td>${r.total}</td>
+                  </tr>
+                `).join('')}
+                <tr class="total-row">
+                  <td colspan="5" style="text-align:right;">Closing Balance</td>
+                  <td>${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                </tr>
+              </tbody>
+            </table>
+            <h4>General use summary</h4>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Material Name</th>
+                  <th>Total Used</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${generalUseArr.map(g => `
+                  <tr>
+                    <td>${g.name}</td>
+                    <td>${g.totalUsed}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+
+          // ADD COMPLETED, ONGOING, AND PENDING TASKS FOR SPECIFIC PROJECT
+          let completedTasks = [], ongoingTasks = [], pendingTasks = [];
+          let filteredTasksFlat = allTasksFlat.filter(t => t.projectId === projectFilter);
+
+          if (forMonth) {
+            completedTasks = filteredTasksFlat.filter(t => {
+              if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
+              let inMonth = false;
+              if (t.startDate) {
+                const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
+                if (sd.getMonth() === month && sd.getFullYear() === year) inMonth = true;
+              }
+              if (t.endDate) {
+                const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
+                if (ed.getMonth() === month && ed.getFullYear() === year) inMonth = true;
+              }
+              return inMonth;
+            });
+          } else if (forWeek) {
+            completedTasks = filteredTasksFlat.filter(t => {
+              if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
+              let inWeek = false;
+              if (t.startDate) {
+                const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
+                const { week: w, year: y } = getWeekNumberFromDate(sd);
+                if (w === week && y === weekYear) inWeek = true;
+              }
+              if (t.endDate) {
+                const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
+                const { week: w, year: y } = getWeekNumberFromDate(ed);
+                if (w === week && y === weekYear) inWeek = true;
+              }
+              return inWeek;
+            });
+          }
+
+          ongoingTasks = showOngoing ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing') : [];
+          pendingTasks = showPending ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending') : [];
+
+          // COMPLETED TASKS TABLE
+          mainHtml += `
+          <h3>COMPLETED TASKS</h3>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>PROJECT</th>
+                <th>TASK ID</th>
+                <th>TASK DESCRIPTION</th>
+                <th>ASSIGNED</th>
+                <th>LOCATION</th>
+                <th>STATUS</th>
+                <th>START DATE</th>
+                <th>END DATE</th>
+                <th>DURATION (Hrs)</th>
+                <th>MATERIAL COST</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${completedTasks.map(row => `
+                <tr>
+                  <td>${safeProjectName(row)}</td>
+                  <td>${row.taskId || '-'}</td>
+                  <td>${row.taskDescription || '-'}</td>
+                  <td>${row.assignedTo || '-'}</td>
+                  <td>${row.location || '-'}</td>
+                  <td>${row.status || '-'}</td>
+                  <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                  <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
+                  <td>${row._durationHours || '0'}</td>
+                  <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+
+          if (showOngoing) {
+            mainHtml += `
+            <h3>ONGOING TASKS</h3>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>PROJECT</th>
+                  <th>TASK ID</th>
+                  <th>TASK DESCRIPTION</th>
+                  <th>ASSIGNED</th>
+                  <th>LOCATION</th>
+                  <th>STATUS</th>
+                  <th>START DATE</th>
+                  <th>DURATION (Hrs)</th>
+                  <th>MATERIAL COST</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ongoingTasks.map(row => `
+                  <tr>
+                    <td>${safeProjectName(row)}</td>
+                    <td>${row.taskId || '-'}</td>
+                    <td>${row.taskDescription || '-'}</td>
+                    <td>${row.assignedTo || '-'}</td>
+                    <td>${row.location || '-'}</td>
+                    <td>${row.status || '-'}</td>
+                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                    <td>${row._durationHours || '0'}</td>
+                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+          }
+
+          if (showPending) {
+            mainHtml += `
+            <h3>PENDING TASKS</h3>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>PROJECT</th>
+                  <th>TASK ID</th>
+                  <th>TASK DESCRIPTION</th>
+                  <th>ASSIGNED</th>
+                  <th>LOCATION</th>
+                  <th>STATUS</th>
+                  <th>START DATE</th>
+                  <th>DURATION (Hrs)</th>
+                  <th>MATERIAL COST</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pendingTasks.map(row => `
+                  <tr>
+                    <td>${safeProjectName(row)}</td>
+                    <td>${row.taskId || '-'}</td>
+                    <td>${row.taskDescription || '-'}</td>
+                    <td>${row.assignedTo || '-'}</td>
+                    <td>${row.location || '-'}</td>
+                    <td>${row.status || '-'}</td>
+                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                    <td>${row._durationHours || '0'}</td>
+                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+          }
+
+          mainHtml += `</div>`;
+          document.getElementById("report-output").innerHTML = mainHtml;
+          lastReportHTML = mainHtml;
+          lastReportType = reportTypeSelect.value;
+          lastReportPeriod = periodLabel;
+          document.getElementById("download-pdf-btn").disabled = false;
+          return;
+        }
+
+        // DEFAULT REPORT (ALL PROJECTS)
         const {accountTotals, grandTotal, accounts} = await getAccountTotalsForCashReport(
-          month, year, forMonth, week, forWeek, weekYear
+          month, year, forMonth, week, forWeek, weekYear, projectFilter
         );
 
-        // Process stock data
         filterUsages.forEach(u => {
           if (u.reversed) return;
           let projectName = "-";
@@ -572,6 +835,7 @@
               ? projectCache[u.projectId]
               : (projectCache[u.projectId].name || "-");
           }
+          if (projectFilter && u.projectId !== projectFilter) return;
           const qty = parseFloat(u.quantity || 0);
           const unitPrice = parseFloat(u.unitPrice || 0);
           const assignedValue = qty * unitPrice;
@@ -580,7 +844,6 @@
           totalStockSpent += assignedValue;
         });
 
-        // Process man-hour data
         filterTransfers.forEach(d => {
           let projectName = "-";
           if (d.projectId && projectCache[d.projectId]) {
@@ -588,6 +851,7 @@
               ? projectCache[d.projectId]
               : (projectCache[d.projectId].name || "-");
           }
+          if (projectFilter && d.projectId !== projectFilter) return;
           const mh = parseFloat(d.mh || 0);
           if (!manHourTotals[projectName]) manHourTotals[projectName] = 0;
           manHourTotals[projectName] += mh;
@@ -597,10 +861,14 @@
 
         const totalCostIncurred = totalStockSpent + totalMHCost;
 
-        // Filter tasks based on report period
         let completedTasks = [], ongoingTasks = [], pendingTasks = [];
+        let filteredTasksFlat = allTasksFlat;
+        if (projectFilter) {
+          filteredTasksFlat = allTasksFlat.filter(t => t.projectId === projectFilter);
+        }
+
         if (forMonth) {
-          completedTasks = allTasksFlat.filter(t => {
+          completedTasks = filteredTasksFlat.filter(t => {
             if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
             let inMonth = false;
             if (t.startDate) {
@@ -614,7 +882,7 @@
             return inMonth;
           });
         } else if (forWeek) {
-          completedTasks = allTasksFlat.filter(t => {
+          completedTasks = filteredTasksFlat.filter(t => {
             if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
             let inWeek = false;
             if (t.startDate) {
@@ -630,15 +898,12 @@
             return inWeek;
           });
         }
-        
-        // Ongoing and pending tasks show all regardless of period
-        ongoingTasks = allTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing');
-        pendingTasks = allTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending');
 
-        // Generate the report HTML
+        ongoingTasks = showOngoing ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing') : [];
+        pendingTasks = showPending ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending') : [];
+
         let mainHtml = `<div id="report-export-section">`;
-        
-        // Cash Report Section
+
         mainHtml += `
         <div id="cash-report-section">
           <h2 style="color:#1976d2;">Cash Received Report</h2>
@@ -666,7 +931,6 @@
           </table>
         </div>`;
 
-        // Inventory Flow Report
         mainHtml += `
         <h2 style="color:#1976d2;">${periodLabel} Out Flow Inventory Report</h2>
         <div class="total-cost-incurred">Total Cost Incurred: ZMW ${totalCostIncurred.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
@@ -692,7 +956,6 @@
         </tbody>
         </table>`;
 
-        // Man Hour Summary
         mainHtml += `
         <h3>Man Hour Summary</h3>
         <table class="report-table">
@@ -717,7 +980,6 @@
           </tfoot>
         </table>`;
 
-        // Completed Tasks
         mainHtml += `
         <h3>COMPLETED TASKS</h3>
         <table class="report-table">
@@ -732,6 +994,7 @@
               <th>START DATE</th>
               <th>END DATE</th>
               <th>DURATION (Hrs)</th>
+              <th>MATERIAL COST</th>
             </tr>
           </thead>
           <tbody>
@@ -746,83 +1009,90 @@
                 <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
                 <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
                 <td>${row._durationHours || '0'}</td>
+                <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>`;
 
-        // Ongoing Tasks
-        mainHtml += `
-        <h3>ONGOING TASKS</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>PROJECT</th>
-              <th>TASK ID</th>
-              <th>TASK DESCRIPTION</th>
-              <th>ASSIGNED</th>
-              <th>LOCATION</th>
-              <th>STATUS</th>
-              <th>START DATE</th>
-              <th>DURATION (Hrs)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${ongoingTasks.map(row => `
+        if (showOngoing) {
+          mainHtml += `
+          <h3>ONGOING TASKS</h3>
+          <table class="report-table">
+            <thead>
               <tr>
-                <td>${safeProjectName(row)}</td>
-                <td>${row.taskId || '-'}</td>
-                <td>${row.taskDescription || '-'}</td>
-                <td>${row.assignedTo || '-'}</td>
-                <td>${row.location || '-'}</td>
-                <td>${row.status || '-'}</td>
-                <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                <td>${row._durationHours || '0'}</td>
+                <th>PROJECT</th>
+                <th>TASK ID</th>
+                <th>TASK DESCRIPTION</th>
+                <th>ASSIGNED</th>
+                <th>LOCATION</th>
+                <th>STATUS</th>
+                <th>START DATE</th>
+                <th>DURATION (Hrs)</th>
+                <th>MATERIAL COST</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>`;
+            </thead>
+            <tbody>
+              ${ongoingTasks.map(row => `
+                <tr>
+                  <td>${safeProjectName(row)}</td>
+                  <td>${row.taskId || '-'}</td>
+                  <td>${row.taskDescription || '-'}</td>
+                  <td>${row.assignedTo || '-'}</td>
+                  <td>${row.location || '-'}</td>
+                  <td>${row.status || '-'}</td>
+                  <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                  <td>${row._durationHours || '0'}</td>
+                  <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+        }
 
-        // Pending Tasks
-        mainHtml += `
-        <h3>PENDING TASKS</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>PROJECT</th>
-              <th>TASK ID</th>
-              <th>TASK DESCRIPTION</th>
-              <th>ASSIGNED</th>
-              <th>LOCATION</th>
-              <th>STATUS</th>
-              <th>START DATE</th>
-              <th>DURATION (Hrs)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${pendingTasks.map(row => `
+        if (showPending) {
+          mainHtml += `
+          <h3>PENDING TASKS</h3>
+          <table class="report-table">
+            <thead>
               <tr>
-                <td>${safeProjectName(row)}</td>
-                <td>${row.taskId || '-'}</td>
-                <td>${row.taskDescription || '-'}</td>
-                <td>${row.assignedTo || '-'}</td>
-                <td>${row.location || '-'}</td>
-                <td>${row.status || '-'}</td>
-                <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                <td>${row._durationHours || '0'}</td>
+                <th>PROJECT</th>
+                <th>TASK ID</th>
+                <th>TASK DESCRIPTION</th>
+                <th>ASSIGNED</th>
+                <th>LOCATION</th>
+                <th>STATUS</th>
+                <th>START DATE</th>
+                <th>DURATION (Hrs)</th>
+                <th>MATERIAL COST</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        </div>`;
+            </thead>
+            <tbody>
+              ${pendingTasks.map(row => `
+                <tr>
+                  <td>${safeProjectName(row)}</td>
+                  <td>${row.taskId || '-'}</td>
+                  <td>${row.taskDescription || '-'}</td>
+                  <td>${row.assignedTo || '-'}</td>
+                  <td>${row.location || '-'}</td>
+                  <td>${row.status || '-'}</td>
+                  <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                  <td>${row._durationHours || '0'}</td>
+                  <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>`;
+        }
 
-        // Display the report
+        mainHtml += `</div>`;
+
         document.getElementById("report-output").innerHTML = mainHtml;
         lastReportHTML = mainHtml;
         lastReportType = reportTypeSelect.value;
         lastReportPeriod = periodLabel;
         document.getElementById("download-pdf-btn").disabled = false;
-        
+
       } catch (error) {
         console.error("Error generating report:", error);
         document.getElementById("report-output").innerHTML = `<p style="color:red;">Error generating report: ${error.message}</p>`;
@@ -832,7 +1102,6 @@
       }
     };
 
-    // PDF download handler
     document.getElementById("download-pdf-btn").onclick = function() {
       if (!lastReportHTML) return;
       const section = document.getElementById("report-export-section");
@@ -847,5 +1116,43 @@
       html2pdf().from(section).set(opt).save();
     };
   </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
 </body>
 </html>
