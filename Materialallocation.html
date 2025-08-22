@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +102,17 @@ body {
   border: 1px solid var(--gray-400);
   background: var(--gray-300);
   color: var(--gray-900);
+}
+
+.search-bar {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-md);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--gray-400);
+  background: var(--gray-300);
+  color: var(--gray-900);
+  margin-left: var(--space-md);
+  min-width: 220px;
 }
 
 .total-container {
@@ -318,6 +328,8 @@ tr:hover {
         <select id="monthFilter" class="filter-select">
           <option value="">All</option>
         </select>
+        <!-- SEARCH BAR -->
+        <input id="usageSearchBar" class="search-bar" type="text" placeholder="Search anything..." autocomplete="off" />
       </div>
       <div class="total-container">
         TOTAL AMOUNT: <span id="total-assigned-value">-</span>
@@ -398,6 +410,7 @@ tr:hover {
     const taskIdFilter = document.getElementById('taskIdFilter');
     const monthFilter = document.getElementById('monthFilter');
     const totalAssignedValueCell = document.getElementById('total-assigned-value');
+    const usageSearchBar = document.getElementById('usageSearchBar');
 
     // Modal elements
     const editModal = document.getElementById('edit-modal');
@@ -424,8 +437,12 @@ tr:hover {
       material: "ims_material_filter",
       project: "ims_project_filter",
       taskId: "ims_taskid_filter",
-      month: "ims_month_filter"
+      month: "ims_month_filter",
+      search: "ims_usage_search"
     };
+
+    // Store current search string
+    let currentSearch = "";
 
     function renderTable(usages) {
       tableBody.innerHTML = "";
@@ -621,6 +638,7 @@ tr:hover {
       const selectedProject = projectFilter.value;
       const taskIdValue = taskIdFilter.value.trim().toLowerCase();
       const selectedMonth = monthFilter.value;
+      const searchValue = currentSearch.trim().toLowerCase();
 
       if (selectedMaterial) {
         filtered = filtered.filter(u => u.materialName === selectedMaterial);
@@ -634,6 +652,25 @@ tr:hover {
       if (selectedMonth) {
         filtered = filtered.filter(u => u._month === selectedMonth);
       }
+      // SEARCH BAR FILTER (search in all columns)
+      if (searchValue) {
+        filtered = filtered.filter(u => {
+          // Search among all text fields
+          const fields = [
+            u.materialName,
+            u.category,
+            u.quantity,
+            u.unitPrice,
+            u.projectName,
+            u.taskId,
+            u.taskDescription,
+            u.location,
+            u.assignedToName,
+            u.assignedAt ? u.assignedAt.toDate().toLocaleString() : ""
+          ];
+          return fields.some(field => field && field.toString().toLowerCase().includes(searchValue));
+        });
+      }
       renderTable(filtered);
     }
 
@@ -643,10 +680,15 @@ tr:hover {
       const pV = getPersistedFilter("project");
       const tV = getPersistedFilter("taskId");
       const moV = getPersistedFilter("month");
+      const sV = getPersistedFilter("search");
       if (mV) materialFilter.value = mV;
       if (pV) projectFilter.value = pV;
       if (tV) taskIdFilter.value = tV;
       if (moV) monthFilter.value = moV;
+      if (sV) {
+        usageSearchBar.value = sV;
+        currentSearch = sV;
+      }
     }
 
     materialFilter.addEventListener('change', function() {
@@ -665,6 +707,14 @@ tr:hover {
       persistFilter("month", monthFilter.value);
       applyFiltersAndRender();
     });
+
+    // SEARCH BAR
+    usageSearchBar.addEventListener('input', function() {
+      currentSearch = usageSearchBar.value;
+      persistFilter("search", currentSearch);
+      applyFiltersAndRender();
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
       restoreFiltersFromStorage();
       applyFiltersAndRender();
