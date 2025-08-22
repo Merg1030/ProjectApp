@@ -1,193 +1,273 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>IMS Weekly & Monthly Stock & Man Hour Report</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body { font-family: Arial, sans-serif; background: #f7fafd; margin: 0; }
-    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.06); margin: 40px auto; padding: 30px; max-width: 1800px; }
-    .panel-heading { background: #1976d2; color: #fff; padding: 18px 24px; font-size: 1.25rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; letter-spacing: 0.08em; }
-    .filter-bar { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;}
-    label { font-weight: 600; margin-right: 7px; }
-    input[type="number"], select { padding: 6px 14px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
-    button { padding: 7px 18px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;}
-    button:hover { background: #125195;}
-    #download-pdf-btn { margin-left: 7px; background:  #1976d2;}
-    #download-pdf-btn:hover { background:  #3770a9; }
-    #report-output { margin-top: 0; margin-bottom: 30px; }
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 16px;
-      font-size: 0.80rem;
-      table-layout: fixed;
-      word-break: break-word;
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7fafd;
+    margin: 0;
+  }
+
+  .panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(44,62,80,0.06);
+    margin: 40px auto;
+    padding: 30px;
+    max-width: 1800px;
+  }
+
+  .panel-heading {
+    background: #1976d2;
+    color: #fff;
+    padding: 18px 24px;
+    font-size: 1.25rem;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+    margin: -30px -30px 24px -30px;
+    letter-spacing: 0.08em;
+  }
+
+  .filter-bar {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  label { font-weight: 600; margin-right: 7px; }
+
+  input[type="number"], select {
+    padding: 6px 14px;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+  }
+
+  button {
+    padding: 7px 18px;
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+
+  button:hover { background: #125195; }
+  #download-pdf-btn { margin-left: 7px; background: #1976d2; }
+  #download-pdf-btn:hover { background: #3770a9; }
+
+  #report-output { margin-top: 0; margin-bottom: 30px; }
+
+  /* ---------------- TABLE STYLES ---------------- */
+  .report-table, .tracker-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 0.80rem;
+    table-layout: auto;
+    word-break: break-word;
+  }
+
+  .report-table th, .report-table td,
+  .tracker-table th, .tracker-table td {
+    text-align: left;
+    padding: 6px 6px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    font-size: 11px;
+  }
+
+  .report-table th {
+    color: #222;
+    font-weight: bold;
+    background: #f1f7fe;
+  }
+
+  .report-table tr:nth-child(even),
+  .tracker-table tr:nth-child(even) {
+    background: #f9fbfd;
+  }
+
+  .currency { font-weight: 500; color: #1976d2; }
+
+  .total-row td {
+    font-weight: bold;
+    border-top: 2px solid #d1e4fc;
+    color: #1976d2;
+    background: #f1f7fe;
+  }
+
+  .total-cost-incurred {
+    background: #eafbed;
+    color: #0a7b1c;
+    font-size: 1.10rem;
+    font-weight: bold;
+    padding: 10px 12px;
+    border: 2px solid #b5e7c1;
+    border-radius: 7px;
+    margin-bottom: 16px;
+    margin-top: 10px;
+    text-align: right;
+  }
+
+  h3 { margin-top: 28px; }
+
+  /* PDF-specific styles */
+  @media print {
+    body {
+      background: #fff !important;
+      margin: 0;
+      padding: 0;
     }
-    .report-table th, .report-table td {
-      text-align: left;
-      padding: 4px 4px;
-      border-bottom: 1px solid #eee;
-      vertical-align: top;
-      max-width: 140px;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      white-space: normal;
-    }
-    .report-table th {
-      color: #222;
-      font-weight: bold;
-      background: #f1f7fe;
-    }
-    .report-table tr:nth-child(even) { background: #f9fbfd; }
-    .currency { font-weight: 500; color: #1976d2; }
-    .total-row td {
-      font-weight: bold;
-      border-top: 2px solid #d1e4fc;
-      color: #1976d2;
-      background: #f1f7fe;
-    }
-    .total-cost-incurred {
-      background: #eafbed;
-      color: #0a7b1c;
-      font-size: 1.10rem;
-      font-weight: bold;
-      padding: 10px 12px;
-      border: 2px solid #b5e7c1;
-      border-radius: 7px;
-      margin-bottom: 16px;
-      margin-top: 10px;
-      text-align: right;
-    }
-    h3 { margin-top: 28px; }
-    table, tr, td, th { page-break-inside: avoid !important; }
-    .pdf-page-break { page-break-before: always; }
-    #report-export-section { overflow: visible !important; }
-    .btn.btn-outline{color: white; margin-right: 20PX;}
-    .loading-spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      border-radius: 50%;
-      border-top: 4px solid #1976d2;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .toggle-tasks {
-      display: flex;
-      gap: 18px;
-      align-items: center;
-      margin-left: 12px;
-      font-size: 0.97rem;
-      flex-wrap: wrap;
-    }
-    .toggle-tasks label {
-      font-weight: normal;
-      margin: 0 6px 0 0;
-      color: #222;
-      cursor: pointer;
-    }
-    .toggle-tasks input[type="checkbox"] {
-      accent-color: #1976d2;
-      width: 16px;
-      height: 16px;
-      vertical-align: middle;
-      margin-right: 3px;
-    }
-    .project-filter-block { margin-left: 10px; }
-    .project-filter-block label { font-weight: 600; margin-right: 6px; }
-    #project-select { padding: 6px 14px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
     
-    /* Employee Tracker Styles */
-    .tracker-table {
+    .panel {
+      box-shadow: none;
+      border-radius: 0;
+      margin: 0;
+      padding: 10px;
       width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 15px;
-      font-size: 0.8rem;
-      table-layout: fixed;
+      max-width: 100%;
     }
+    
+    .panel-heading {
+      margin: 0 0 15px 0;
+      border-radius: 0;
+    }
+    
+    .filter-bar {
+      display: none !important;
+    }
+    
+    table, tr, td, th, tbody, thead {
+      page-break-inside: avoid !important;
+    }
+    
+    h2, h3, h4 {
+      page-break-after: avoid;
+    }
+    
+    .report-table, .tracker-table {
+      font-size: 9px;
+    }
+    
+    .report-table th, .report-table td,
     .tracker-table th, .tracker-table td {
-      text-align: left;
-      padding: 6px 3px;
-      border-bottom: 1px solid #eee;
-      vertical-align: top;
-      overflow-wrap: break-word;
-      word-break: break-word;
+      padding: 4px 4px;
     }
-    .tracker-table th {
-      color: #222;
-      font-weight: bold;
-      background: #f1f7fe;
-      font-size: 0.75rem;
+    
+    .pdf-section {
+      margin-bottom: 15px;
     }
-    .tracker-table tr:nth-child(even) { background: #f9fbfd; }
-    .comment-cell { 
-      width: 200px;
+    
+    .pdf-heading {
+      margin-top: 10px;
+      margin-bottom: 8px;
     }
-    .comment-input {
-      width: 100%;
-      padding: 4px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
-      font-size: 0.75rem;
-    }
-    .project-breakdown { 
-      width: 250px;
-      line-height: 1.3;
-      font-size: 0.68rem;
-      color: #137c05;
-      font-weight: bolder;
-    }
-    .name-cell {
-      width: 180px;
-      font-weight: 600;
-      font-size: 0.8rem;
-    }
+  }
+
+  /* ---------------- EMPLOYEE TRACKER ---------------- */
+  .tracker-table th {
+    color: #222;
+    font-weight: bold;
+    background: #f1f7fe;
+    font-size: 0.75rem;
+  }
+
+  .comment-cell { width: 200px; }
+
+  .comment-input {
+    width: 100%;
+    padding: 4px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 0.75rem;
+  }
+
+  .project-breakdown {
+    width: 250px;
+    line-height: 1.3;
+    font-size: 0.68rem;
+    color: #137c05;
+    font-weight: bolder;
+  }
+
+  .name-cell {
+    width: 180px;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .mh-cell, .unworked-cell, .workdays-cell, .absent-cell, .leave-cell, .sick-cell {
+    width: 70px;
+    text-align: center;
+    font-size: 0.78rem;
+  }
+
+  /* ---------------- MATERIAL USAGE BREAKDOWN FIX ---------------- */
+  .material-breakdown {
+    display: inline-block;
+    vertical-align: top;
+    margin: 0;
+    padding: 0;
+    page-break-inside: avoid !important;
+  }
+
+  .material-breakdown table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    page-break-inside: avoid !important;
+  }
+
+  .material-breakdown tr, 
+  .material-breakdown td, 
+  .material-breakdown th {
+    page-break-inside: avoid !important;
+  }
+
+  /* ---------------- RESPONSIVE ---------------- */
+  @media (max-width: 900px) {
+    .panel { padding: 10px; margin: 10px; }
+
+    .tracker-table { font-size: 0.7rem; }
+    .tracker-table th, .tracker-table td { padding: 4px 2px; }
+
+    .filter-bar { flex-direction: column; align-items: flex-start; }
+
+    .project-breakdown { width: 180px; font-size: 0.6rem; }
+    .name-cell { width: 140px; font-size: 0.7rem; }
+
     .mh-cell, .unworked-cell, .workdays-cell, .absent-cell, .leave-cell, .sick-cell {
-      width: 70px;
-      text-align: center;
-      font-size: 0.78rem;
+      width: 50px;
+      font-size: 0.7rem;
     }
-    @media (max-width: 900px) {
-      .panel { 
-        padding: 10px; 
-        margin: 10px;
-      }
-      .tracker-table {
-        font-size: 0.7rem;
-      }
-      .tracker-table th, .tracker-table td { 
-        padding: 4px 2px; 
-      }
-      .filter-bar { 
-        flex-direction: column; 
-        align-items: flex-start; 
-      }
-      .project-breakdown {
-        width: 180px;
-        font-size: 0.6rem;
-      }
-      .name-cell {
-        width: 140px;
-        font-size: 0.7rem;
-      }
-      .mh-cell, .unworked-cell, .workdays-cell, .absent-cell, .leave-cell, .sick-cell {
-        width: 50px;
-        font-size: 0.7rem;
-      }
-      .comment-cell {
-        width: 120px;
-      }
-      .comment-input {
-        font-size: 0.65rem;
-      }
-    }
-  </style>
+
+    .comment-cell { width: 120px; }
+    .comment-input { font-size: 0.65rem; }
+  }
+  
+  /* PDF spacing fix */
+  .pdf-section {
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+  
+  .pdf-heading {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+</style>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -195,13 +275,14 @@
     <div class="panel-heading">
       <a href="dashboard.html" class="btn btn-outline">
         ← Back
-      </a>IMS Weekly & Monthly Stock & Man Hour Report
+      </a>IMS Weekly, Monthly & Yearly Stock & Man Hour Report
     </div>
     <div class="filter-bar">
       <label for="report-type-select">Report Type:</label>
       <select id="report-type-select">
         <option value="week">Weekly</option>
         <option value="month">Monthly</option>
+        <option value="year">Yearly</option>
       </select>
       <div id="week-controls">
         <label for="week-select">Week Number:</label>
@@ -228,6 +309,10 @@
         <label for="year-select">Year:</label>
         <input type="number" id="year-select" min="2020" max="2100" step="1" style="width:90px;" />
       </div>
+      <div id="year-controls" style="display:none;">
+        <label for="year-only-select">Year:</label>
+        <input type="number" id="year-only-select" min="2020" max="2100" step="1" style="width:90px;" />
+      </div>
       <div class="project-filter-block">
         <label for="project-select">Project:</label>
         <select id="project-select">
@@ -238,7 +323,6 @@
         <label><input type="checkbox" id="show-ongoing-checkbox" checked>Show Ongoing Tasks</label>
         <label><input type="checkbox" id="show-pending-checkbox" checked>Show Pending Tasks</label>
         <label><input type="checkbox" id="show-usage-checkbox" checked>Show Material Usage (Breakdown & General)</label>
-
       </div>
       <button id="generate-report-btn">Generate Report</button>
       <button id="download-pdf-btn" disabled>Download as PDF</button>
@@ -284,6 +368,7 @@
     const reportTypeSelect = document.getElementById("report-type-select");
     const weekControls = document.getElementById("week-controls");
     const monthControls = document.getElementById("month-controls");
+    const yearControls = document.getElementById("year-controls");
     const showOngoingCheckbox = document.getElementById("show-ongoing-checkbox");
     const showPendingCheckbox = document.getElementById("show-pending-checkbox");
     const usageCheckbox = document.getElementById('show-usage-checkbox');
@@ -316,11 +401,44 @@
       if (reportTypeSelect.value === "week") {
         weekControls.style.display = "";
         monthControls.style.display = "none";
-      } else {
+        yearControls.style.display = "none";
+      } else if (reportTypeSelect.value === "month") {
         weekControls.style.display = "none";
         monthControls.style.display = "";
+        yearControls.style.display = "none";
+      } else {
+        weekControls.style.display = "none";
+        monthControls.style.display = "none";
+        yearControls.style.display = "";
       }
     };
+
+    // Function to calculate workdays in a month (excluding Sundays, counting Saturdays as half days)
+    function getWorkdaysInMonth(month, year) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let workdays = 0;
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dayOfWeek = date.getDay();
+        
+        if (dayOfWeek !== 0) { // Not Sunday
+          if (dayOfWeek === 6) { // Saturday (half day)
+            workdays += 0.5;
+          } else {
+            workdays += 1;
+          }
+        }
+      }
+      
+      return workdays;
+    }
+
+    // Function to calculate expected hours for a month
+    function getExpectedMonthlyHours(month, year) {
+      const workdays = getWorkdaysInMonth(month, year);
+      return workdays * 8; // 8 hours per workday
+    }
 
     function getWeekNumber(d) {
       d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -340,6 +458,10 @@
 
     function isSameMonthYear(date, month, year) {
       return date.getMonth() === month && date.getFullYear() === year;
+    }
+
+    function isSameYear(date, year) {
+      return date.getFullYear() === year;
     }
 
     function safeProjectName(row) {
@@ -499,16 +621,20 @@
     }
 
     // Fetch all employees from Firestore
-    async function fetchEmployees() {
-      const empSnap = await getDocs(collection(db, "employees"));
-      const empMap = {};
-      empSnap.forEach(doc => {
-        const data = doc.data();
-        const fullName = ((data.name || "") + " " + (data.surname || "")).trim().toUpperCase();
-        empMap[fullName] = { id: doc.id, ...data };
-      });
-      return empMap;
-    }
+async function fetchEmployees() {
+  const empSnap = await getDocs(collection(db, "employees"));
+  const empMap = {};
+  
+  empSnap.forEach(doc => {
+    const data = doc.data();
+    // Correct fullName concatenation
+    const fullName = ((data.name || "") + " " + (data.surname || "")).trim().toUpperCase();
+    empMap[fullName] = { id: doc.id, ...data };
+  });
+
+  return empMap;
+}
+
 
     // Fetch location history for MH calculation
     async function fetchLocationHistory(periodType, periodObj, projectFilter) {
@@ -522,9 +648,11 @@
         
         if (periodType === "month") {
           if (isSameMonthYear(d, periodObj.month, periodObj.year)) inPeriod = true;
-        } else {
+        } else if (periodType === "week") {
           const { week, year } = getWeekNumberFromDate(d);
           if (week === periodObj.week && year === periodObj.year) inPeriod = true;
+        } else if (periodType === "year") {
+          if (isSameYear(d, periodObj.year)) inPeriod = true;
         }
         
         if (inPeriod) {
@@ -586,41 +714,41 @@
           )
           .sort();
 
-       let html = `
-  <h3 style="color:#1976d2; margin: 30px 0 15px 0;">
-    ${periodType === 'week' ? 'Week' : 'Month'} 
-    ${periodObj.week || periodObj.month + 1} 
-    (${periodObj.year}) Employee Days / MH Tracker 
-    ${projectFilterName ? " - " + projectFilterName : ""}
-  </h3>
-  <table class="tracker-table">
-    <thead>
-      <tr>
-        <th class="name-cell">NAME</th>
-        <th class="project-breakdown">PROJECT NAME & HOURS BREAKDOWN</th>
-        <th class="mh-cell">MH</th>
-        <th class="unworked-cell">UNWORKED</th>
-        <th class="workdays-cell">W/D</th>
-        <th class="absent-cell">A/DAYS</th>
-        <th class="leave-cell">L/DAYS</th>
-        <th class="sick-cell">S/DAY</th>
-        <th class="comment-cell">COMMENT</th>
-      </tr>
-    </thead>
-    <tbody>
+        let html = `
+  <div class="pdf-section">
+    <h3 class="pdf-heading" style="color:#1976d2; margin: 30px 0 15px 0;">
+      ${periodType === 'week' ? 'Week' : periodType === 'month' ? 'Month' : 'Year'} 
+      ${periodObj.week || periodObj.month + 1 || periodObj.year} 
+      (${periodObj.year}) Employee Days / MH Tracker 
+      ${projectFilterName ? " - " + projectFilterName : ""}
+    </h3>
+    <table class="tracker-table">
+      <thead>
+        <tr>
+          <th class="name-cell">NAME</th>
+          <th class="project-breakdown">PROJECT NAME & HOURS BREAKDOWN</th>
+          <th class="mh-cell">MH</th>
+          <th class="unworked-cell">UNWORKED</th>
+          <th class="workdays-cell">W/D</th>
+          <th class="absent-cell">A/DAYS</th>
+          <th class="leave-cell">L/DAYS</th>
+          <th class="sick-cell">S/DAY</th>
+          <th class="comment-cell">COMMENT</th>
+        </tr>
+      </thead>
+      <tbody>
 `;
 
-let totalMH = 0;
-let totalUnworked = 0;
-let totalWorkDays = 0;
-let totalAbsentDays = 0;
-let totalLeaveDays = 0;
-let totalSickDays = 0;
+        let totalMH = 0;
+        let totalUnworked = 0;
+        let totalWorkDays = 0;
+        let totalAbsentDays = 0;
+        let totalLeaveDays = 0;
+        let totalSickDays = 0;
 
-for (const name of allEmployeeNames) {
-  const emp = empMap[name] || null;
-  let employeeId = emp ? emp.id : null;
-
+        for (const name of allEmployeeNames) {
+          const emp = empMap[name] || null;
+          let employeeId = emp ? emp.id : null;
 
           // LocationHistory records for this employee in the selected period
           const employeeLocRecords = (employeeId && locMap[employeeId]) ? locMap[employeeId] : [];
@@ -667,21 +795,28 @@ for (const name of allEmployeeNames) {
           let leaveDays = leaveDaysSet.size;
           let sickDays = sickDaysSet.size;
 
-          // Unworked hours
+          // Unworked hours calculation
           let unworkedHours = 0;
           if (periodType === "week") {
             unworkedHours = 45 - mhWorked;
+          } else if (periodType === "month") {
+            // Calculate expected hours for the month
+            const expectedHours = getExpectedMonthlyHours(periodObj.month, periodObj.year);
+            unworkedHours = expectedHours - mhWorked;
+          } else if (periodType === "year") {
+            // For yearly reports, don't calculate unworked hours
+            unworkedHours = 0;
           }
 
           totalMH += mhWorked;
-          totalUnworked += unworkedHours;
+          totalUnworked += unworkedHours > 0 ? unworkedHours : 0;
           totalWorkDays += workDays;
           totalAbsentDays += absentDays;
           totalLeaveDays += leaveDays;
           totalSickDays += sickDays;
 
           // COMMENT LOGIC - unique per employee per period
-          const commentId = `${name}-${periodType}-${periodObj.week || periodObj.month}-${periodObj.year}`;
+          const commentId = `${name}-${periodType}-${periodObj.week || periodObj.month || 'year'}-${periodObj.year}`;
           // Load from persisted commentsData
           const savedComment = commentsData[commentId] || "";
 
@@ -689,7 +824,7 @@ for (const name of allEmployeeNames) {
             <td class="name-cell">${name}</td>
             <td class="project-breakdown">${projectHoursBreakdown}</td>
             <td class="mh-cell">${mhWorked.toFixed(1)}</td>
-            <td class="unworked-cell">${periodType === "week" ? (unworkedHours > 0 ? unworkedHours.toFixed(1) : 0) : ""}</td>
+            <td class="unworked-cell">${unworkedHours > 0 ? unworkedHours.toFixed(1) : '0'}</td>
             <td class="workdays-cell">${workDays}</td>
             <td class="absent-cell">${absentDays}</td>
             <td class="leave-cell">${leaveDays}</td>
@@ -713,7 +848,7 @@ for (const name of allEmployeeNames) {
           <td></td>
         </tr>`;
 
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
 
         // ===== Save comments instantly and persistently =====
         setTimeout(() => {
@@ -831,13 +966,15 @@ for (const name of allEmployeeNames) {
       if (latestStockDate) {
         document.getElementById("month-select").value = latestStockDate.getMonth();
         document.getElementById("year-select").value = latestStockDate.getFullYear();
+        document.getElementById("year-only-select").value = latestStockDate.getFullYear();
       } else {
         document.getElementById("month-select").value = now.getMonth();
         document.getElementById("year-select").value = now.getFullYear();
+        document.getElementById("year-only-select").value = now.getFullYear();
       }
     }
 
-    async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear, projectIdFilter) {
+    async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear, forYear, yearOnly, projectIdFilter) {
       const expensesCol = collection(db, "General expenses");
       const snap = await getDocs(expensesCol);
       let expenses = snap.docs.map(doc => doc.data());
@@ -856,6 +993,12 @@ for (const name of allEmployeeNames) {
           const d = new Date(exp.date);
           const { week: expWeek, year: expYear } = getWeekNumberFromDate(d);
           return expWeek === week && expYear === weekYear;
+        });
+      } else if (forYear && yearOnly) {
+        expenses = expenses.filter(exp => {
+          if (!exp.date) return false;
+          const d = new Date(exp.date);
+          return d.getFullYear() === yearOnly;
         });
       }
       const accounts = [
@@ -905,10 +1048,12 @@ for (const name of allEmployeeNames) {
 
         let forMonth = reportTypeSelect.value === "month";
         let forWeek = reportTypeSelect.value === "week";
+        let forYear = reportTypeSelect.value === "year";
         let month = forMonth ? parseInt(document.getElementById("month-select").value) : null;
         let year = forMonth ? parseInt(document.getElementById("year-select").value) : null;
         let week = forWeek ? parseInt(document.getElementById("week-select").value) : null;
         let weekYear = forWeek ? parseInt(document.getElementById("week-year-select").value) : null;
+        let yearOnly = forYear ? parseInt(document.getElementById("year-only-select").value) : null;
 
         if (forMonth) {
           const monthVal = parseInt(document.getElementById("month-select").value);
@@ -916,7 +1061,7 @@ for (const name of allEmployeeNames) {
           periodLabel = `Month: ${document.getElementById("month-select").options[monthVal].text} ${yearVal}${projectFilterName ? " | Project: " + projectFilterName : ""}`;
           filterUsages = allUsages.filter(u => u._date && isSameMonthYear(u._date, monthVal, yearVal));
           filterTransfers = allTransfers.filter(d => d._date && isSameMonthYear(d._date, monthVal, yearVal));
-        } else {
+        } else if (forWeek) {
           const weekToReport = week;
           periodLabel = `Week ${weekToReport} (${weekYear})${projectFilterName ? " | Project: " + projectFilterName : ""}`;
           filterUsages = allUsages.filter(u => {
@@ -928,6 +1073,17 @@ for (const name of allEmployeeNames) {
             if (!d._date) return false;
             const { week: w, year: y } = getWeekNumberFromDate(d._date);
             return w === weekToReport && y === weekYear;
+          });
+        } else if (forYear) {
+          const yearToReport = yearOnly;
+          periodLabel = `Year: ${yearToReport}${projectFilterName ? " | Project: " + projectFilterName : ""}`;
+          filterUsages = allUsages.filter(u => {
+            if (!u._date) return false;
+            return isSameYear(u._date, yearToReport);
+          });
+          filterTransfers = allTransfers.filter(d => {
+            if (!d._date) return false;
+            return isSameYear(d._date, yearToReport);
           });
         }
 
@@ -941,11 +1097,11 @@ for (const name of allEmployeeNames) {
 
         // Cash Report Section
         const {accountTotals, grandTotal, accounts} = await getAccountTotalsForCashReport(
-          month, year, forMonth, week, forWeek, weekYear, projectFilter
+          month, year, forMonth, week, forWeek, weekYear, forYear, yearOnly, projectFilter
         );
 
         mainHtml += `
-        <div id="cash-report-section">
+        <div class="pdf-section" id="cash-report-section">
           <h2 style="color:#1976d2;">Cash Received Report</h2>
           <table class="report-table">
             <thead>
@@ -972,92 +1128,95 @@ for (const name of allEmployeeNames) {
         </div>`;
 
         // --- INVENTORY FLOW BREAKDOWN ---
-    let breakdownRows = [];
-let generalUseTotals = {};
-let closingBalance = 0;
+        let breakdownRows = [];
+        let generalUseTotals = {};
+        let closingBalance = 0;
 
-if (usageCheckbox.checked) {
-  filterUsages.slice().sort((a, b) => {
-    let dA = a.assignedAt && a.assignedAt.toDate ? a.assignedAt.toDate() : (a._date || new Date());
-    let dB = b.assignedAt && b.assignedAt.toDate ? b.assignedAt.toDate() : (b._date || new Date());
-    return dA - dB;
-  }).forEach(u => {
-    const dateStr = u.assignedAt && u.assignedAt.toDate ? u.assignedAt.toDate().toLocaleDateString() : "-";
-    const taskId = u.taskId || "-";
-    const name = u.materialName || "-";
-    const qty = Number(u.quantity || 0);
-    const unitPrice = Number(u.unitPrice || 0);
-    const total = qty * unitPrice;
-    breakdownRows.push({ dateStr, taskId, name, qty, unitPrice, total });
-    generalUseTotals[name] = (generalUseTotals[name] || 0) + qty;
-    closingBalance += total;
-  });
-}
+        if (usageCheckbox.checked) {
+          filterUsages.slice().sort((a, b) => {
+            let dA = a.assignedAt && a.assignedAt.toDate ? a.assignedAt.toDate() : (a._date || new Date());
+            let dB = b.assignedAt && b.assignedAt.toDate ? b.assignedAt.toDate() : (b._date || new Date());
+            return dA - dB;
+          }).forEach(u => {
+            const dateStr = u.assignedAt && u.assignedAt.toDate ? u.assignedAt.toDate().toLocaleDateString() : "-";
+            const taskId = u.taskId || "-";
+            const name = u.materialName || "-";
+            const qty = Number(u.quantity || 0);
+            const unitPrice = Number(u.unitPrice || 0);
+            const total = qty * unitPrice;
+            breakdownRows.push({ dateStr, taskId, name, qty, unitPrice, total });
+            generalUseTotals[name] = (generalUseTotals[name] || 0) + qty;
+            closingBalance += total;
+          });
+        }
 
         const generalUseArr = Object.entries(generalUseTotals).map(([name, totalUsed]) => ({ name, totalUsed }));
 
         mainHtml += `
-          <h2 style="color:#1976d2;">${periodLabel} Inventory Flow Breakdown ${projectFilterName ? " - " + projectFilterName : ""}</h2>
-          <div class="total-cost-incurred">Total Cost Incurred: ZMW ${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
-          <h3>Break down use</h3>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Task ID</th>
-                <th>Name</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${breakdownRows.map(r => `
+          <div class="pdf-section">
+            <h2 style="color:#1976d2;">${periodLabel} Inventory Flow Breakdown ${projectFilterName ? " - " + projectFilterName : ""}</h2>
+            <div class="total-cost-incurred">Total Cost Incurred: ZMW ${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
+            <h3 class="pdf-heading">Break down use</h3>
+            <table class="report-table">
+              <thead>
                 <tr>
-                  <td>${r.dateStr}</td>
-                  <td>${r.taskId}</td>
-                  <td>${r.name}</td>
-                  <td>${r.qty}</td>
-                  <td>${r.unitPrice}</td>
-                  <td>${r.total}</td>
+                  <th>Date</th>
+                  <th>Task ID</th>
+                  <th>Name</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
                 </tr>
-              `).join('')}
-              <tr class="total-row">
-                <td colspan="5" style="text-align:right;">Closing Balance</td>
-                <td>${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-              </tr>
-            </tbody>
-          </table>
-          <h4>General use summary</h4>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Material Name</th>
-                <th>Total Used</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${generalUseArr.map(g => `
+              </thead>
+              <tbody>
+                ${breakdownRows.map(r => `
+                  <tr>
+                    <td>${r.dateStr}</td>
+                    <td>${r.taskId}</td>
+                    <td>${r.name}</td>
+                    <td>${r.qty}</td>
+                    <td>${r.unitPrice}</td>
+                    <td>${r.total}</td>
+                  </tr>
+                `).join('')}
+                <tr class="total-row">
+                  <td colspan="5" style="text-align:right;">Closing Balance</td>
+                  <td>${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                </tr>
+              </tbody>
+            </table>
+            <h4 class="pdf-heading">General use summary</h4>
+            <table class="report-table">
+              <thead>
                 <tr>
-                  <td>${g.name}</td>
-                  <td>${g.totalUsed}</td>
+                  <th>Material Name</th>
+                  <th>Total Used</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                ${generalUseArr.map(g => `
+                  <tr>
+                    <td>${g.name}</td>
+                    <td>${g.totalUsed}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         `;
 
         // Inventory Flow Report
         mainHtml += `
-        <h3>Inventory Flow Report</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th>Cost Incurred</th>
-            </tr>
-          </thead>
-          <tbody>`;
+        <div class="pdf-section">
+          <h3 class="pdf-heading">Inventory Flow Report</h3>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Project Name</th>
+                <th>Cost Incurred</th>
+              </tr>
+            </thead>
+            <tbody>`;
         
         filterUsages.forEach(u => {
           if (u.reversed) return;
@@ -1089,20 +1248,22 @@ if (usageCheckbox.checked) {
   </tr>
   </tbody>
   </table>
+</div>
 `;
 
 // Man Hour Summary
 mainHtml += `
-  <h3>Man Hour Summary</h3>
-  <table class="report-table">
-    <thead>
-      <tr>
-        <th>Project</th>
-        <th>MAN HOUR</th>
-        <th>COST</th>
-      </tr>
-    </thead>
-    <tbody>
+  <div class="pdf-section">
+    <h3 class="pdf-heading">Man Hour Summary</h3>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>MAN HOUR</th>
+          <th>COST</th>
+        </tr>
+      </thead>
+      <tbody>
 `;
         
 filterTransfers.forEach(d => {
@@ -1138,10 +1299,11 @@ mainHtml += `
       </tr>
     </tfoot>
   </table>
+</div>
 `;
 
  // Add Employee Tracker Table
-        const periodObj = forMonth ? {month, year} : {week, year: weekYear};
+        const periodObj = forMonth ? {month, year} : forWeek ? {week, year: weekYear} : {year: yearOnly};
         const employeeTrackerHtml = await generateEmployeeTracker(
           reportTypeSelect.value, 
           periodObj, 
@@ -1188,115 +1350,137 @@ mainHtml += `
             }
             return inWeek;
           });
+        } else if (forYear) {
+          completedTasks = filteredTasksFlat.filter(t => {
+            if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
+            let inYear = false;
+            if (t.startDate) {
+              const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
+              if (sd.getFullYear() === yearOnly) inYear = true;
+            }
+            if (t.endDate) {
+              const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
+              if (ed.getFullYear() === yearOnly) inYear = true;
+            }
+            return inYear;
+          });
         }
 
         ongoingTasks = showOngoing ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing') : [];
         pendingTasks = showPending ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending') : [];
 
         // COMPLETED TASKS TABLE
-        mainHtml += `
-        <h3>COMPLETED TASKS</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>PROJECT</th>
-              <th>TASK ID</th>
-              <th>TASK DESCRIPTION</th>
-              <th>ASSIGNED</th>
-              <th>LOCATION</th>
-              <th>STATUS</th>
-              <th>START DATE</th>
-              <th>END DATE</th>
-              <th>DURATION (Hrs)</th>
-              <th>MATERIAL COST</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${completedTasks.map(row => `
-              <tr>
-                <td>${safeProjectName(row)}</td>
-                <td>${row.taskId || '-'}</td>
-                <td>${row.taskDescription || '-'}</td>
-                <td>${row.assignedTo || '-'}</td>
-                <td>${row.location || '-'}</td>
-                <td>${row.status || '-'}</td>
-                <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
-                <td>${row._durationHours || '0'}</td>
-                <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>`;
-
-        if (showOngoing) {
+        if (completedTasks.length > 0) {
           mainHtml += `
-          <h3>ONGOING TASKS</h3>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>PROJECT</th>
-                <th>TASK ID</th>
-                <th>TASK DESCRIPTION</th>
-                <th>ASSIGNED</th>
-                <th>LOCATION</th>
-                <th>STATUS</th>
-                <th>START DATE</th>
-                <th>DURATION (Hrs)</th>
-                <th>MATERIAL COST</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${ongoingTasks.map(row => `
+          <div class="pdf-section">
+            <h3 class="pdf-heading">COMPLETED TASKS</h3>
+            <table class="report-table">
+              <thead>
                 <tr>
-                  <td>${safeProjectName(row)}</td>
-                  <td>${row.taskId || '-'}</td>
-                  <td>${row.taskDescription || '-'}</td>
-                  <td>${row.assignedTo || '-'}</td>
-                  <td>${row.location || '-'}</td>
-                  <td>${row.status || '-'}</td>
-                  <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                  <td>${row._durationHours || '0'}</td>
-                  <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  <th>PROJECT</th>
+                  <th>TASK ID</th>
+                  <th>TASK DESCRIPTION</th>
+                  <th>ASSIGNED</th>
+                  <th>LOCATION</th>
+                  <th>STATUS</th>
+                  <th>START DATE</th>
+                  <th>END DATE</th>
+                  <th>DURATION (Hrs)</th>
+                  <th>MATERIAL COST</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>`;
+              </thead>
+              <tbody>
+                ${completedTasks.map(row => `
+                  <tr>
+                    <td>${safeProjectName(row)}</td>
+                    <td>${row.taskId || '-'}</td>
+                    <td>${row.taskDescription || '-'}</td>
+                    <td>${row.assignedTo || '-'}</td>
+                    <td>${row.location || '-'}</td>
+                    <td>${row.status || '-'}</td>
+                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                    <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
+                    <td>${row._durationHours || '0'}</td>
+                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
         }
 
-        if (showPending) {
+        if (showOngoing && ongoingTasks.length > 0) {
           mainHtml += `
-          <h3>PENDING TASKS</h3>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>PROJECT</th>
-                <th>TASK ID</th>
-                <th>TASK DESCRIPTION</th>
-                <th>ASSIGNED</th>
-                <th>LOCATION</th>
-                <th>STATUS</th>
-                <th>START DATE</th>
-                <th>DURATION (Hrs)</th>
-                <th>MATERIAL COST</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${pendingTasks.map(row => `
+          <div class="pdf-section">
+            <h3 class="pdf-heading">ONGOING TASKS</h3>
+            <table class="report-table">
+              <thead>
                 <tr>
-                  <td>${safeProjectName(row)}</td>
-                  <td>${row.taskId || '-'}</td>
-                  <td>${row.taskDescription || '-'}</td>
-                  <td>${row.assignedTo || '-'}</td>
-                  <td>${row.location || '-'}</td>
-                  <td>${row.status || '-'}</td>
-                  <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                  <td>${row._durationHours || '0'}</td>
-                  <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  <th>PROJECT</th>
+                  <th>TASK ID</th>
+                  <th>TASK DESCRIPTION</th>
+                  <th>ASSIGNED</th>
+                  <th>LOCATION</th>
+                  <th>STATUS</th>
+                  <th>START DATE</th>
+                  <th>DURATION (Hrs)</th>
+                  <th>MATERIAL COST</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>`;
+              </thead>
+              <tbody>
+                ${ongoingTasks.map(row => `
+                  <tr>
+                    <td>${safeProjectName(row)}</td>
+                    <td>${row.taskId || '-'}</td>
+                    <td>${row.taskDescription || '-'}</td>
+                    <td>${row.assignedTo || '-'}</td>
+                    <td>${row.location || '-'}</td>
+                    <td>${row.status || '-'}</td>
+                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                    <td>${row._durationHours || '0'}</td>
+                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        }
+
+        if (showPending && pendingTasks.length > 0) {
+          mainHtml += `
+          <div class="pdf-section">
+            <h3 class="pdf-heading">PENDING TASKS</h3>
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>PROJECT</th>
+                  <th>TASK ID</th>
+                  <th>TASK DESCRIPTION</th>
+                  <th>ASSIGNED</th>
+                  <th>LOCATION</th>
+                  <th>STATUS</th>
+                  <th>START DATE</th>
+                  <th>DURATION (Hrs)</th>
+                  <th>MATERIAL COST</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pendingTasks.map(row => `
+                  <tr>
+                    <td>${safeProjectName(row)}</td>
+                    <td>${row.taskId || '-'}</td>
+                    <td>${row.taskDescription || '-'}</td>
+                    <td>${row.assignedTo || '-'}</td>
+                    <td>${row.location || '-'}</td>
+                    <td>${row.status || '-'}</td>
+                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
+                    <td>${row._durationHours || '0'}</td>
+                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>`;
         }
 
         mainHtml += `</div>`;
@@ -1316,19 +1500,38 @@ mainHtml += `
       }
     };
 
-    document.getElementById("download-pdf-btn").onclick = function() {
-      if (!lastReportHTML) return;
-      const section = document.getElementById("report-export-section");
-      const opt = {
-        margin: 0.2,
-        filename: `${lastReportType}-${lastReportPeriod.replace(/[^a-zA-Z0-9]/g,"_")}-full-report.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, scrollY: 0, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-      html2pdf().from(section).set(opt).save();
-    };
+   document.getElementById("download-pdf-btn").onclick = function() {
+  if (!lastReportHTML) return;
+  const section = document.getElementById("report-export-section");
+
+  // sanitize blanks before export
+  section.querySelectorAll("td, span, div").forEach(el => {
+    if (!el.innerText || el.innerText === "undefined" || el.innerText === "null") {
+      el.innerText = "0";  // replace with safe value
+    }
+  });
+
+  // enforce supported font
+  section.style.fontFamily = "Arial, Helvetica, sans-serif";
+
+  const opt = {
+    margin: 0.2,
+    filename: `${lastReportType}-${lastReportPeriod.replace(/[^a-zA-Z0-9]/g,"_")}-full-report.pdf`,
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: { 
+      scale: 2, 
+      scrollY: 0, 
+      useCORS: true, 
+      logging: false, 
+      windowWidth: document.body.scrollWidth
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  html2pdf().from(section).set(opt).save();
+};
+
 
     // Initialize the page
     updateDefaultWeekAndMonth();
