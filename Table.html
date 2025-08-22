@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { font-family: Arial, sans-serif; background: #f7fafd; margin: 0; }
-    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.06); margin: 40px auto; padding: 30px;}
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.06); margin: 40px auto; padding: 30px; max-width: 1800px; }
     .panel-heading { background: #1976d2; color: #fff; padding: 18px 24px; font-size: 1.25rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; letter-spacing: 0.08em; }
     .filter-bar { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;}
     label { font-weight: 600; margin-right: 7px; }
@@ -83,6 +84,7 @@
       align-items: center;
       margin-left: 12px;
       font-size: 0.97rem;
+      flex-wrap: wrap;
     }
     .toggle-tasks label {
       font-weight: normal;
@@ -100,6 +102,91 @@
     .project-filter-block { margin-left: 10px; }
     .project-filter-block label { font-weight: 600; margin-right: 6px; }
     #project-select { padding: 6px 14px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
+    
+    /* Employee Tracker Styles */
+    .tracker-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 0.8rem;
+      table-layout: fixed;
+    }
+    .tracker-table th, .tracker-table td {
+      text-align: left;
+      padding: 6px 3px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+    .tracker-table th {
+      color: #222;
+      font-weight: bold;
+      background: #f1f7fe;
+      font-size: 0.75rem;
+    }
+    .tracker-table tr:nth-child(even) { background: #f9fbfd; }
+    .comment-cell { 
+      width: 200px;
+    }
+    .comment-input {
+      width: 100%;
+      padding: 4px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-size: 0.75rem;
+    }
+    .project-breakdown { 
+      width: 250px;
+      line-height: 1.3;
+      font-size: 0.68rem;
+      color: #137c05;
+      font-weight: bolder;
+    }
+    .name-cell {
+      width: 180px;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .mh-cell, .unworked-cell, .workdays-cell, .absent-cell, .leave-cell, .sick-cell {
+      width: 70px;
+      text-align: center;
+      font-size: 0.78rem;
+    }
+    @media (max-width: 900px) {
+      .panel { 
+        padding: 10px; 
+        margin: 10px;
+      }
+      .tracker-table {
+        font-size: 0.7rem;
+      }
+      .tracker-table th, .tracker-table td { 
+        padding: 4px 2px; 
+      }
+      .filter-bar { 
+        flex-direction: column; 
+        align-items: flex-start; 
+      }
+      .project-breakdown {
+        width: 180px;
+        font-size: 0.6rem;
+      }
+      .name-cell {
+        width: 140px;
+        font-size: 0.7rem;
+      }
+      .mh-cell, .unworked-cell, .workdays-cell, .absent-cell, .leave-cell, .sick-cell {
+        width: 50px;
+        font-size: 0.7rem;
+      }
+      .comment-cell {
+        width: 120px;
+      }
+      .comment-input {
+        font-size: 0.65rem;
+      }
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -107,7 +194,7 @@
   <div class="panel">
     <div class="panel-heading">
       <a href="dashboard.html" class="btn btn-outline">
-        <i class="fas fa-arrow-left"></i> Back
+        ← Back
       </a>IMS Weekly & Monthly Stock & Man Hour Report
     </div>
     <div class="filter-bar">
@@ -150,6 +237,8 @@
       <div class="toggle-tasks">
         <label><input type="checkbox" id="show-ongoing-checkbox" checked>Show Ongoing Tasks</label>
         <label><input type="checkbox" id="show-pending-checkbox" checked>Show Pending Tasks</label>
+        <label><input type="checkbox" id="show-usage-checkbox" checked>Show Material Usage (Breakdown & General)</label>
+
       </div>
       <button id="generate-report-btn">Generate Report</button>
       <button id="download-pdf-btn" disabled>Download as PDF</button>
@@ -189,8 +278,49 @@
     let projectCache = {};
     let taskHourCache = {};
     let taskMaterialCache = {};
-
     let projectOptions = {};
+
+    // UI controls
+    const reportTypeSelect = document.getElementById("report-type-select");
+    const weekControls = document.getElementById("week-controls");
+    const monthControls = document.getElementById("month-controls");
+    const showOngoingCheckbox = document.getElementById("show-ongoing-checkbox");
+    const showPendingCheckbox = document.getElementById("show-pending-checkbox");
+    const usageCheckbox = document.getElementById('show-usage-checkbox');
+
+    const projectSelect = document.getElementById("project-select");
+    const reportOutput = document.getElementById("report-output");
+    let lastReportHTML = '';
+    let lastReportType = '';
+    let lastReportPeriod = '';
+
+    // ===== COMMENT PERSISTENCE =====
+    // Load all comments from localStorage
+    function loadAllComments() {
+      try {
+        return JSON.parse(localStorage.getItem("ims_comments")) || {};
+      } catch {
+        return {};
+      }
+    }
+    // Save all comments to localStorage
+    function saveAllComments(commentsData) {
+      try {
+        localStorage.setItem("ims_comments", JSON.stringify(commentsData));
+      } catch {}
+    }
+    let commentsData = loadAllComments();
+
+    // Period switch
+    reportTypeSelect.onchange = function() {
+      if (reportTypeSelect.value === "week") {
+        weekControls.style.display = "";
+        monthControls.style.display = "none";
+      } else {
+        weekControls.style.display = "none";
+        monthControls.style.display = "";
+      }
+    };
 
     function getWeekNumber(d) {
       d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -368,6 +498,240 @@
       return all;
     }
 
+    // Fetch all employees from Firestore
+    async function fetchEmployees() {
+      const empSnap = await getDocs(collection(db, "employees"));
+      const empMap = {};
+      empSnap.forEach(doc => {
+        const data = doc.data();
+        const fullName = ((data.name || "") + " " + (data.surname || "")).trim().toUpperCase();
+        empMap[fullName] = { id: doc.id, ...data };
+      });
+      return empMap;
+    }
+
+    // Fetch location history for MH calculation
+    async function fetchLocationHistory(periodType, periodObj, projectFilter) {
+      const locSnap = await getDocs(query(collection(db, "locationHistory"), orderBy("transferredAt", "desc")));
+      const locMap = {};
+      locSnap.forEach(doc => {
+        const data = doc.data();
+        if (!data.employeeId || !data.transferredAt || data.reversed) return;
+        const d = data.transferredAt.toDate ? data.transferredAt.toDate() : new Date(data.transferredAt);
+        let inPeriod = false;
+        
+        if (periodType === "month") {
+          if (isSameMonthYear(d, periodObj.month, periodObj.year)) inPeriod = true;
+        } else {
+          const { week, year } = getWeekNumberFromDate(d);
+          if (week === periodObj.week && year === periodObj.year) inPeriod = true;
+        }
+        
+        if (inPeriod) {
+          // Apply project filter
+          if (projectFilter && data.projectId !== projectFilter) return;
+          
+          if (!locMap[data.employeeId]) locMap[data.employeeId] = [];
+          locMap[data.employeeId].push({...data, _date: d, id: doc.id});
+        }
+      });
+      return locMap;
+    }
+
+    // Helper: Get project hours breakdown string for employee for the selected period
+    function getProjectHoursBreakdown(employeeLocRecords) {
+      const projectHours = {};
+
+      employeeLocRecords.forEach(record => {
+        let projectName =
+          record.projectName ||
+          record.project ||
+          (
+            record.taskDescription
+            ? record.taskDescription.split(' - ')[0]
+            : ""
+          );
+
+        if (!projectName) projectName = "UNKNOWN PROJECT";
+
+        const hours = Number(record.mh) || 0;
+        if (!projectHours[projectName]) projectHours[projectName] = 0;
+        projectHours[projectName] += hours;
+      });
+
+      // Format breakdown string: "Painting (32) Doors installation (16)"
+      let breakdown = "";
+      for (const [project, hours] of Object.entries(projectHours)) {
+        if (hours > 0) {
+          breakdown += `${project} (${hours}) `;
+        }
+      }
+      return breakdown.trim() || "No project data";
+    }
+
+    // Generate employee tracker table
+    async function generateEmployeeTracker(periodType, periodObj, projectFilter, projectFilterName) {
+      try {
+        // Fetch employees and location history
+        const [empMap, locMap] = await Promise.all([
+          fetchEmployees(),
+          fetchLocationHistory(periodType, periodObj, projectFilter)
+        ]);
+
+        // Remove Techno Department and Christopher Chishela
+        const allEmployeeNames = Object.keys(empMap)
+          .filter(name =>
+            !name.includes("TECHNO DEPARTMENT") &&
+            !name.includes("CHRISTOPHER CHISHELA")
+          )
+          .sort();
+
+       let html = `
+  <h3 style="color:#1976d2; margin: 30px 0 15px 0;">
+    ${periodType === 'week' ? 'Week' : 'Month'} 
+    ${periodObj.week || periodObj.month + 1} 
+    (${periodObj.year}) Employee Days / MH Tracker 
+    ${projectFilterName ? " - " + projectFilterName : ""}
+  </h3>
+  <table class="tracker-table">
+    <thead>
+      <tr>
+        <th class="name-cell">NAME</th>
+        <th class="project-breakdown">PROJECT NAME & HOURS BREAKDOWN</th>
+        <th class="mh-cell">MH</th>
+        <th class="unworked-cell">UNWORKED</th>
+        <th class="workdays-cell">W/D</th>
+        <th class="absent-cell">A/DAYS</th>
+        <th class="leave-cell">L/DAYS</th>
+        <th class="sick-cell">S/DAY</th>
+        <th class="comment-cell">COMMENT</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+
+let totalMH = 0;
+let totalUnworked = 0;
+let totalWorkDays = 0;
+let totalAbsentDays = 0;
+let totalLeaveDays = 0;
+let totalSickDays = 0;
+
+for (const name of allEmployeeNames) {
+  const emp = empMap[name] || null;
+  let employeeId = emp ? emp.id : null;
+
+
+          // LocationHistory records for this employee in the selected period
+          const employeeLocRecords = (employeeId && locMap[employeeId]) ? locMap[employeeId] : [];
+
+          // MH
+          let mhWorked = employeeLocRecords.reduce((sum, record) => sum + (Number(record.mh) || 0), 0);
+
+          // Project Hours Breakdown
+          const projectHoursBreakdown = getProjectHoursBreakdown(employeeLocRecords);
+
+          // W/D calculation: count unique dates EXCEPT those where taskDescription includes absent, sick, or leave
+          const workedDaysSet = new Set();
+          // For each type, count unique dates with those taskDescriptions
+          const absentDaysSet = new Set();
+          const leaveDaysSet = new Set();
+          const sickDaysSet = new Set();
+
+          employeeLocRecords.forEach(record => {
+            const desc = (record.taskDescription || "").toLowerCase();
+            const d = record._date;
+            const dayStr = d.toISOString().slice(0, 10);
+
+            if (desc.indexOf("absent") !== -1) {
+              absentDaysSet.add(dayStr);
+            }
+            if (desc.indexOf("leave") !== -1) {
+              leaveDaysSet.add(dayStr);
+            }
+            if (desc.indexOf("sick") !== -1) {
+              sickDaysSet.add(dayStr);
+            }
+            // Worked day = not absent/leave/sick
+            if (
+              desc.indexOf("absent") === -1 &&
+              desc.indexOf("leave") === -1 &&
+              desc.indexOf("sick") === -1
+            ) {
+              workedDaysSet.add(dayStr);
+            }
+          });
+
+          let workDays = workedDaysSet.size;
+          let absentDays = absentDaysSet.size;
+          let leaveDays = leaveDaysSet.size;
+          let sickDays = sickDaysSet.size;
+
+          // Unworked hours
+          let unworkedHours = 0;
+          if (periodType === "week") {
+            unworkedHours = 45 - mhWorked;
+          }
+
+          totalMH += mhWorked;
+          totalUnworked += unworkedHours;
+          totalWorkDays += workDays;
+          totalAbsentDays += absentDays;
+          totalLeaveDays += leaveDays;
+          totalSickDays += sickDays;
+
+          // COMMENT LOGIC - unique per employee per period
+          const commentId = `${name}-${periodType}-${periodObj.week || periodObj.month}-${periodObj.year}`;
+          // Load from persisted commentsData
+          const savedComment = commentsData[commentId] || "";
+
+          html += `<tr>
+            <td class="name-cell">${name}</td>
+            <td class="project-breakdown">${projectHoursBreakdown}</td>
+            <td class="mh-cell">${mhWorked.toFixed(1)}</td>
+            <td class="unworked-cell">${periodType === "week" ? (unworkedHours > 0 ? unworkedHours.toFixed(1) : 0) : ""}</td>
+            <td class="workdays-cell">${workDays}</td>
+            <td class="absent-cell">${absentDays}</td>
+            <td class="leave-cell">${leaveDays}</td>
+            <td class="sick-cell">${sickDays}</td>
+            <td class="comment-cell">
+              <input type="text" class="comment-input" data-id="${commentId}" 
+                     value="${savedComment}" placeholder="Add comment">
+            </td>
+          </tr>`;
+        }
+
+        html += `<tr class="total-row">
+          <td>TOTAL</td>
+          <td></td>
+          <td>${totalMH.toFixed(1)}</td>
+          <td>${totalUnworked.toFixed(1)}</td>
+          <td>${totalWorkDays}</td>
+          <td>${totalAbsentDays}</td>
+          <td>${totalLeaveDays}</td>
+          <td>${totalSickDays}</td>
+          <td></td>
+        </tr>`;
+
+        html += `</tbody></table>`;
+
+        // ===== Save comments instantly and persistently =====
+        setTimeout(() => {
+          document.querySelectorAll('.comment-input').forEach(input => {
+            input.addEventListener('change', function() {
+              commentsData[this.dataset.id] = this.value;
+              saveAllComments(commentsData);
+            });
+          });
+        }, 100);
+
+        return html;
+      } catch (err) {
+        console.error("Error generating employee tracker:", err);
+        return `<p style="color:red;">Error generating employee tracker: ${err.message}</p>`;
+      }
+    }
+
     onSnapshot(collection(db, "projectDashboard"), snapshot => {
       snapshot.docs.forEach(docSnap => {
         const d = docSnap.data();
@@ -458,7 +822,7 @@
       });
       allTransfers.forEach(d => {
         if (d._week && d._week > latestMHWeek) latestMHWeek = d._week;
-        if (d._date && (!latestStockDate || d._date > latestStockDate)) latestStockDate = d._date;
+        if (d._date && (!latestStockDate || d._date > latestStockDate)) latestStockDate = u._date;
       });
       let wk = Math.max(latestStockWeek, latestMHWeek) || 1;
       const now = new Date();
@@ -472,27 +836,6 @@
         document.getElementById("year-select").value = now.getFullYear();
       }
     }
-
-    let lastReportHTML = '';
-    let lastReportType = '';
-    let lastReportPeriod = '';
-
-    const reportTypeSelect = document.getElementById("report-type-select");
-    const weekControls = document.getElementById("week-controls");
-    const monthControls = document.getElementById("month-controls");
-    const showOngoingCheckbox = document.getElementById("show-ongoing-checkbox");
-    const showPendingCheckbox = document.getElementById("show-pending-checkbox");
-    const projectSelect = document.getElementById("project-select");
-
-    reportTypeSelect.onchange = function() {
-      if (reportTypeSelect.value === "week") {
-        weekControls.style.display = "";
-        monthControls.style.display = "none";
-      } else {
-        weekControls.style.display = "none";
-        monthControls.style.display = "";
-      }
-    };
 
     async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear, projectIdFilter) {
       const expensesCol = collection(db, "General expenses");
@@ -542,6 +885,7 @@
       generateBtn.disabled = true;
       generateBtn.textContent = "Generating...";
       document.getElementById("report-output").innerHTML = '<div class="loading-spinner"></div><p style="text-align:center;">Generating report, please wait...</p>';
+      
       try {
         taskHourCache = {};
         taskMaterialCache = {};
@@ -587,245 +931,134 @@
           });
         }
 
-        // PROJECT SPECIFIC OUTPUT
-        if (isSpecificProject) {
+        // Apply project filter
+        if (projectFilter) {
           filterUsages = filterUsages.filter(u => u.projectId === projectFilter);
-
-          // --- INVENTORY FLOW BREAKDOWN ---
-          let breakdownRows = [];
-          let generalUseTotals = {};
-          let closingBalance = 0;
-
-          filterUsages.slice().sort((a, b) => {
-            let dA = a.assignedAt && a.assignedAt.toDate ? a.assignedAt.toDate() : (a._date || new Date());
-            let dB = b.assignedAt && b.assignedAt.toDate ? b.assignedAt.toDate() : (b._date || new Date());
-            return dA - dB;
-          }).forEach(u => {
-            const dateStr = u.assignedAt && u.assignedAt.toDate ? u.assignedAt.toDate().toLocaleDateString() : "-";
-            const taskId = u.taskId || "-";
-            const name = u.materialName || "-";
-            const qty = Number(u.quantity || 0);
-            const unitPrice = Number(u.unitPrice || 0);
-            const total = qty * unitPrice;
-            breakdownRows.push({ dateStr, taskId, name, qty, unitPrice, total });
-            generalUseTotals[name] = (generalUseTotals[name] || 0) + qty;
-            closingBalance += total;
-          });
-
-          const generalUseArr = Object.entries(generalUseTotals).map(([name, totalUsed]) => ({ name, totalUsed }));
-
-          let mainHtml = `<div id="report-export-section">`;
-
-          mainHtml += `
-            <h2 style="color:#1976d2;">${periodLabel} Inventory Flow Breakdown - ${projectFilterName}</h2>
-            <div class="total-cost-incurred">Total Cost Incurred: ZMW ${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
-            <h3>Break down use</h3>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Task ID</th>
-                  <th>Name</th>
-                  <th>Qty</th>
-                  <th>Unit Price</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${breakdownRows.map(r => `
-                  <tr>
-                    <td>${r.dateStr}</td>
-                    <td>${r.taskId}</td>
-                    <td>${r.name}</td>
-                    <td>${r.qty}</td>
-                    <td>${r.unitPrice}</td>
-                    <td>${r.total}</td>
-                  </tr>
-                `).join('')}
-                <tr class="total-row">
-                  <td colspan="5" style="text-align:right;">Closing Balance</td>
-                  <td>${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-                </tr>
-              </tbody>
-            </table>
-            <h4>General use summary</h4>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>Material Name</th>
-                  <th>Total Used</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${generalUseArr.map(g => `
-                  <tr>
-                    <td>${g.name}</td>
-                    <td>${g.totalUsed}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          `;
-
-          // ADD COMPLETED, ONGOING, AND PENDING TASKS FOR SPECIFIC PROJECT
-          let completedTasks = [], ongoingTasks = [], pendingTasks = [];
-          let filteredTasksFlat = allTasksFlat.filter(t => t.projectId === projectFilter);
-
-          if (forMonth) {
-            completedTasks = filteredTasksFlat.filter(t => {
-              if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
-              let inMonth = false;
-              if (t.startDate) {
-                const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-                if (sd.getMonth() === month && sd.getFullYear() === year) inMonth = true;
-              }
-              if (t.endDate) {
-                const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
-                if (ed.getMonth() === month && ed.getFullYear() === year) inMonth = true;
-              }
-              return inMonth;
-            });
-          } else if (forWeek) {
-            completedTasks = filteredTasksFlat.filter(t => {
-              if (!t.status || (t.status || '').toLowerCase() !== 'completed') return false;
-              let inWeek = false;
-              if (t.startDate) {
-                const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-                const { week: w, year: y } = getWeekNumberFromDate(sd);
-                if (w === week && y === weekYear) inWeek = true;
-              }
-              if (t.endDate) {
-                const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
-                const { week: w, year: y } = getWeekNumberFromDate(ed);
-                if (w === week && y === weekYear) inWeek = true;
-              }
-              return inWeek;
-            });
-          }
-
-          ongoingTasks = showOngoing ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing') : [];
-          pendingTasks = showPending ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending') : [];
-
-          // COMPLETED TASKS TABLE
-          mainHtml += `
-          <h3>COMPLETED TASKS</h3>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>PROJECT</th>
-                <th>TASK ID</th>
-                <th>TASK DESCRIPTION</th>
-                <th>ASSIGNED</th>
-                <th>LOCATION</th>
-                <th>STATUS</th>
-                <th>START DATE</th>
-                <th>END DATE</th>
-                <th>DURATION (Hrs)</th>
-                <th>MATERIAL COST</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${completedTasks.map(row => `
-                <tr>
-                  <td>${safeProjectName(row)}</td>
-                  <td>${row.taskId || '-'}</td>
-                  <td>${row.taskDescription || '-'}</td>
-                  <td>${row.assignedTo || '-'}</td>
-                  <td>${row.location || '-'}</td>
-                  <td>${row.status || '-'}</td>
-                  <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                  <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
-                  <td>${row._durationHours || '0'}</td>
-                  <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>`;
-
-          if (showOngoing) {
-            mainHtml += `
-            <h3>ONGOING TASKS</h3>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>PROJECT</th>
-                  <th>TASK ID</th>
-                  <th>TASK DESCRIPTION</th>
-                  <th>ASSIGNED</th>
-                  <th>LOCATION</th>
-                  <th>STATUS</th>
-                  <th>START DATE</th>
-                  <th>DURATION (Hrs)</th>
-                  <th>MATERIAL COST</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${ongoingTasks.map(row => `
-                  <tr>
-                    <td>${safeProjectName(row)}</td>
-                    <td>${row.taskId || '-'}</td>
-                    <td>${row.taskDescription || '-'}</td>
-                    <td>${row.assignedTo || '-'}</td>
-                    <td>${row.location || '-'}</td>
-                    <td>${row.status || '-'}</td>
-                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                    <td>${row._durationHours || '0'}</td>
-                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>`;
-          }
-
-          if (showPending) {
-            mainHtml += `
-            <h3>PENDING TASKS</h3>
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>PROJECT</th>
-                  <th>TASK ID</th>
-                  <th>TASK DESCRIPTION</th>
-                  <th>ASSIGNED</th>
-                  <th>LOCATION</th>
-                  <th>STATUS</th>
-                  <th>START DATE</th>
-                  <th>DURATION (Hrs)</th>
-                  <th>MATERIAL COST</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${pendingTasks.map(row => `
-                  <tr>
-                    <td>${safeProjectName(row)}</td>
-                    <td>${row.taskId || '-'}</td>
-                    <td>${row.taskDescription || '-'}</td>
-                    <td>${row.assignedTo || '-'}</td>
-                    <td>${row.location || '-'}</td>
-                    <td>${row.status || '-'}</td>
-                    <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-                    <td>${row._durationHours || '0'}</td>
-                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>`;
-          }
-
-          mainHtml += `</div>`;
-          document.getElementById("report-output").innerHTML = mainHtml;
-          lastReportHTML = mainHtml;
-          lastReportType = reportTypeSelect.value;
-          lastReportPeriod = periodLabel;
-          document.getElementById("download-pdf-btn").disabled = false;
-          return;
+          filterTransfers = filterTransfers.filter(d => d.projectId === projectFilter);
         }
 
-        // DEFAULT REPORT (ALL PROJECTS)
+        let mainHtml = `<div id="report-export-section">`;
+
+        // Cash Report Section
         const {accountTotals, grandTotal, accounts} = await getAccountTotalsForCashReport(
           month, year, forMonth, week, forWeek, weekYear, projectFilter
         );
 
+        mainHtml += `
+        <div id="cash-report-section">
+          <h2 style="color:#1976d2;">Cash Received Report</h2>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Account name</th>
+                <th>Total cost incurred</th>
+              </tr>
+            </thead>
+            <tbody>`;
+        accounts.forEach(acc => {
+          mainHtml += `
+            <tr>
+              <td>${acc}</td>
+              <td>${accountTotals[acc].toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+            </tr>`;
+        });
+        mainHtml += `
+            <tr class="total-row">
+              <td>Total</td>
+              <td>${grandTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+            </tr>
+          </tbody>
+          </table>
+        </div>`;
+
+        // --- INVENTORY FLOW BREAKDOWN ---
+    let breakdownRows = [];
+let generalUseTotals = {};
+let closingBalance = 0;
+
+if (usageCheckbox.checked) {
+  filterUsages.slice().sort((a, b) => {
+    let dA = a.assignedAt && a.assignedAt.toDate ? a.assignedAt.toDate() : (a._date || new Date());
+    let dB = b.assignedAt && b.assignedAt.toDate ? b.assignedAt.toDate() : (b._date || new Date());
+    return dA - dB;
+  }).forEach(u => {
+    const dateStr = u.assignedAt && u.assignedAt.toDate ? u.assignedAt.toDate().toLocaleDateString() : "-";
+    const taskId = u.taskId || "-";
+    const name = u.materialName || "-";
+    const qty = Number(u.quantity || 0);
+    const unitPrice = Number(u.unitPrice || 0);
+    const total = qty * unitPrice;
+    breakdownRows.push({ dateStr, taskId, name, qty, unitPrice, total });
+    generalUseTotals[name] = (generalUseTotals[name] || 0) + qty;
+    closingBalance += total;
+  });
+}
+
+        const generalUseArr = Object.entries(generalUseTotals).map(([name, totalUsed]) => ({ name, totalUsed }));
+
+        mainHtml += `
+          <h2 style="color:#1976d2;">${periodLabel} Inventory Flow Breakdown ${projectFilterName ? " - " + projectFilterName : ""}</h2>
+          <div class="total-cost-incurred">Total Cost Incurred: ZMW ${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
+          <h3>Break down use</h3>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Task ID</th>
+                <th>Name</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${breakdownRows.map(r => `
+                <tr>
+                  <td>${r.dateStr}</td>
+                  <td>${r.taskId}</td>
+                  <td>${r.name}</td>
+                  <td>${r.qty}</td>
+                  <td>${r.unitPrice}</td>
+                  <td>${r.total}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td colspan="5" style="text-align:right;">Closing Balance</td>
+                <td>${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+              </tr>
+            </tbody>
+          </table>
+          <h4>General use summary</h4>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Material Name</th>
+                <th>Total Used</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${generalUseArr.map(g => `
+                <tr>
+                  <td>${g.name}</td>
+                  <td>${g.totalUsed}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        // Inventory Flow Report
+        mainHtml += `
+        <h3>Inventory Flow Report</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Project Name</th>
+              <th>Cost Incurred</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        
         filterUsages.forEach(u => {
           if (u.reversed) return;
           let projectName = "-";
@@ -835,7 +1068,6 @@
               ? projectCache[u.projectId]
               : (projectCache[u.projectId].name || "-");
           }
-          if (projectFilter && u.projectId !== projectFilter) return;
           const qty = parseFloat(u.quantity || 0);
           const unitPrice = parseFloat(u.unitPrice || 0);
           const assignedValue = qty * unitPrice;
@@ -844,23 +1076,82 @@
           totalStockSpent += assignedValue;
         });
 
-        filterTransfers.forEach(d => {
-          let projectName = "-";
-          if (d.projectId && projectCache[d.projectId]) {
-            projectName = typeof projectCache[d.projectId] === "string"
-              ? projectCache[d.projectId]
-              : (projectCache[d.projectId].name || "-");
-          }
-          if (projectFilter && d.projectId !== projectFilter) return;
-          const mh = parseFloat(d.mh || 0);
-          if (!manHourTotals[projectName]) manHourTotals[projectName] = 0;
-          manHourTotals[projectName] += mh;
-          totalMH += mh;
-          totalMHCost += mh * COST_PER_HOUR;
+        Object.entries(stockTotals).forEach(([projectName, value]) => {
+          mainHtml += `<tr>
+            <td>${projectName}</td>
+            <td>${Number(value).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+          </tr>`;
         });
+       mainHtml += `
+  <tr class="total-row">
+    <td>Total Spent</td>
+    <td>${Number(totalStockSpent).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+  </tr>
+  </tbody>
+  </table>
+`;
 
-        const totalCostIncurred = totalStockSpent + totalMHCost;
+// Man Hour Summary
+mainHtml += `
+  <h3>Man Hour Summary</h3>
+  <table class="report-table">
+    <thead>
+      <tr>
+        <th>Project</th>
+        <th>MAN HOUR</th>
+        <th>COST</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+        
+filterTransfers.forEach(d => {
+  let projectName = "-";
+  if (d.projectId && projectCache[d.projectId]) {
+    projectName = typeof projectCache[d.projectId] === "string"
+      ? projectCache[d.projectId]
+      : (projectCache[d.projectId].name || "-");
+  }
+  const mh = parseFloat(d.mh || 0);
+  if (!manHourTotals[projectName]) manHourTotals[projectName] = 0;
+  manHourTotals[projectName] += mh;
+  totalMH += mh;
+  totalMHCost += mh * COST_PER_HOUR;
+});
 
+Object.entries(manHourTotals).forEach(([project, mh]) => {
+  mainHtml += `
+    <tr>
+      <td>${project}</td>
+      <td>${mh}</td>
+      <td>${(mh * COST_PER_HOUR).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+    </tr>`;
+});
+
+mainHtml += `
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td>Total Spent</td>
+        <td>${totalMH}</td>
+        <td>${totalMHCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+      </tr>
+    </tfoot>
+  </table>
+`;
+
+ // Add Employee Tracker Table
+        const periodObj = forMonth ? {month, year} : {week, year: weekYear};
+        const employeeTrackerHtml = await generateEmployeeTracker(
+          reportTypeSelect.value, 
+          periodObj, 
+          projectFilter, 
+          projectFilterName
+        );
+        
+        mainHtml += employeeTrackerHtml;
+
+        // Tasks Section
         let completedTasks = [], ongoingTasks = [], pendingTasks = [];
         let filteredTasksFlat = allTasksFlat;
         if (projectFilter) {
@@ -902,84 +1193,7 @@
         ongoingTasks = showOngoing ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'ongoing') : [];
         pendingTasks = showPending ? filteredTasksFlat.filter(t => (t.status || '').toLowerCase() === 'pending') : [];
 
-        let mainHtml = `<div id="report-export-section">`;
-
-        mainHtml += `
-        <div id="cash-report-section">
-          <h2 style="color:#1976d2;">Cash Received Report</h2>
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Account name</th>
-                <th>Total cost incurred</th>
-              </tr>
-            </thead>
-            <tbody>`;
-        accounts.forEach(acc => {
-          mainHtml += `
-            <tr>
-              <td>${acc}</td>
-              <td>${accountTotals[acc].toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-            </tr>`;
-        });
-        mainHtml += `
-            <tr class="total-row">
-              <td>Total</td>
-              <td>${grandTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-            </tr>
-          </tbody>
-          </table>
-        </div>`;
-
-        mainHtml += `
-        <h2 style="color:#1976d2;">${periodLabel} Out Flow Inventory Report</h2>
-        <div class="total-cost-incurred">Total Cost Incurred: ZMW ${totalCostIncurred.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
-        <h3>Inventory Flow Report</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th>Cost Incurred</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        Object.entries(stockTotals).forEach(([projectName, value]) => {
-          mainHtml += `<tr>
-            <td>${projectName}</td>
-            <td>${Number(value).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-          </tr>`;
-        });
-        mainHtml += `<tr class="total-row">
-          <td>Total Spent</td>
-          <td>${Number(totalStockSpent).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-        </tr>
-        </tbody>
-        </table>`;
-
-        mainHtml += `
-        <h3>Man Hour Summary</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>MAN HOUR</th>
-              <th>COST</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        Object.entries(manHourTotals).forEach(([project, mh]) => {
-          mainHtml += `<tr><td>${project}</td><td>${mh}</td><td>${(mh*COST_PER_HOUR).toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`;
-        });
-        mainHtml += `</tbody>
-          <tfoot>
-            <tr class="total-row">
-              <td>Total Spent</td>
-              <td>${totalMH}</td>
-              <td>${totalMHCost.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-            </tr>
-          </tfoot>
-        </table>`;
-
+        // COMPLETED TASKS TABLE
         mainHtml += `
         <h3>COMPLETED TASKS</h3>
         <table class="report-table">
@@ -1115,44 +1329,9 @@
       };
       html2pdf().from(section).set(opt).save();
     };
+
+    // Initialize the page
+    updateDefaultWeekAndMonth();
   </script>
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
 </body>
 </html>
