@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Tasks | Task Management</title>
+    <title>Project Tasks | Maintenance Task Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* All your existing CSS styles remain the same */
         body { 
             font-family: 'Segoe UI', 'Roboto', sans-serif; 
             background: #f5f7fa; 
@@ -624,6 +625,76 @@
         body.dark-mode .search-input {
             color: #e5e7eb;
         }
+        
+        /* New styles for maintenance tasks */
+        .maintenance-tasks-panel {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .maintenance-tasks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .maintenance-tasks-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        .maintenance-tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+        .maintenance-task-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .maintenance-task-info {
+            flex: 1;
+        }
+        .maintenance-task-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .maintenance-task-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .maintenance-task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .toggle-maintenance-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .toggle-maintenance-btn.remove {
+            background: #ef4444;
+        }
+        body.dark-mode .maintenance-tasks-panel {
+            background: #252833;
+            border-color: #374151;
+        }
+        body.dark-mode .maintenance-task-card {
+            background: #1f2937;
+            border-color: #374151;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -650,6 +721,9 @@
                 <button class="btn btn-primary action-btn" id="addTaskBtn">
                     <i class="fas fa-plus"></i> Add Task
                 </button>
+                <button class="btn btn-primary action-btn" id="addMaintenanceTasksBtn">
+                    <i class="fas fa-tools"></i> Add Maintenance Tasks
+                </button>
                 <a href="#" class="btn btn-outline action-btn" id="completedtasksBtn">
                     <i class="fas fa-check-circle"></i> Completed Tasks
                 </a>
@@ -661,6 +735,20 @@
         <div class="project-header" id="projectHeaderSticky">
             <div class="project-title-sticky" id="projectNameHeader">Project Tasks</div>
         </div>
+        
+        <!-- Maintenance Tasks Panel -->
+        <div class="maintenance-tasks-panel" id="maintenanceTasksPanel" style="display: none;">
+            <div class="maintenance-tasks-header">
+                <div class="maintenance-tasks-title">Monthly Maintenance Tasks</div>
+                <button class="btn btn-outline" id="closeMaintenancePanelBtn">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+            <div class="maintenance-tasks-grid" id="maintenanceTasksGrid">
+                <!-- Maintenance tasks will be populated here -->
+            </div>
+        </div>
+        
         <div class="filters-bar">
             <div class="search-container">
                 <i class="fas fa-search"></i>
@@ -701,6 +789,13 @@
                     <option value="2026">2026</option>
                 </select>
             </div>
+            <div class="filter-group"><span class="filter-label">Task Type:</span>
+                <select id="taskTypeFilter">
+                    <option value="">All Tasks</option>
+                    <option value="maintenance">Maintenance Tasks</option>
+                    <option value="regular">Regular Tasks</option>
+                </select>
+            </div>
         </div>
         <div class="main-table-wrap" id="mainTableWrap" style="position:relative;">
             <div class="card" id="mainCard">
@@ -727,6 +822,7 @@
                                 <th>MAN COST</th>
                                 <th>TOTAL COST</th>
                                 <th>LOCATION</th>
+                                <th>TYPE</th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
@@ -735,12 +831,11 @@
                         </tbody>
                         <tfoot>
                             <tr class="total-row">
-                                <td colspan="9" style="text-align: right; font-weight: bold;">TOTAL:</td>
-                                <td id="totalDuration"></td>
+                                <td colspan="10" style="text-align: right; font-weight: bold;">TOTAL:</td>
                                 <td id="totalMaterialCost"></td>
                                 <td id="totalManCost"></td>
                                 <td id="totalCost"></td>
-                                <td colspan="2"></td>
+                                <td colspan="3"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -833,23 +928,39 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 const statusFilter = document.getElementById('statusFilter');
 const monthFilter = document.getElementById('monthFilter');
 const yearFilter = document.getElementById('yearFilter');
+const taskTypeFilter = document.getElementById('taskTypeFilter');
 const searchInput = document.getElementById('searchInput');
 const taskList = document.getElementById('taskList');
 const emptyState = document.getElementById('emptyState');
 const ganttCalendarBody = document.getElementById('ganttCalendarBody');
 const ganttCalendarHead = document.getElementById('ganttCalendarHead');
 const addTaskBtn = document.getElementById('addTaskBtn');
+const addMaintenanceTasksBtn = document.getElementById('addMaintenanceTasksBtn');
 const toggleModeBtn = document.getElementById('toggleModeBtn');
 const completedTasksBtn = document.getElementById('completedTasksBtn');
+const maintenanceTasksPanel = document.getElementById('maintenanceTasksPanel');
+const closeMaintenancePanelBtn = document.getElementById('closeMaintenancePanelBtn');
+const maintenanceTasksGrid = document.getElementById('maintenanceTasksGrid');
 
 // State variables
-let ganttVisible = false; // Changed to false by default
+let ganttVisible = false;
 let showCurrentMonthOnly = false;
 let isFullscreen = false;
 let allTasks = [];
 let unsubMain = null;
 let subUnsubs = {};
 let expandedTasks = {};
+
+// Maintenance task templates
+const MAINTENANCE_TASK_TEMPLATES = [
+    { name: "General work", category: "general" },
+    { name: "Electrical maintenance", category: "electrical" },
+    { name: "Plumbing maintenance", category: "plumbing" },
+    { name: "Carpentry maintenance", category: "carpentry" },
+    { name: "Welding maintenance", category: "welding" },
+    { name: "Networking and IT maintenance", category: "networking" },
+    { name: "Plants and gardening maintenance", category: "gardening" }
+];
 
 // Helper functions
 async function getProjectName(projectId) {
@@ -956,6 +1067,158 @@ async function getMaterialCostForTaskId(taskId) {
     });
     
     return sum;
+}
+
+// Get current month and year for maintenance tasks
+function getCurrentMonthYear() {
+    const now = new Date();
+    const month = now.toLocaleString('default', { month: 'long' });
+    const year = now.getFullYear();
+    return { month, year };
+}
+
+// Check if maintenance task already exists for current month
+function maintenanceTaskExists(tasks, maintenanceName) {
+    const { month, year } = getCurrentMonthYear();
+    const expectedDescription = `${maintenanceName} - ${month} ${year}`;
+    
+    return tasks.some(task => 
+        task.taskDescription === expectedDescription && 
+        task.taskType === 'maintenance'
+    );
+}
+
+// Add maintenance task to project
+async function addMaintenanceTask(maintenanceTemplate) {
+    const { month, year } = getCurrentMonthYear();
+    const projectName = await getProjectName(projectId);
+    const initials = getInitials(projectName);
+    const nextNum = await getNextMainTaskNumber(projectId);
+    const taskId = `${initials}-${nextNum}`;
+    
+    const taskDescription = `${maintenanceTemplate.name} - ${month} ${year}`;
+    const startDate = new Date();
+    const giveTarget = new Date();
+    giveTarget.setDate(giveTarget.getDate() + 7); // Set target to 7 days from now
+    
+    try {
+        await addDoc(collection(db, "projectTasks"), {
+            projectId,
+            taskId,
+            taskLine: nextNum,
+            taskDescription,
+            assignedTo: "",
+            location: "",
+            status: "PENDING",
+            startDate: startDate,
+            giveTarget: giveTarget,
+            taskType: "maintenance",
+            maintenanceCategory: maintenanceTemplate.category,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        return true;
+    } catch (e) {
+        console.error("Error adding maintenance task:", e);
+        return false;
+    }
+}
+
+// Remove maintenance task
+async function removeMaintenanceTask(taskId) {
+    try {
+        // Find the task document
+        const q = query(collection(db, "projectTasks"), 
+            where("projectId", "==", projectId), 
+            where("taskId", "==", taskId));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            const taskDoc = querySnapshot.docs[0];
+            await deleteDoc(doc(db, "projectTasks", taskDoc.id));
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.error("Error removing maintenance task:", e);
+        return false;
+    }
+}
+
+// Show maintenance tasks panel
+function showMaintenanceTasksPanel() {
+    maintenanceTasksPanel.style.display = 'block';
+    renderMaintenanceTasks();
+}
+
+// Hide maintenance tasks panel
+function hideMaintenanceTasksPanel() {
+    maintenanceTasksPanel.style.display = 'none';
+}
+
+// Render maintenance tasks in the panel
+function renderMaintenanceTasks() {
+    maintenanceTasksGrid.innerHTML = '';
+    
+    const { month, year } = getCurrentMonthYear();
+    
+    MAINTENANCE_TASK_TEMPLATES.forEach(template => {
+        const exists = maintenanceTaskExists(allTasks, template.name);
+        
+        const card = document.createElement('div');
+        card.className = 'maintenance-task-card';
+        
+        card.innerHTML = `
+            <div class="maintenance-task-info">
+                <div class="maintenance-task-name">${template.name}</div>
+                <div class="maintenance-task-date">${month} ${year}</div>
+            </div>
+            <div class="maintenance-task-actions">
+                <button class="toggle-maintenance-btn ${exists ? 'remove' : ''}" 
+                        data-template='${JSON.stringify(template)}'>
+                    ${exists ? 'Remove' : 'Add'}
+                </button>
+            </div>
+        `;
+        
+        maintenanceTasksGrid.appendChild(card);
+    });
+    
+    // Add event listeners to the buttons
+    document.querySelectorAll('.toggle-maintenance-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const template = JSON.parse(this.dataset.template);
+            const isRemove = this.classList.contains('remove');
+            
+            if (isRemove) {
+                // Remove maintenance task
+                const taskDescription = `${template.name} - ${getCurrentMonthYear().month} ${getCurrentMonthYear().year}`;
+                const task = allTasks.find(t => 
+                    t.taskDescription === taskDescription && 
+                    t.taskType === 'maintenance'
+                );
+                
+                if (task) {
+                    const success = await removeMaintenanceTask(task.taskId);
+                    if (success) {
+                        alert(`Removed ${template.name} from project`);
+                        renderMaintenanceTasks();
+                    } else {
+                        alert('Error removing maintenance task');
+                    }
+                }
+            } else {
+                // Add maintenance task
+                const success = await addMaintenanceTask(template);
+                if (success) {
+                    alert(`Added ${template.name} to project`);
+                    renderMaintenanceTasks();
+                } else {
+                    alert('Error adding maintenance task');
+                }
+            }
+        });
+    });
 }
 
 // New function to check if task is overdue
@@ -1175,6 +1438,11 @@ async function loadAllTasks() {
                 debugLog("Rendering tasks and Gantt chart");
                 renderTasks(filterTasks(allTasks));
                 renderGanttCalendar(filterTasks(allTasks));
+                
+                // Update maintenance panel if visible
+                if (maintenanceTasksPanel.style.display === 'block') {
+                    renderMaintenanceTasks();
+                }
             },
             (error) => {
                 debugLog("Error in main tasks listener", error);
@@ -1187,11 +1455,12 @@ async function loadAllTasks() {
     }
 }
 
-// Filter tasks with the new overdue status
+// Filter tasks with the new overdue status and task type
 function filterTasks(tasks) {
     const statusVal = statusFilter.value;
     const monthVal = monthFilter.value;
     const yearVal = yearFilter.value;
+    const taskTypeVal = taskTypeFilter.value;
     const searchVal = searchInput.value.toLowerCase();
     
     return tasks.filter(task => {
@@ -1229,6 +1498,16 @@ function filterTasks(tasks) {
             }
         }
         
+        // Check task type filter
+        let matchesTaskType = true;
+        if (taskTypeVal) {
+            if (taskTypeVal === 'maintenance') {
+                matchesTaskType = task.taskType === 'maintenance';
+            } else if (taskTypeVal === 'regular') {
+                matchesTaskType = !task.taskType || task.taskType !== 'maintenance';
+            }
+        }
+        
         // Check search filter
         let matchesSearch = true;
         if (searchVal) {
@@ -1238,7 +1517,8 @@ function filterTasks(tasks) {
                 (task.assignedTo && task.assignedTo.toLowerCase().includes(searchVal)) ||
                 (task.status && task.status.toLowerCase().includes(searchVal)) ||
                 (task.location && task.location.toLowerCase().includes(searchVal)) ||
-                (task.taskLine && task.taskLine.toString().includes(searchVal))
+                (task.taskLine && task.taskLine.toString().includes(searchVal)) ||
+                (task.taskType && task.taskType.toLowerCase().includes(searchVal))
             );
             
             // Check subtasks if main task doesn't match
@@ -1276,7 +1556,7 @@ function filterTasks(tasks) {
             }
         }
         
-        return matchesStatus && matchesMonth && matchesYear && matchesSearch;
+        return matchesStatus && matchesMonth && matchesYear && matchesTaskType && matchesSearch;
     });
 }
 
@@ -1522,7 +1802,7 @@ async function getSubSubtasks(mainId, subId) {
     return subsubtasks;
 }
 
-// Render tasks with the new give target column
+// Render tasks with the new give target column and task type
 function renderTasks(tasks) {
     taskList.innerHTML = '';
     let visibleCount = 0;
@@ -1577,6 +1857,7 @@ function renderTasks(tasks) {
             <td><span class="cost-badge">${formatCurrency(displayManCost)}</span></td>
             <td><span class="cost-badge">${formatCurrency(displayTotalCost)}</span></td>
             <td>${task.location || ''}</td>
+            <td>${task.taskType === 'maintenance' ? 'Maintenance' : 'Regular'}</td>
             <td>
                 <button class="add-subtask-btn action-btn" data-mainid="${task.id}">
                     <i class="fas fa-plus"></i> Subtask
@@ -1592,7 +1873,7 @@ function renderTasks(tasks) {
             if (!task.subTasks || !task.subTasks.length) {
                 const trSub = document.createElement('tr');
                 trSub.classList.add('subtask-row');
-                trSub.innerHTML = `<td></td><td colspan="14">No sub tasks yet.</td>`;
+                trSub.innerHTML = `<td></td><td colspan="15">No sub tasks yet.</td>`;
                 taskList.appendChild(trSub);
             } else {
                 task.subTasks.forEach(sub => {
@@ -1628,6 +1909,7 @@ function renderTasks(tasks) {
                         <td><span class="cost-badge">${formatCurrency(subManCost)}</span></td>
                         <td><span class="cost-badge">${formatCurrency(subTotalCost)}</span></td>
                         <td>${sub.location || ''}</td>
+                        <td></td>
                         <td>
                             <button class="add-subsubtask-btn action-btn" data-mainid="${task.id}" data-subid="${sub.id}">
                                 <i class="fas fa-plus"></i> Sub-Subtask
@@ -1673,6 +1955,7 @@ function renderTasks(tasks) {
                                 <td><span class="cost-badge">${formatCurrency(subsubManCost)}</span></td>
                                 <td><span class="cost-badge">${formatCurrency(subsubTotalCost)}</span></td>
                                 <td>${subsub.location || ''}</td>
+                                <td></td>
                                 <td>
                                     <button class="delete-btn" onclick="deleteTask('subsub', '${task.id}', '${sub.id}', '${subsub.id}')">
                                         <i class="fas fa-trash"></i>
@@ -1773,6 +2056,7 @@ addTaskBtn.onclick = async () => {
             status: "PENDING",
             startDate: new Date(startDate),
             giveTarget: giveTarget ? new Date(giveTarget) : null,
+            taskType: "regular",
             createdAt: new Date(),
             updatedAt: new Date()
         });
@@ -2160,6 +2444,12 @@ function renderGanttCalendar(tasks) {
         renderGanttCalendar(filterTasks(allTasks));
     });
     
+    taskTypeFilter.addEventListener('change', () => {
+        saveFilterStates();
+        renderTasks(filterTasks(allTasks));
+        renderGanttCalendar(filterTasks(allTasks));
+    });
+    
     searchInput.addEventListener('input', () => {
         renderTasks(filterTasks(allTasks));
         renderGanttCalendar(filterTasks(allTasks));
@@ -2169,6 +2459,8 @@ function renderGanttCalendar(tasks) {
     showGanttBtn.addEventListener('click', toggleGanttVisibility);
     currentMonthBtn.addEventListener('click', toggleCurrentMonthView);
     fullscreenBtn.addEventListener('click', toggleFullscreen);
+    addMaintenanceTasksBtn.addEventListener('click', showMaintenanceTasksPanel);
+    closeMaintenancePanelBtn.addEventListener('click', hideMaintenanceTasksPanel);
 
     // Fullscreen event listeners
     document.addEventListener('fullscreenchange', () => {
@@ -2191,6 +2483,7 @@ function renderGanttCalendar(tasks) {
         const savedStatus = localStorage.getItem('taskStatusFilter');
         const savedMonth = localStorage.getItem('taskMonthFilter');
         const savedYear = localStorage.getItem('taskYearFilter');
+        const savedTaskType = localStorage.getItem('taskTypeFilter');
         const savedSearch = localStorage.getItem('taskSearchFilter');
         const savedGanttVisible = localStorage.getItem('ganttVisible');
         const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
@@ -2198,6 +2491,7 @@ function renderGanttCalendar(tasks) {
         if (savedStatus) statusFilter.value = savedStatus;
         if (savedMonth) monthFilter.value = savedMonth;
         if (savedYear) yearFilter.value = savedYear;
+        if (savedTaskType) taskTypeFilter.value = savedTaskType;
         if (savedSearch) searchInput.value = savedSearch;
         if (savedGanttVisible === 'true') {
             ganttVisible = true;
@@ -2217,6 +2511,7 @@ function renderGanttCalendar(tasks) {
         localStorage.setItem('taskStatusFilter', statusFilter.value);
         localStorage.setItem('taskMonthFilter', monthFilter.value);
         localStorage.setItem('taskYearFilter', yearFilter.value);
+        localStorage.setItem('taskTypeFilter', taskTypeFilter.value);
         localStorage.setItem('taskSearchFilter', searchInput.value);
     }
 
