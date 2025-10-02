@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Tasks | Maintenance Task Management</title>
+    <title>Project Tasks | Task Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* All your existing CSS styles remain the same */
         body { 
             font-family: 'Segoe UI', 'Roboto', sans-serif; 
             background: #f5f7fa; 
@@ -625,86 +624,57 @@
         body.dark-mode .search-input {
             color: #e5e7eb;
         }
-        
-        /* New styles for maintenance tasks */
-        .maintenance-tasks-panel {
-            background: #fff;
+
+        /* Category header styles */
+        .category-header {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            padding: 15px 20px;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .maintenance-tasks-header {
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            justify-content: space-between;
         }
-        .maintenance-tasks-title {
-            font-size: 16px;
+        .category-title {
+            font-size: 24px;
             font-weight: 600;
-            color: #3b82f6;
-        }
-        .maintenance-tasks-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: flex;
+            align-items: center;
             gap: 10px;
         }
-        .maintenance-task-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .category-icon {
+            font-size: 28px;
         }
-        .maintenance-task-info {
-            flex: 1;
-        }
-        .maintenance-task-name {
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-        .maintenance-task-date {
-            font-size: 12px;
-            color: #6b7280;
-        }
-        .maintenance-task-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .toggle-maintenance-btn {
-            background: #3b82f6;
+        .category-back-btn {
+            background: rgba(255,255,255,0.2);
             color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.3);
         }
-        .toggle-maintenance-btn.remove {
-            background: #ef4444;
-        }
-        body.dark-mode .maintenance-tasks-panel {
-            background: #252833;
-            border-color: #374151;
-        }
-        body.dark-mode .maintenance-task-card {
-            background: #1f2937;
-            border-color: #374151;
+        .category-back-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
     </style>
 </head>
 <body class="dark-mode">
     <div class="container">
+        <!-- Category Header -->
+        <div class="category-header" id="categoryHeader">
+            <div class="category-title">
+                <i class="fas fa-tools category-icon" id="categoryIcon"></i>
+                <span id="categoryTitle">All Tasks</span>
+            </div>
+            <a href="cards.html?id=PROJECT_ID" class="btn category-back-btn" id="backToCategoriesBtn">
+                <i class="fas fa-layer-group"></i> Back to Categories
+            </a>
+        </div>
+
         <div class="project-info-container">
             <div class="project-header-card">
                 <div class="project-details-grid">
                     <div class="detail-item">
                         <a href="dashboard.html" class="btn btn-outline">
-                            <i class="fas fa-arrow-left"></i> Back
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
                         </a>
                         <span class="project-label">PROJECT MANAGER:</span>
                         <span class="project-value">Christopher chishela</span>
@@ -721,9 +691,6 @@
                 <button class="btn btn-primary action-btn" id="addTaskBtn">
                     <i class="fas fa-plus"></i> Add Task
                 </button>
-                <button class="btn btn-primary action-btn" id="addMaintenanceTasksBtn">
-                    <i class="fas fa-tools"></i> Add Maintenance Tasks
-                </button>
                 <a href="#" class="btn btn-outline action-btn" id="completedtasksBtn">
                     <i class="fas fa-check-circle"></i> Completed Tasks
                 </a>
@@ -735,20 +702,6 @@
         <div class="project-header" id="projectHeaderSticky">
             <div class="project-title-sticky" id="projectNameHeader">Project Tasks</div>
         </div>
-        
-        <!-- Maintenance Tasks Panel -->
-        <div class="maintenance-tasks-panel" id="maintenanceTasksPanel" style="display: none;">
-            <div class="maintenance-tasks-header">
-                <div class="maintenance-tasks-title">Monthly Maintenance Tasks</div>
-                <button class="btn btn-outline" id="closeMaintenancePanelBtn">
-                    <i class="fas fa-times"></i> Close
-                </button>
-            </div>
-            <div class="maintenance-tasks-grid" id="maintenanceTasksGrid">
-                <!-- Maintenance tasks will be populated here -->
-            </div>
-        </div>
-        
         <div class="filters-bar">
             <div class="search-container">
                 <i class="fas fa-search"></i>
@@ -789,19 +742,12 @@
                     <option value="2026">2026</option>
                 </select>
             </div>
-            <div class="filter-group"><span class="filter-label">Task Type:</span>
-                <select id="taskTypeFilter">
-                    <option value="">All Tasks</option>
-                    <option value="maintenance">Maintenance Tasks</option>
-                    <option value="regular">Regular Tasks</option>
-                </select>
-            </div>
         </div>
         <div class="main-table-wrap" id="mainTableWrap" style="position:relative;">
             <div class="card" id="mainCard">
                 <div class="card-header" style="padding: 10px 0 15px 0;">
                     <h2 class="card-title" style="font-size:14px; margin:0; color:#3b82f6; font-weight:500">
-                        <i class="fas fa-tasks"></i> All Tasks
+                        <i class="fas fa-tasks"></i> <span id="tasksTitle">All Tasks</span>
                     </h2>
                 </div>
                 <div class="table-responsive">
@@ -822,7 +768,6 @@
                                 <th>MAN COST</th>
                                 <th>TOTAL COST</th>
                                 <th>LOCATION</th>
-                                <th>TYPE</th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
@@ -831,11 +776,12 @@
                         </tbody>
                         <tfoot>
                             <tr class="total-row">
-                                <td colspan="10" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                                <td colspan="9" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                                <td id="totalDuration"></td>
                                 <td id="totalMaterialCost"></td>
                                 <td id="totalManCost"></td>
                                 <td id="totalCost"></td>
-                                <td colspan="3"></td>
+                                <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -912,7 +858,17 @@ function getProjectIdFromURL() {
     return projectId;
 }
 
+// Get category from URL
+function getCategoryFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('category');
+}
+
 const projectId = getProjectIdFromURL();
+const currentCategory = getCategoryFromURL();
+
+// Update back button URL
+document.getElementById('backToCategoriesBtn').href = `cards.html?id=${projectId}`;
 
 // Set completed tasks button href
 document.getElementById('completedtasksBtn').href = `completedtask.html?id=${projectId}`;
@@ -928,19 +884,64 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 const statusFilter = document.getElementById('statusFilter');
 const monthFilter = document.getElementById('monthFilter');
 const yearFilter = document.getElementById('yearFilter');
-const taskTypeFilter = document.getElementById('taskTypeFilter');
 const searchInput = document.getElementById('searchInput');
 const taskList = document.getElementById('taskList');
 const emptyState = document.getElementById('emptyState');
 const ganttCalendarBody = document.getElementById('ganttCalendarBody');
 const ganttCalendarHead = document.getElementById('ganttCalendarHead');
 const addTaskBtn = document.getElementById('addTaskBtn');
-const addMaintenanceTasksBtn = document.getElementById('addMaintenanceTasksBtn');
 const toggleModeBtn = document.getElementById('toggleModeBtn');
 const completedTasksBtn = document.getElementById('completedTasksBtn');
-const maintenanceTasksPanel = document.getElementById('maintenanceTasksPanel');
-const closeMaintenancePanelBtn = document.getElementById('closeMaintenancePanelBtn');
-const maintenanceTasksGrid = document.getElementById('maintenanceTasksGrid');
+const categoryHeader = document.getElementById('categoryHeader');
+const categoryTitle = document.getElementById('categoryTitle');
+const categoryIcon = document.getElementById('categoryIcon');
+const tasksTitle = document.getElementById('tasksTitle');
+
+// Category definitions with keywords for auto-categorization
+const categories = {
+    'general': {
+        name: 'General Work',
+        icon: 'fas fa-tools',
+        color: '#4361ee',
+        keywords: ['general', 'maintenance', 'repair', 'work', 'task', 'service']
+    },
+    'electrical': {
+        name: 'Electrical Maintenance',
+        icon: 'fas fa-bolt',
+        color: '#f8961e',
+        keywords: ['electrical', 'wiring', 'circuit', 'power', 'lighting', 'socket', 'switch', 'breaker', 'voltage', 'current', 'electric', 'wiring']
+    },
+    'plumbing': {
+        name: 'Plumbing Maintenance',
+        icon: 'fas fa-faucet',
+        color: '#4cc9f0',
+        keywords: ['plumbing', 'pipe', 'water', 'drain', 'faucet', 'toilet', 'sink', 'leak', 'valve', 'sewer', 'flush', 'tap']
+    },
+    'carpentry': {
+        name: 'Carpentry Maintenance',
+        icon: 'fas fa-hammer',
+        color: '#7209b7',
+        keywords: ['carpentry', 'wood', 'carpenter', 'frame', 'door', 'window', 'cabinet', 'furniture', 'saw', 'nail', 'screw', 'woodwork']
+    },
+    'welding': {
+        name: 'Welding Maintenance',
+        icon: 'fas fa-fire',
+        color: '#f72585',
+        keywords: ['welding', 'weld', 'metal', 'steel', 'arc', 'solder', 'fabrication', 'grinding', 'cutting', 'metalwork']
+    },
+    'networking': {
+        name: 'Networking and IT Maintenance',
+        icon: 'fas fa-network-wired',
+        color: '#4895ef',
+        keywords: ['network', 'it', 'computer', 'internet', 'wifi', 'server', 'cable', 'ethernet', 'router', 'switch', 'software', 'hardware', 'system']
+    },
+    'gardening': {
+        name: 'Plants and Gardening Maintenance',
+        icon: 'fas fa-leaf',
+        color: '#38b000',
+        keywords: ['gardening', 'garden', 'plant', 'landscape', 'lawn', 'tree', 'flower', 'irrigation', 'watering', 'hedge', 'grass', 'soil']
+    }
+};
 
 // State variables
 let ganttVisible = false;
@@ -951,16 +952,54 @@ let unsubMain = null;
 let subUnsubs = {};
 let expandedTasks = {};
 
-// Maintenance task templates
-const MAINTENANCE_TASK_TEMPLATES = [
-    { name: "General work", category: "general" },
-    { name: "Electrical maintenance", category: "electrical" },
-    { name: "Plumbing maintenance", category: "plumbing" },
-    { name: "Carpentry maintenance", category: "carpentry" },
-    { name: "Welding maintenance", category: "welding" },
-    { name: "Networking and IT maintenance", category: "networking" },
-    { name: "Plants and gardening maintenance", category: "gardening" }
-];
+// Update UI based on category
+function updateCategoryUI() {
+    if (currentCategory && categories[currentCategory]) {
+        const category = categories[currentCategory];
+        categoryTitle.textContent = category.name;
+        categoryIcon.className = category.icon + ' category-icon';
+        categoryHeader.style.background = `linear-gradient(135deg, ${category.color}, ${darkenColor(category.color, 20)})`;
+        tasksTitle.textContent = `${category.name} Tasks`;
+        document.title = `${category.name} | Task Management`;
+    } else {
+        categoryTitle.textContent = 'All Tasks';
+        categoryIcon.className = 'fas fa-tasks category-icon';
+        categoryHeader.style.background = 'linear-gradient(135deg, #3b82f6, #1e40af)';
+        tasksTitle.textContent = 'All Tasks';
+        document.title = 'Project Tasks | Task Management';
+    }
+}
+
+// Helper function to darken color
+function darkenColor(color, percent) {
+    const num = parseInt(color.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) - amt;
+    const G = (num >> 8 & 0x00FF) - amt;
+    const B = (num & 0x0000FF) - amt;
+    return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+}
+
+// Auto-categorize task based on description
+function autoCategorizeTask(taskDescription) {
+    if (!taskDescription) return 'general';
+    
+    const desc = taskDescription.toLowerCase();
+    
+    for (const [categoryId, category] of Object.entries(categories)) {
+        if (categoryId === 'general') continue; // Skip general as it's the fallback
+        
+        for (const keyword of category.keywords) {
+            if (desc.includes(keyword.toLowerCase())) {
+                return categoryId;
+            }
+        }
+    }
+    
+    return 'general'; // Default to general if no match found
+}
 
 // Helper functions
 async function getProjectName(projectId) {
@@ -1069,158 +1108,6 @@ async function getMaterialCostForTaskId(taskId) {
     return sum;
 }
 
-// Get current month and year for maintenance tasks
-function getCurrentMonthYear() {
-    const now = new Date();
-    const month = now.toLocaleString('default', { month: 'long' });
-    const year = now.getFullYear();
-    return { month, year };
-}
-
-// Check if maintenance task already exists for current month
-function maintenanceTaskExists(tasks, maintenanceName) {
-    const { month, year } = getCurrentMonthYear();
-    const expectedDescription = `${maintenanceName} - ${month} ${year}`;
-    
-    return tasks.some(task => 
-        task.taskDescription === expectedDescription && 
-        task.taskType === 'maintenance'
-    );
-}
-
-// Add maintenance task to project
-async function addMaintenanceTask(maintenanceTemplate) {
-    const { month, year } = getCurrentMonthYear();
-    const projectName = await getProjectName(projectId);
-    const initials = getInitials(projectName);
-    const nextNum = await getNextMainTaskNumber(projectId);
-    const taskId = `${initials}-${nextNum}`;
-    
-    const taskDescription = `${maintenanceTemplate.name} - ${month} ${year}`;
-    const startDate = new Date();
-    const giveTarget = new Date();
-    giveTarget.setDate(giveTarget.getDate() + 7); // Set target to 7 days from now
-    
-    try {
-        await addDoc(collection(db, "projectTasks"), {
-            projectId,
-            taskId,
-            taskLine: nextNum,
-            taskDescription,
-            assignedTo: "",
-            location: "",
-            status: "PENDING",
-            startDate: startDate,
-            giveTarget: giveTarget,
-            taskType: "maintenance",
-            maintenanceCategory: maintenanceTemplate.category,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
-        return true;
-    } catch (e) {
-        console.error("Error adding maintenance task:", e);
-        return false;
-    }
-}
-
-// Remove maintenance task
-async function removeMaintenanceTask(taskId) {
-    try {
-        // Find the task document
-        const q = query(collection(db, "projectTasks"), 
-            where("projectId", "==", projectId), 
-            where("taskId", "==", taskId));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            const taskDoc = querySnapshot.docs[0];
-            await deleteDoc(doc(db, "projectTasks", taskDoc.id));
-            return true;
-        }
-        return false;
-    } catch (e) {
-        console.error("Error removing maintenance task:", e);
-        return false;
-    }
-}
-
-// Show maintenance tasks panel
-function showMaintenanceTasksPanel() {
-    maintenanceTasksPanel.style.display = 'block';
-    renderMaintenanceTasks();
-}
-
-// Hide maintenance tasks panel
-function hideMaintenanceTasksPanel() {
-    maintenanceTasksPanel.style.display = 'none';
-}
-
-// Render maintenance tasks in the panel
-function renderMaintenanceTasks() {
-    maintenanceTasksGrid.innerHTML = '';
-    
-    const { month, year } = getCurrentMonthYear();
-    
-    MAINTENANCE_TASK_TEMPLATES.forEach(template => {
-        const exists = maintenanceTaskExists(allTasks, template.name);
-        
-        const card = document.createElement('div');
-        card.className = 'maintenance-task-card';
-        
-        card.innerHTML = `
-            <div class="maintenance-task-info">
-                <div class="maintenance-task-name">${template.name}</div>
-                <div class="maintenance-task-date">${month} ${year}</div>
-            </div>
-            <div class="maintenance-task-actions">
-                <button class="toggle-maintenance-btn ${exists ? 'remove' : ''}" 
-                        data-template='${JSON.stringify(template)}'>
-                    ${exists ? 'Remove' : 'Add'}
-                </button>
-            </div>
-        `;
-        
-        maintenanceTasksGrid.appendChild(card);
-    });
-    
-    // Add event listeners to the buttons
-    document.querySelectorAll('.toggle-maintenance-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const template = JSON.parse(this.dataset.template);
-            const isRemove = this.classList.contains('remove');
-            
-            if (isRemove) {
-                // Remove maintenance task
-                const taskDescription = `${template.name} - ${getCurrentMonthYear().month} ${getCurrentMonthYear().year}`;
-                const task = allTasks.find(t => 
-                    t.taskDescription === taskDescription && 
-                    t.taskType === 'maintenance'
-                );
-                
-                if (task) {
-                    const success = await removeMaintenanceTask(task.taskId);
-                    if (success) {
-                        alert(`Removed ${template.name} from project`);
-                        renderMaintenanceTasks();
-                    } else {
-                        alert('Error removing maintenance task');
-                    }
-                }
-            } else {
-                // Add maintenance task
-                const success = await addMaintenanceTask(template);
-                if (success) {
-                    alert(`Added ${template.name} to project`);
-                    renderMaintenanceTasks();
-                } else {
-                    alert('Error adding maintenance task');
-                }
-            }
-        });
-    });
-}
-
 // New function to check if task is overdue
 function checkTaskOverdue(task) {
     if (task.status === 'COMPLETED') return false;
@@ -1315,6 +1202,11 @@ async function loadAllTasks() {
                     const docData = { id: docSnap.id, ...docSnap.data(), subTasks: [] };
                     docData.expanded = expandedTasks[docSnap.id] || false;
                     
+                    // Auto-categorize if no category is set
+                    if (!docData.category && docData.taskDescription) {
+                        docData.category = autoCategorizeTask(docData.taskDescription);
+                    }
+                    
                     // Check if task is overdue
                     if (checkTaskOverdue(docData)) {
                         docData.status = 'OVERDUE';
@@ -1335,6 +1227,11 @@ async function loadAllTasks() {
                                 
                                 subSnap.forEach(subDoc => {
                                     let subData = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
+                                    
+                                    // Auto-categorize if no category is set
+                                    if (!subData.category && subData.taskDescription) {
+                                        subData.category = autoCategorizeTask(subData.taskDescription);
+                                    }
                                     
                                     // Check if subtask is overdue
                                     if (checkTaskOverdue(subData)) {
@@ -1360,6 +1257,11 @@ async function loadAllTasks() {
                                         debugLog(`Got ${subsubtasks.length} sub-subtasks for ${subData.taskId}`);
                                         
                                         let subSubPromises = subsubtasks.map(subsub => {
+                                            // Auto-categorize if no category is set
+                                            if (!subsub.category && subsub.taskDescription) {
+                                                subsub.category = autoCategorizeTask(subsub.taskDescription);
+                                            }
+                                            
                                             // Check if sub-subtask is overdue
                                             if (checkTaskOverdue(subsub)) {
                                                 subsub.status = 'OVERDUE';
@@ -1438,11 +1340,6 @@ async function loadAllTasks() {
                 debugLog("Rendering tasks and Gantt chart");
                 renderTasks(filterTasks(allTasks));
                 renderGanttCalendar(filterTasks(allTasks));
-                
-                // Update maintenance panel if visible
-                if (maintenanceTasksPanel.style.display === 'block') {
-                    renderMaintenanceTasks();
-                }
             },
             (error) => {
                 debugLog("Error in main tasks listener", error);
@@ -1455,15 +1352,25 @@ async function loadAllTasks() {
     }
 }
 
-// Filter tasks with the new overdue status and task type
+// Filter tasks with category support
 function filterTasks(tasks) {
     const statusVal = statusFilter.value;
     const monthVal = monthFilter.value;
     const yearVal = yearFilter.value;
-    const taskTypeVal = taskTypeFilter.value;
     const searchVal = searchInput.value.toLowerCase();
     
     return tasks.filter(task => {
+        // Check category filter
+        let matchesCategory = true;
+        if (currentCategory) {
+            if (currentCategory === 'general') {
+                // General should show tasks with no category or general category
+                matchesCategory = (!task.category || task.category === 'general');
+            } else {
+                matchesCategory = (task.category === currentCategory);
+            }
+        }
+        
         // Check status filter
         let matchesStatus = true;
         if (statusVal) {
@@ -1498,16 +1405,6 @@ function filterTasks(tasks) {
             }
         }
         
-        // Check task type filter
-        let matchesTaskType = true;
-        if (taskTypeVal) {
-            if (taskTypeVal === 'maintenance') {
-                matchesTaskType = task.taskType === 'maintenance';
-            } else if (taskTypeVal === 'regular') {
-                matchesTaskType = !task.taskType || task.taskType !== 'maintenance';
-            }
-        }
-        
         // Check search filter
         let matchesSearch = true;
         if (searchVal) {
@@ -1517,8 +1414,7 @@ function filterTasks(tasks) {
                 (task.assignedTo && task.assignedTo.toLowerCase().includes(searchVal)) ||
                 (task.status && task.status.toLowerCase().includes(searchVal)) ||
                 (task.location && task.location.toLowerCase().includes(searchVal)) ||
-                (task.taskLine && task.taskLine.toString().includes(searchVal)) ||
-                (task.taskType && task.taskType.toLowerCase().includes(searchVal))
+                (task.taskLine && task.taskLine.toString().includes(searchVal))
             );
             
             // Check subtasks if main task doesn't match
@@ -1556,7 +1452,7 @@ function filterTasks(tasks) {
             }
         }
         
-        return matchesStatus && matchesMonth && matchesYear && matchesTaskType && matchesSearch;
+        return matchesCategory && matchesStatus && matchesMonth && matchesYear && matchesSearch;
     });
 }
 
@@ -1802,7 +1698,7 @@ async function getSubSubtasks(mainId, subId) {
     return subsubtasks;
 }
 
-// Render tasks with the new give target column and task type
+// Render tasks with the new give target column
 function renderTasks(tasks) {
     taskList.innerHTML = '';
     let visibleCount = 0;
@@ -1857,7 +1753,6 @@ function renderTasks(tasks) {
             <td><span class="cost-badge">${formatCurrency(displayManCost)}</span></td>
             <td><span class="cost-badge">${formatCurrency(displayTotalCost)}</span></td>
             <td>${task.location || ''}</td>
-            <td>${task.taskType === 'maintenance' ? 'Maintenance' : 'Regular'}</td>
             <td>
                 <button class="add-subtask-btn action-btn" data-mainid="${task.id}">
                     <i class="fas fa-plus"></i> Subtask
@@ -1873,7 +1768,7 @@ function renderTasks(tasks) {
             if (!task.subTasks || !task.subTasks.length) {
                 const trSub = document.createElement('tr');
                 trSub.classList.add('subtask-row');
-                trSub.innerHTML = `<td></td><td colspan="15">No sub tasks yet.</td>`;
+                trSub.innerHTML = `<td></td><td colspan="14">No sub tasks yet.</td>`;
                 taskList.appendChild(trSub);
             } else {
                 task.subTasks.forEach(sub => {
@@ -1909,7 +1804,6 @@ function renderTasks(tasks) {
                         <td><span class="cost-badge">${formatCurrency(subManCost)}</span></td>
                         <td><span class="cost-badge">${formatCurrency(subTotalCost)}</span></td>
                         <td>${sub.location || ''}</td>
-                        <td></td>
                         <td>
                             <button class="add-subsubtask-btn action-btn" data-mainid="${task.id}" data-subid="${sub.id}">
                                 <i class="fas fa-plus"></i> Sub-Subtask
@@ -1955,7 +1849,6 @@ function renderTasks(tasks) {
                                 <td><span class="cost-badge">${formatCurrency(subsubManCost)}</span></td>
                                 <td><span class="cost-badge">${formatCurrency(subsubTotalCost)}</span></td>
                                 <td>${subsub.location || ''}</td>
-                                <td></td>
                                 <td>
                                     <button class="delete-btn" onclick="deleteTask('subsub', '${task.id}', '${sub.id}', '${subsub.id}')">
                                         <i class="fas fa-trash"></i>
@@ -2035,6 +1928,9 @@ addTaskBtn.onclick = async () => {
     const location = prompt("Location:");
     const taskLine = parseInt(prompt("Task Line (number, optional):") || 0);
     
+    // Auto-categorize the task
+    const category = autoCategorizeTask(taskDesc);
+    
     // Get start date
     const startDate = prompt("Start Date (YYYY-MM-DD, required):");
     if (!startDate) {
@@ -2053,14 +1949,14 @@ addTaskBtn.onclick = async () => {
             taskDescription: taskDesc,
             assignedTo,
             location,
+            category: category,
             status: "PENDING",
             startDate: new Date(startDate),
             giveTarget: giveTarget ? new Date(giveTarget) : null,
-            taskType: "regular",
             createdAt: new Date(),
             updatedAt: new Date()
         });
-        alert('Main task added!');
+        alert('Main task added! Category: ' + categories[category].name);
     } catch (e) {
         alert("Error adding main task: " + e.message);
     }
@@ -2083,12 +1979,16 @@ async function addSubtask(mainId) {
     const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
     const duration = parseFloat(prompt("Duration (number, hour, optional):") || 0);
     
+    // Auto-categorize the subtask
+    const category = autoCategorizeTask(taskDesc);
+    
     try {
         await addDoc(collection(db, "projectTasks", mainId, "subtasks"), {
             taskId: subTaskId,
             taskDescription: taskDesc,
             assignedTo,
             location,
+            category: category,
             status: status.toUpperCase(),
             startDate: startDate ? new Date(startDate) : null,
             endDate: endDate ? new Date(endDate) : null,
@@ -2119,12 +2019,16 @@ async function addSubSubtask(mainId, subtaskId) {
     const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
     const duration = parseFloat(prompt("Duration (number, hour, optional):") || 0);
     
+    // Auto-categorize the sub-subtask
+    const category = autoCategorizeTask(taskDesc);
+    
     try {
         await addDoc(collection(db, "projectTasks", mainId, "subtasks", subtaskId, "subsubtasks"), {
             taskId: subSubTaskId,
             taskDescription: taskDesc,
             assignedTo,
             location,
+            category: category,
             status: status.toUpperCase(),
             startDate: startDate ? new Date(startDate) : null,
             endDate: endDate ? new Date(endDate) : null,
@@ -2133,7 +2037,7 @@ async function addSubSubtask(mainId, subtaskId) {
             createdAt: new Date(),
             updatedAt: new Date()
         });
-        alert('Sub-subtask added!');
+        alert('Sub-subtask added! Category: ' + categories[category].name);
     } catch (e) {
         alert("Error adding sub-subtask: " + e.message);
     }
@@ -2444,12 +2348,6 @@ function renderGanttCalendar(tasks) {
         renderGanttCalendar(filterTasks(allTasks));
     });
     
-    taskTypeFilter.addEventListener('change', () => {
-        saveFilterStates();
-        renderTasks(filterTasks(allTasks));
-        renderGanttCalendar(filterTasks(allTasks));
-    });
-    
     searchInput.addEventListener('input', () => {
         renderTasks(filterTasks(allTasks));
         renderGanttCalendar(filterTasks(allTasks));
@@ -2459,8 +2357,6 @@ function renderGanttCalendar(tasks) {
     showGanttBtn.addEventListener('click', toggleGanttVisibility);
     currentMonthBtn.addEventListener('click', toggleCurrentMonthView);
     fullscreenBtn.addEventListener('click', toggleFullscreen);
-    addMaintenanceTasksBtn.addEventListener('click', showMaintenanceTasksPanel);
-    closeMaintenancePanelBtn.addEventListener('click', hideMaintenanceTasksPanel);
 
     // Fullscreen event listeners
     document.addEventListener('fullscreenchange', () => {
@@ -2483,7 +2379,6 @@ function renderGanttCalendar(tasks) {
         const savedStatus = localStorage.getItem('taskStatusFilter');
         const savedMonth = localStorage.getItem('taskMonthFilter');
         const savedYear = localStorage.getItem('taskYearFilter');
-        const savedTaskType = localStorage.getItem('taskTypeFilter');
         const savedSearch = localStorage.getItem('taskSearchFilter');
         const savedGanttVisible = localStorage.getItem('ganttVisible');
         const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
@@ -2491,7 +2386,6 @@ function renderGanttCalendar(tasks) {
         if (savedStatus) statusFilter.value = savedStatus;
         if (savedMonth) monthFilter.value = savedMonth;
         if (savedYear) yearFilter.value = savedYear;
-        if (savedTaskType) taskTypeFilter.value = savedTaskType;
         if (savedSearch) searchInput.value = savedSearch;
         if (savedGanttVisible === 'true') {
             ganttVisible = true;
@@ -2511,7 +2405,6 @@ function renderGanttCalendar(tasks) {
         localStorage.setItem('taskStatusFilter', statusFilter.value);
         localStorage.setItem('taskMonthFilter', monthFilter.value);
         localStorage.setItem('taskYearFilter', yearFilter.value);
-        localStorage.setItem('taskTypeFilter', taskTypeFilter.value);
         localStorage.setItem('taskSearchFilter', searchInput.value);
     }
 
@@ -2547,6 +2440,7 @@ function renderGanttCalendar(tasks) {
     }
 
     // Initialize
+    updateCategoryUI();
     loadFilterStates();
     loadExpandedTasks();
     
