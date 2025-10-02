@@ -654,6 +654,153 @@
         .category-back-btn:hover {
             background: rgba(255,255,255,0.3);
         }
+        
+        /* Category transfer modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        body.dark-mode .modal-content {
+            background: #252833;
+            color: #e5e7eb;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        body.dark-mode .modal-header {
+            border-bottom-color: #374151;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .close-btn:hover {
+            color: #374151;
+        }
+        body.dark-mode .close-btn {
+            color: #9ca3af;
+        }
+        body.dark-mode .close-btn:hover {
+            color: #e5e7eb;
+        }
+        .category-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .category-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .category-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .category-option.selected {
+            border-color: #3b82f6;
+        }
+        .category-option-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .category-option-name {
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .transfer-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .transfer-btn:hover {
+            background: #2563eb;
+        }
+        .transfer-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .cancel-btn {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        body.dark-mode .cancel-btn {
+            background: #374151;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+        .cancel-btn:hover {
+            background: #e5e7eb;
+        }
+        body.dark-mode .cancel-btn:hover {
+            background: #4b5563;
+        }
+        .transfer-task-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .transfer-task-btn:hover {
+            background: #059669;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -768,6 +915,7 @@
                                 <th>MAN COST</th>
                                 <th>TOTAL COST</th>
                                 <th>LOCATION</th>
+                                <th>CATEGORY</th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
@@ -776,12 +924,11 @@
                         </tbody>
                         <tfoot>
                             <tr class="total-row">
-                                <td colspan="9" style="text-align: right; font-weight: bold;">TOTAL:</td>
-                                <td id="totalDuration"></td>
+                                <td colspan="10" style="text-align: right; font-weight: bold;">TOTAL:</td>
                                 <td id="totalMaterialCost"></td>
                                 <td id="totalManCost"></td>
                                 <td id="totalCost"></td>
-                                <td colspan="2"></td>
+                                <td colspan="3"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -809,6 +956,26 @@
                 </div>
             </div>
             <button id="showGanttBtn" class="toggle-bar action-btn" title="Show Gantt Calendar"><i class="fas fa-calendar-alt"></i></button>
+        </div>
+    </div>
+
+    <!-- Category Transfer Modal -->
+    <div class="modal-overlay" id="categoryTransferModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Transfer Task to Category</h3>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <div id="transferTaskInfo">
+                <!-- Task info will be populated here -->
+            </div>
+            <div class="category-options" id="categoryOptions">
+                <!-- Category options will be populated here -->
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" id="cancelTransferBtn">Cancel</button>
+                <button class="transfer-btn" id="confirmTransferBtn" disabled>Transfer Task</button>
+            </div>
         </div>
     </div>
 
@@ -897,6 +1064,14 @@ const categoryTitle = document.getElementById('categoryTitle');
 const categoryIcon = document.getElementById('categoryIcon');
 const tasksTitle = document.getElementById('tasksTitle');
 
+// Category Transfer Modal Elements
+const categoryTransferModal = document.getElementById('categoryTransferModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const transferTaskInfo = document.getElementById('transferTaskInfo');
+const categoryOptions = document.getElementById('categoryOptions');
+const cancelTransferBtn = document.getElementById('cancelTransferBtn');
+const confirmTransferBtn = document.getElementById('confirmTransferBtn');
+
 // Category definitions with keywords for auto-categorization
 const categories = {
     'general': {
@@ -951,6 +1126,8 @@ let allTasks = [];
 let unsubMain = null;
 let subUnsubs = {};
 let expandedTasks = {};
+let selectedTaskForTransfer = null;
+let selectedCategoryForTransfer = null;
 
 // Update UI based on category
 function updateCategoryUI() {
@@ -1698,7 +1875,110 @@ async function getSubSubtasks(mainId, subId) {
     return subsubtasks;
 }
 
-// Render tasks with the new give target column
+// Get category display name
+function getCategoryDisplayName(categoryId) {
+    return categories[categoryId] ? categories[categoryId].name : 'General';
+}
+
+// Get category icon
+function getCategoryIcon(categoryId) {
+    return categories[categoryId] ? categories[categoryId].icon : 'fas fa-tools';
+}
+
+// Show category transfer modal
+function showCategoryTransferModal(task, type, mainId, subId = null) {
+    selectedTaskForTransfer = { task, type, mainId, subId };
+    selectedCategoryForTransfer = null;
+    
+    // Update modal content
+    transferTaskInfo.innerHTML = `
+        <p><strong>Task ID:</strong> ${task.taskId}</p>
+        <p><strong>Description:</strong> ${task.taskDescription}</p>
+        <p><strong>Current Category:</strong> ${getCategoryDisplayName(task.category || 'general')}</p>
+    `;
+    
+    // Populate category options
+    categoryOptions.innerHTML = '';
+    for (const [categoryId, category] of Object.entries(categories)) {
+        // Skip the current category
+        if (categoryId === (task.category || 'general')) continue;
+        
+        const option = document.createElement('div');
+        option.className = 'category-option';
+        option.dataset.categoryId = categoryId;
+        option.innerHTML = `
+            <i class="${category.icon} category-option-icon" style="color: ${category.color}"></i>
+            <span class="category-option-name">${category.name}</span>
+        `;
+        option.onclick = () => selectCategory(categoryId, option);
+        categoryOptions.appendChild(option);
+    }
+    
+    // Reset transfer button
+    confirmTransferBtn.disabled = true;
+    confirmTransferBtn.textContent = 'Transfer Task';
+    
+    // Show modal
+    categoryTransferModal.style.display = 'flex';
+}
+
+// Select category for transfer
+function selectCategory(categoryId, optionElement) {
+    // Remove selected class from all options
+    document.querySelectorAll('.category-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked option
+    optionElement.classList.add('selected');
+    
+    // Update selected category
+    selectedCategoryForTransfer = categoryId;
+    
+    // Enable transfer button
+    confirmTransferBtn.disabled = false;
+}
+
+// Transfer task to new category
+async function transferTaskToCategory() {
+    if (!selectedTaskForTransfer || !selectedCategoryForTransfer) return;
+    
+    const { task, type, mainId, subId } = selectedTaskForTransfer;
+    
+    try {
+        let updateData = { 
+            category: selectedCategoryForTransfer,
+            updatedAt: new Date()
+        };
+        
+        if (type === 'main') {
+            await updateDoc(doc(db, "projectTasks", mainId), updateData);
+        } else if (type === 'sub') {
+            await updateDoc(doc(db, "projectTasks", mainId, "subtasks", subId), updateData);
+        } else if (type === 'subsub') {
+            await updateDoc(doc(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks", task.id), updateData);
+        }
+        
+        alert(`Task transferred to ${getCategoryDisplayName(selectedCategoryForTransfer)} successfully!`);
+        closeCategoryTransferModal();
+        
+        // If we're in a category view and the task no longer matches, reload tasks
+        if (currentCategory && selectedCategoryForTransfer !== currentCategory) {
+            loadAllTasks();
+        }
+    } catch (e) {
+        alert("Error transferring task: " + e.message);
+    }
+}
+
+// Close category transfer modal
+function closeCategoryTransferModal() {
+    categoryTransferModal.style.display = 'none';
+    selectedTaskForTransfer = null;
+    selectedCategoryForTransfer = null;
+}
+
+// Render tasks with the new give target column and category transfer button
 function renderTasks(tasks) {
     taskList.innerHTML = '';
     let visibleCount = 0;
@@ -1753,9 +2033,13 @@ function renderTasks(tasks) {
             <td><span class="cost-badge">${formatCurrency(displayManCost)}</span></td>
             <td><span class="cost-badge">${formatCurrency(displayTotalCost)}</span></td>
             <td>${task.location || ''}</td>
+            <td>${getCategoryDisplayName(task.category || 'general')}</td>
             <td>
                 <button class="add-subtask-btn action-btn" data-mainid="${task.id}">
                     <i class="fas fa-plus"></i> Subtask
+                </button>
+                <button class="transfer-task-btn" onclick="showCategoryTransferModal(${JSON.stringify(task).replace(/"/g, '&quot;')}, 'main', '${task.id}')">
+                    <i class="fas fa-exchange-alt"></i> Transfer
                 </button>
                 <button class="delete-btn" onclick="deleteTask('main', '${task.id}')">
                     <i class="fas fa-trash"></i>
@@ -1768,7 +2052,7 @@ function renderTasks(tasks) {
             if (!task.subTasks || !task.subTasks.length) {
                 const trSub = document.createElement('tr');
                 trSub.classList.add('subtask-row');
-                trSub.innerHTML = `<td></td><td colspan="14">No sub tasks yet.</td>`;
+                trSub.innerHTML = `<td></td><td colspan="15">No sub tasks yet.</td>`;
                 taskList.appendChild(trSub);
             } else {
                 task.subTasks.forEach(sub => {
@@ -1804,9 +2088,13 @@ function renderTasks(tasks) {
                         <td><span class="cost-badge">${formatCurrency(subManCost)}</span></td>
                         <td><span class="cost-badge">${formatCurrency(subTotalCost)}</span></td>
                         <td>${sub.location || ''}</td>
+                        <td>${getCategoryDisplayName(sub.category || 'general')}</td>
                         <td>
                             <button class="add-subsubtask-btn action-btn" data-mainid="${task.id}" data-subid="${sub.id}">
                                 <i class="fas fa-plus"></i> Sub-Subtask
+                            </button>
+                            <button class="transfer-task-btn" onclick="showCategoryTransferModal(${JSON.stringify(sub).replace(/"/g, '&quot;')}, 'sub', '${task.id}', '${sub.id}')">
+                                <i class="fas fa-exchange-alt"></i> Transfer
                             </button>
                             <button class="delete-btn" onclick="deleteTask('sub', '${task.id}', '${sub.id}')">
                                 <i class="fas fa-trash"></i>
@@ -1849,7 +2137,11 @@ function renderTasks(tasks) {
                                 <td><span class="cost-badge">${formatCurrency(subsubManCost)}</span></td>
                                 <td><span class="cost-badge">${formatCurrency(subsubTotalCost)}</span></td>
                                 <td>${subsub.location || ''}</td>
+                                <td>${getCategoryDisplayName(subsub.category || 'general')}</td>
                                 <td>
+                                    <button class="transfer-task-btn" onclick="showCategoryTransferModal(${JSON.stringify(subsub).replace(/"/g, '&quot;')}, 'subsub', '${task.id}', '${sub.id}')">
+                                        <i class="fas fa-exchange-alt"></i> Transfer
+                                    </button>
                                     <button class="delete-btn" onclick="deleteTask('subsub', '${task.id}', '${sub.id}', '${subsub.id}')">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -2358,6 +2650,11 @@ function renderGanttCalendar(tasks) {
     currentMonthBtn.addEventListener('click', toggleCurrentMonthView);
     fullscreenBtn.addEventListener('click', toggleFullscreen);
 
+    // Category transfer modal event listeners
+    closeModalBtn.addEventListener('click', closeCategoryTransferModal);
+    cancelTransferBtn.addEventListener('click', closeCategoryTransferModal);
+    confirmTransferBtn.addEventListener('click', transferTaskToCategory);
+
     // Fullscreen event listeners
     document.addEventListener('fullscreenchange', () => {
         isFullscreen = !!document.fullscreenElement;
@@ -2464,8 +2761,9 @@ function renderGanttCalendar(tasks) {
         renderGanttCalendar(filterTasks(allTasks));
     }, 60000);
 
-    // Make deleteTask function available globally
+    // Make functions available globally
     window.deleteTask = deleteTask;
+    window.showCategoryTransferModal = showCategoryTransferModal;
 </script>
 </body>
 </html>
