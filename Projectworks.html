@@ -801,105 +801,6 @@
         .transfer-task-btn:hover {
             background: #059669;
         }
-
-        /* Hide completed tasks toggle */
-        .hide-completed-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: auto;
-        }
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .toggle-slider {
-            background-color: #10b981;
-        }
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-
-        /* Status dropdown menu */
-        .status-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .status-dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: white;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 100;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        body.dark-mode .status-dropdown-content {
-            background-color: #252833;
-            border: 1px solid #374151;
-        }
-        .status-dropdown-content.show {
-            display: block;
-        }
-        .status-option {
-            padding: 10px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        body.dark-mode .status-option {
-            border-bottom-color: #374151;
-        }
-        .status-option:last-child {
-            border-bottom: none;
-        }
-        .status-option:hover {
-            background-color: #f3f4f6;
-        }
-        body.dark-mode .status-option:hover {
-            background-color: #374151;
-        }
-        .status-option.hide-option {
-            border-top: 1px solid #e5e7eb;
-            background-color: #f9fafb;
-            font-weight: 600;
-        }
-        body.dark-mode .status-option.hide-option {
-            border-top-color: #374151;
-            background-color: #1f2937;
-        }
     </style>
 </head>
 <body class="dark-mode">
@@ -987,13 +888,6 @@
                     <option value="2025">2025</option>
                     <option value="2026">2026</option>
                 </select>
-            </div>
-            <div class="hide-completed-container">
-                <span class="filter-label">Hide Completed:</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="hideCompletedToggle">
-                    <span class="toggle-slider"></span>
-                </label>
             </div>
         </div>
         <div class="main-table-wrap" id="mainTableWrap" style="position:relative;">
@@ -1169,7 +1063,6 @@ const categoryHeader = document.getElementById('categoryHeader');
 const categoryTitle = document.getElementById('categoryTitle');
 const categoryIcon = document.getElementById('categoryIcon');
 const tasksTitle = document.getElementById('tasksTitle');
-const hideCompletedToggle = document.getElementById('hideCompletedToggle');
 
 // Category Transfer Modal Elements
 const categoryTransferModal = document.getElementById('categoryTransferModal');
@@ -1235,8 +1128,6 @@ let subUnsubs = {};
 let expandedTasks = {};
 let selectedTaskForTransfer = null;
 let selectedCategoryForTransfer = null;
-let hideCompleted = false;
-let activeStatusDropdown = null;
 
 // Update UI based on category
 function updateCategoryUI() {
@@ -1646,11 +1537,6 @@ function filterTasks(tasks) {
     const searchVal = searchInput.value.toLowerCase();
     
     return tasks.filter(task => {
-        // Check hide completed filter
-        if (hideCompleted && task.status === 'COMPLETED') {
-            return false;
-        }
-        
         // Check category filter
         let matchesCategory = true;
         if (currentCategory) {
@@ -2092,91 +1978,6 @@ function closeCategoryTransferModal() {
     selectedCategoryForTransfer = null;
 }
 
-// Show status dropdown menu
-function showStatusDropdown(cell, type, taskId, mainId, subId = null) {
-    // Close any existing dropdown
-    if (activeStatusDropdown) {
-        activeStatusDropdown.remove();
-        activeStatusDropdown = null;
-    }
-    
-    const currentStatus = cell.textContent.trim();
-    
-    // Create dropdown
-    const dropdown = document.createElement('div');
-    dropdown.className = 'status-dropdown-content show';
-    dropdown.style.position = 'absolute';
-    dropdown.style.left = '0';
-    dropdown.style.top = '100%';
-    dropdown.style.zIndex = '1000';
-    
-    // Status options
-    const statusOptions = [
-        { value: 'COMPLETED', label: 'Completed', icon: 'fas fa-check-circle', color: '#10b981' },
-        { value: 'ONGOING', label: 'Ongoing', icon: 'fas fa-sync-alt', color: '#3b82f6' },
-        { value: 'PENDING', label: 'Pending', icon: 'fas fa-clock', color: '#6b7280' },
-        { value: 'OVERDUE', label: 'Overdue', icon: 'fas fa-exclamation-triangle', color: '#ef4444' }
-    ];
-    
-    // Add status options to dropdown
-    statusOptions.forEach(option => {
-        const statusOption = document.createElement('div');
-        statusOption.className = 'status-option';
-        if (option.value === currentStatus) {
-            statusOption.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-        }
-        statusOption.innerHTML = `
-            <i class="${option.icon}" style="color: ${option.color}"></i>
-            <span>${option.label}</span>
-        `;
-        statusOption.onclick = async () => {
-            await saveEditable(cell, type, 'status', option.value);
-            dropdown.remove();
-            activeStatusDropdown = null;
-        };
-        dropdown.appendChild(statusOption);
-    });
-    
-    // Add hide completed option if current status is COMPLETED
-    if (currentStatus === 'COMPLETED') {
-        const hideOption = document.createElement('div');
-        hideOption.className = 'status-option hide-option';
-        hideOption.innerHTML = `
-            <i class="fas fa-eye-slash" style="color: #6b7280"></i>
-            <span>Hide This Task</span>
-        `;
-        hideOption.onclick = () => {
-            hideCompleted = true;
-            saveFilterStates();
-            renderTasks(filterTasks(allTasks));
-            dropdown.remove();
-            activeStatusDropdown = null;
-        };
-        dropdown.appendChild(hideOption);
-    }
-    
-    // Position dropdown
-    const rect = cell.getBoundingClientRect();
-    dropdown.style.left = '0';
-    dropdown.style.top = '100%';
-    dropdown.style.minWidth = rect.width + 'px';
-    
-    cell.appendChild(dropdown);
-    activeStatusDropdown = dropdown;
-    
-    // Close dropdown when clicking outside
-    setTimeout(() => {
-        const closeDropdown = (e) => {
-            if (!cell.contains(e.target)) {
-                dropdown.remove();
-                activeStatusDropdown = null;
-                document.removeEventListener('click', closeDropdown);
-            }
-        };
-        document.addEventListener('click', closeDropdown);
-    }, 0);
-}
-
 // Render tasks with the new give target column and category transfer button
 function renderTasks(tasks) {
     taskList.innerHTML = '';
@@ -2219,7 +2020,7 @@ function renderTasks(tasks) {
             <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine || ''}</td>
             <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription || ''}</td>
             <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
-            <td class="status-dropdown editable" data-type="main" data-field="status" data-id="${task.id}">
+            <td class="editable" data-type="main" data-field="status" data-id="${task.id}">
                 <span class="${getStatusBadge(task.status)}">${task.status || ''}</span>
             </td>
             <td class="editable" data-type="main" data-field="startDate" data-id="${task.id}">${formatDate(task.startDate) || ''}</td>
@@ -2274,7 +2075,7 @@ function renderTasks(tasks) {
                         <td></td>
                         <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}">${sub.taskDescription || ''}</td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
-                        <td class="status-dropdown editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
+                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
                             <span class="${getStatusBadge(sub.status)}">${sub.status || ''}</span>
                         </td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="startDate" data-id="${sub.id}">${formatDate(sub.startDate) || ''}</td>
@@ -2323,7 +2124,7 @@ function renderTasks(tasks) {
                                 <td></td>
                                 <td class="editable subtask-desc" style="padding-left:40px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${subsub.id}">${subsub.taskDescription || ''}</td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${subsub.id}">${subsub.assignedTo || ''}</td>
-                                <td class="status-dropdown editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
+                                <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
                                     <span class="${getStatusBadge(subsub.status)}">${subsub.status || ''}</span>
                                 </td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="startDate" data-id="${subsub.id}">${formatDate(subsub.startDate) || ''}</td>
@@ -2390,24 +2191,13 @@ function renderTasks(tasks) {
         };
     });
     
-    // Add event listeners for status dropdowns
-    document.querySelectorAll('.status-dropdown').forEach(cell => {
-        cell.onclick = function(e) {
-            e.stopPropagation();
-            const type = this.dataset.type;
-            const taskId = this.dataset.id;
-            const mainId = this.dataset.mainid;
-            const subId = this.dataset.subid;
-            showStatusDropdown(this, type, taskId, mainId, subId);
-        };
-    });
-    
-    // Add event listeners for other editable fields
-    document.querySelectorAll('.editable:not(.status-dropdown)').forEach(cell => {
+    document.querySelectorAll('.editable').forEach(cell => {
         cell.onclick = function() {
             const type = this.dataset.type;
             const field = this.dataset.field;
-            if (field === 'startDate' || field === 'endDate' || field === 'giveTarget') {
+            if (field === 'status') {
+                makeEditableSelect(this, type, field);
+            } else if (field === 'startDate' || field === 'endDate' || field === 'giveTarget') {
                 makeEditableInput(this, type, field, 'date');
             } else if (field === 'taskLine') {
                 makeEditableInput(this, type, field, 'number');
@@ -2831,14 +2621,6 @@ function renderGanttCalendar(tasks) {
         }
     }
 
-    // Toggle hide completed tasks
-    function toggleHideCompleted() {
-        hideCompleted = hideCompletedToggle.checked;
-        saveFilterStates();
-        renderTasks(filterTasks(allTasks));
-        renderGanttCalendar(filterTasks(allTasks));
-    }
-
     // Event listeners
     statusFilter.addEventListener('change', () => {
         saveFilterStates();
@@ -2862,8 +2644,6 @@ function renderGanttCalendar(tasks) {
         renderTasks(filterTasks(allTasks));
         renderGanttCalendar(filterTasks(allTasks));
     });
-
-    hideCompletedToggle.addEventListener('change', toggleHideCompleted);
 
     toggleGanttBtn.addEventListener('click', toggleGanttVisibility);
     showGanttBtn.addEventListener('click', toggleGanttVisibility);
@@ -2899,7 +2679,6 @@ function renderGanttCalendar(tasks) {
         const savedSearch = localStorage.getItem('taskSearchFilter');
         const savedGanttVisible = localStorage.getItem('ganttVisible');
         const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
-        const savedHideCompleted = localStorage.getItem('hideCompleted');
         
         if (savedStatus) statusFilter.value = savedStatus;
         if (savedMonth) monthFilter.value = savedMonth;
@@ -2916,10 +2695,6 @@ function renderGanttCalendar(tasks) {
             showCurrentMonthOnly = true;
             currentMonthBtn.textContent = "All Months";
         }
-        if (savedHideCompleted === 'true') {
-            hideCompleted = true;
-            hideCompletedToggle.checked = true;
-        }
     }
 
     // Save filter states
@@ -2928,7 +2703,6 @@ function renderGanttCalendar(tasks) {
         localStorage.setItem('taskMonthFilter', monthFilter.value);
         localStorage.setItem('taskYearFilter', yearFilter.value);
         localStorage.setItem('taskSearchFilter', searchInput.value);
-        localStorage.setItem('hideCompleted', hideCompleted.toString());
     }
 
     // Load expanded tasks
