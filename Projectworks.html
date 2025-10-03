@@ -1691,35 +1691,48 @@ function makeEditableInput(cell, type, field, inputType='text') {
     };
 }
 
-// Make editable select for status
+// Make editable select for status - FIXED VERSION
 function makeEditableSelect(cell, type, field) {
     if (cell.querySelector('select')) return;
-    const val = cell.textContent.trim();
+    
+    // Get the current status from the badge span
+    const badgeSpan = cell.querySelector('.status-badge');
+    const currentStatus = badgeSpan ? badgeSpan.textContent.trim() : cell.textContent.trim();
+    
     const select = document.createElement('select');
     select.className = 'editable-select';
     select.setAttribute('data-field', field);
-    if (field === 'taskDescription' || field === 'assignedTo') {
-        select.style.textAlign = 'left';
-    } else {
-        select.style.textAlign = 'center';
-    }
+    select.style.textAlign = 'center';
+    select.style.width = '100%';
+    select.style.padding = '4px';
+    select.style.border = '1px solid #ccc';
+    select.style.borderRadius = '4px';
+    select.style.backgroundColor = 'white';
     
-    // Include OVERDUE in status options
-    ['COMPLETED', 'ONGOING', 'PENDING', 'OVERDUE'].forEach(opt => {
-        const o = document.createElement('option');
-        o.value = opt;
-        o.textContent = opt;
-        if (val.toUpperCase() === opt) o.selected = true;
-        select.appendChild(o);
+    // Status options including OVERDUE
+    const statusOptions = ['COMPLETED', 'ONGOING', 'PENDING', 'OVERDUE'];
+    
+    statusOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        if (currentStatus.toUpperCase() === opt) {
+            option.selected = true;
+        }
+        select.appendChild(option);
     });
     
     cell.innerHTML = '';
     cell.appendChild(select);
     select.focus();
+    
     select.onblur = async () => {
         await saveEditable(cell, type, field, select.value);
     };
-    select.onchange = () => select.blur();
+    
+    select.onchange = async () => {
+        await saveEditable(cell, type, field, select.value);
+    };
 }
 
 // Save editable fields including give target
@@ -2020,7 +2033,7 @@ function renderTasks(tasks) {
             <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine || ''}</td>
             <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription || ''}</td>
             <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
-            <td class="editable" data-type="main" data-field="status" data-id="${task.id}">
+            <td class="editable status-cell" data-type="main" data-field="status" data-id="${task.id}">
                 <span class="${getStatusBadge(task.status)}">${task.status || ''}</span>
             </td>
             <td class="editable" data-type="main" data-field="startDate" data-id="${task.id}">${formatDate(task.startDate) || ''}</td>
@@ -2075,7 +2088,7 @@ function renderTasks(tasks) {
                         <td></td>
                         <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}">${sub.taskDescription || ''}</td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
+                        <td class="editable status-cell" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
                             <span class="${getStatusBadge(sub.status)}">${sub.status || ''}</span>
                         </td>
                         <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="startDate" data-id="${sub.id}">${formatDate(sub.startDate) || ''}</td>
@@ -2124,7 +2137,7 @@ function renderTasks(tasks) {
                                 <td></td>
                                 <td class="editable subtask-desc" style="padding-left:40px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${subsub.id}">${subsub.taskDescription || ''}</td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${subsub.id}">${subsub.assignedTo || ''}</td>
-                                <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
+                                <td class="editable status-cell" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
                                     <span class="${getStatusBadge(subsub.status)}">${subsub.status || ''}</span>
                                 </td>
                                 <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="startDate" data-id="${subsub.id}">${formatDate(subsub.startDate) || ''}</td>
@@ -2191,13 +2204,21 @@ function renderTasks(tasks) {
         };
     });
     
-    document.querySelectorAll('.editable').forEach(cell => {
+    // FIXED: Status cell click handler
+    document.querySelectorAll('.status-cell').forEach(cell => {
         cell.onclick = function() {
             const type = this.dataset.type;
             const field = this.dataset.field;
-            if (field === 'status') {
-                makeEditableSelect(this, type, field);
-            } else if (field === 'startDate' || field === 'endDate' || field === 'giveTarget') {
+            makeEditableSelect(this, type, field);
+        };
+    });
+    
+    // Other editable fields
+    document.querySelectorAll('.editable:not(.status-cell)').forEach(cell => {
+        cell.onclick = function() {
+            const type = this.dataset.type;
+            const field = this.dataset.field;
+            if (field === 'startDate' || field === 'endDate' || field === 'giveTarget') {
                 makeEditableInput(this, type, field, 'date');
             } else if (field === 'taskLine') {
                 makeEditableInput(this, type, field, 'number');
@@ -2767,3 +2788,4 @@ function renderGanttCalendar(tasks) {
 </script>
 </body>
 </html>
+
