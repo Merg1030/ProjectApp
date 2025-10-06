@@ -363,6 +363,7 @@
     let taskHourCache = {};
     let taskMaterialCache = {};
     let projectOptions = {};
+    let taskDescriptionCache = {};
 
     // UI controls
     const reportTypeSelect = document.getElementById("report-type-select");
@@ -493,6 +494,46 @@
       } catch {}
       projectCache[projectId] = "-";
       return "-";
+    }
+
+    // Function to get task description from taskId
+    async function getTaskDescription(taskId) {
+      if (!taskId) return "-";
+      if (taskDescriptionCache[taskId]) {
+        return taskDescriptionCache[taskId];
+      }
+      
+      try {
+        // First try to find in projectTasks collection
+        const tasksQuery = query(collection(db, "projectTasks"), where("taskId", "==", taskId));
+        const tasksSnap = await getDocs(tasksQuery);
+        
+        if (!tasksSnap.empty) {
+          const taskData = tasksSnap.docs[0].data();
+          const description = taskData.taskDescription || "-";
+          taskDescriptionCache[taskId] = description;
+          return description;
+        }
+        
+        // If not found in projectTasks, try locationHistory
+        const locationQuery = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
+        const locationSnap = await getDocs(locationQuery);
+        
+        if (!locationSnap.empty) {
+          const locationData = locationSnap.docs[0].data();
+          const description = locationData.taskDescription || "-";
+          taskDescriptionCache[taskId] = description;
+          return description;
+        }
+        
+        // If still not found, return default
+        taskDescriptionCache[taskId] = "-";
+        return "-";
+      } catch (error) {
+        console.error("Error getting task description for task", taskId, error);
+        taskDescriptionCache[taskId] = "-";
+        return "-";
+      }
     }
 
     async function getHoursForTask(taskId) {
@@ -881,6 +922,7 @@ async function fetchEmployees() {
       allUsages = [];
       materialCache = {};
       projectCache = {};
+      taskDescriptionCache = {};
       const usageDocs = snapshot.docs;
       await Promise.all(usageDocs.map(async (docSnap) => {
         const u = docSnap.data();
@@ -903,6 +945,11 @@ async function fetchEmployees() {
             else materialCache[u.materialId] = "-";
           } catch { materialCache[u.materialId] = "-"; }
         }
+        // Get task description if taskId exists
+        if (u.taskId && !taskDescriptionCache[u.taskId]) {
+          taskDescriptionCache[u.taskId] = await getTaskDescription(u.taskId);
+        }
+        
         let usage = { ...u };
         if (u.projectId && projectCache[u.projectId]) usage.projectName = projectCache[u.projectId];
         else if (u.projectName) usage.projectName = u.projectName;
@@ -912,6 +959,8 @@ async function fetchEmployees() {
           usage._date = u.assignedAt.toDate();
           usage._week = getWeekNumber(usage._date);
         }
+        // Add task description to usage object
+        usage.taskDescription = taskDescriptionCache[u.taskId] || u.taskDescription || "-";
         allUsages.push(usage);
       }));
       updateProjectDropdownOptions();
@@ -1133,6 +1182,13 @@ async function fetchEmployees() {
         let closingBalance = 0;
 
         if (usageCheckbox.checked) {
+          // Fetch task descriptions for all usages
+          await Promise.all(filterUsages.map(async (u) => {
+            if (!taskDescriptionCache[u.taskId]) {
+              taskDescriptionCache[u.taskId] = await getTaskDescription(u.taskId);
+            }
+          }));
+
           filterUsages.slice().sort((a, b) => {
             let dA = a.assignedAt && a.assignedAt.toDate ? a.assignedAt.toDate() : (a._date || new Date());
             let dB = b.assignedAt && b.assignedAt.toDate ? b.assignedAt.toDate() : (b._date || new Date());
@@ -1144,7 +1200,9 @@ async function fetchEmployees() {
             const qty = Number(u.quantity || 0);
             const unitPrice = Number(u.unitPrice || 0);
             const total = qty * unitPrice;
-            breakdownRows.push({ dateStr, taskId, name, qty, unitPrice, total });
+            const taskDescription = taskDescriptionCache[u.taskId] || u.taskDescription || "-";
+            
+            breakdownRows.push({ dateStr, taskId, taskDescription, name, qty, unitPrice, total });
             generalUseTotals[name] = (generalUseTotals[name] || 0) + qty;
             closingBalance += total;
           });
@@ -1162,6 +1220,7 @@ async function fetchEmployees() {
                 <tr>
                   <th>Date</th>
                   <th>Task ID</th>
+                  <th>Task Description</th>
                   <th>Name</th>
                   <th>Qty</th>
                   <th>Unit Price</th>
@@ -1173,14 +1232,15 @@ async function fetchEmployees() {
                   <tr>
                     <td>${r.dateStr}</td>
                     <td>${r.taskId}</td>
+                    <td>${r.taskDescription}</td>
                     <td>${r.name}</td>
                     <td>${r.qty}</td>
                     <td>${r.unitPrice}</td>
-                    <td>${r.total}</td>
+                    <td>${r.total.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
                   </tr>
                 `).join('')}
                 <tr class="total-row">
-                  <td colspan="5" style="text-align:right;">Closing Balance</td>
+                  <td colspan="6" style="text-align:right;">Closing Balance</td>
                   <td>${closingBalance.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
                 </tr>
               </tbody>
@@ -1386,11 +1446,17 @@ mainHtml += `
                   <th>START DATE</th>
                   <th>END DATE</th>
                   <th>DURATION (Hrs)</th>
+                  <th>LABOUR COST</th>
                   <th>MATERIAL COST</th>
+                  <th>TOTAL COST</th>
                 </tr>
               </thead>
               <tbody>
-                ${completedTasks.map(row => `
+                ${completedTasks.map(row => {
+                  const labourCost = (row._durationHours || 0) * COST_PER_HOUR;
+                  const materialCost = row._materialCost || 0;
+                  const totalCost = labourCost + materialCost;
+                  return `
                   <tr>
                     <td>${safeProjectName(row)}</td>
                     <td>${row.taskId || '-'}</td>
@@ -1401,9 +1467,11 @@ mainHtml += `
                     <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
                     <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
                     <td>${row._durationHours || '0'}</td>
-                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                    <td>${labourCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td>${materialCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td>${totalCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
             </table>
           </div>`;
@@ -1424,11 +1492,17 @@ mainHtml += `
                   <th>STATUS</th>
                   <th>START DATE</th>
                   <th>DURATION (Hrs)</th>
+                  <th>LABOUR COST</th>
                   <th>MATERIAL COST</th>
+                  <th>TOTAL COST</th>
                 </tr>
               </thead>
               <tbody>
-                ${ongoingTasks.map(row => `
+                ${ongoingTasks.map(row => {
+                  const labourCost = (row._durationHours || 0) * COST_PER_HOUR;
+                  const materialCost = row._materialCost || 0;
+                  const totalCost = labourCost + materialCost;
+                  return `
                   <tr>
                     <td>${safeProjectName(row)}</td>
                     <td>${row.taskId || '-'}</td>
@@ -1438,9 +1512,11 @@ mainHtml += `
                     <td>${row.status || '-'}</td>
                     <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
                     <td>${row._durationHours || '0'}</td>
-                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                    <td>${labourCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td>${materialCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td>${totalCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
             </table>
           </div>`;
@@ -1461,11 +1537,17 @@ mainHtml += `
                   <th>STATUS</th>
                   <th>START DATE</th>
                   <th>DURATION (Hrs)</th>
+                  <th>LABOUR COST</th>
                   <th>MATERIAL COST</th>
+                  <th>TOTAL COST</th>
                 </tr>
               </thead>
               <tbody>
-                ${pendingTasks.map(row => `
+                ${pendingTasks.map(row => {
+                  const labourCost = (row._durationHours || 0) * COST_PER_HOUR;
+                  const materialCost = row._materialCost || 0;
+                  const totalCost = labourCost + materialCost;
+                  return `
                   <tr>
                     <td>${safeProjectName(row)}</td>
                     <td>${row.taskId || '-'}</td>
@@ -1475,9 +1557,11 @@ mainHtml += `
                     <td>${row.status || '-'}</td>
                     <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
                     <td>${row._durationHours || '0'}</td>
-                    <td>${row._materialCost !== undefined ? row._materialCost.toLocaleString(undefined,{maximumFractionDigits:2}) : '0'}</td>
+                    <td>${labourCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td>${materialCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td>${totalCost.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
             </table>
           </div>`;
