@@ -612,6 +612,23 @@
                     <label class="form-label" for="customProjectDescription">Description</label>
                     <input type="text" id="customProjectDescription" class="form-input" placeholder="Enter project description">
                 </div>
+                <div class="form-group">
+                    <label class="form-label" for="customProjectColor">Color</label>
+                    <input type="color" id="customProjectColor" class="form-input" value="#6c757d">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="customProjectIcon">Icon</label>
+                    <select id="customProjectIcon" class="form-input">
+                        <option value="fas fa-folder">Folder</option>
+                        <option value="fas fa-star">Star</option>
+                        <option value="fas fa-flag">Flag</option>
+                        <option value="fas fa-briefcase">Briefcase</option>
+                        <option value="fas fa-rocket">Rocket</option>
+                        <option value="fas fa-lightbulb">Lightbulb</option>
+                        <option value="fas fa-gem">Gem</option>
+                        <option value="fas fa-puzzle-piece">Puzzle</option>
+                    </select>
+                </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-outline" id="cancelCustomProject">Cancel</button>
                     <button type="submit" class="btn btn-primary">Create Project</button>
@@ -794,6 +811,21 @@
             };
         }
 
+        // Calculate stats for custom project
+        function calculateCustomProjectStats(customProject) {
+            // Custom projects have their own independent tasks
+            const customProjectTasks = allTasks.filter(task => task.customProjectId === customProject.id);
+            const totalTasks = customProjectTasks.length;
+            const completedTasks = customProjectTasks.filter(task => task.status === 'COMPLETED').length;
+            const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            
+            return {
+                totalTasks,
+                completedTasks,
+                progress
+            };
+        }
+
         // Create category card
         function createCategoryCard(category, stats) {
             const card = document.createElement('div');
@@ -907,6 +939,7 @@
             card.addEventListener('click', (e) => {
                 // Don't navigate if clicking on action buttons
                 if (!e.target.closest('.custom-project-actions')) {
+                    // Navigate to tasks page with custom project ID
                     window.location.href = `Projectworks.html?id=${projectId}&customProject=${customProject.id}`;
                 }
             });
@@ -926,20 +959,6 @@
             });
             
             return card;
-        }
-
-        // Calculate stats for custom project
-        function calculateCustomProjectStats(customProject) {
-            const customProjectTasks = allTasks.filter(task => task.customProjectId === customProject.id);
-            const totalTasks = customProjectTasks.length;
-            const completedTasks = customProjectTasks.filter(task => task.status === 'COMPLETED').length;
-            const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-            
-            return {
-                totalTasks,
-                completedTasks,
-                progress
-            };
         }
 
         // Create add custom project card
@@ -1122,7 +1141,7 @@
         }
 
         // Create custom project
-        async function createCustomProject(name, description) {
+        async function createCustomProject(name, description, color, icon) {
             try {
                 const customProjectData = {
                     name: name,
@@ -1130,8 +1149,8 @@
                     projectId: projectId,
                     createdAt: new Date(),
                     hidden: false,
-                    icon: 'fas fa-folder',
-                    color: '#6c757d'
+                    icon: icon,
+                    color: color
                 };
                 
                 await addDoc(collection(db, "customProjects"), customProjectData);
@@ -1162,6 +1181,14 @@
         async function deleteCustomProject(customProjectId) {
             if (confirm("Are you sure you want to delete this custom project? This action cannot be undone.")) {
                 try {
+                    // First, delete all tasks associated with this custom project
+                    const tasksToDelete = allTasks.filter(task => task.customProjectId === customProjectId);
+                    for (const task of tasksToDelete) {
+                        const taskRef = doc(db, "projectTasks", task.id);
+                        await deleteDoc(taskRef);
+                    }
+                    
+                    // Then delete the custom project itself
                     const projectRef = doc(db, "customProjects", customProjectId);
                     await deleteDoc(projectRef);
                 } catch (error) {
@@ -1208,7 +1235,9 @@
             e.preventDefault();
             const name = document.getElementById('customProjectName').value;
             const description = document.getElementById('customProjectDescription').value;
-            createCustomProject(name, description);
+            const color = document.getElementById('customProjectColor').value;
+            const icon = document.getElementById('customProjectIcon').value;
+            createCustomProject(name, description, color, icon);
         });
         
         showHiddenToggle.addEventListener('change', (e) => {
