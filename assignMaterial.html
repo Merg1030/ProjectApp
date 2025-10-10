@@ -876,13 +876,23 @@
       let optionsHtml = '';
 
       for (const mainDocSnap of mainTasksSnap.docs) {
-        hasTasks = true;
         const mainData = mainDocSnap.data();
-        const mainTaskId = mainDocSnap.id;
-        optionsHtml += `<option value="${mainTaskId}">[MAIN] ${mainData.taskId || ''} - ${mainData.taskDescription || ''}</option>`;
+        // FILTER OUT COMPLETED TASKS - Only show tasks that are NOT "COMPLETED"
+        if (mainData.status !== "COMPLETED") {
+          hasTasks = true;
+          const mainTaskId = mainDocSnap.id;
+          const statusText = mainData.status ? ` [${mainData.status}]` : '';
+          optionsHtml += `<option value="${mainTaskId}">[MAIN] ${mainData.taskId || ''} - ${mainData.taskDescription || ''}${statusText}</option>`;
+        }
       }
+      
       taskSelect.innerHTML = '<option value="">-- Select Main Task --</option>' + optionsHtml;
       taskSelect.disabled = !hasTasks;
+      
+      if (!hasTasks) {
+        taskSelect.innerHTML = '<option value="">No ongoing tasks available for this project</option>';
+      }
+      
       subtaskSelect.innerHTML = '<option value="">-- Assign to Main Task --</option>';
       subtaskSelect.disabled = true;
       subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
@@ -901,20 +911,24 @@
         subsubtaskSelect.disabled = true;
         return;
       }
-      // Fetch subtasks for selected main task
+      // Fetch subtasks for selected main task - FILTER OUT COMPLETED SUBTASKS
       const subSnap = await getDocs(collection(db, "projectTasks", mainTaskId, "subtasks"));
       let hasSubtasks = false;
       subSnap.forEach(subDoc => {
         const subData = subDoc.data();
-        hasSubtasks = true;
-        const option = document.createElement('option');
-        option.value = subDoc.id;
-        option.textContent = `[SUB] ${subData.taskId || ''} - ${subData.taskDescription || ''}`;
-        subtaskSelect.appendChild(option);
+        // Only show subtasks that are NOT "COMPLETED"
+        if (subData.status !== "COMPLETED") {
+          hasSubtasks = true;
+          const statusText = subData.status ? ` [${subData.status}]` : '';
+          const option = document.createElement('option');
+          option.value = subDoc.id;
+          option.textContent = `[SUB] ${subData.taskId || ''} - ${subData.taskDescription || ''}${statusText}`;
+          subtaskSelect.appendChild(option);
+        }
       });
       subtaskSelect.disabled = !hasSubtasks;
       if (!hasSubtasks) {
-        subtaskSelect.innerHTML = '<option value="">No subtasks available (assign to main task)</option>';
+        subtaskSelect.innerHTML = '<option value="">No ongoing subtasks available (assign to main task)</option>';
         subtaskSelect.disabled = true;
         subsubtaskSelect.innerHTML = '<option value="">-- Assign to Subtask or above --</option>';
         subsubtaskSelect.disabled = true;
@@ -931,18 +945,25 @@
         subsubtaskSelect.disabled = true;
         return;
       }
-      // Fetch sub-subtasks for selected subtask
+      // Fetch sub-subtasks for selected subtask - FILTER OUT COMPLETED SUB-SUBTASKS
       const subsubSnap = await getDocs(collection(db, "projectTasks", mainTaskId, "subtasks", subtaskId, "subsubtasks"));
       let hasSubsubtasks = false;
       subsubSnap.forEach(subsubDoc => {
         const subsubData = subsubDoc.data();
-        hasSubsubtasks = true;
-        const option = document.createElement('option');
-        option.value = subsubDoc.id;
-        option.textContent = `[SUBSUB] ${subsubData.taskId || ''} - ${subsubData.taskDescription || ''}`;
-        subsubtaskSelect.appendChild(option);
+        // Only show sub-subtasks that are NOT "COMPLETED"
+        if (subsubData.status !== "COMPLETED") {
+          hasSubsubtasks = true;
+          const statusText = subsubData.status ? ` [${subsubData.status}]` : '';
+          const option = document.createElement('option');
+          option.value = subsubDoc.id;
+          option.textContent = `[SUBSUB] ${subsubData.taskId || ''} - ${subsubData.taskDescription || ''}${statusText}`;
+          subsubtaskSelect.appendChild(option);
+        }
       });
       subsubtaskSelect.disabled = !hasSubsubtasks;
+      if (!hasSubsubtasks) {
+        subsubtaskSelect.innerHTML = '<option value="">No ongoing sub-subtasks available</option>';
+      }
       assignBtn.disabled = false;
     });
 
