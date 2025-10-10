@@ -249,6 +249,44 @@
   font-size: 1em;
 }
 
+/* Autocomplete dropdown styles */
+.autocomplete {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+  font-size: 13px;
+}
+
+.autocomplete-items div:hover {
+  background-color: #e9e9e9;
+}
+
+.autocomplete-active {
+  background-color: #1abc9c !important;
+  color: #ffffff;
+}
+
 @media (max-width: 700px) {
   .checkbox {
     flex-direction: column;
@@ -362,8 +400,16 @@
                     </thead>
                     <tbody id="supplier-table-body">
                       <tr>
-                        <td><input type="text" id="supplier-mat-name" placeholder="Material Name"></td>
-                        <td><input type="text" id="supplier-mat-category" placeholder="Category"></td>
+                        <td>
+                          <div class="autocomplete">
+                            <input type="text" id="supplier-mat-name" placeholder="Material Name" autocomplete="off">
+                          </div>
+                        </td>
+                        <td>
+                          <div class="autocomplete">
+                            <input type="text" id="supplier-mat-category" placeholder="Category" autocomplete="off">
+                          </div>
+                        </td>
                         <td><input type="number" id="supplier-mat-qty" min="1" placeholder="Qty"></td>
                         <td><input type="number" id="supplier-mat-unitprice" min="0" step="0.01" placeholder="Unit Price"></td>
                         <td><input type="text" id="supplier-mat-amount" readonly placeholder="Amount" style="background:#f1f1dd"></td>
@@ -446,6 +492,130 @@
     const fromSupplierCancelBtn = document.getElementById('from-supplier-cancel-btn');
     const showSupplierFormBtn = document.getElementById('show-supplier-form-btn');
     const showInventoryFormBtn = document.getElementById('show-inventory-form-btn');
+
+    // Arrays to store historical data for autocomplete
+    let historicalMaterialNames = [];
+    let historicalCategories = [];
+
+    // Load historical usage data for autocomplete suggestions
+    function loadHistoricalUsageData() {
+      onSnapshot(collection(db, "materialsUsage"), (snapshot) => {
+        const materialNames = new Set();
+        const categories = new Set();
+        
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.materialName) materialNames.add(data.materialName);
+          if (data.category) categories.add(data.category);
+        });
+        
+        historicalMaterialNames = Array.from(materialNames).sort();
+        historicalCategories = Array.from(categories).sort();
+        
+        // Initialize autocomplete functionality
+        initAutocomplete();
+      });
+    }
+
+    // Autocomplete function
+    function autocomplete(inp, arr) {
+      let currentFocus;
+      
+      inp.addEventListener("input", function(e) {
+        let val = this.value;
+        closeAllLists();
+        if (!val) return false;
+        currentFocus = -1;
+        
+        const list = document.createElement("DIV");
+        list.setAttribute("id", this.id + "autocomplete-list");
+        list.setAttribute("class", "autocomplete-items");
+        this.parentNode.appendChild(list);
+        
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i].substr(0, val.length).toUpperCase() === val.toUpperCase()) {
+            const item = document.createElement("DIV");
+            item.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+            item.innerHTML += arr[i].substr(val.length);
+            item.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+            item.addEventListener("click", function(e) {
+              inp.value = this.getElementsByTagName("input")[0].value;
+              closeAllLists();
+              
+              // If we're selecting a material name, try to auto-fill the category
+              if (inp.id === "supplier-mat-name") {
+                autoFillCategory(inp.value);
+              }
+            });
+            list.appendChild(item);
+          }
+        }
+      });
+      
+      inp.addEventListener("keydown", function(e) {
+        let x = document.getElementById(this.id + "autocomplete-list");
+        if (x) x = x.getElementsByTagName("div");
+        if (e.keyCode == 40) { // Down arrow
+          currentFocus++;
+          addActive(x);
+        } else if (e.keyCode == 38) { // Up arrow
+          currentFocus--;
+          addActive(x);
+        } else if (e.keyCode == 13) { // Enter
+          e.preventDefault();
+          if (currentFocus > -1) {
+            if (x) x[currentFocus].click();
+          }
+        }
+      });
+      
+      function addActive(x) {
+        if (!x) return false;
+        removeActive(x);
+        if (currentFocus >= x.length) currentFocus = 0;
+        if (currentFocus < 0) currentFocus = (x.length - 1);
+        x[currentFocus].classList.add("autocomplete-active");
+      }
+      
+      function removeActive(x) {
+        for (let i = 0; i < x.length; i++) {
+          x[i].classList.remove("autocomplete-active");
+        }
+      }
+      
+      function closeAllLists(elmnt) {
+        const x = document.getElementsByClassName("autocomplete-items");
+        for (let i = 0; i < x.length; i++) {
+          if (elmnt != x[i] && elmnt != inp) {
+            x[i].parentNode.removeChild(x[i]);
+          }
+        }
+      }
+      
+      document.addEventListener("click", function(e) {
+        closeAllLists(e.target);
+      });
+    }
+
+    // Auto-fill category based on selected material name
+    function autoFillCategory(materialName) {
+      // Look for this material in historical data to find its category
+      onSnapshot(query(collection(db, "materialsUsage"), where("materialName", "==", materialName)), (snapshot) => {
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          if (data.category) {
+            supplierMatCategory.value = data.category;
+          }
+        }
+      });
+    }
+
+    // Initialize autocomplete for material name and category fields
+    function initAutocomplete() {
+      autocomplete(supplierMatName, historicalMaterialNames);
+      autocomplete(supplierMatCategory, historicalCategories);
+    }
 
     // --- Amount auto-calc
     function updateSupplierAmount() {
@@ -916,6 +1086,11 @@
 
     matForm.addEventListener('reset', function() {
       messageDiv.innerHTML = '';
+    });
+
+    // Load historical data when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      loadHistoricalUsageData();
     });
   </script>
 </body>
