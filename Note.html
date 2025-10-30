@@ -3,869 +3,696 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Task Management Simplified</title>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <!-- Bootstrap 5 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <title>FreeNotes - Cloud-Synced Markdown Notes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Global Firebase variables
+        window.firebaseApp = app;
+        window.firestore = db;
+        window.auth = auth;
+
+        // Sign in anonymously to use Firebase
+        signInAnonymously(auth)
+            .then(() => {
+                console.log("Signed in anonymously");
+                // Initialize notes app after auth
+                if (window.initNotesApp) {
+                    window.initNotesApp();
+                }
+            })
+            .catch((error) => {
+                console.error("Anonymous sign-in failed:", error);
+            });
+
+        // Firebase functions for notes
+        window.firebaseNotes = {
+            // Get real-time updates for notes
+            subscribeToNotes: (callback) => {
+                const q = query(collection(db, "notes"), orderBy("updatedAt", "desc"));
+                return onSnapshot(q, callback);
+            },
+            
+            // Create a new note
+            createNote: async (noteData) => {
+                const noteWithTimestamps = {
+                    ...noteData,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                };
+                const docRef = await addDoc(collection(db, "notes"), noteWithTimestamps);
+                return docRef.id;
+            },
+            
+            // Update an existing note
+            updateNote: async (noteId, noteData) => {
+                const noteRef = doc(db, "notes", noteId);
+                await updateDoc(noteRef, {
+                    ...noteData,
+                    updatedAt: serverTimestamp()
+                });
+            },
+            
+            // Delete a note
+            deleteNote: async (noteId) => {
+                await deleteDoc(doc(db, "notes", noteId));
+            }
+        };
+    </script>
+
     <style>
-        :root {
-            --primary: #4361ee;
-            --primary-light: #eef2ff;
-            --secondary: #6c757d;
-            --success: #4cc9f0;
-            --warning: #f8961e;
-            --danger: #b90d0d;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --border: #dee2e6;
-            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            --transition: all 0.3s ease;
-        }
-        
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
-        
+
         body {
-            background-color: #f5f7ff;
-            color: var(--dark);
-            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
             line-height: 1.6;
             min-height: 100vh;
             padding: 20px;
         }
-        
-        .app-container {
-        
+
+        .container {
+            max-width: 1000px;
             margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            overflow: hidden;
         }
-        
-        .app-header {
-            background: var(--primary);
-            color: white;
-            padding: 20px 30px;
+
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
         }
-        
-        .app-title {
+
+        .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            font-size: 24px;
             font-weight: 700;
-            font-size: 1.8rem;
-            margin: 0;
+            color: #2c3e50;
         }
-        
-        .app-controls {
-            display: flex;
-            gap: 12px;
+
+        .logo i {
+            margin-right: 10px;
+            color: #3498db;
         }
-        
-        .btn {
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: var(--transition);
+
+        .sync-status {
             display: flex;
             align-items: center;
-            gap: 6px;
+            font-size: 14px;
+            color: #7f8c8d;
         }
-        
-        .btn-primary {
-            background: white;
-            color: var(--primary);
-            border: none;
+
+        .sync-status i {
+            margin-right: 5px;
         }
-        
-        .btn-primary:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-2px);
+
+        .syncing {
+            color: #f39c12;
         }
-        
-        .btn-outline-primary {
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            color: white;
-            background: transparent;
+
+        .synced {
+            color: #27ae60;
         }
-        
-        .btn-outline-primary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: white;
+
+        .error {
+            color: #e74c3c;
         }
-        
-        .main-content {
-            padding: 30px;
-        }
-        
-        .task-form-container {
-            background: var(--primary-light);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: var(--card-shadow);
-        }
-        
-        .form-title {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .task-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        
-        .form-group {
-            margin-bottom: 0;
-        }
-        
-        .form-control {
-            border-radius: 8px;
-            padding: 10px 15px;
-            border: 1px solid var(--border);
-            transition: var(--transition);
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
-        }
-        
-        .form-actions {
+
+        .controls {
             display: flex;
             gap: 10px;
-            align-items: flex-end;
         }
-        
-        .filter-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
-            align-items: center;
-        }
-        
-        .filter-label {
-            font-weight: 500;
-            color: var(--secondary);
-        }
-        
-        .filter-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-        }
-        
-        .filter-select {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
+
+        .btn {
+            padding: 8px 15px;
             background: white;
-            min-width: 150px;
-        }
-        
-        .view-tabs {
-            display: flex;
-            background: var(--light);
-            border-radius: 10px;
-            padding: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .view-tab {
-            padding: 8px 20px;
-            border-radius: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-            border: none;
-            background: transparent;
-            color: var(--secondary);
-        }
-        
-        .view-tab.active {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        
-        .table-container {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-        
-        th {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-weight: 600;
-            padding: 16px 12px;
-            text-align: left;
-            position: sticky;
-            top: 0;
-        }
-        
-        td {
-            padding: 16px 12px;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-        }
-        
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        tr:hover {
-            background: #fafbff;
-        }
-        
-        .badge-dropdown {
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            border: none;
-            transition: var(--transition);
-            display: inline-flex;
+            transition: all 0.3s;
+            display: flex;
             align-items: center;
-            gap: 4px;
-        }
-        
-        .badge-dropdown:after {
-            content: "▾";
+            gap: 5px;
             font-size: 14px;
         }
-        
-        .badge-dropdown:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .btn:hover {
+            background: #f8f9fa;
+            border-color: #3498db;
         }
-        
-        .badge-status-completed { background: #e6f7ff; color: #0891b2; }
-        .badge-status-ongoing { background: #fff7e6; color: #f97316; }
-        .badge-status-pending { background: #f2f2f2; color: #6c757d; }
-        .badge-priority-High { background: #ffe6e6; color: #dc2626; }
-        .badge-priority-Medium { background: #fff7e6; color: #f97316; }
-        .badge-priority-Low { background: #e6f7ff; color: #0891b2; }
-        .badge-category-Work { background: #eef2ff; color: #4f46e5; }
-        .badge-category-personal { background: #f0f9ff; color: #0369a1; }
-        .badge-category-School { background: #faf5ff; color: #7c3aed; }
-        .badge-category-Software { background: #fff7e6; color: #f97316; }
-        
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            transition: var(--transition);
-            color: var(--secondary);
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
         }
-        
-        .edit-btn:hover {
-            background: #eef2ff;
-            color: var(--primary);
+
+        .btn-primary:hover {
+            background: #2980b9;
         }
-        
-        .delete-btn:hover {
-            background: #ffe6e6;
-            color: var(--danger);
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
         }
-        
-        .cell-editable {
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 6px;
-            padding: 6px 10px;
-            width: 100%;
-            transition: var(--transition);
+
+        .btn-danger:hover {
+            background: #c0392b;
         }
-        
-        .cell-editable:focus {
-            border-color: var(--primary);
+
+        .notes-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .notes-sidebar {
             background: white;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
-        }
-        
-        .dropdown-menu-cell {
-            position: absolute;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            z-index: 1000;
-            padding: 8px 0;
-            min-width: 140px;
-        }
-        
-        .dropdown-menu-cell button {
-            width: 100%;
-            text-align: left;
-            padding: 8px 16px;
-            background: none;
-            border: none;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            overflow-y: auto;
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-direction: column;
         }
-        
-        .dropdown-menu-cell button:hover {
-            background: #f5f7ff;
-        }
-        
-        .cell-dropdown-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--secondary);
-        }
-        
-        .empty-state i {
-            font-size: 3rem;
+
+        .search-box {
             margin-bottom: 15px;
-            color: #dee2e6;
         }
-        
-        @media (max-width: 992px) {
-            .task-form {
-                grid-template-columns: 1fr 1fr;
-            }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
         }
-        
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .notes-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .notes-list li {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .notes-list li:hover {
+            background: #f8f9fa;
+        }
+
+        .notes-list li.active {
+            background: #e3f2fd;
+            border-left-color: #3498db;
+        }
+
+        .note-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-preview {
+            font-size: 12px;
+            color: #7f8c8d;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-date {
+            font-size: 11px;
+            color: #95a5a6;
+        }
+
+        .notes-editor {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-title {
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            padding: 5px 0;
+            background: transparent;
+        }
+
+        .editor-title:focus {
+            outline: none;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .editor-body {
+            flex: 1;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #noteContent {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: none;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            flex: 1;
+        }
+
+        #noteContent:focus {
+            outline: none;
+        }
+
+        .markdown-help {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .markdown-help summary {
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .markdown-help ul {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+
+        .markdown-help li {
+            margin-bottom: 5px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #7f8c8d;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .app-header {
-                padding: 15px 20px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
-            
-            .task-form {
+            .notes-container {
                 grid-template-columns: 1fr;
             }
             
-            .filter-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .filter-select {
-                width: 100%;
-            }
-            
-            th, td {
-                padding: 12px 8px;
+            .notes-sidebar {
+                display: none;
             }
         }
-        
-        /* Animation for form toggle */
-        .task-form-container {
-            transition: all 0.3s ease;
-        }
-        
-        /* Focus states for accessibility */
-        button:focus-visible, 
-        select:focus-visible, 
-        input:focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
+
+        .word-count {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
-<div class="app-container">
-    <header class="app-header">
-        <h1 class="app-title"><i class="fa-solid fa-list-check"></i> TaskFlow Manager</h1>
-        <div class="app-controls">
-            <button class="btn btn-primary" id="toggleFormBtn">
-                <i class="fa-solid fa-plus"></i> Add Task
-            </button>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-sticky-note"></i>
+                <span>FreeNotes</span>
+                <div class="sync-status" id="syncStatus">
+                    <i class="fas fa-cloud"></i>
+                    <span>Connecting...</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn" id="newNoteBtn">
+                    <i class="fas fa-plus"></i> New Note
+                </button>
+                <button class="btn btn-danger" id="deleteNoteBtn">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </header>
+
+        <div class="notes-container">
+            <div class="notes-sidebar">
+                <div class="search-box">
+                    <input type="text" id="searchNotes" placeholder="Search notes...">
+                </div>
+                <ul class="notes-list" id="notesList">
+                    <!-- Notes will be listed here -->
+                </ul>
+            </div>
+
+            <div class="notes-editor">
+                <div class="editor-header">
+                    <input type="text" class="editor-title" id="noteTitle" placeholder="Note Title">
+                    <div class="editor-actions">
+                        <div class="word-count" id="wordCount">0 words</div>
+                    </div>
+                </div>
+
+                <div class="editor-body">
+                    <textarea id="noteContent" placeholder="Start typing your note here... You can use Markdown formatting!"></textarea>
+                </div>
+
+                <div class="markdown-help">
+                    <details>
+                        <summary>Markdown Formatting Help</summary>
+                        <ul>
+                            <li><strong>Bold:</strong> **text** or __text__</li>
+                            <li><em>Italic:</em> *text* or _text_</li>
+                            <li># Heading 1, ## Heading 2, etc.</li>
+                            <li>- List item or * List item</li>
+                            <li>1. Numbered list</li>
+                            <li>[Link](http://example.com)</li>
+                            <li>`Inline code`</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
         </div>
-    </header>
-    
-    <main class="main-content">
-        <section class="task-form-container" id="taskFormContainer" style="display: none;">
-            <h2 class="form-title"><i class="fa-solid fa-pen-to-square"></i> Add New Task</h2>
-            <form id="taskForm" class="task-form">
-                <div class="form-group">
-                    <label for="taskDescription" class="form-label">Task Description</label>
-                    <input type="text" id="taskDescription" class="form-control" placeholder="What needs to be done?" required>
-                </div>
+    </div>
+
+    <script>
+        // Notes Management System with Firebase
+        let notes = [];
+        let currentNoteId = null;
+        let unsubscribeNotes = null;
+        let saveTimeout = null;
+
+        // DOM Elements
+        const notesList = document.getElementById('notesList');
+        const noteTitle = document.getElementById('noteTitle');
+        const noteContent = document.getElementById('noteContent');
+        const newNoteBtn = document.getElementById('newNoteBtn');
+        const deleteNoteBtn = document.getElementById('deleteNoteBtn');
+        const searchNotes = document.getElementById('searchNotes');
+        const syncStatus = document.getElementById('syncStatus');
+        const wordCount = document.getElementById('wordCount');
+
+        // Initialize the app after Firebase is ready
+        window.initNotesApp = function() {
+            updateSyncStatus('synced', 'Connected to Cloud');
+            loadNotesFromFirebase();
+            setupEventListeners();
+        };
+
+        // Load notes from Firebase with real-time updates
+        function loadNotesFromFirebase() {
+            if (unsubscribeNotes) {
+                unsubscribeNotes(); // Unsubscribe from previous listener
+            }
+
+            unsubscribeNotes = window.firebaseNotes.subscribeToNotes((snapshot) => {
+                notes = [];
+                snapshot.forEach(doc => {
+                    const noteData = doc.data();
+                    notes.push({
+                        id: doc.id,
+                        title: noteData.title || 'Untitled',
+                        content: noteData.content || '',
+                        createdAt: noteData.createdAt?.toDate() || new Date(),
+                        updatedAt: noteData.updatedAt?.toDate() || new Date()
+                    });
+                });
+
+                renderNotesList();
                 
-                <div class="form-group">
-                    <label for="category" class="form-label">Category</label>
-                    <select id="category" class="form-control" required>
-                        <option value="" hidden>Select Category</option>
-                        <option value="Work">Work</option>
-                        <option value="School">School</option>
-                        <option value="personal">Personal</option>
-                        <option value="Software">Software</option>
-                    </select>
-                </div>
+                // If no current note is selected, select the first one
+                if (!currentNoteId && notes.length > 0) {
+                    currentNoteId = notes[0].id;
+                    renderEditor();
+                }
                 
-                <div class="form-group">
-                    <label for="priority" class="form-label">Priority</label>
-                    <select id="priority" class="form-control" required>
-                        <option value="" hidden>Select Priority</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="status" class="form-label">Status</label>
-                    <select id="status" class="form-control" required>
-                        <option value="" hidden>Select Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="ongoing">Ongoing</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="deadLine" class="form-label">Deadline</label>
-                    <input type="text" id="deadLine" class="form-control" placeholder="e.g. 30 July 2025" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="comment" class="form-label">Comments</label>
-                    <input type="text" id="comment" class="form-control" placeholder="Notes or progress">
-                </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> Add Task
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn" style="display:none;">
-                        <i class="fa-solid fa-xmark"></i> Cancel
-                    </button>
-                </div>
-            </form>
-        </section>
-        
-        <section class="controls-section">
-            <div class="view-tabs">
-                <button class="view-tab active" id="showActiveBtn">Active Tasks</button>
-                <button class="view-tab" id="showCompletedBtn">Completed Tasks</button>
-            </div>
-            
-            <div class="filter-section">
-                <span class="filter-label"><i class="fa-solid fa-filter"></i> Filter by:</span>
-                <div class="filter-controls">
-                    <select id="filterCategory" class="filter-select">
-                        <option value="">All Categories</option>
-                        <option value="Work">Work</option>
-                        <option value="School">School</option>
-                        <option value="personal">Personal</option>
-                        <option value="Software">Software</option>
-                    </select>
-                    
-                    <select id="filterPriority" class="filter-select">
-                        <option value="">All Priorities</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                </div>
-            </div>
-        </section>
-        
-        <section class="table-container">
-            <table id="taskTable">
-                <thead>
-                <tr>
-                    <th>TASK DESCRIPTION</th>
-                    <th>CATEGORY</th>
-                    <th>PRIORITY</th>
-                    <th>STATUS</th>
-                    <th>DEADLINE</th>
-                    <th>COMMENTS</th>
-                    <th>ACTIONS</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-    </main>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyClOZGykyDEgqssG423M6CLLKZ8sxrtAFk",
-        authDomain: "shop-a24bc.firebaseapp.com",
-        projectId: "shop-a24bc",
-        storageBucket: "shop-a24bc.appspot.com",
-        messagingSenderId: "405250859058",
-        appId: "1:405250859058:web:01e3c07ad2139c4f5d1c2b",
-        measurementId: "G-NX2KK1ZXG1"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const taskForm = document.getElementById("taskForm");
-    const taskFormContainer = document.getElementById("taskFormContainer");
-    const taskTable = document.getElementById("taskTable").querySelector("tbody");
-    const toggleFormBtn = document.getElementById("toggleFormBtn");
-    const cancelEditBtn = document.getElementById("cancelEditBtn");
-    const showActiveBtn = document.getElementById("showActiveBtn");
-    const showCompletedBtn = document.getElementById("showCompletedBtn");
-    const filterCategory = document.getElementById("filterCategory");
-    const filterPriority = document.getElementById("filterPriority");
-
-    let editingDocId = null;
-    let tasksCache = [];
-    let showCompleted = false;
-
-    // Initial sample tasks (only added if DB is empty)
-    const initialTasks = [
-        {
-            taskDescription: "Hazida motors sales entrance door replacement",
-            category: "Work",
-            priority: "High",
-            status: "completed",
-            deadLine: "30 July 2025",
-            comment: "was already done by juilo"
-        },
-        {
-            taskDescription: "directors room kitchen tap to replace",
-            category: "Work",
-            priority: "High",
-            status: "completed",
-            deadLine: "29 July 2025",
-            comment: "sorted out"
-        },
-        {
-            taskDescription: "Mr dashan house db cover",
-            category: "Work",
-            priority: "High",
-            status: "completed",
-            deadLine: "29 July",
-            comment: "peter has gone to cover the db area"
-        },
-        {
-            taskDescription: "Centro mall displace and socket to replace",
-            category: "Work",
-            priority: "High",
-            status: "ongoing",
-            deadLine: "first week of august",
-            comment: "wating on the pic to be send yet to arrange for ie"
-        },
-        {
-            taskDescription: "Fire extinguishers servicing",
-            category: "Work",
-            priority: "High",
-            status: "pending",
-            deadLine: "First week of auguse",
-            comment: "talked to mr hamprey waiting for him to give me a day to make plans with brighton"
-        }
-    ];
-
-    // Persist filters and active/completed tab in localStorage
-    function saveViewState() {
-        localStorage.setItem('taskListStatusTab', showCompleted ? 'completed' : 'active');
-        localStorage.setItem('taskListCategoryFilter', filterCategory.value);
-        localStorage.setItem('taskListPriorityFilter', filterPriority.value);
-    }
-    
-    function loadViewState() {
-        const tab = localStorage.getItem('taskListStatusTab');
-        if (tab === 'completed') {
-            showCompleted = true;
-            showCompletedBtn.classList.add("active");
-            showActiveBtn.classList.remove("active");
-        }
-        filterCategory.value = localStorage.getItem('taskListCategoryFilter') || "";
-        filterPriority.value = localStorage.getItem('taskListPriorityFilter') || "";
-    }
-
-    toggleFormBtn.addEventListener("click", function() {
-        if (taskFormContainer.style.display === "none") {
-            taskForm.reset();
-            editingDocId = null;
-            taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
-            cancelEditBtn.style.display = "none";
-            taskFormContainer.style.display = "block";
-            toggleFormBtn.innerHTML = '<i class="fa-solid fa-minus"></i> Hide Form';
-        } else {
-            taskFormContainer.style.display = "none";
-            toggleFormBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
-        }
-    });
-
-    cancelEditBtn.addEventListener("click", function() {
-        taskForm.reset();
-        editingDocId = null;
-        taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
-        cancelEditBtn.style.display = "none";
-        taskFormContainer.style.display = "none";
-        toggleFormBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
-    });
-
-    showActiveBtn.addEventListener("click", function() {
-        showCompleted = false;
-        saveViewState();
-        showActiveBtn.classList.add("active");
-        showCompletedBtn.classList.remove("active");
-        renderTasks();
-    });
-
-    showCompletedBtn.addEventListener("click", function() {
-        showCompleted = true;
-        saveViewState();
-        showCompletedBtn.classList.add("active");
-        showActiveBtn.classList.remove("active");
-        renderTasks();
-    });
-
-    filterCategory.addEventListener('change', () => { saveViewState(); renderTasks(); });
-    filterPriority.addEventListener('change', () => { saveViewState(); renderTasks(); });
-
-    async function loadTasks() {
-        const snapshot = await getDocs(collection(db, "tasklist"));
-        tasksCache = [];
-        snapshot.forEach((docSnap) => {
-            const t = docSnap.data();
-            tasksCache.push({ id: docSnap.id, ...t });
-        });
-        // If DB is empty, add initial sample tasks
-        if (tasksCache.length === 0) {
-            for (const t of initialTasks) await addDoc(collection(db, "tasklist"), t);
-            return loadTasks();
-        }
-        renderTasks();
-    }
-
-    function getBadgeClass(type, value) {
-        return `badge-${type}-${value}`;
-    }
-
-    function renderTasks() {
-        let rows = '';
-        // Filtering logic
-        let filteredTasks = tasksCache.filter(task => showCompleted 
-            ? task.status === "completed"
-            : task.status !== "completed"
-        );
-        if (filterCategory.value) {
-            filteredTasks = filteredTasks.filter(t => t.category === filterCategory.value);
-        }
-        if (filterPriority.value) {
-            filteredTasks = filteredTasks.filter(t => t.priority === filterPriority.value);
-        }
-        if (filteredTasks.length === 0) {
-            rows = `<tr><td colspan="7">
-                <div class="empty-state">
-                    <i class="fa-regular fa-clipboard-list"></i>
-                    <h3>No tasks found</h3>
-                    <p>Try changing your filters or add a new task</p>
-                </div>
-            </td></tr>`;
-        } else {
-            filteredTasks.forEach((t) => {
-                rows += `<tr data-id="${t.id}">
-                    <td style="text-align:left;">${t.taskDescription || ""}</td>
-                    <td>
-                        <div class="cell-dropdown-wrapper">
-                            <button class="badge-dropdown ${getBadgeClass('category', t.category || 'Work')}" data-id="${t.id}" data-type="category" tabindex="0">${t.category || ""}</button>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="cell-dropdown-wrapper">
-                            <button class="badge-dropdown ${getBadgeClass('priority', t.priority || 'Low')}" data-id="${t.id}" data-type="priority" tabindex="0">${t.priority || ""}</button>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="cell-dropdown-wrapper">
-                            <button class="badge-dropdown ${getBadgeClass('status', t.status || 'pending')}" data-id="${t.id}" data-type="status" tabindex="0">${t.status ? t.status.charAt(0).toUpperCase() + t.status.slice(1) : ""}</button>
-                        </div>
-                    </td>
-                    <td>
-                        <input class="cell-editable" type="text" value="${t.deadLine || ''}" data-id="${t.id}" data-field="deadLine" />
-                    </td>
-                    <td style="text-align:left;">
-                        <input class="cell-editable" type="text" value="${t.comment || ''}" data-id="${t.id}" data-field="comment" />
-                    </td>
-                    <td>
-                        <button class="action-btn edit-btn" title="Edit" onclick="window.editTask('${t.id}')"><i class="fa-solid fa-edit"></i></button>
-                        <button class="action-btn delete-btn" title="Delete" onclick="window.deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`;
+                renderNotesList();
             });
         }
-        taskTable.innerHTML = rows;
 
-        // Inline dropdown for category, priority, status
-        document.querySelectorAll('.badge-dropdown').forEach(function(btn) {
-            btn.onclick = function(e) {
-                e.stopPropagation();
-                document.querySelectorAll('.dropdown-menu-cell').forEach(menu => menu.remove());
-                const type = this.getAttribute('data-type');
-                const id = this.getAttribute('data-id');
-                let options = [];
-                if (type === 'category') options = ["Work", "School", "personal", "Software"];
-                if (type === 'priority') options = ["High", "Medium", "Low"];
-                if (type === 'status') options = ["pending", "ongoing", "completed"];
-                const menu = document.createElement('div');
-                menu.className = 'dropdown-menu-cell';
-                options.forEach(opt => {
-                    const b = document.createElement('button');
-                    b.className = getBadgeClass(type, opt);
-                    b.innerHTML = `<span class="badge-indicator ${getBadgeClass(type, opt)}"></span> ${type === "status" ? (opt.charAt(0).toUpperCase() + opt.slice(1)) : opt}`;
-                    b.onclick = async (ev) => {
-                        ev.stopPropagation();
-                        menu.remove();
-                        const task = tasksCache.find(t => t.id === id);
-                        if (task) {
-                            task[type] = opt;
-                            await updateDoc(doc(db, "tasklist", id), task);
-                            saveViewState();
-                            if (type === "status") {
-                                if (!showCompleted && opt === "completed") {
-                                    renderTasks();
-                                    return;
-                                }
-                                if (showCompleted && opt !== "completed") {
-                                    renderTasks();
-                                    return;
-                                }
-                            }
-                            renderTasks();
-                        }
-                    };
-                    menu.appendChild(b);
+        // Create a new note
+        function createNewNote() {
+            const newNote = {
+                title: 'New Note',
+                content: ''
+            };
+            
+            updateSyncStatus('syncing', 'Saving...');
+            
+            window.firebaseNotes.createNote(newNote)
+                .then(noteId => {
+                    currentNoteId = noteId;
+                    updateSyncStatus('synced', 'Saved to Cloud');
+                    renderNotesList();
+                    renderEditor();
+                    
+                    // Focus on title
+                    setTimeout(() => {
+                        noteTitle.focus();
+                        noteTitle.select();
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('Error creating note:', error);
+                    updateSyncStatus('error', 'Save failed');
                 });
-                this.parentNode.appendChild(menu);
-                setTimeout(() => {
-                    document.addEventListener('click', function handler(ev) {
-                        if (!menu.contains(ev.target)) {
-                            menu.remove();
-                            document.removeEventListener('click', handler);
+        }
+
+        // Save current note
+        function saveCurrentNote() {
+            if (!currentNoteId) return;
+            
+            const note = notes.find(n => n.id === currentNoteId);
+            if (note) {
+                updateSyncStatus('syncing', 'Saving...');
+                
+                window.firebaseNotes.updateNote(currentNoteId, {
+                    title: noteTitle.value,
+                    content: noteContent.value
+                })
+                .then(() => {
+                    updateSyncStatus('synced', 'Saved to Cloud');
+                })
+                .catch(error => {
+                    console.error('Error saving note:', error);
+                    updateSyncStatus('error', 'Save failed');
+                });
+            }
+        }
+
+        // Delete current note
+        function deleteCurrentNote() {
+            if (!currentNoteId) return;
+            
+            if (confirm('Are you sure you want to delete this note?')) {
+                updateSyncStatus('syncing', 'Deleting...');
+                
+                window.firebaseNotes.deleteNote(currentNoteId)
+                    .then(() => {
+                        updateSyncStatus('synced', 'Note deleted');
+                        
+                        if (notes.length > 0) {
+                            // Select the first note after deletion
+                            currentNoteId = notes.find(n => n.id !== currentNoteId)?.id || null;
+                        } else {
+                            currentNoteId = null;
                         }
+                        
+                        renderNotesList();
+                        renderEditor();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting note:', error);
+                        updateSyncStatus('error', 'Delete failed');
                     });
-                }, 10);
-            };
+            }
+        }
+
+        // Render notes list
+        function renderNotesList() {
+            const searchTerm = searchNotes.value.toLowerCase();
+            let filteredNotes = notes;
+            
+            if (searchTerm) {
+                filteredNotes = notes.filter(note => 
+                    note.title.toLowerCase().includes(searchTerm) || 
+                    note.content.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            notesList.innerHTML = '';
+            
+            if (filteredNotes.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.innerHTML = `
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>${searchTerm ? 'No notes match your search' : 'No notes yet'}</p>
+                `;
+                notesList.appendChild(emptyState);
+                return;
+            }
+            
+            filteredNotes.forEach(note => {
+                const li = document.createElement('li');
+                li.className = currentNoteId === note.id ? 'active' : '';
+                li.setAttribute('data-id', note.id);
+                
+                // Create preview text (first line of content)
+                const preview = note.content.split('\n')[0]?.substring(0, 50) || 'Empty note';
+                const date = new Date(note.updatedAt).toLocaleDateString();
+                
+                li.innerHTML = `
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-preview">${preview}${preview.length === 50 ? '...' : ''}</div>
+                    <div class="note-date">${date}</div>
+                `;
+                
+                li.addEventListener('click', () => {
+                    currentNoteId = note.id;
+                    renderNotesList();
+                    renderEditor();
+                });
+                
+                notesList.appendChild(li);
+            });
+        }
+
+        // Render editor with current note
+        function renderEditor() {
+            if (!currentNoteId) {
+                noteTitle.value = '';
+                noteContent.value = '';
+                updateWordCount();
+                return;
+            }
+            
+            const note = notes.find(n => n.id === currentNoteId);
+            if (note) {
+                noteTitle.value = note.title;
+                noteContent.value = note.content;
+                updateWordCount();
+            }
+        }
+
+        // Update word count
+        function updateWordCount() {
+            const text = noteContent.value;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCount.textContent = `${words} words`;
+        }
+
+        // Update sync status display
+        function updateSyncStatus(status, message) {
+            syncStatus.className = `sync-status ${status}`;
+            syncStatus.innerHTML = `
+                <i class="fas fa-cloud"></i>
+                <span>${message}</span>
+            `;
+        }
+
+        // Auto-save functionality
+        function scheduleSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveCurrentNote, 1000);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            newNoteBtn.addEventListener('click', createNewNote);
+            deleteNoteBtn.addEventListener('click', deleteCurrentNote);
+            
+            noteTitle.addEventListener('input', scheduleSave);
+            noteContent.addEventListener('input', () => {
+                scheduleSave();
+                updateWordCount();
+            });
+            
+            searchNotes.addEventListener('input', renderNotesList);
+            
+            // Load existing notes or create first note
+            if (notes.length === 0) {
+                createNewNote();
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // If Firebase is already initialized, start the app
+            if (window.firebaseApp) {
+                window.initNotesApp();
+            }
         });
-
-        // Inline editing for deadLine and comment
-        document.querySelectorAll('input.cell-editable').forEach(function(inp) {
-            inp.onchange = async function(e) {
-                const id = this.getAttribute('data-id');
-                const field = this.getAttribute('data-field');
-                const val = this.value;
-                const task = tasksCache.find(t => t.id === id);
-                if (task) {
-                    task[field] = val;
-                    await updateDoc(doc(db, "tasklist", id), task);
-                    saveViewState();
-                }
-            };
-            inp.onblur = inp.onchange;
-        });
-    }
-
-    taskForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const taskData = {
-            taskDescription: document.getElementById("taskDescription").value.trim(),
-            category: document.getElementById("category").value,
-            priority: document.getElementById("priority").value,
-            status: document.getElementById("status").value,
-            deadLine: document.getElementById("deadLine").value.trim(),
-            comment: document.getElementById("comment").value.trim()
-        };
-        if (!taskData.taskDescription || !taskData.category || !taskData.priority || !taskData.status || !taskData.deadLine) {
-            alert("Please fill all required fields.");
-            return;
-        }
-        if (editingDocId) {
-            await updateDoc(doc(db, "tasklist", editingDocId), taskData);
-            editingDocId = null;
-            taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
-            cancelEditBtn.style.display = "none";
-        } else {
-            await addDoc(collection(db, "tasklist"), taskData);
-        }
-        taskForm.reset();
-        taskFormContainer.style.display = "none";
-        toggleFormBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Task';
-        await loadTasks();
-    });
-
-    window.editTask = function (docId) {
-        const task = tasksCache.find(t => t.id === docId);
-        if (!task) return;
-        document.getElementById("taskDescription").value = task.taskDescription || "";
-        document.getElementById("category").value = task.category || "";
-        document.getElementById("priority").value = task.priority || "";
-        document.getElementById("status").value = task.status || "";
-        document.getElementById("deadLine").value = task.deadLine || "";
-        document.getElementById("comment").value = task.comment || "";
-        editingDocId = docId;
-        taskForm.querySelector("button[type=submit]").innerHTML = '<i class="fa-solid fa-save"></i> Update Task';
-        cancelEditBtn.style.display = "inline-block";
-        if (taskFormContainer.style.display === "none") {
-            taskFormContainer.style.display = "block";
-            toggleFormBtn.innerHTML = '<i class="fa-solid fa-minus"></i> Hide Form';
-        }
-    };
-
-    window.deleteTask = async function (docId) {
-        if (!confirm("Are you sure you want to delete this task?")) return;
-        await deleteDoc(doc(db, "tasklist", docId));
-        await loadTasks();
-    };
-
-    // Load persisted view state and tasks
-    loadViewState();
-    loadTasks();
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    </script>
 </body>
 </html>
-
