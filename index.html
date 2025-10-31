@@ -103,13 +103,38 @@
       const password = document.getElementById("password").value;
       const warningMessage = document.getElementById("warningMessage");
 
-      // Single login for everyone
+      // List of users for assessment.html
+      const assessmentUsers = [
+        "brighton matolokosh", "caphas tembo", "clisha mambilima", "dabson daka",
+        "danny mvula", "james daka", "joseph tembo", "luckson phiri", "micheal lobela",
+        "obert siame", "dominic sakala", "peter mawere", "saviour phiri", "tembeya sakala", "kelvin siame"
+      ];
+
+      // Shared global account (everyone uses this except admins)
+      // Username: "Penta" (case-insensitive), Password: "12345"
       if (username === "penta" && password === "12345") {
         // Save login attempt data to Firebase
         const loginRef = ref(database, 'loginAttempts');
         push(loginRef, {
           username: username,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          method: "shared-account"
+        });
+
+        // Record current user and redirect to assessment (shared account is routed to assessment)
+        localStorage.setItem('currentUser', 'penta');
+        window.location.href = 'assessment.html';
+        return;
+      }
+
+      // Assessment user logic (individual usernames)
+      if (assessmentUsers.includes(username) && password === "12345") {
+        // Save login attempt data to Firebase
+        const loginRef = ref(database, 'loginAttempts');
+        push(loginRef, {
+          username: username,
+          timestamp: new Date().toISOString(),
+          method: "individual-assessment"
         });
 
         // Store user for assessment.html
@@ -118,8 +143,27 @@
         return;
       }
 
-      // Otherwise,
-      warningMessage.style.display = "block"; // Show warning message
+      // Admin/dashboard users (keep their passwords as-is)
+      if (
+        (username === "faiyaz mulla" && password === "PENTACON") ||
+        (username === "chishela" && password === "PENTACON")
+      ) {
+        // Save login attempt data to Firebase
+        const loginRef = ref(database, 'loginAttempts');
+        push(loginRef, {
+          username: username,
+          timestamp: new Date().toISOString(),
+          method: "admin"
+        });
+
+        // Store user if needed
+        localStorage.setItem('currentUser', username);
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // If none of the above match, show warning message
+      warningMessage.style.display = "block";
     }
 
     // Function to toggle password visibility
@@ -132,7 +176,7 @@
         toggleIcon.textContent = "🙈"; // Change to "hide" icon
       } else {
         passwordField.type = "password";
-        toggleIcon.textContent = "👁️"; // Change to "show" icon
+        toggleIcon.textContent = "👁"; // Change to "show" icon
       }
     }
 
@@ -148,7 +192,7 @@
     <input type="text" id="username" placeholder="User Name">
     <div class="password-container">
       <input type="password" id="password" placeholder="Password">
-      <span class="toggle-password" id="togglePasswordIcon" onclick="togglePasswordVisibility()">👁️</span>
+      <span class="toggle-password" id="togglePasswordIcon" onclick="togglePasswordVisibility()">👁</span>
     </div>
     <p class="warning" id="warningMessage">Invalid username or password. Please try again.</p>
     <button onclick="login()">Login</button>
