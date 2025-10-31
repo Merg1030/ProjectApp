@@ -495,6 +495,53 @@
       to { transform: rotate(360deg); }
     }
     
+    /* Card Toggle Controls */
+    .card-toggle-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      padding: 0 4vw;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    
+    .toggle-btn {
+      background: var(--primary-light);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .toggle-btn:hover {
+      background: var(--primary);
+    }
+    
+    .toggle-btn.active {
+      background: var(--primary-dark);
+    }
+    
+    /* Person Filter */
+    .person-filter {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      padding: 0 4vw;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    
+    .person-filter select {
+      width: 200px;
+      padding: 8px;
+      font-size: 0.9em;
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
       body {
@@ -538,6 +585,15 @@
         width: 80%;
         max-width: 200px;
       }
+      .person-filter {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .person-filter select {
+        width: 80%;
+        max-width: 200px;
+      }
       .stats-grid {
         grid-template-columns: 1fr;
       }
@@ -547,6 +603,11 @@
       }
       .employee-cards {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+      }
+      .card-toggle-controls {
+        flex-direction: column;
+        align-items: center;
         gap: 8px;
       }
     }
@@ -583,18 +644,52 @@
     <input type="date" id="dateFilterInput" onchange="applyDateFilter()">
   </div>
   
+  <div class="person-filter">
+    <select id="personFilterSelect" onchange="applyPersonFilter()">
+      <option value="all">All Employees</option>
+      <option value="BRIGHTON MATOLOKOSH">BRIGHTON MATOLOKOSH</option>
+      <option value="CAPHAS TEMBO">CAPHAS TEMBO</option>
+      <option value="CLISHA MAMBILIMA">CLISHA MAMBILIMA</option>
+      <option value="DABSON DAKA">DABSON DAKA</option>
+      <option value="DANNY MVULA">DANNY MVULA</option>
+      <option value="JOSEPH TEMBO">JOSEPH TEMBO</option>
+      <option value="LUCKSON PHIRI">LUCKSON PHIRI</option>
+      <option value="MICHEAL LOBELA">MICHEAL LOBELA</option>
+      <option value="OBERT SIAME">OBERT SIAME</option>
+      <option value="DOMINIC SAKALA">DOMINIC SAKALA</option>
+      <option value="PETER MAWERE">PETER MAWERE</option>
+      <option value="SAVIOUR PHIRI">SAVIOUR PHIRI</option>
+      <option value="TEMBEYA SAKALA">TEMBEYA SAKALA</option>
+      <option value="KELVIN SIAME">KELVIN SIAME</option>
+      <option value="ORSCAR MUSHIPEE">ORSCAR MUSHIPEE</option>
+      <option value="NICKSON MUMBA">NICKSON MUMBA</option>
+    </select>
+  </div>
+  
+  <div class="card-toggle-controls">
+    <button class="toggle-btn" id="toggleStatsBtn" onclick="toggleCard('stats')">
+      <i class="fas fa-chart-bar"></i> Toggle Stats
+    </button>
+    <button class="toggle-btn" id="toggleUnworkedBtn" onclick="toggleCard('unworked')">
+      <i class="fas fa-user-times"></i> Toggle Absent Days
+    </button>
+    <button class="toggle-btn" id="toggleEmployeeCardsBtn" onclick="toggleCard('employeeCards')">
+      <i class="fas fa-users"></i> Toggle Employee Cards
+    </button>
+  </div>
+  
   <div class="employee-cards" id="employeeCards">
     <!-- Employee cards will be populated here -->
   </div>
   
-  <div class="unworked-container" id="unworkedContainer" style="display: none;">
+  <div class="unworked-container" id="unworkedContainer">
     <div class="unworked-title">Absent Days</div>
     <div class="unworked-grid" id="unworkedGrid">
       <!-- Absent days will be populated here -->
     </div>
   </div>
   
-  <div class="stats-container" id="statsContainer" style="display: none;">
+  <div class="stats-container" id="statsContainer">
     <div class="stats-title">Work Summary</div>
     <div class="stats-grid">
       <div class="stat-card">
@@ -796,6 +891,7 @@ function logout() {
   localStorage.removeItem('dateFilter');
   localStorage.removeItem('monthFilter');
   localStorage.removeItem('personFilter');
+  localStorage.removeItem('cardVisibility');
   location.href = "index.html";
 }
 function showWelcome(user) {
@@ -890,7 +986,54 @@ let allTaskIDs = new Set();
 let unsubscribe = null;
 let currentFilter = localStorage.getItem('currentFilter') || 'all';
 let dateFilter = localStorage.getItem('dateFilter') || '';
-let personFilter = JSON.parse(localStorage.getItem('personFilter')) || {};
+let personFilter = localStorage.getItem('personFilter') || 'all';
+
+// ---- CARD VISIBILITY MANAGEMENT ----
+function getCardVisibility() {
+  const stored = localStorage.getItem('cardVisibility');
+  return stored ? JSON.parse(stored) : {
+    stats: true,
+    unworked: true,
+    employeeCards: true
+  };
+}
+
+function setCardVisibility(visibility) {
+  localStorage.setItem('cardVisibility', JSON.stringify(visibility));
+}
+
+function toggleCard(cardType) {
+  const visibility = getCardVisibility();
+  visibility[cardType] = !visibility[cardType];
+  setCardVisibility(visibility);
+  updateCardVisibility();
+  
+  // Update button active state
+  const button = document.getElementById(`toggle${cardType.charAt(0).toUpperCase() + cardType.slice(1)}Btn`);
+  if (visibility[cardType]) {
+    button.classList.add('active');
+  } else {
+    button.classList.remove('active');
+  }
+}
+
+function updateCardVisibility() {
+  const visibility = getCardVisibility();
+  
+  // Update stats container
+  document.getElementById('statsContainer').style.display = visibility.stats ? 'block' : 'none';
+  
+  // Update unworked container
+  document.getElementById('unworkedContainer').style.display = visibility.unworked ? 'block' : 'none';
+  
+  // Update employee cards
+  document.getElementById('employeeCards').style.display = visibility.employeeCards ? 'grid' : 'none';
+  
+  // Update button active states
+  document.getElementById('toggleStatsBtn').classList.toggle('active', visibility.stats);
+  document.getElementById('toggleUnworkedBtn').classList.toggle('active', visibility.unworked);
+  document.getElementById('toggleEmployeeCardsBtn').classList.toggle('active', visibility.employeeCards);
+}
 
 function listenTasks() {
   const user = getCurrentUser();
@@ -949,7 +1092,7 @@ function renderTasks() {
   }
   
   // Apply person filter if set
-  if (personFilter.person) {
+  if (personFilter && personFilter !== 'all') {
     filteredTasks = applyPersonFilterToTasks(filteredTasks);
   }
   
@@ -1045,12 +1188,10 @@ function applyDateFilterToTasks(tasks) {
 }
 
 function applyPersonFilterToTasks(tasks) {
-  const person = personFilter.person;
-  
-  if (!person) return tasks;
+  if (!personFilter || personFilter === 'all') return tasks;
   
   return tasks.filter(task => {
-    return task.name === person;
+    return task.name === personFilter;
   });
 }
 
@@ -1113,12 +1254,11 @@ function updateEmployeeCards() {
       this.classList.add('active');
       
       // Apply person filter
-      personFilter = {
-        person: name
-      };
+      personFilter = name;
+      document.getElementById('personFilterSelect').value = name;
       
       // Save to localStorage
-      localStorage.setItem('personFilter', JSON.stringify(personFilter));
+      localStorage.setItem('personFilter', personFilter);
       
       // Re-render tasks and update stats
       renderTasks();
@@ -1220,7 +1360,7 @@ function updateStatistics() {
   let filteredTasks = allTasks;
   
   // Apply person filter if set
-  if (personFilter.person) {
+  if (personFilter && personFilter !== 'all') {
     filteredTasks = applyPersonFilterToTasks(filteredTasks);
   }
   
@@ -1265,7 +1405,7 @@ function updateUnworkedHours() {
   let filteredTasks = allTasks;
   
   // Apply person filter if set
-  if (personFilter.person) {
+  if (personFilter && personFilter !== 'all') {
     filteredTasks = applyPersonFilterToTasks(filteredTasks);
   }
   
@@ -1328,6 +1468,28 @@ function applyDateFilter() {
   
   // Save to localStorage
   localStorage.setItem('dateFilter', dateFilter);
+  
+  // Re-render tasks and update stats
+  renderTasks();
+  updateStatistics();
+  updateUnworkedHours();
+}
+
+// ---- PERSON FILTER FUNCTIONS ----
+function applyPersonFilter() {
+  personFilter = document.getElementById('personFilterSelect').value;
+  
+  // Save to localStorage
+  localStorage.setItem('personFilter', personFilter);
+  
+  // Update active state of employee cards
+  document.querySelectorAll('.employee-card').forEach(card => {
+    if (card.dataset.name === personFilter) {
+      card.classList.add('active');
+    } else {
+      card.classList.remove('active');
+    }
+  });
   
   // Re-render tasks and update stats
   renderTasks();
@@ -1549,13 +1711,29 @@ window.onload = function() {
   }
   showWelcome(user);
   setupTaskIDAutocomplete();
-  listenTasks();
   
-  // Set default date to today
-  const today = new Date();
-  document.getElementById('dateFilterInput').valueAsDate = today;
-  dateFilter = document.getElementById('dateFilterInput').value;
-  localStorage.setItem('dateFilter', dateFilter);
+  // Restore filters from localStorage
+  dateFilter = localStorage.getItem('dateFilter') || '';
+  personFilter = localStorage.getItem('personFilter') || 'all';
+  
+  // Set filter values
+  if (dateFilter) {
+    document.getElementById('dateFilterInput').value = dateFilter;
+  } else {
+    // Set default date to today
+    const today = new Date();
+    document.getElementById('dateFilterInput').valueAsDate = today;
+    dateFilter = document.getElementById('dateFilterInput').value;
+    localStorage.setItem('dateFilter', dateFilter);
+  }
+  
+  document.getElementById('personFilterSelect').value = personFilter;
+  
+  // Update card visibility
+  updateCardVisibility();
+  
+  // Start listening for tasks
+  listenTasks();
 }
 </script>
 </body>
