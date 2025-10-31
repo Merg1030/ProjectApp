@@ -446,6 +446,30 @@
             align-items: center;
         }
 
+        .column-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .column-action-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .column-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .column-action-btn.delete:hover {
+            background: #e74c3c;
+        }
+
         .column-content {
             flex: 1;
             padding: 15px;
@@ -701,6 +725,9 @@
                             <button class="toolbar-btn" id="addColumnBtn">
                                 <i class="fas fa-plus"></i> Add Column
                             </button>
+                            <button class="toolbar-btn" id="deleteColumnBtn">
+                                <i class="fas fa-minus"></i> Delete Column
+                            </button>
                             <button class="toolbar-btn" id="boldBtn">
                                 <i class="fas fa-bold"></i> Bold
                             </button>
@@ -750,6 +777,7 @@
         const columnsCount = document.getElementById('columnsCount');
         const columnsContainer = document.getElementById('columnsContainer');
         const addColumnBtn = document.getElementById('addColumnBtn');
+        const deleteColumnBtn = document.getElementById('deleteColumnBtn');
         const boldBtn = document.getElementById('boldBtn');
         const italicBtn = document.getElementById('italicBtn');
         const underlineBtn = document.getElementById('underlineBtn');
@@ -817,6 +845,21 @@
             return column.id;
         }
 
+        // Delete a column by ID
+        function deleteColumn(columnId) {
+            if (columns.length <= 1) {
+                alert("You need to have at least one column!");
+                return;
+            }
+            
+            const columnIndex = columns.findIndex(col => col.id === columnId);
+            if (columnIndex !== -1) {
+                columns.splice(columnIndex, 1);
+                renderColumns();
+                scheduleSave();
+            }
+        }
+
         // Render all columns
         function renderColumns() {
             columnsContainer.innerHTML = '';
@@ -830,8 +873,13 @@
                 columnElement.innerHTML = `
                     <div class="column-header">
                         <span>${column.title}</span>
-                        <div class="drag-handle">
-                            <i class="fas fa-grip-vertical"></i>
+                        <div class="column-actions">
+                            <div class="drag-handle">
+                                <i class="fas fa-grip-vertical"></i>
+                            </div>
+                            <button class="column-action-btn delete" data-column-id="${column.id}" title="Delete Column">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="column-content">
@@ -854,6 +902,14 @@
                 const header = columnElement.querySelector('.column-header span');
                 header.addEventListener('blur', handleColumnTitleChange);
                 header.setAttribute('contenteditable', 'true');
+                
+                // Add delete button event listener
+                const deleteBtn = columnElement.querySelector('.column-action-btn.delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const columnId = e.target.closest('.column-action-btn').getAttribute('data-column-id');
+                    deleteColumn(columnId);
+                });
             });
             
             // Add "add column" button
@@ -1191,6 +1247,14 @@
             
             // Add column button
             addColumnBtn.addEventListener('click', () => createColumn());
+            
+            // Delete column button
+            deleteColumnBtn.addEventListener('click', () => {
+                if (columns.length > 0) {
+                    const lastColumnId = columns[columns.length - 1].id;
+                    deleteColumn(lastColumnId);
+                }
+            });
         }
 
         // Initialize the app when DOM is loaded
