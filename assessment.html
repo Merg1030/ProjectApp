@@ -50,7 +50,7 @@
       padding: 0;
     }
     .welcome {
-      font-size: 1em;
+      font-size: 1.2em;
       color: var(--primary);
       text-align: center;
       margin: 0;
@@ -58,7 +58,7 @@
       font-weight: 600;
       width: 100vw;
       background: var(--light-bg);
-      padding: 10px 0;
+      padding: 15px 0;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .header-bar {
@@ -390,6 +390,7 @@
       gap: 10px;
       margin: 15px 0;
       flex-wrap: wrap;
+      padding: 0 4vw;
     }
     .filter-btn {
       padding: 8px 16px;
@@ -530,6 +531,83 @@
       to { transform: rotate(360deg); }
     }
     
+    /* Employee Cards */
+    .employee-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+      padding: 0 4vw;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .employee-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .employee-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .employee-card.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .employee-name {
+      font-weight: 600;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+    }
+    
+    .employee-hours {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    
+    .employee-card.active .employee-hours {
+      color: white;
+    }
+    
+    /* Toggle buttons for sections */
+    .section-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+      padding: 0 4vw;
+    }
+    
+    .toggle-btn {
+      padding: 8px 16px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .toggle-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
       body {
@@ -587,6 +665,10 @@
         flex-direction: column;
         gap: 5px;
       }
+      .employee-cards {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+      }
     }
     
     /* Animation for form toggle */
@@ -614,9 +696,25 @@
       </button>
     </div>
   </div>
-  <div class="welcome" id="welcome"></div>
+  <div class="welcome" id="welcome">WELCOME PENTA</div>
   
-  <div class="filter-controls" id="filterControls">
+  <div class="section-toggle">
+    <button class="toggle-btn active" data-section="employees" onclick="toggleSection('employees')">
+      <i class="fas fa-users"></i> Employees
+    </button>
+    <button class="toggle-btn" data-section="filters" onclick="toggleSection('filters')">
+      <i class="fas fa-filter"></i> Filters
+    </button>
+    <button class="toggle-btn" data-section="stats" onclick="toggleSection('stats')">
+      <i class="fas fa-chart-bar"></i> Stats
+    </button>
+  </div>
+  
+  <div class="employee-cards" id="employeeCards">
+    <!-- Employee cards will be populated here -->
+  </div>
+  
+  <div class="filter-controls" id="filterControls" style="display: none;">
     <button class="filter-btn active" data-filter="tomorrow">Tomorrow</button>
     <button class="filter-btn" data-filter="today">Today</button>
     <button class="filter-btn" data-filter="all">All Tasks</button>
@@ -624,7 +722,7 @@
     <button class="filter-btn" data-filter="month">This Month</button>
   </div>
   
-  <div class="person-filter" id="personFilter">
+  <div class="person-filter" id="personFilter" style="display: none;">
     <select id="personSelect">
       <option value="">All People</option>
       <!-- Options will be populated dynamically -->
@@ -633,14 +731,14 @@
     <button onclick="clearPersonFilter()">Clear Filter</button>
   </div>
   
-  <div class="date-filter" id="dateFilter">
+  <div class="date-filter" id="dateFilter" style="display: none;">
     <input type="date" id="startDate" placeholder="Start Date">
     <input type="date" id="endDate" placeholder="End Date">
     <button onclick="applyDateFilter()">Apply Date Filter</button>
     <button onclick="clearDateFilter()">Clear Filter</button>
   </div>
   
-  <div class="month-filter" id="monthFilter">
+  <div class="month-filter" id="monthFilter" style="display: none;">
     <select id="monthSelect">
       <option value="">Select Month</option>
       <option value="0">January</option>
@@ -663,14 +761,14 @@
     <button onclick="clearMonthFilter()">Clear Filter</button>
   </div>
   
-  <div class="unworked-container" id="unworkedContainer">
+  <div class="unworked-container" id="unworkedContainer" style="display: none;">
     <div class="unworked-title">Unworked Hours</div>
     <div class="unworked-grid" id="unworkedGrid">
       <!-- Unworked hours will be populated here -->
     </div>
   </div>
   
-  <div class="stats-container" id="statsContainer">
+  <div class="stats-container" id="statsContainer" style="display: none;">
     <div class="stats-title">Work Summary</div>
     <div class="stats-grid">
       <div class="stat-card">
@@ -1007,6 +1105,7 @@ function listenTasks() {
     updatePersonFilterInputs();
     updateStatistics();
     updateUnworkedHours();
+    updateEmployeeCards();
   }, error => {
     console.error("Error loading tasks:", error);
     document.getElementById("tasksTableBody").innerHTML = `
@@ -1230,6 +1329,102 @@ function formatDate(dateValue) {
     return date.toLocaleDateString();
   } catch (e) {
     return dateValue;
+  }
+}
+
+// ---- EMPLOYEE CARDS ----
+function updateEmployeeCards() {
+  const employeeCards = document.getElementById('employeeCards');
+  employeeCards.innerHTML = '';
+  
+  // Calculate total hours for each employee
+  const employeeHours = {};
+  EMPLOYEE_NAMES.forEach(name => {
+    employeeHours[name] = 0;
+  });
+  
+  allTasks.forEach(task => {
+    if (EMPLOYEE_NAMES.includes(task.name) && task.status !== 'absent') {
+      employeeHours[task.name] += parseFloat(task.hours) || 0;
+    }
+  });
+  
+  // Create cards for each employee
+  EMPLOYEE_NAMES.forEach(name => {
+    const card = document.createElement('div');
+    card.className = 'employee-card';
+    card.dataset.name = name;
+    
+    // Get first name for display
+    const firstName = name.split(' ')[0];
+    
+    card.innerHTML = `
+      <div class="employee-name">${firstName}</div>
+      <div class="employee-hours">${employeeHours[name].toFixed(1)}h</div>
+    `;
+    
+    card.addEventListener('click', function() {
+      // Toggle active state
+      document.querySelectorAll('.employee-card').forEach(c => {
+        c.classList.remove('active');
+      });
+      this.classList.add('active');
+      
+      // Apply person filter
+      personFilter = {
+        person: name
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('personFilter', JSON.stringify(personFilter));
+      
+      // Re-render tasks
+      renderTasks();
+    });
+    
+    employeeCards.appendChild(card);
+  });
+}
+
+// ---- SECTION TOGGLE ----
+function toggleSection(section) {
+  // Update toggle buttons
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.section === section) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Show/hide sections
+  const sections = {
+    'employees': document.getElementById('employeeCards'),
+    'filters': [
+      document.getElementById('filterControls'),
+      document.getElementById('dateFilter'),
+      document.getElementById('monthFilter'),
+      document.getElementById('personFilter')
+    ],
+    'stats': [
+      document.getElementById('statsContainer'),
+      document.getElementById('unworkedContainer')
+    ]
+  };
+  
+  // Hide all sections first
+  Object.values(sections).forEach(section => {
+    if (Array.isArray(section)) {
+      section.forEach(el => el.style.display = 'none');
+    } else {
+      section.style.display = 'none';
+    }
+  });
+  
+  // Show selected section
+  if (Array.isArray(sections[section])) {
+    sections[section].forEach(el => el.style.display = 'flex');
+  } else {
+    sections[section].style.display = 'grid';
   }
 }
 
