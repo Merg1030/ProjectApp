@@ -420,6 +420,33 @@
       background: var(--primary-dark);
     }
     
+    /* Person Filter */
+    .person-filter {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+      padding: 0 4vw;
+    }
+    .person-filter select {
+      width: 200px;
+      padding: 8px;
+      font-size: 0.9em;
+    }
+    .person-filter button {
+      padding: 8px 16px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .person-filter button:hover {
+      background: var(--primary-dark);
+    }
+    
     /* Task ID Suggestions */
     .suggestions-container {
       position: relative;
@@ -504,12 +531,12 @@
         padding: 6px 12px;
         font-size: 0.8em;
       }
-      .date-filter, .month-filter {
+      .date-filter, .month-filter, .person-filter {
         flex-direction: column;
         align-items: center;
         gap: 8px;
       }
-      .date-filter input, .month-filter select {
+      .date-filter input, .month-filter select, .person-filter select {
         width: 80%;
         max-width: 200px;
       }
@@ -554,6 +581,15 @@
     <button class="filter-btn" data-filter="today">Today</button>
     <button class="filter-btn" data-filter="week">This Week</button>
     <button class="filter-btn" data-filter="month">This Month</button>
+  </div>
+  
+  <div class="person-filter" id="personFilter">
+    <select id="personSelect">
+      <option value="">All People</option>
+      <!-- Options will be populated dynamically -->
+    </select>
+    <button onclick="applyPersonFilter()">Apply Person Filter</button>
+    <button onclick="clearPersonFilter()">Clear Filter</button>
   </div>
   
   <div class="date-filter" id="dateFilter">
@@ -622,7 +658,25 @@
         <small style="color: #666;">Type to search existing Task IDs or enter a new one</small>
         
         <label>Name</label>
-        <input type="text" id="name" required>
+        <select id="name" required>
+          <option value="">Select Name</option>
+          <option value="BRIGHTON MATOLOKOSH">BRIGHTON MATOLOKOSH</option>
+          <option value="CAPHAS TEMBO">CAPHAS TEMBO</option>
+          <option value="CLISHA MAMBILIMA">CLISHA MAMBILIMA</option>
+          <option value="DABSON DAKA">DABSON DAKA</option>
+          <option value="DANNY MVULA">DANNY MVULA</option>
+          <option value="JOSEPH TEMBO">JOSEPH TEMBO</option>
+          <option value="LUCKSON PHIRI">LUCKSON PHIRI</option>
+          <option value="MICHEAL LOBELA">MICHEAL LOBELA</option>
+          <option value="OBERT SIAME">OBERT SIAME</option>
+          <option value="DOMINIC SAKALA">DOMINIC SAKALA</option>
+          <option value="PETER MAWERE">PETER MAWERE</option>
+          <option value="SAVIOUR PHIRI">SAVIOUR PHIRI</option>
+          <option value="TEMBEYA SAKALA">TEMBEYA SAKALA</option>
+          <option value="KELVIN SIAME">KELVIN SIAME</option>
+          <option value="ORSCAR MUSHIPEE">ORSCAR MUSHIPEE</option>
+          <option value="NICKSON MUMBA">NICKSON MUMBA</option>
+        </select>
         
         <label>Location</label>
         <input type="text" id="location" required>
@@ -660,7 +714,25 @@
         <h3 style="text-align: center; color: var(--warning); margin-top: 0;">Mark Absence</h3>
         
         <label>Name</label>
-        <input type="text" id="absentName" required>
+        <select id="absentName" required>
+          <option value="">Select Name</option>
+          <option value="BRIGHTON MATOLOKOSH">BRIGHTON MATOLOKOSH</option>
+          <option value="CAPHAS TEMBO">CAPHAS TEMBO</option>
+          <option value="CLISHA MAMBILIMA">CLISHA MAMBILIMA</option>
+          <option value="DABSON DAKA">DABSON DAKA</option>
+          <option value="DANNY MVULA">DANNY MVULA</option>
+          <option value="JOSEPH TEMBO">JOSEPH TEMBO</option>
+          <option value="LUCKSON PHIRI">LUCKSON PHIRI</option>
+          <option value="MICHEAL LOBELA">MICHEAL LOBELA</option>
+          <option value="OBERT SIAME">OBERT SIAME</option>
+          <option value="DOMINIC SAKALA">DOMINIC SAKALA</option>
+          <option value="PETER MAWERE">PETER MAWERE</option>
+          <option value="SAVIOUR PHIRI">SAVIOUR PHIRI</option>
+          <option value="TEMBEYA SAKALA">TEMBEYA SAKALA</option>
+          <option value="KELVIN SIAME">KELVIN SIAME</option>
+          <option value="ORSCAR MUSHIPEE">ORSCAR MUSHIPEE</option>
+          <option value="NICKSON MUMBA">NICKSON MUMBA</option>
+        </select>
         
         <label>Date</label>
         <input type="date" id="absentDate" required>
@@ -706,6 +778,24 @@
 // ---- CONFIGURATION ----
 const ADMIN_USERS = ['faiyaz mulla', 'christopher', 'chris', 'faiyaz'];
 const GENERAL_PASSWORD = '12345';
+const EMPLOYEE_NAMES = [
+  "BRIGHTON MATOLOKOSH",
+  "CAPHAS TEMBO",
+  "CLISHA MAMBILIMA",
+  "DABSON DAKA",
+  "DANNY MVULA",
+  "JOSEPH TEMBO",
+  "LUCKSON PHIRI",
+  "MICHEAL LOBELA",
+  "OBERT SIAME",
+  "DOMINIC SAKALA",
+  "PETER MAWERE",
+  "SAVIOUR PHIRI",
+  "TEMBEYA SAKALA",
+  "KELVIN SIAME",
+  "ORSCAR MUSHIPEE",
+  "NICKSON MUMBA"
+];
 
 // ---- FIREBASE SETUP ----
 const firebaseConfig = {
@@ -733,6 +823,7 @@ function logout() {
   localStorage.removeItem('currentFilter');
   localStorage.removeItem('dateFilter');
   localStorage.removeItem('monthFilter');
+  localStorage.removeItem('personFilter');
   location.href = "index.html";
 }
 function showWelcome(user) {
@@ -743,10 +834,12 @@ function showWelcome(user) {
     document.getElementById('filterControls').style.display = 'flex';
     document.getElementById('dateFilter').style.display = 'flex';
     document.getElementById('monthFilter').style.display = 'flex';
+    document.getElementById('personFilter').style.display = 'flex';
   } else {
     document.getElementById('filterControls').style.display = 'none';
     document.getElementById('dateFilter').style.display = 'none';
     document.getElementById('monthFilter').style.display = 'none';
+    document.getElementById('personFilter').style.display = 'none';
   }
 }
 
@@ -790,6 +883,12 @@ function resetForm() {
   document.getElementById("cancelEdit").style.display = "none";
   document.getElementById("formError").style.display = "none";
   document.getElementById("taskIDSuggestions").style.display = "none";
+  
+  // Set the name to current user if they're in the employee list
+  const user = getCurrentUser();
+  if (user && EMPLOYEE_NAMES.includes(user.toUpperCase())) {
+    document.getElementById("name").value = user.toUpperCase();
+  }
 }
 
 function resetAbsentForm() {
@@ -797,10 +896,10 @@ function resetAbsentForm() {
   document.getElementById("absentDate").valueAsDate = new Date();
   document.getElementById("absentFormError").style.display = "none";
   
-  // Set the name to current user
+  // Set the name to current user if they're in the employee list
   const user = getCurrentUser();
-  if (user) {
-    document.getElementById("absentName").value = user;
+  if (user && EMPLOYEE_NAMES.includes(user.toUpperCase())) {
+    document.getElementById("absentName").value = user.toUpperCase();
   }
 }
 
@@ -816,6 +915,7 @@ let unsubscribe = null;
 let currentFilter = localStorage.getItem('currentFilter') || 'all';
 let dateFilter = JSON.parse(localStorage.getItem('dateFilter')) || {};
 let monthFilter = JSON.parse(localStorage.getItem('monthFilter')) || {};
+let personFilter = JSON.parse(localStorage.getItem('personFilter')) || {};
 
 function listenTasks() {
   const user = getCurrentUser();
@@ -853,6 +953,7 @@ function listenTasks() {
     updateFilterButtons();
     updateDateFilterInputs();
     updateMonthFilterInputs();
+    updatePersonFilterInputs();
     updateStatistics();
   }, error => {
     console.error("Error loading tasks:", error);
@@ -879,6 +980,11 @@ function renderTasks() {
   // Apply month filter if set
   if (monthFilter.month !== undefined || monthFilter.year) {
     filteredTasks = applyMonthFilterToTasks(filteredTasks);
+  }
+  
+  // Apply person filter if set
+  if (personFilter.person) {
+    filteredTasks = applyPersonFilterToTasks(filteredTasks);
   }
   
   if (filteredTasks.length === 0) {
@@ -1015,6 +1121,16 @@ function applyMonthFilterToTasks(tasks) {
   });
 }
 
+function applyPersonFilterToTasks(tasks) {
+  const person = personFilter.person;
+  
+  if (!person) return tasks;
+  
+  return tasks.filter(task => {
+    return task.name === person;
+  });
+}
+
 function updateFilterButtons() {
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -1039,6 +1155,12 @@ function updateMonthFilterInputs() {
   }
   if (monthFilter.year) {
     document.getElementById('yearSelect').value = monthFilter.year;
+  }
+}
+
+function updatePersonFilterInputs() {
+  if (personFilter.person) {
+    document.getElementById('personSelect').value = personFilter.person;
   }
 }
 
@@ -1165,6 +1287,28 @@ function updateStatistics() {
   // Days absent
   const daysAbsent = allTasks.filter(task => task.status === 'absent').length;
   document.getElementById('daysAbsent').textContent = daysAbsent;
+}
+
+// ---- PERSON FILTER FUNCTIONS ----
+function applyPersonFilter() {
+  const person = document.getElementById('personSelect').value;
+  
+  personFilter = {
+    person: person || null
+  };
+  
+  // Save to localStorage
+  localStorage.setItem('personFilter', JSON.stringify(personFilter));
+  
+  // Re-render tasks
+  renderTasks();
+}
+
+function clearPersonFilter() {
+  personFilter = {};
+  document.getElementById('personSelect').value = '';
+  localStorage.removeItem('personFilter');
+  renderTasks();
 }
 
 // ---- DATE FILTER FUNCTIONS ----
@@ -1455,6 +1599,18 @@ function populateYearSelect() {
   }
 }
 
+function populatePersonSelect() {
+  const personSelect = document.getElementById('personSelect');
+  
+  // Add all employee names to the person filter
+  EMPLOYEE_NAMES.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    personSelect.appendChild(option);
+  });
+}
+
 window.onload = function() {
   const user = getCurrentUser();
   if (!user) { 
@@ -1465,6 +1621,7 @@ window.onload = function() {
   setupFilterControls();
   setupTaskIDAutocomplete();
   populateYearSelect();
+  populatePersonSelect();
   listenTasks();
 }
 </script>
