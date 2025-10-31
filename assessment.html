@@ -420,6 +420,35 @@
       background: var(--primary-dark);
     }
     
+    /* Task ID Suggestions */
+    .suggestions-container {
+      position: relative;
+    }
+    .suggestions-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .suggestion-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    .suggestion-item:hover {
+      background: var(--light-bg);
+    }
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+    
     /* Loading indicator */
     .loading {
       display: inline-block;
@@ -585,6 +614,13 @@
         <input type="hidden" id="taskId">
         <input type="hidden" id="originalUsername">
         
+        <label>Task ID</label>
+        <div class="suggestions-container">
+          <input type="text" id="taskID" required list="taskIDSuggestions" autocomplete="off">
+          <div class="suggestions-list" id="taskIDSuggestions" style="display: none;"></div>
+        </div>
+        <small style="color: #666;">Type to search existing Task IDs or enter a new one</small>
+        
         <label>Name</label>
         <input type="text" id="name" required>
         
@@ -668,7 +704,7 @@
 
 <script>
 // ---- CONFIGURATION ----
-const ADMIN_USERS = ['faiyaz mulla', 'christopher'];
+const ADMIN_USERS = ['faiyaz mulla', 'christopher', 'chris', 'faiyaz'];
 const GENERAL_PASSWORD = '12345';
 
 // ---- FIREBASE SETUP ----
@@ -753,6 +789,7 @@ function resetForm() {
   document.getElementById("status").value = "start";
   document.getElementById("cancelEdit").style.display = "none";
   document.getElementById("formError").style.display = "none";
+  document.getElementById("taskIDSuggestions").style.display = "none";
 }
 
 function resetAbsentForm() {
@@ -774,6 +811,7 @@ function cancelEdit() {
 
 // ---- TASK CRUD ----
 let allTasks = [];
+let allTaskIDs = new Set();
 let unsubscribe = null;
 let currentFilter = localStorage.getItem('currentFilter') || 'all';
 let dateFilter = JSON.parse(localStorage.getItem('dateFilter')) || {};
@@ -801,10 +839,15 @@ function listenTasks() {
   }
   unsubscribe = query.onSnapshot(snapshot => {
     allTasks = [];
+    allTaskIDs.clear();
     snapshot.forEach(doc => {
       const data = doc.data();
       data._id = doc.id;
       allTasks.push(data);
+      // Collect all unique task IDs for auto-complete
+      if (data.taskID) {
+        allTaskIDs.add(data.taskID);
+      }
     });
     renderTasks();
     updateFilterButtons();
@@ -886,7 +929,7 @@ function createTaskRow(task) {
   }
   
   row.innerHTML = `
-    <td>${task._id.substring(0, 8)}</td>
+    <td>${task.taskID || task._id.substring(0, 8)}</td>
     <td>${task.name || "Unknown"}</td>
     <td>${task.location || "None"}</td>
     <td class="job-cell">${task.job || "No description"}</td>
@@ -896,7 +939,7 @@ function createTaskRow(task) {
     <td>${task.username || "Unknown"}</td>
     <td>
       <div class="action-buttons">
-        <button class="action-btn edit-btn" onclick="editTask('${task._id}', event)" ${!isAdmin(getCurrentUser()) && task.username !== getCurrentUser() ? 'disabled' : ''}>
+        <button class="action-btn edit-btn" onclick="editTask('${task._id}', event)" ${!isAdmin(getCurrentUser()) ? 'disabled' : ''}>
           <i class="fas fa-edit"></i> Edit
         </button>
         <button class="action-btn delete-btn" onclick="deleteTask('${task._id}', event)" ${!isAdmin(getCurrentUser()) && task.username !== getCurrentUser() ? 'disabled' : ''}>
@@ -1009,24 +1052,114 @@ function formatDate(dateValue) {
   }
 }
 
+// ---- TASK ID AUTO-COMPLETE ----
+function setupTaskIDAutocomplete() {
+  const taskIDInput = document.getElementById('taskID');
+  const suggestionsContainer = document.getElementById('taskIDSuggestions');
+  
+  taskIDInput.addEventListener('input', function() {
+    const value = this.value.toLowerCase();
+    const suggestions = Array.from(allTaskIDs).filter(taskID => 
+      taskID.toLowerCase().includes(value)
+    );
+    
+    showSuggestions(suggestions);
+  });
+  
+  taskIDInput.addEventListener('focus', function() {
+    if (this.value) {
+      const value = this.value.toLowerCase();
+      const suggestions = Array.from(allTaskIDs).filter(taskID => 
+        taskID.toLowerCase().includes(value)
+      );
+      showSuggestions(suggestions);
+    } else {
+      showSuggestions(Array.from(allTaskIDs).slice(0, 10));
+    }
+  });
+  
+  taskIDInput.addEventListener('blur', function() {
+    // Hide suggestions after a short delay to allow clicking on them
+    setTimeout(() => {
+      suggestionsContainer.style.display = 'none';
+    }, 200);
+  });
+  
+  // Prevent form submission when selecting a suggestion
+  taskIDInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && suggestionsContainer.style.display !== 'none') {
+      e.preventDefault();
+      const activeSuggestion = suggestionsContainer.querySelector('.suggestion-item:hover');
+      if (activeSuggestion) {
+        activeSuggestion.click();
+      }
+    }
+  });
+}
+
+function showSuggestions(suggestions) {
+  const suggestionsContainer = document.getElementById('taskIDSuggestions');
+  
+  if (suggestions.length === 0) {
+    suggestionsContainer.style.display = 'none';
+    return;
+  }
+  
+  suggestionsContainer.innerHTML = '';
+  suggestions.slice(0, 10).forEach(taskID => {
+    const suggestionItem = document.createElement('div');
+    suggestionItem.className = 'suggestion-item';
+    suggestionItem.textContent = taskID;
+    suggestionItem.addEventListener('mousedown', function() {
+      document.getElementById('taskID').value = taskID;
+      suggestionsContainer.style.display = 'none';
+      // Auto-fill other fields if this task ID exists
+      autoFillTaskDetails(taskID);
+    });
+    suggestionsContainer.appendChild(suggestionItem);
+  });
+  
+  suggestionsContainer.style.display = 'block';
+}
+
+function autoFillTaskDetails(taskID) {
+  // Find the most recent task with this ID to auto-fill details
+  const tasksWithThisID = allTasks
+    .filter(task => task.taskID === taskID && task.status !== 'absent')
+    .sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+  
+  if (tasksWithThisID.length > 0) {
+    const latestTask = tasksWithThisID[0];
+    document.getElementById('name').value = latestTask.name || '';
+    document.getElementById('location').value = latestTask.location || '';
+    document.getElementById('job').value = latestTask.job || '';
+    document.getElementById('status').value = latestTask.status || 'start';
+  }
+}
+
 // ---- STATISTICS ----
 function updateStatistics() {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  // Count unique task IDs (excluding absent days)
+  const taskIDs = new Set();
+  const tasksWithHours = allTasks.filter(task => task.status !== 'absent');
   
-  // Total tasks
-  document.getElementById('totalTasks').textContent = allTasks.length;
+  tasksWithHours.forEach(task => {
+    if (task.taskID) {
+      taskIDs.add(task.taskID);
+    }
+  });
+  
+  // Total unique tasks (by task ID)
+  document.getElementById('totalTasks').textContent = taskIDs.size;
   
   // Total hours (excluding absent days)
-  const totalHours = allTasks.reduce((sum, task) => {
-    if (task.status === 'absent') return sum;
+  const totalHours = tasksWithHours.reduce((sum, task) => {
     return sum + (parseFloat(task.hours) || 0);
   }, 0);
   document.getElementById('totalHours').textContent = totalHours.toFixed(1);
   
-  // Average hours per task (excluding absent days)
-  const tasksWithHours = allTasks.filter(task => task.status !== 'absent');
-  const avgHours = tasksWithHours.length > 0 ? totalHours / tasksWithHours.length : 0;
+  // Average hours per unique task
+  const avgHours = taskIDs.size > 0 ? totalHours / taskIDs.size : 0;
   document.getElementById('avgHours').textContent = avgHours.toFixed(1);
   
   // Days absent
@@ -1094,12 +1227,11 @@ function clearMonthFilter() {
 async function editTask(docId, event) {
   event.stopPropagation();
   
-  // Check if user can edit this task
+  // Check if user can edit this task - ONLY ADMINS
   const user = getCurrentUser();
-  const task = allTasks.find(t => t._id === docId);
   
-  if (!isAdmin(user) && task.username !== user) {
-    alert("You can only edit your own tasks");
+  if (!isAdmin(user)) {
+    alert("Only admins (Chris and Faiyaz) can edit tasks");
     return;
   }
   
@@ -1109,6 +1241,7 @@ async function editTask(docId, event) {
     const task = doc.data();
     document.getElementById("taskId").value = docId;
     document.getElementById("originalUsername").value = task.username || "";
+    document.getElementById("taskID").value = task.taskID || "";
     document.getElementById("name").value = task.name || "";
     document.getElementById("location").value = task.location || "";
     document.getElementById("job").value = task.job || "";
@@ -1190,6 +1323,7 @@ document.getElementById("taskForm").addEventListener("submit", async function(e)
   
   try {
     const formData = {
+      taskID: document.getElementById("taskID").value,
       name: document.getElementById("name").value,
       location: document.getElementById("location").value,
       job: document.getElementById("job").value,
@@ -1329,6 +1463,7 @@ window.onload = function() {
   }
   showWelcome(user);
   setupFilterControls();
+  setupTaskIDAutocomplete();
   populateYearSelect();
   listenTasks();
 }
