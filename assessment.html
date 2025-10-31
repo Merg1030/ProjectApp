@@ -332,6 +332,46 @@
       margin-top: 5px;
     }
     
+    /* Unworked Hours Section */
+    .unworked-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      margin: 15px auto;
+      padding: 16px;
+      max-width: 98vw;
+      width: 460px;
+      border: 1px solid var(--border);
+    }
+    .unworked-title {
+      font-weight: bold;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+    }
+    .unworked-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .unworked-card {
+      background: #ffebee;
+      border-radius: 6px;
+      padding: 10px;
+      border: 1px solid #ffcdd2;
+    }
+    .unworked-name {
+      font-weight: bold;
+      color: #d32f2f;
+    }
+    .unworked-hours {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #d32f2f;
+      margin-top: 5px;
+    }
+    
     /* Form Error */
     #formError {
       color: var(--danger);
@@ -506,7 +546,7 @@
         padding: 7px 10px;
         font-size: 0.85em;
       }
-      .form-container, .stats-container { 
+      .form-container, .stats-container, .unworked-container { 
         max-width: 94vw; 
         border-radius: 0; 
         padding: 10px 3vw 6px;
@@ -554,7 +594,7 @@
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .form-container, .stats-container {
+    .form-container, .stats-container, .unworked-container {
       animation: fadeIn 0.3s ease-out;
     }
   </style>
@@ -577,8 +617,9 @@
   <div class="welcome" id="welcome"></div>
   
   <div class="filter-controls" id="filterControls">
-    <button class="filter-btn active" data-filter="all">All Tasks</button>
+    <button class="filter-btn active" data-filter="tomorrow">Tomorrow</button>
     <button class="filter-btn" data-filter="today">Today</button>
+    <button class="filter-btn" data-filter="all">All Tasks</button>
     <button class="filter-btn" data-filter="week">This Week</button>
     <button class="filter-btn" data-filter="month">This Month</button>
   </div>
@@ -620,6 +661,13 @@
     </select>
     <button onclick="applyMonthFilter()">Apply Month Filter</button>
     <button onclick="clearMonthFilter()">Clear Filter</button>
+  </div>
+  
+  <div class="unworked-container" id="unworkedContainer">
+    <div class="unworked-title">Unworked Hours</div>
+    <div class="unworked-grid" id="unworkedGrid">
+      <!-- Unworked hours will be populated here -->
+    </div>
   </div>
   
   <div class="stats-container" id="statsContainer">
@@ -776,7 +824,7 @@
 
 <script>
 // ---- CONFIGURATION ----
-const ADMIN_USERS = ['faiyaz mulla', 'christopher', 'chris', 'faiyaz'];
+const ADMIN_USERS = ['faiyaz mulla', 'christopher', 'chris', 'faiyaz', 'penta'];
 const GENERAL_PASSWORD = '12345';
 const EMPLOYEE_NAMES = [
   "BRIGHTON MATOLOKOSH",
@@ -830,17 +878,12 @@ function showWelcome(user) {
   let name = user.trim().split(" ");
   name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
   document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
-  if (isAdmin(user)) {
-    document.getElementById('filterControls').style.display = 'flex';
-    document.getElementById('dateFilter').style.display = 'flex';
-    document.getElementById('monthFilter').style.display = 'flex';
-    document.getElementById('personFilter').style.display = 'flex';
-  } else {
-    document.getElementById('filterControls').style.display = 'none';
-    document.getElementById('dateFilter').style.display = 'none';
-    document.getElementById('monthFilter').style.display = 'none';
-    document.getElementById('personFilter').style.display = 'none';
-  }
+  
+  // Everyone can see all filters now
+  document.getElementById('filterControls').style.display = 'flex';
+  document.getElementById('dateFilter').style.display = 'flex';
+  document.getElementById('monthFilter').style.display = 'flex';
+  document.getElementById('personFilter').style.display = 'flex';
 }
 
 // ---- FORM TOGGLE ----
@@ -878,7 +921,12 @@ function resetForm() {
   document.getElementById("taskForm").reset();
   document.getElementById("taskId").value = "";
   document.getElementById("originalUsername").value = "";
-  document.getElementById("date").valueAsDate = new Date();
+  
+  // Set default date to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById("date").valueAsDate = tomorrow;
+  
   document.getElementById("status").value = "start";
   document.getElementById("cancelEdit").style.display = "none";
   document.getElementById("formError").style.display = "none";
@@ -893,7 +941,12 @@ function resetForm() {
 
 function resetAbsentForm() {
   document.getElementById("absentForm").reset();
-  document.getElementById("absentDate").valueAsDate = new Date();
+  
+  // Set default date to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById("absentDate").valueAsDate = tomorrow;
+  
   document.getElementById("absentFormError").style.display = "none";
   
   // Set the name to current user if they're in the employee list
@@ -912,7 +965,7 @@ function cancelEdit() {
 let allTasks = [];
 let allTaskIDs = new Set();
 let unsubscribe = null;
-let currentFilter = localStorage.getItem('currentFilter') || 'all';
+let currentFilter = localStorage.getItem('currentFilter') || 'tomorrow';
 let dateFilter = JSON.parse(localStorage.getItem('dateFilter')) || {};
 let monthFilter = JSON.parse(localStorage.getItem('monthFilter')) || {};
 let personFilter = JSON.parse(localStorage.getItem('personFilter')) || {};
@@ -933,10 +986,8 @@ function listenTasks() {
   `;
   
   let query = db.collection("TASKS");
-  // Only admins see all tasks
-  if (!isAdmin(user)) {
-    query = query.where("username", "==", user);
-  }
+  
+  // Everyone can see all tasks now
   unsubscribe = query.onSnapshot(snapshot => {
     allTasks = [];
     allTaskIDs.clear();
@@ -955,6 +1006,7 @@ function listenTasks() {
     updateMonthFilterInputs();
     updatePersonFilterInputs();
     updateStatistics();
+    updateUnworkedHours();
   }, error => {
     console.error("Error loading tasks:", error);
     document.getElementById("tasksTableBody").innerHTML = `
@@ -1048,7 +1100,7 @@ function createTaskRow(task) {
         <button class="action-btn edit-btn" onclick="editTask('${task._id}', event)" ${!isAdmin(getCurrentUser()) ? 'disabled' : ''}>
           <i class="fas fa-edit"></i> Edit
         </button>
-        <button class="action-btn delete-btn" onclick="deleteTask('${task._id}', event)" ${!isAdmin(getCurrentUser()) && task.username !== getCurrentUser() ? 'disabled' : ''}>
+        <button class="action-btn delete-btn" onclick="deleteTask('${task._id}', event)" ${!isAdmin(getCurrentUser()) ? 'disabled' : ''}>
           <i class="fas fa-trash"></i> Delete
         </button>
       </div>
@@ -1064,15 +1116,22 @@ function createTaskRow(task) {
 function filterTasks(tasks) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - today.getDay());
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   
   switch(currentFilter) {
+    case 'tomorrow': 
+      return tasks.filter(task => {
+        const taskDate = task.date ? new Date(task.date) : task.createdAt?.toDate();
+        return taskDate >= tomorrow && taskDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000);
+      });
     case 'today': 
       return tasks.filter(task => {
         const taskDate = task.date ? new Date(task.date) : task.createdAt?.toDate();
-        return taskDate >= today;
+        return taskDate >= today && taskDate < tomorrow;
       });
     case 'week': 
       return tasks.filter(task => {
@@ -1289,6 +1348,72 @@ function updateStatistics() {
   document.getElementById('daysAbsent').textContent = daysAbsent;
 }
 
+// ---- UNWORKED HOURS CALCULATION ----
+function updateUnworkedHours() {
+  const unworkedGrid = document.getElementById('unworkedGrid');
+  unworkedGrid.innerHTML = '';
+  
+  // Calculate unworked hours for each employee
+  const employeeWorkHours = {};
+  const employeeAbsentDays = {};
+  
+  // Initialize employee data
+  EMPLOYEE_NAMES.forEach(name => {
+    employeeWorkHours[name] = 0;
+    employeeAbsentDays[name] = 0;
+  });
+  
+  // Calculate worked hours and absent days
+  allTasks.forEach(task => {
+    if (EMPLOYEE_NAMES.includes(task.name)) {
+      if (task.status === 'absent') {
+        employeeAbsentDays[task.name]++;
+      } else {
+        employeeWorkHours[task.name] += parseFloat(task.hours) || 0;
+      }
+    }
+  });
+  
+  // Calculate unworked hours (8 hours per day - worked hours)
+  const unworkedData = [];
+  EMPLOYEE_NAMES.forEach(name => {
+    const workedHours = employeeWorkHours[name];
+    const absentDays = employeeAbsentDays[name];
+    const totalExpectedHours = 8 * (Object.keys(employeeWorkHours).length > 0 ? 1 : 0); // Assuming 1 day for now
+    const unworkedHours = Math.max(0, totalExpectedHours - workedHours);
+    
+    if (unworkedHours > 0 || absentDays > 0) {
+      unworkedData.push({
+        name: name,
+        workedHours: workedHours,
+        unworkedHours: unworkedHours,
+        absentDays: absentDays
+      });
+    }
+  });
+  
+  // Sort by unworked hours (descending)
+  unworkedData.sort((a, b) => b.unworkedHours - a.unworkedHours);
+  
+  // Display unworked hours
+  if (unworkedData.length === 0) {
+    unworkedGrid.innerHTML = '<div style="text-align:center; color:#666; padding:10px;">No unworked hours to display</div>';
+    return;
+  }
+  
+  unworkedData.forEach(employee => {
+    const unworkedCard = document.createElement('div');
+    unworkedCard.className = 'unworked-card';
+    unworkedCard.innerHTML = `
+      <div class="unworked-name">${employee.name}</div>
+      <div>Worked: ${employee.workedHours.toFixed(1)} hours</div>
+      <div class="unworked-hours">Unworked: ${employee.unworkedHours.toFixed(1)} hours</div>
+      <div>Absent Days: ${employee.absentDays}</div>
+    `;
+    unworkedGrid.appendChild(unworkedCard);
+  });
+}
+
 // ---- PERSON FILTER FUNCTIONS ----
 function applyPersonFilter() {
   const person = document.getElementById('personSelect').value;
@@ -1375,7 +1500,7 @@ async function editTask(docId, event) {
   const user = getCurrentUser();
   
   if (!isAdmin(user)) {
-    alert("Only admins (Chris and Faiyaz) can edit tasks");
+    alert("Only admins can edit tasks");
     return;
   }
   
@@ -1420,12 +1545,11 @@ function formatDateForInput(dateValue) {
 async function deleteTask(docId, event) {
   event.stopPropagation();
   
-  // Check if user can delete this task
+  // Check if user can delete this task - ONLY ADMINS
   const user = getCurrentUser();
-  const task = allTasks.find(t => t._id === docId);
   
-  if (!isAdmin(user) && task.username !== user) {
-    alert("You can only delete your own tasks");
+  if (!isAdmin(user)) {
+    alert("Only admins can delete tasks");
     return;
   }
   
