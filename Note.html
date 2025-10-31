@@ -97,7 +97,7 @@
         }
 
         .container {
-        
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -383,25 +383,134 @@
             flex-direction: column;
         }
 
-        #noteContent {
+        .spreadsheet-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            padding: 15px 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .toolbar-btn {
+            padding: 8px 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background: #e67e22;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        .columns-container {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            background: #fcfcfc;
+            position: relative;
+        }
+
+        .column {
+            min-width: 200px;
+            border-right: 2px solid #2c3e50;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            position: relative;
+        }
+
+        .column-header {
+            padding: 12px 15px;
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+            border-bottom: 1px solid #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .column-content textarea {
             width: 100%;
             height: 100%;
             border: none;
-            padding: 25px;
-            font-size: 16px;
-            line-height: 1.7;
             resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+            background: transparent;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            flex: 1;
-            background: #fcfcfc;
         }
 
-        #noteContent:focus {
+        .column-content textarea:focus {
             outline: none;
         }
 
-        #noteContent::placeholder {
-            color: #bdc3c7;
+        .resize-handle {
+            position: absolute;
+            right: -5px;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 10;
+        }
+
+        .resize-handle:hover {
+            background: rgba(230, 126, 34, 0.3);
+        }
+
+        .resize-handle.active {
+            background: rgba(230, 126, 34, 0.6);
+        }
+
+        .drag-handle {
+            cursor: move;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .drag-handle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .add-column-btn {
+            min-width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ecf0f1;
+            border: 2px dashed #bdc3c7;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-column-btn:hover {
+            background: #e67e22;
+            border-color: #e67e22;
+            color: white;
         }
 
         .editor-footer {
@@ -417,29 +526,6 @@
             font-size: 14px;
             color: #7f8c8d;
             font-weight: 500;
-        }
-
-        .markdown-help {
-            background: #f8f9fa;
-            padding: 15px 25px;
-            border-top: 1px solid #ecf0f1;
-            font-size: 14px;
-            color: #7f8c8d;
-        }
-
-        .markdown-help summary {
-            cursor: pointer;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .markdown-help ul {
-            margin-top: 12px;
-            padding-left: 20px;
-        }
-
-        .markdown-help li {
-            margin-bottom: 6px;
         }
 
         .empty-state {
@@ -463,6 +549,29 @@
             font-size: 20px;
             margin-bottom: 10px;
             color: #2c3e50;
+        }
+
+        /* Formatting buttons */
+        .format-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .format-btn:hover {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .format-btn.active {
+            background: #2980b9;
+            color: white;
+            border-color: #2980b9;
         }
 
         /* Responsive */
@@ -492,6 +601,10 @@
             .logo {
                 justify-content: center;
             }
+            
+            .toolbar {
+                flex-wrap: wrap;
+            }
         }
 
         /* Scrollbar styling */
@@ -511,6 +624,23 @@
 
         .notes-sidebar::-webkit-scrollbar-thumb:hover {
             background: #d35400;
+        }
+
+        .columns-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .columns-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .columns-container::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .columns-container::-webkit-scrollbar-thumb:hover {
+            background: #95a5a6;
         }
     </style>
 </head>
@@ -566,23 +696,30 @@
                 </div>
 
                 <div class="editor-body">
-                    <textarea id="noteContent" placeholder="Document site observations, material notes, safety issues, or project updates here...&#10;&#10;You can use Markdown formatting for better organization:&#10;- **Bold text** for important items&#10;- *Italic text* for emphasis&#10;- # Headings for sections&#10;- Lists for tasks or materials"></textarea>
+                    <div class="spreadsheet-container">
+                        <div class="toolbar">
+                            <button class="toolbar-btn" id="addColumnBtn">
+                                <i class="fas fa-plus"></i> Add Column
+                            </button>
+                            <button class="toolbar-btn" id="boldBtn">
+                                <i class="fas fa-bold"></i> Bold
+                            </button>
+                            <button class="toolbar-btn" id="italicBtn">
+                                <i class="fas fa-italic"></i> Italic
+                            </button>
+                            <button class="toolbar-btn" id="underlineBtn">
+                                <i class="fas fa-underline"></i> Underline
+                            </button>
+                        </div>
+                        <div class="columns-container" id="columnsContainer">
+                            <!-- Columns will be dynamically added here -->
+                        </div>
+                    </div>
                 </div>
 
                 <div class="editor-footer">
                     <div class="word-count" id="charCount">0 characters</div>
-                    <div class="markdown-help">
-                        <details>
-                            <summary>Formatting Help</summary>
-                            <ul>
-                                <li><strong>Bold:</strong> **text** or __text__</li>
-                                <li><em>Italic:</em> *text* or _text_</li>
-                                <li># Heading 1, ## Heading 2, etc.</li>
-                                <li>- List item or * List item</li>
-                                <li>1. Numbered list</li>
-                            </ul>
-                        </details>
-                    </div>
+                    <div class="word-count" id="columnsCount">0 columns</div>
                 </div>
             </div>
         </div>
@@ -594,11 +731,15 @@
         let currentNoteId = null;
         let unsubscribeNotes = null;
         let saveTimeout = null;
+        let columns = [];
+        let isResizing = false;
+        let currentResizeColumn = null;
+        let startX = 0;
+        let startWidth = 0;
 
         // DOM Elements
         const notesList = document.getElementById('notesList');
         const noteTitle = document.getElementById('noteTitle');
-        const noteContent = document.getElementById('noteContent');
         const newNoteBtn = document.getElementById('newNoteBtn');
         const deleteNoteBtn = document.getElementById('deleteNoteBtn');
         const searchNotes = document.getElementById('searchNotes');
@@ -606,11 +747,18 @@
         const wordCount = document.getElementById('wordCount');
         const charCount = document.getElementById('charCount');
         const notesCount = document.getElementById('notesCount');
+        const columnsCount = document.getElementById('columnsCount');
+        const columnsContainer = document.getElementById('columnsContainer');
+        const addColumnBtn = document.getElementById('addColumnBtn');
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
 
         // Initialize the app after Firebase is ready
         window.initNotesApp = function() {
             loadNotesFromFirebase();
             setupEventListeners();
+            initializeSpreadsheet();
         };
 
         // Load notes from Firebase with real-time updates
@@ -627,6 +775,7 @@
                         id: doc.id,
                         title: noteData.title || 'Untitled Note',
                         content: noteData.content || '',
+                        columns: noteData.columns || [],
                         createdAt: noteData.createdAt?.toDate() || new Date(),
                         updatedAt: noteData.updatedAt?.toDate() || new Date()
                     });
@@ -648,11 +797,179 @@
             });
         }
 
+        // Initialize spreadsheet functionality
+        function initializeSpreadsheet() {
+            columns = [];
+            renderColumns();
+        }
+
+        // Create a new column
+        function createColumn(title = 'New Column', content = '') {
+            const column = {
+                id: Date.now().toString(),
+                title: title,
+                content: content,
+                width: 200
+            };
+            columns.push(column);
+            renderColumns();
+            scheduleSave();
+            return column.id;
+        }
+
+        // Render all columns
+        function renderColumns() {
+            columnsContainer.innerHTML = '';
+            
+            columns.forEach((column, index) => {
+                const columnElement = document.createElement('div');
+                columnElement.className = 'column';
+                columnElement.style.width = column.width + 'px';
+                columnElement.setAttribute('data-column-id', column.id);
+                
+                columnElement.innerHTML = `
+                    <div class="column-header">
+                        <span>${column.title}</span>
+                        <div class="drag-handle">
+                            <i class="fas fa-grip-vertical"></i>
+                        </div>
+                    </div>
+                    <div class="column-content">
+                        <textarea placeholder="Enter column content..." data-column-id="${column.id}">${column.content}</textarea>
+                    </div>
+                    <div class="resize-handle" data-column-id="${column.id}"></div>
+                `;
+                
+                columnsContainer.appendChild(columnElement);
+                
+                // Add resize handle event listeners
+                const resizeHandle = columnElement.querySelector('.resize-handle');
+                resizeHandle.addEventListener('mousedown', startResize);
+                
+                // Add textarea event listener
+                const textarea = columnElement.querySelector('textarea');
+                textarea.addEventListener('input', handleColumnContentChange);
+                
+                // Make column header editable
+                const header = columnElement.querySelector('.column-header span');
+                header.addEventListener('blur', handleColumnTitleChange);
+                header.setAttribute('contenteditable', 'true');
+            });
+            
+            // Add "add column" button
+            const addButton = document.createElement('div');
+            addButton.className = 'column add-column-btn';
+            addButton.innerHTML = '<i class="fas fa-plus"></i>';
+            addButton.addEventListener('click', () => createColumn());
+            columnsContainer.appendChild(addButton);
+            
+            updateColumnsCount();
+        }
+
+        // Start column resize
+        function startResize(e) {
+            isResizing = true;
+            currentResizeColumn = e.target.getAttribute('data-column-id');
+            startX = e.clientX;
+            
+            const column = document.querySelector(`[data-column-id="${currentResizeColumn}"]`);
+            startWidth = parseInt(column.style.width, 10);
+            
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+            e.preventDefault();
+        }
+
+        // Handle column resize
+        function handleResize(e) {
+            if (!isResizing) return;
+            
+            const width = startWidth + (e.clientX - startX);
+            if (width > 100) { // Minimum width
+                const column = document.querySelector(`[data-column-id="${currentResizeColumn}"]`);
+                column.style.width = width + 'px';
+                
+                // Update column data
+                const columnIndex = columns.findIndex(col => col.id === currentResizeColumn);
+                if (columnIndex !== -1) {
+                    columns[columnIndex].width = width;
+                }
+            }
+        }
+
+        // Stop column resize
+        function stopResize() {
+            isResizing = false;
+            currentResizeColumn = null;
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+            scheduleSave();
+        }
+
+        // Handle column content change
+        function handleColumnContentChange(e) {
+            const columnId = e.target.getAttribute('data-column-id');
+            const columnIndex = columns.findIndex(col => col.id === columnId);
+            if (columnIndex !== -1) {
+                columns[columnIndex].content = e.target.value;
+                scheduleSave();
+                updateWordCount();
+            }
+        }
+
+        // Handle column title change
+        function handleColumnTitleChange(e) {
+            const columnId = e.target.parentElement.parentElement.getAttribute('data-column-id');
+            const columnIndex = columns.findIndex(col => col.id === columnId);
+            if (columnIndex !== -1) {
+                columns[columnIndex].title = e.target.textContent;
+                scheduleSave();
+            }
+        }
+
+        // Apply formatting to selected text
+        function applyFormatting(format) {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName === 'TEXTAREA') {
+                const start = activeElement.selectionStart;
+                const end = activeElement.selectionEnd;
+                const selectedText = activeElement.value.substring(start, end);
+                
+                let formattedText = '';
+                switch(format) {
+                    case 'bold':
+                        formattedText = `**${selectedText}**`;
+                        break;
+                    case 'italic':
+                        formattedText = `*${selectedText}*`;
+                        break;
+                    case 'underline':
+                        formattedText = `__${selectedText}__`;
+                        break;
+                }
+                
+                activeElement.value = activeElement.value.substring(0, start) + formattedText + activeElement.value.substring(end);
+                
+                // Update column data
+                const columnId = activeElement.getAttribute('data-column-id');
+                const columnIndex = columns.findIndex(col => col.id === columnId);
+                if (columnIndex !== -1) {
+                    columns[columnIndex].content = activeElement.value;
+                    scheduleSave();
+                }
+                
+                // Restore cursor position
+                activeElement.focus();
+                activeElement.setSelectionRange(start + formattedText.length, start + formattedText.length);
+            }
+        }
+
         // Create a new note manually
         function createNewNote() {
             const newNote = {
                 title: 'New Site Note',
-                content: ''
+                content: '',
+                columns: []
             };
             
             updateSyncStatus('Saving...', 'syncing');
@@ -660,6 +977,8 @@
             window.firebaseNotes.createNote(newNote)
                 .then(noteId => {
                     currentNoteId = noteId;
+                    columns = [];
+                    renderColumns();
                     updateSyncStatus('All Changes Saved', 'synced');
                     
                     // Focus on title after a short delay
@@ -684,7 +1003,8 @@
                 
                 window.firebaseNotes.updateNote(currentNoteId, {
                     title: noteTitle.value,
-                    content: noteContent.value
+                    content: getCombinedContent(),
+                    columns: columns
                 })
                 .then(() => {
                     updateSyncStatus('All Changes Saved', 'synced');
@@ -694,6 +1014,11 @@
                     updateSyncStatus('Save Failed', 'error');
                 });
             }
+        }
+
+        // Get combined content from all columns
+        function getCombinedContent() {
+            return columns.map(col => `## ${col.title}\n${col.content}`).join('\n\n');
         }
 
         // Delete current note
@@ -718,6 +1043,12 @@
         function updateNotesCount() {
             const count = notes.length;
             notesCount.textContent = `${count} ${count === 1 ? 'note' : 'notes'}`;
+        }
+
+        // Update columns count
+        function updateColumnsCount() {
+            const count = columns.length;
+            columnsCount.textContent = `${count} ${count === 1 ? 'column' : 'columns'}`;
         }
 
         // Render notes list
@@ -789,7 +1120,8 @@
         function renderEditor() {
             if (!currentNoteId) {
                 noteTitle.value = '';
-                noteContent.value = '';
+                columns = [];
+                renderColumns();
                 updateWordCount();
                 return;
             }
@@ -797,14 +1129,26 @@
             const note = notes.find(n => n.id === currentNoteId);
             if (note) {
                 noteTitle.value = note.title;
-                noteContent.value = note.content;
+                columns = note.columns || [];
+                
+                // If no columns exist but there's content, create a default column
+                if (columns.length === 0 && note.content) {
+                    columns = [{
+                        id: 'default',
+                        title: 'Main Content',
+                        content: note.content,
+                        width: 200
+                    }];
+                }
+                
+                renderColumns();
                 updateWordCount();
             }
         }
 
         // Update word and character count
         function updateWordCount() {
-            const text = noteContent.value;
+            const text = getCombinedContent();
             const words = text.trim() ? text.trim().split(/\s+/).length : 0;
             const chars = text.length;
             wordCount.textContent = `${words} words`;
@@ -837,12 +1181,16 @@
             deleteNoteBtn.addEventListener('click', deleteCurrentNote);
             
             noteTitle.addEventListener('input', scheduleSave);
-            noteContent.addEventListener('input', () => {
-                scheduleSave();
-                updateWordCount();
-            });
             
             searchNotes.addEventListener('input', renderNotesList);
+            
+            // Formatting buttons
+            boldBtn.addEventListener('click', () => applyFormatting('bold'));
+            italicBtn.addEventListener('click', () => applyFormatting('italic'));
+            underlineBtn.addEventListener('click', () => applyFormatting('underline'));
+            
+            // Add column button
+            addColumnBtn.addEventListener('click', () => createColumn());
         }
 
         // Initialize the app when DOM is loaded
@@ -855,4 +1203,3 @@
     </script>
 </body>
 </html>
-
