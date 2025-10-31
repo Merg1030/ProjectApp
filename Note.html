@@ -207,17 +207,6 @@
             border-color: #c0392b;
         }
 
-        .btn-toggle {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-
-        .btn-toggle:hover {
-            background: #2980b9;
-            border-color: #2980b9;
-        }
-
         .notes-container {
             display: grid;
             grid-template-columns: 320px 1fr;
@@ -292,7 +281,18 @@
             list-style: none;
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding-right: 5px;
+        }
+
+        /* Hide scrollbar for notes list */
+        .notes-list::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .notes-list {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
 
         .notes-list li {
@@ -486,8 +486,18 @@
         .column-content {
             flex: 1;
             padding: 15px;
-            overflow: hidden;
-            position: relative;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+
+        /* Hide scrollbar for column content */
+        .column-content::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .column-content {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
 
         .column-content textarea {
@@ -500,6 +510,17 @@
             background: transparent;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Hide scrollbar for textarea */
+        .column-content textarea::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .column-content textarea {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
 
         .column-content textarea:focus {
@@ -573,93 +594,6 @@
             color: #2c3e50;
         }
 
-        /* Formatting buttons */
-        .format-btn {
-            padding: 6px 12px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .format-btn:hover {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-
-        .format-btn.active {
-            background: #2980b9;
-            color: white;
-            border-color: #2980b9;
-        }
-
-        /* Column selection for deletion */
-        .column-selector {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            z-index: 100;
-            min-width: 300px;
-        }
-
-        .column-selector h3 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-        }
-
-        .column-options {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-
-        .column-option {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .column-option:hover {
-            background: #f0f0f0;
-        }
-
-        .column-option.selected {
-            background: #e3f2fd;
-            border-color: #3498db;
-        }
-
-        .selector-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 99;
-        }
-
-        /* Hidden state for controls */
-        .controls.hidden {
-            display: none;
-        }
-
         /* Responsive */
         @media (max-width: 968px) {
             .notes-container {
@@ -693,25 +627,7 @@
             }
         }
 
-        /* Scrollbar styling */
-        .notes-sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .notes-sidebar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .notes-sidebar::-webkit-scrollbar-thumb {
-            background: #e67e22;
-            border-radius: 10px;
-        }
-
-        .notes-sidebar::-webkit-scrollbar-thumb:hover {
-            background: #d35400;
-        }
-
+        /* Scrollbar styling for horizontal scrolling only */
         .columns-container::-webkit-scrollbar {
             height: 8px;
         }
@@ -726,24 +642,6 @@
         }
 
         .columns-container::-webkit-scrollbar-thumb:hover {
-            background: #95a5a6;
-        }
-
-        .column-content textarea::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .column-content textarea::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .column-content textarea::-webkit-scrollbar-thumb {
-            background: #bdc3c7;
-            border-radius: 10px;
-        }
-
-        .column-content textarea::-webkit-scrollbar-thumb:hover {
             background: #95a5a6;
         }
     </style>
@@ -762,14 +660,13 @@
                 <i class="fas fa-cloud"></i>
                 <span>All Changes Saved</span>
             </div>
-            <div class="controls" id="controls">
+            <div class="controls">
                 <button class="btn btn-primary" id="newNoteBtn">
                     <i class="fas fa-plus-circle"></i> New Note
                 </button>
                 <button class="btn btn-danger" id="deleteNoteBtn">
                     <i class="fas fa-trash-alt"></i> Delete
                 </button>
-               
             </div>
         </header>
 
@@ -806,10 +703,6 @@
                             <button class="toolbar-btn" id="addColumnBtn">
                                 <i class="fas fa-plus"></i> Add Column
                             </button>
-                            <button class="toolbar-btn" id="deleteColumnBtn">
-                                <i class="fas fa-minus"></i> Delete Column
-                            </button>
-                            
                         </div>
                         <div class="columns-container" id="columnsContainer">
                             <!-- Columns will be dynamically added here -->
@@ -836,15 +729,12 @@
         let currentResizeColumn = null;
         let startX = 0;
         let startWidth = 0;
-        let controlsVisible = true;
 
         // DOM Elements
         const notesList = document.getElementById('notesList');
         const noteTitle = document.getElementById('noteTitle');
         const newNoteBtn = document.getElementById('newNoteBtn');
         const deleteNoteBtn = document.getElementById('deleteNoteBtn');
-        const toggleControlsBtn = document.getElementById('toggleControlsBtn');
-        const controls = document.getElementById('controls');
         const searchNotes = document.getElementById('searchNotes');
         const syncStatus = document.getElementById('syncStatus');
         const wordCount = document.getElementById('wordCount');
@@ -853,45 +743,13 @@
         const columnsCount = document.getElementById('columnsCount');
         const columnsContainer = document.getElementById('columnsContainer');
         const addColumnBtn = document.getElementById('addColumnBtn');
-        const deleteColumnBtn = document.getElementById('deleteColumnBtn');
-        const boldBtn = document.getElementById('boldBtn');
-        const italicBtn = document.getElementById('italicBtn');
-        const underlineBtn = document.getElementById('underlineBtn');
 
         // Initialize the app after Firebase is ready
         window.initNotesApp = function() {
-            loadUIState();
             loadNotesFromFirebase();
             setupEventListeners();
             initializeSpreadsheet();
         };
-
-        // Load UI state from localStorage
-        function loadUIState() {
-            const savedControlsState = localStorage.getItem('controlsVisible');
-            if (savedControlsState !== null) {
-                controlsVisible = savedControlsState === 'true';
-                updateControlsVisibility();
-            }
-        }
-
-        // Update controls visibility based on state
-        function updateControlsVisibility() {
-            if (controlsVisible) {
-                controls.classList.remove('hidden');
-                toggleControlsBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Controls';
-            } else {
-                controls.classList.add('hidden');
-                toggleControlsBtn.innerHTML = '<i class="fas fa-eye"></i> Show Controls';
-            }
-        }
-
-        // Toggle controls visibility
-        function toggleControls() {
-            controlsVisible = !controlsVisible;
-            localStorage.setItem('controlsVisible', controlsVisible);
-            updateControlsVisibility();
-        }
 
         // Load notes from Firebase with real-time updates
         function loadNotesFromFirebase() {
@@ -949,72 +807,13 @@
             return column.id;
         }
 
-        // Show column selector for deletion
-        function showColumnSelector() {
+        // Delete a column by ID
+        function deleteColumn(columnId) {
             if (columns.length <= 1) {
                 alert("You need to have at least one column!");
                 return;
             }
             
-            const overlay = document.createElement('div');
-            overlay.className = 'overlay';
-            
-            const selector = document.createElement('div');
-            selector.className = 'column-selector';
-            selector.innerHTML = `
-                <h3>Select a Column to Delete</h3>
-                <div class="column-options" id="columnOptions"></div>
-                <div class="selector-actions">
-                    <button class="btn" id="cancelDeleteBtn">Cancel</button>
-                    <button class="btn btn-danger" id="confirmDeleteBtn">Delete Selected</button>
-                </div>
-            `;
-            
-            document.body.appendChild(overlay);
-            document.body.appendChild(selector);
-            
-            const columnOptions = document.getElementById('columnOptions');
-            let selectedColumnId = null;
-            
-            columns.forEach(column => {
-                const option = document.createElement('div');
-                option.className = 'column-option';
-                option.textContent = column.title;
-                option.setAttribute('data-column-id', column.id);
-                
-                option.addEventListener('click', () => {
-                    // Remove selection from all options
-                    document.querySelectorAll('.column-option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    
-                    // Select this option
-                    option.classList.add('selected');
-                    selectedColumnId = column.id;
-                });
-                
-                columnOptions.appendChild(option);
-            });
-            
-            // Set up event listeners for the selector
-            document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
-                document.body.removeChild(overlay);
-                document.body.removeChild(selector);
-            });
-            
-            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-                if (selectedColumnId) {
-                    deleteColumn(selectedColumnId);
-                    document.body.removeChild(overlay);
-                    document.body.removeChild(selector);
-                } else {
-                    alert("Please select a column to delete.");
-                }
-            });
-        }
-
-        // Delete a column by ID
-        function deleteColumn(columnId) {
             const columnIndex = columns.findIndex(col => col.id === columnId);
             if (columnIndex !== -1) {
                 columns.splice(columnIndex, 1);
@@ -1071,7 +870,7 @@
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const columnId = e.target.closest('.column-action-btn').getAttribute('data-column-id');
-                    showColumnSelector();
+                    deleteColumn(columnId);
                 });
             });
             
@@ -1391,23 +1190,33 @@
         function setupEventListeners() {
             newNoteBtn.addEventListener('click', createNewNote);
             deleteNoteBtn.addEventListener('click', deleteCurrentNote);
-            toggleControlsBtn.addEventListener('click', toggleControls);
             
             noteTitle.addEventListener('input', scheduleSave);
             
             searchNotes.addEventListener('input', renderNotesList);
             
-            // Formatting buttons
-            boldBtn.addEventListener('click', () => applyFormatting('bold'));
-            italicBtn.addEventListener('click', () => applyFormatting('italic'));
-            underlineBtn.addEventListener('click', () => applyFormatting('underline'));
-            
             // Add column button
             addColumnBtn.addEventListener('click', () => createColumn());
             
-            // Delete column button
-            deleteColumnBtn.addEventListener('click', () => {
-                showColumnSelector();
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Check if Ctrl key is pressed and the active element is a textarea
+                if (e.ctrlKey && document.activeElement && document.activeElement.tagName === 'TEXTAREA') {
+                    switch(e.key) {
+                        case 'b':
+                            e.preventDefault();
+                            applyFormatting('bold');
+                            break;
+                        case 'i':
+                            e.preventDefault();
+                            applyFormatting('italic');
+                            break;
+                        case 'u':
+                            e.preventDefault();
+                            applyFormatting('underline');
+                            break;
+                    }
+                }
             });
         }
 
