@@ -1,1548 +1,1576 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IMS | Location Transfer History</title>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Work Tracker</title>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore-compat.js"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-   html, body {
-  font-family: 'Open Sans', Arial, sans-serif;
-  background: #111827;
-  margin: 0;
-  padding: 0;
-  color: #e5e7eb;
-}
-
-#wrapper {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.navbar {
-  background: #1f2937;
-  color: #e5e7eb;
-  min-height: 38px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  width: 100%;
-  position: fixed;
-  top: 0;
-  z-index: 1001;
-}
-
-.navbar .navbar-header {
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-}
-
-.navbar .navbar-brand {
-  color: #3b82f6;
-  font-weight: bold;
-  font-size: 1rem;
-  text-decoration: none;
-  margin-right: 24px;
-}
-
-.navbar .navbar-brand:hover {
-  color: #60a5fa;
-}
-
-.btn-danger {
-  background: #dc2626 !important;
-  border: none;
-  border-radius: 3px;
-  padding: 4px 10px;
-  font-size: 12px;
-  margin-left: 6px;
-  color: #fff;
-}
-
-.btn-danger:hover {
-  background: #b91c1c !important;
-}
-
-.user-info {
-  color: #9ca3af;
-  padding: 9px 18px 3px 18px;
-  font-size: 12px;
-  float: right;
-}
-
-#page-wrapper {
-  margin-top: 38px;
-  padding: 12px;
-  background: #1e293b;
-  min-height: calc(100vh - 38px);
-}
-
-.panel {
-  background: #1f2937;
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  margin-bottom: 18px;
-  border: 1px solid #374151;
-}
-
-.panel-heading {
-  background: #111827;
-  color: #3b82f6;
-  padding: 11px 12px;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 6px 6px 0 0;
-  margin: 0;
-}
-
-.panel-body {
-  padding: 12px;
-}
-
-.filter-bar {
-  margin-bottom: 9px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.filter-bar label {
-  font-weight: 600;
-  margin-right: 4px;
-  font-size: 11px;
-  color: #9ca3af;
-}
-
-.filter-bar select,
-.filter-bar input[type="date"],
-.filter-bar input[type="week"] {
-  padding: 2px 6px;
-  border-radius: 3px;
-  border: 1px solid #4b5563;
-  font-size: 12px;
-  min-width: 75px;
-  background: #1e293b;
-  color: #f9fafb;
-  height: 22px;
-}
-
-.filter-bar .clear-btn {
-  background: #f59e0b;
-  border: none;
-  border-radius: 3px;
-  color: #111827;
-  padding: 3px 7px;
-  margin-left: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 11px;
-}
-
-.filter-bar .clear-btn:hover {
-  background: #d97706;
-}
-
-.table-responsive {
-  overflow-x: auto;
-  max-height: 54vh;
-  position: relative;
-}
-
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: #1f2937;
-  margin-bottom: 0;
-  border-radius: 5px;
-  overflow: hidden;
-  position: relative;
-  table-layout: auto;
-}
-
-th, td {
-  padding: 7px 5px;
-  text-align: left;
-  font-size: 12px;
-  color: #f3f4f6;
-}
-
-th {
-  background: #1e40af;
-  color: #f8fafc;
-  font-weight: 700;
-  border-right: 1px solid #374151;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-th:last-child {
-  border-right: none;
-}
-
-tr {
-  transition: background 0.14s;
-}
-
-tr:nth-child(even) {
-  background: #111827;
-}
-
-tr:hover {
-  background: #172554;
-}
-
-td:first-child, th:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: #1e3a8a;
-  color: #f1f5f9;
-}
-
-th:first-child {
-  z-index: 3;
-}
-
-/* Buttons */
-.edit-btn {
-  padding: 2px 8px;
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-left: 2px;
-  font-size: 11px;
-}
-
-.edit-btn:hover {
-  background: #1d4ed8;
-}
-
-.reverse-btn {
-  padding: 2px 8px;
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-left: 3px;
-  font-size: 11px;
-}
-
-.reverse-btn:hover {
-  background: #991b1b;
-}
-
-.repeat-btn {
-  padding: 2px 8px;
-  background: #10b981;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  margin-left: 3px;
-  font-size: 11px;
-}
-
-.repeat-btn:hover {
-  background: #059669;
-}
-
-.batch-repeat-btn {
-  padding: 4px 12px;
-  background: #8b5cf6;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 11px;
-  margin-left: auto;
-}
-
-.batch-repeat-btn:hover {
-  background: #7c3aed;
-}
-
-.batch-repeat-btn:disabled {
-  background: #6b7280;
-  cursor: not-allowed;
-}
-
-/* Input */
-.mh-input {
-  width: 38px;
-  padding: 2px;
-  border-radius: 3px;
-  border: 1px solid #6b7280;
-  background: #111827;
-  color: #f3f4f6;
-  font-size: 11px;
-}
-
-.mh-save-btn {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  padding: 2px 6px;
-  margin-left: 4px;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.mh-save-btn:hover {
-  background: #1e3a8a;
-}
-
-.mh-saved-text {
-  color: #10b981;
-  font-size: 11px;
-  margin-left: 7px;
-  font-weight: bold;
-}
-
-/* Checkbox for selection */
-.select-checkbox {
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
-}
-
-/* Modal styles */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: 1002;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: #1f2937;
-  padding: 20px;
-  border-radius: 6px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  position: relative;
-  border: 1px solid #374151;
-}
-
-.modal-close {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 24px;
-  cursor: pointer;
-  color: #9ca3af;
-  background: none;
-  border: none;
-}
-
-.modal-close:hover {
-  color: #e5e7eb;
-}
-
-.modal h3 {
-  margin-top: 0;
-  margin-bottom: 17px;
-  color: #3b82f6;
-}
-
-.modal label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.modal input[type="date"],
-.modal input[type="datetime-local"] {
-  width: 100%;
-  padding: 6px;
-  border-radius: 3px;
-  border: 1px solid #4b5563;
-  background: #1e293b;
-  color: #f9fafb;
-  margin-bottom: 15px;
-  font-size: 12px;
-}
-
-.modal-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 15px;
-}
-
-.modal .delete-btn {
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 11px;
-  margin-right: auto;
-}
-
-.modal .delete-btn:hover {
-  background: #b91c1c;
-}
-
-.modal .cancel-btn {
-  background: #6b7280;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.modal .cancel-btn:hover {
-  background: #4b5563;
-}
-
-.modal .save-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.modal .save-btn:hover {
-  background: #1d4ed8;
-}
-
-.modal .repeat-task-btn {
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 11px;
-  width: 100%;
-  margin-top: 10px;
-}
-
-.modal .repeat-task-btn:hover {
-  background: #059669;
-}
-
-.modal .repeat-task-btn:disabled {
-  background: #6b7280;
-  cursor: not-allowed;
-}
-
-#repeat-modal-error {
-  color: #ef4444;
-  font-size: 11px;
-  margin-bottom: 10px;
-  min-height: 14px;
-}
-
-/* Multi-date styles */
-.date-list {
-  max-height: 150px;
-  overflow-y: auto;
-  border: 1px solid #4b5563;
-  border-radius: 3px;
-  padding: 8px;
-  margin-bottom: 10px;
-  background: #1e293b;
-}
-
-.date-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px;
-  margin-bottom: 4px;
-  background: #111827;
-  border-radius: 3px;
-  font-size: 11px;
-}
-
-.date-item:last-child {
-  margin-bottom: 0;
-}
-
-.remove-date {
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 2px;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.remove-date:hover {
-  background: #b91c1c;
-}
-
-.add-date-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 11px;
-  margin-bottom: 10px;
-}
-
-.add-date-btn:hover {
-  background: #1d4ed8;
-}
-
-/* Responsive */
-@media (max-width: 500px) {
-  .navbar {
-    min-height: 28px;
-  }
-
-  .navbar .navbar-header {
-    padding: 0 3px;
-  }
-
-  .navbar .navbar-brand {
-    font-size: 0.85rem;
-  }
-
-  #page-wrapper {
-    padding: 3px 0;
-  }
-
-  .panel-body {
-    padding: 2px 0;
-  }
-
-  .panel-heading {
-    font-size: 0.9rem;
-    padding: 8px 4px;
-  }
-
-  th, td {
-    padding: 4px 2px;
-    font-size: 10px;
-  }
-
-  .filter-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .table-responsive {
-    max-height: 30vh;
-  }
-
-  .mh-input {
-    width: 28px;
-    font-size: 9px;
-  }
-
-  .mh-save-btn {
-    font-size: 9px;
-    padding: 1px 3px;
-  }
-}
-.btn.btn-outline{
-  color: white;
-  margin-right: 20px;
-}
-
+    :root {
+      /* Construction Theme Colors */
+      --primary: #2a5f8a;
+      --primary-light: #3a7cb9;
+      --primary-dark: #1d4568;
+      --secondary: #f7931e;
+      --secondary-light: #ffae4d;
+      --secondary-dark: #e07c0d;
+      --success: #4CAF50;
+      --danger: #F44336;
+      --warning: #FF9800;
+      --info: #2196F3;
+      --text: #333;
+      --light-bg: #f5f7fa;
+      --card-bg: #fff;
+      --border: #e0e4e9;
+      --approved-color: #2e7d32;
+      --resolved-color: #1565c0;
+    }
+    html, body {
+      min-height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+      background: var(--light-bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100vw;
+      background: var(--card-bg);
+      padding: 0;
+    }
+    .welcome {
+      font-size: 1.2em;
+      color: var(--primary);
+      text-align: center;
+      margin: 0;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      width: 100vw;
+      background: var(--light-bg);
+      padding: 15px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .header-bar {
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--primary);
+      color: white;
+      padding: 0 3vw;
+      margin-bottom: 0;
+      min-height: 54px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .header-bar h2 {
+      margin: 0;
+      color: white;
+      font-weight: 700;
+      font-size: 1.2em;
+      letter-spacing: 1px;
+    }
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      background: var(--secondary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 16px;
+      font-size: 0.9em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn i {
+      font-size: 1em;
+    }
+    .btn-logout {
+      background: var(--danger);
+    }
+    .btn-toggle:hover { background: var(--secondary-dark); }
+    .btn-logout:hover { background: #c62828; }
+    .btn-success {
+      background: var(--success);
+    }
+    .btn-info {
+      background: var(--info);
+    }
+    .btn-absent {
+      background: var(--warning);
+    }
+    .form-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      max-width: 98vw;
+      width: 460px;
+      margin: 20px auto 10px;
+      padding: 16px 12px 10px;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    label { 
+      font-weight: bold; 
+      margin-top: 10px; 
+      display: block; 
+      color: var(--primary);
+      font-size: 0.9em;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 9px 11px;
+      margin-top: 4px;
+      background: #f8fafc;
+      border: 1.2px solid #b5c4d6;
+      border-radius: 5px;
+      font-size: 0.95em;
+      color: var(--text);
+      margin-bottom: 4px;
+      transition: all 0.18s;
+      box-sizing: border-box;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(42, 95, 138, 0.2);
+    }
+    textarea { 
+      resize: vertical; 
+      min-height: 42px; 
+      font-family: inherit;
+    }
+    .btn-submit {
+      margin-top: 18px;
+      padding: 11px 0;
+      width: 100%;
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      font-size: 1.05em;
+      border-radius: 7px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all .18s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .btn-submit:hover { 
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    /* Table Layout */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 0 auto 40px;
+      padding: 0 4vw;
+      box-sizing: border-box;
+    }
+    
+    .tasks-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .tasks-table th {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 15px;
+      font-size: 0.9em;
+      position: sticky;
+      top: 0;
+    }
+    
+    .tasks-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9em;
+      vertical-align: top;
+    }
+    
+    .tasks-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .tasks-table tr:hover {
+      background: #f2f6fb;
+    }
+    
+    .job-cell {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .job-cell.expanded {
+      white-space: normal;
+      max-width: none;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .action-btn {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .edit-btn {
+      background: var(--info);
+      color: white;
+    }
+    
+    .delete-btn {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .expand-btn {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    
+    /* Status Badges */
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 600;
+      text-align: center;
+      display: inline-block;
+    }
+    .status-start {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+    .status-ongoing {
+      background-color: #fff3e0;
+      color: #f57c00;
+    }
+    .status-completed {
+      background-color: #e8f5e9;
+      color: #388e3c;
+    }
+    .status-absent {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+    
+    /* Statistics Section */
+    .stats-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      margin: 15px auto;
+      padding: 16px;
+      max-width: 98vw;
+      width: 460px;
+      border: 1px solid var(--border);
+    }
+    .stats-title {
+      font-weight: bold;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .stat-card {
+      background: #f2f6fb;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .stat-value {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    .stat-label {
+      font-size: 0.85em;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    /* Unworked Hours Section */
+    .unworked-container {
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      margin: 15px auto;
+      padding: 16px;
+      max-width: 98vw;
+      width: 460px;
+      border: 1px solid var(--border);
+    }
+    .unworked-title {
+      font-weight: bold;
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.1em;
+    }
+    .unworked-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .unworked-card {
+      background: #ffebee;
+      border-radius: 6px;
+      padding: 10px;
+      border: 1px solid #ffcdd2;
+    }
+    .unworked-name {
+      font-weight: bold;
+      color: #d32f2f;
+    }
+    .unworked-hours {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #d32f2f;
+      margin-top: 5px;
+    }
+    
+    /* Form Error */
+    #formError {
+      color: var(--danger);
+      margin-top: 8px;
+      font-size: 0.9em;
+      padding: 8px;
+      background: #ffebee;
+      border-radius: 4px;
+      border-left: 3px solid var(--danger);
+    }
+    
+    /* Employee Cards */
+    .employee-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+      padding: 0 4vw;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .employee-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .employee-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .employee-card.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .employee-name {
+      font-weight: 600;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+    }
+    
+    .employee-hours {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    
+    .employee-card.active .employee-hours {
+      color: white;
+    }
+    
+    /* Simple Date Filter */
+    .date-filter {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+      padding: 0 4vw;
+    }
+    
+    .date-filter input {
+      width: 150px;
+      padding: 8px;
+      font-size: 0.9em;
+    }
+    
+    /* Task ID Suggestions */
+    .suggestions-container {
+      position: relative;
+    }
+    
+    .suggestions-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .suggestion-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .suggestion-item:hover {
+      background: var(--light-bg);
+    }
+    
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+    
+    /* Loading indicator */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        font-size: 13px;
+      }
+      .header-bar, .welcome {
+        padding-left: 3vw;
+        padding-right: 3vw;
+      }
+      .header-controls {
+        gap: 6px;
+      }
+      .btn {
+        padding: 7px 10px;
+        font-size: 0.85em;
+      }
+      .form-container, .stats-container, .unworked-container { 
+        max-width: 94vw; 
+        border-radius: 0; 
+        padding: 10px 3vw 6px;
+        box-shadow: none;
+        border-left: none;
+        border-right: none;
+      }
+      .table-container { 
+        padding: 0 3vw 16px; 
+      }
+      .tasks-table {
+        font-size: 0.85em;
+      }
+      .tasks-table th, 
+      .tasks-table td {
+        padding: 8px 10px;
+      }
+      .date-filter {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .date-filter input {
+        width: 80%;
+        max-width: 200px;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .action-buttons {
+        flex-direction: column;
+        gap: 5px;
+      }
+      .employee-cards {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+      }
+    }
+    
+    /* Animation for form toggle */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-container, .stats-container, .unworked-container {
+      animation: fadeIn 0.3s ease-out;
+    }
   </style>
 </head>
 <body>
-  <div id="wrapper">
-    <nav class="navbar" role="navigation">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="#">
-                <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>IMS Portal</a>
-        <span class="user-info" style="margin-left:auto;">
-          Welcome Christopher Chishela&nbsp; 
-        </span>
+  <div class="header-bar">
+    <h2>EMPLOYEE WORK TRACKER</h2>
+    <div class="header-controls">
+      <button class="btn btn-toggle" id="addBtn" onclick="toggleForm()">
+        <i class="fas fa-plus"></i> Add Task
+      </button>
+      <button class="btn btn-absent" id="markAbsentBtn" onclick="toggleAbsentForm()">
+        <i class="fas fa-user-times"></i> Mark Absent
+      </button>
+      <button class="btn btn-logout" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </div>
+  <div class="welcome" id="welcome">WELCOME PENTA</div>
+  
+  <div class="date-filter">
+    <input type="date" id="dateFilterInput" onchange="applyDateFilter()">
+  </div>
+  
+  <div class="employee-cards" id="employeeCards">
+    <!-- Employee cards will be populated here -->
+  </div>
+  
+  <div class="unworked-container" id="unworkedContainer" style="display: none;">
+    <div class="unworked-title">Absent Days</div>
+    <div class="unworked-grid" id="unworkedGrid">
+      <!-- Absent days will be populated here -->
+    </div>
+  </div>
+  
+  <div class="stats-container" id="statsContainer" style="display: none;">
+    <div class="stats-title">Work Summary</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="totalTasks">0</div>
+        <div class="stat-label">Total Tasks</div>
       </div>
-    </nav>
-    <div id="page-wrapper">
-      <div id="page-inner">
-        <h2 style="margin-top:0;">Location Transfer History</h2>
-        <hr />
-        <div class="row">
-          <div class="col-md-12">
-            <div class="panel panel-default sticky-panel">
-              <div class="panel-heading">
-                All Transfer Events
-                <button class="batch-repeat-btn" id="batch-repeat-btn" disabled>Repeat Selected Tasks</button>
-              </div>
-              <div class="panel-body">
-                <div class="filter-bar">
-                  <label for="employee-filter">Employee:</label>
-                  <select id="employee-filter">
-                    <option value="">All</option>
-                  </select>
-                  <label for="location-filter">Location:</label>
-                  <select id="location-filter">
-                    <option value="">All</option>
-                  </select>
-                  <label for="date-filter">Date:</label>
-                  <input type="date" id="date-filter" />
-                  <label for="week-filter">Week:</label>
-                  <input type="week" id="week-filter" />
-                  <button class="clear-btn" id="clear-filter" style="display:none;">Clear</button>
-                </div>
-                <div id="total-week-hours-bar" class="total-week-hours-bar" style="display:none;"></div>
-                <div id="total-hours-bar" class="total-hours-bar" style="display:none;"></div>
-                <div id="mh-total-bar" class="total-mh-cost-bar" style="display:none;"></div>
-                <div class="table-responsive">
-                  <table>
-                    <thead>
-                      <tr id="table-header-row">
-                        <th><input type="checkbox" id="select-all-checkbox" class="select-checkbox"></th>
-                        <th>#</th>
-                        <th>EMPLOYEE ID</th>
-                        <th>NAME</th>
-                        <th>PROJECT NAME</th>
-                        <th>LOCATION</th>
-                        <th>TASK ID</th>
-                        <th>TASK DESCRIPTION</th>
-                        <th>STATUS</th>
-                        <th>TRANSFER DATE</th>
-                        <th>MH</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="transfer-history-table">
-                    </tbody>
-                  </table>
-                </div>
-                <div id="table-message"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalHours">0</div>
+        <div class="stat-label">Total Hours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="avgHours">0</div>
+        <div class="stat-label">Avg Hours/Task</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="daysAbsent">0</div>
+        <div class="stat-label">Days Absent</div>
       </div>
     </div>
   </div>
   
-  <!-- Edit Modal -->
-  <div id="edit-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <button class="modal-close" id="close-modal-btn" title="Close">&times;</button>
-      <h3 style="margin-top:0;margin-bottom:17px;">Edit Transfer Date/Time</h3>
-      <div id="edit-modal-error"></div>
-      <form id="edit-modal-form">
-        <label for="edit-transferAt">Transfer Date/Time:</label>
-        <input type="datetime-local" id="edit-transferAt" required />
-        <div class="modal-actions" style="display:flex;align-items:center;gap:12px;">
-          <button type="button" class="delete-btn" id="delete-entry-btn" style="margin-right:auto;">Delete</button>
-          <button type="button" class="cancel-btn" id="cancel-edit-btn">Cancel</button>
-          <button type="submit" class="save-btn">Save</button>
+  <div id="userView">
+    <div class="form-container" id="formContainer" style="display: none;">
+      <form id="taskForm">
+        <input type="hidden" id="taskId">
+        <input type="hidden" id="originalUsername">
+        
+        <label>Task ID</label>
+        <div class="suggestions-container">
+          <input type="text" id="taskID" required list="taskIDSuggestions" autocomplete="off">
+          <div class="suggestions-list" id="taskIDSuggestions" style="display: none;"></div>
         </div>
+        <small style="color: #666;">Type to search existing Task IDs or enter a new one</small>
+        
+        <label>Name</label>
+        <select id="name" required>
+          <option value="">Select Name</option>
+          <option value="BRIGHTON MATOLOKOSH">BRIGHTON MATOLOKOSH</option>
+          <option value="CAPHAS TEMBO">CAPHAS TEMBO</option>
+          <option value="CLISHA MAMBILIMA">CLISHA MAMBILIMA</option>
+          <option value="DABSON DAKA">DABSON DAKA</option>
+          <option value="DANNY MVULA">DANNY MVULA</option>
+          <option value="JOSEPH TEMBO">JOSEPH TEMBO</option>
+          <option value="LUCKSON PHIRI">LUCKSON PHIRI</option>
+          <option value="MICHEAL LOBELA">MICHEAL LOBELA</option>
+          <option value="OBERT SIAME">OBERT SIAME</option>
+          <option value="DOMINIC SAKALA">DOMINIC SAKALA</option>
+          <option value="PETER MAWERE">PETER MAWERE</option>
+          <option value="SAVIOUR PHIRI">SAVIOUR PHIRI</option>
+          <option value="TEMBEYA SAKALA">TEMBEYA SAKALA</option>
+          <option value="KELVIN SIAME">KELVIN SIAME</option>
+          <option value="ORSCAR MUSHIPEE">ORSCAR MUSHIPEE</option>
+          <option value="NICKSON MUMBA">NICKSON MUMBA</option>
+        </select>
+        
+        <label>Location</label>
+        <input type="text" id="location" required>
+        
+        <label>Job Done</label>
+        <textarea id="job" required></textarea>
+        
+        <label>Hours Worked</label>
+        <input type="number" id="hours" min="0.5" max="24" step="0.5" required>
+        
+        <label>Date</label>
+        <input type="date" id="date" required>
+        
+        <label>Status</label>
+        <select id="status" required>
+          <option value="start">Start</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+        </select>
+        
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-submit" id="submitBtn">
+            <i class="fas fa-save"></i> Save Task
+          </button>
+          <button type="button" class="btn btn-danger" id="cancelEdit" style="display: none;" onclick="cancelEdit()">
+            <i class="fas fa-times"></i> Cancel Edit
+          </button>
+        </div>
+        <div id="formError" style="display: none;"></div>
       </form>
     </div>
+    
+    <div class="form-container" id="absentFormContainer" style="display: none;">
+      <form id="absentForm">
+        <h3 style="text-align: center; color: var(--warning); margin-top: 0;">Mark Absence</h3>
+        
+        <label>Name</label>
+        <select id="absentName" required>
+          <option value="">Select Name</option>
+          <option value="BRIGHTON MATOLOKOSH">BRIGHTON MATOLOKOSH</option>
+          <option value="CAPHAS TEMBO">CAPHAS TEMBO</option>
+          <option value="CLISHA MAMBILIMA">CLISHA MAMBILIMA</option>
+          <option value="DABSON DAKA">DABSON DAKA</option>
+          <option value="DANNY MVULA">DANNY MVULA</option>
+          <option value="JOSEPH TEMBO">JOSEPH TEMBO</option>
+          <option value="LUCKSON PHIRI">LUCKSON PHIRI</option>
+          <option value="MICHEAL LOBELA">MICHEAL LOBELA</option>
+          <option value="OBERT SIAME">OBERT SIAME</option>
+          <option value="DOMINIC SAKALA">DOMINIC SAKALA</option>
+          <option value="PETER MAWERE">PETER MAWERE</option>
+          <option value="SAVIOUR PHIRI">SAVIOUR PHIRI</option>
+          <option value="TEMBEYA SAKALA">TEMBEYA SAKALA</option>
+          <option value="KELVIN SIAME">KELVIN SIAME</option>
+          <option value="ORSCAR MUSHIPEE">ORSCAR MUSHIPEE</option>
+          <option value="NICKSON MUMBA">NICKSON MUMBA</option>
+        </select>
+        
+        <label>Date</label>
+        <input type="date" id="absentDate" required>
+        
+        <label>Reason (Optional)</label>
+        <textarea id="absentReason"></textarea>
+        
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-submit" id="submitAbsentBtn">
+            <i class="fas fa-user-times"></i> Mark as Absent
+          </button>
+          <button type="button" class="btn btn-danger" onclick="toggleAbsentForm()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+        </div>
+        <div id="absentFormError" style="display: none;"></div>
+      </form>
+    </div>
+    
+    <div class="table-container" id="tableContainer">
+      <table class="tasks-table" id="tasksTable">
+        <thead>
+          <tr>
+            <th>Task ID</th>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Job Done</th>
+            <th>Hours</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Added By</th>
+            <th id="actionsHeader">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tasksTableBody">
+          <!-- Tasks will be populated here -->
+        </tbody>
+      </table>
+    </div>
   </div>
+
+<script>
+// ---- CONFIGURATION ----
+const ADMIN_USERS = ['faiyaz mulla', 'christopher', 'chris', 'faiyaz', 'penta'];
+const GENERAL_PASSWORD = '12345';
+const EMPLOYEE_NAMES = [
+  "BRIGHTON MATOLOKOSH",
+  "CAPHAS TEMBO",
+  "CLISHA MAMBILIMA",
+  "DABSON DAKA",
+  "DANNY MVULA",
+  "JOSEPH TEMBO",
+  "LUCKSON PHIRI",
+  "MICHEAL LOBELA",
+  "OBERT SIAME",
+  "DOMINIC SAKALA",
+  "PETER MAWERE",
+  "SAVIOUR PHIRI",
+  "TEMBEYA SAKALA",
+  "KELVIN SIAME",
+  "ORSCAR MUSHIPEE",
+  "NICKSON MUMBA"
+];
+
+// ---- FIREBASE SETUP ----
+const firebaseConfig = {
+  apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+  authDomain: "project-task-588c4.firebaseapp.com",
+  projectId: "project-task-588c4",
+  storageBucket: "project-task-588c4.appspot.com",
+  messagingSenderId: "411882772509",
+  appId: "1:411882772509:web:08d613186c101a99f38ef4",
+  measurementId: "G-JMFLFYEM0F"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ---- USER MANAGEMENT ----
+function getCurrentUser() {
+  return localStorage.getItem('currentUser') || null;
+}
+function isAdmin(user) {
+  if (!user) return false;
+  return ADMIN_USERS.includes(user.toLowerCase());
+}
+function logout() {
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('currentFilter');
+  localStorage.removeItem('dateFilter');
+  localStorage.removeItem('monthFilter');
+  localStorage.removeItem('personFilter');
+  location.href = "index.html";
+}
+function showWelcome(user) {
+  let name = user.trim().split(" ");
+  name = name.length === 1 ? name[0] : name.slice(-2).join(" ");
+  document.getElementById('welcome').innerHTML = `WELCOME <span style="color:var(--primary)">${name.toUpperCase()}</span>`;
   
-  <!-- Repeat Task Modal -->
-  <div id="repeat-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <button class="modal-close" id="close-repeat-modal-btn" title="Close">&times;</button>
-      <h3 style="margin-top:0;margin-bottom:17px;">Repeat Task</h3>
-      <div id="repeat-modal-error"></div>
-      <form id="repeat-modal-form">
-        <label for="repeat-date">Select Date for Repetition:</label>
-        <input type="date" id="repeat-date" />
-        <button type="button" class="add-date-btn" id="add-date-btn">Add Date</button>
-        <div class="date-list" id="date-list">
-          <!-- Dates will be added here -->
-        </div>
-        <button type="submit" class="repeat-task-btn">Repeat Task on Selected Dates</button>
-      </form>
-    </div>
-  </div>
+  // Hide actions column for non-admin users
+  if (!isAdmin(user)) {
+    document.getElementById('actionsHeader').style.display = 'none';
+  }
+}
+
+// ---- FORM TOGGLE ----
+function toggleForm() {
+  const fc = document.getElementById("formContainer");
+  const afc = document.getElementById("absentFormContainer");
   
-  <!-- Batch Repeat Modal -->
-  <div id="batch-repeat-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <button class="modal-close" id="close-batch-repeat-modal-btn" title="Close">&times;</button>
-      <h3 style="margin-top:0;margin-bottom:17px;">Repeat Selected Tasks</h3>
-      <div id="batch-repeat-modal-error"></div>
-      <form id="batch-repeat-modal-form">
-        <label for="batch-repeat-date">Select Date for Repetition:</label>
-        <input type="date" id="batch-repeat-date" />
-        <button type="button" class="add-date-btn" id="add-batch-date-btn">Add Date</button>
-        <div class="date-list" id="batch-date-list">
-          <!-- Dates will be added here -->
-        </div>
-        <button type="submit" class="repeat-task-btn">Repeat Tasks on Selected Dates</button>
-      </form>
-    </div>
-  </div>
+  if (fc.style.display === "none") {
+    resetForm();
+    fc.style.display = "block";
+    afc.style.display = "none";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
+  } else {
+    fc.style.display = "none";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add Task';
+  }
+}
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { 
-      getFirestore, 
-      collection, 
-      onSnapshot, 
-      query, 
-      orderBy, 
-      getDoc, 
-      doc, 
-      updateDoc, 
-      Timestamp, 
-      deleteDoc,
-      addDoc
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
-    
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-      authDomain: "project-task-588c4.firebaseapp.com",
-      projectId: "project-task-588c4",
-      storageBucket: "project-task-588c4.appspot.com",
-      messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+function toggleAbsentForm() {
+  const fc = document.getElementById("formContainer");
+  const afc = document.getElementById("absentFormContainer");
+  
+  if (afc.style.display === "none") {
+    resetAbsentForm();
+    afc.style.display = "block";
+    fc.style.display = "none";
+    document.getElementById("markAbsentBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
+  } else {
+    afc.style.display = "none";
+    document.getElementById("markAbsentBtn").innerHTML = '<i class="fas fa-user-times"></i> Mark Absent';
+  }
+}
 
-    const tableBody = document.getElementById('transfer-history-table');
-    const tableMsg = document.getElementById('table-message');
-    const employeeFilter = document.getElementById('employee-filter');
-    const locationFilter = document.getElementById('location-filter');
-    const dateFilter = document.getElementById('date-filter');
-    const weekFilter = document.getElementById('week-filter');
-    const clearFilterBtn = document.getElementById('clear-filter');
-    const mhTotalBar = document.getElementById('mh-total-bar');
-    const totalHoursBar = document.getElementById('total-hours-bar');
-    const totalWeekHoursBar = document.getElementById('total-week-hours-bar');
-    const selectAllCheckbox = document.getElementById('select-all-checkbox');
-    const batchRepeatBtn = document.getElementById('batch-repeat-btn');
+function resetForm() {
+  document.getElementById("taskForm").reset();
+  document.getElementById("taskId").value = "";
+  document.getElementById("originalUsername").value = "";
+  
+  // Set default date to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById("date").valueAsDate = tomorrow;
+  
+  document.getElementById("status").value = "start";
+  document.getElementById("cancelEdit").style.display = "none";
+  document.getElementById("formError").style.display = "none";
+  document.getElementById("taskIDSuggestions").style.display = "none";
+  
+  // Set the name to current user if they're in the employee list
+  const user = getCurrentUser();
+  if (user && EMPLOYEE_NAMES.includes(user.toUpperCase())) {
+    document.getElementById("name").value = user.toUpperCase();
+  }
+}
 
-    // Modals
-    const editModal = document.getElementById('edit-modal');
-    const editTransferAtInput = document.getElementById('edit-transferAt');
-    const editModalForm = document.getElementById('edit-modal-form');
-    const editModalError = document.getElementById('edit-modal-error');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const cancelEditBtn = document.getElementById('cancel-edit-btn');
-    const deleteEntryBtn = document.getElementById('delete-entry-btn');
-    
-    const repeatModal = document.getElementById('repeat-modal');
-    const repeatDateInput = document.getElementById('repeat-date');
-    const repeatModalForm = document.getElementById('repeat-modal-form');
-    const repeatModalError = document.getElementById('repeat-modal-error');
-    const closeRepeatModalBtn = document.getElementById('close-repeat-modal-btn');
-    const addDateBtn = document.getElementById('add-date-btn');
-    const dateList = document.getElementById('date-list');
-    
-    const batchRepeatModal = document.getElementById('batch-repeat-modal');
-    const batchRepeatDateInput = document.getElementById('batch-repeat-date');
-    const batchRepeatModalForm = document.getElementById('batch-repeat-modal-form');
-    const batchRepeatModalError = document.getElementById('batch-repeat-modal-error');
-    const closeBatchRepeatModalBtn = document.getElementById('close-batch-repeat-modal-btn');
-    const addBatchDateBtn = document.getElementById('add-batch-date-btn');
-    const batchDateList = document.getElementById('batch-date-list');
+function resetAbsentForm() {
+  document.getElementById("absentForm").reset();
+  
+  // Set default date to tomorrow
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById("absentDate").valueAsDate = tomorrow;
+  
+  document.getElementById("absentFormError").style.display = "none";
+  
+  // Set the name to current user if they're in the employee list
+  const user = getCurrentUser();
+  if (user && EMPLOYEE_NAMES.includes(user.toUpperCase())) {
+    document.getElementById("absentName").value = user.toUpperCase();
+  }
+}
 
-    let currentEditDocId = null;
-    let currentRepeatDocId = null;
-    let selectedTasks = new Set();
-    let selectedDates = [];
-    let batchSelectedDates = [];
+function cancelEdit() {
+  resetForm();
+  toggleForm();
+}
 
-    // Caches for employees, tasks, and projects
-    let employeeCache = {};
-    let taskCache = {};
-    let projectCache = {};
-    let transferDocs = [];
+// ---- TASK CRUD ----
+let allTasks = [];
+let allTaskIDs = new Set();
+let unsubscribe = null;
+let currentFilter = localStorage.getItem('currentFilter') || 'all';
+let dateFilter = localStorage.getItem('dateFilter') || '';
+let personFilter = JSON.parse(localStorage.getItem('personFilter')) || {};
 
-    async function batchFetchEmployeesTasksProjects() {
-      const uniqueEmployeeIds = new Set();
-      const uniqueTaskIds = new Set();
-      const uniqueProjectIds = new Set();
-      for (const docObj of transferDocs) {
-        const d = docObj.data;
-        if (d.employeeId) uniqueEmployeeIds.add(d.employeeId);
-        if (d.taskId) uniqueTaskIds.add(d.taskId);
-        if (d.projectId) uniqueProjectIds.add(d.projectId);
+function listenTasks() {
+  const user = getCurrentUser();
+  if (!user) return;
+  if (unsubscribe) unsubscribe();
+  
+  // Show loading state
+  document.getElementById("tasksTableBody").innerHTML = `
+    <tr>
+      <td colspan="9" style="text-align:center; padding:20px;">
+        <div class="loading" style="border-top-color: var(--primary); margin:0 auto;"></div>
+        <p style="color:#666; margin-top:10px;">Loading tasks...</p>
+      </td>
+    </tr>
+  `;
+  
+  let query = db.collection("TASKS");
+  
+  // Everyone can see all tasks now
+  unsubscribe = query.onSnapshot(snapshot => {
+    allTasks = [];
+    allTaskIDs.clear();
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      data._id = doc.id;
+      allTasks.push(data);
+      // Collect all unique task IDs for auto-complete
+      if (data.taskID) {
+        allTaskIDs.add(data.taskID);
       }
-      const missingEmpIds = [...uniqueEmployeeIds].filter(id => !(id in employeeCache));
-      await Promise.all(missingEmpIds.map(async (id) => {
-        try {
-          const snap = await getDoc(doc(db, "employees", id));
-          if (snap.exists()) employeeCache[id] = snap.data();
-        } catch {}
-      }));
-      const missingTaskIds = [...uniqueTaskIds].filter(id => !(id in taskCache));
-      await Promise.all(missingTaskIds.map(async (id) => {
-        try {
-          const snap = await getDoc(doc(db, "projectTasks", id));
-          if (snap.exists()) taskCache[id] = snap.data();
-        } catch {}
-      }));
-      const missingProjectIds = [...uniqueProjectIds].filter(id => id && !(id in projectCache));
-      await Promise.all(missingProjectIds.map(async (id) => {
-        try {
-          const snap = await getDoc(doc(db, "projectDashboard", id));
-          if (snap.exists()) projectCache[id] = snap.data();
-        } catch {}
-      }));
-    }
-
-    async function fillEmployeeDropdown() {
-      employeeFilter.innerHTML = '<option value="">All</option>';
-      const ids = new Set(transferDocs.map(d => d.data.employeeId).filter(Boolean));
-      const options = [];
-      for (const id of ids) {
-        const emp = employeeCache[id];
-        if (!emp) continue;
-        const label = [emp.empId, emp.name, emp.surname].filter(Boolean).join(' - ');
-        options.push({ value: id, label });
-      }
-      options.sort((a, b) => (a.label || '').localeCompare(b.label || ''));
-      for (const opt of options) {
-        const option = document.createElement('option');
-        option.value = opt.value;
-        option.textContent = opt.label;
-        employeeFilter.appendChild(option);
-      }
-    }
-
-    async function fillLocationDropdown() {
-      locationFilter.innerHTML = '<option value="">All</option>';
-      const locationsSet = new Set();
-      for (const docObj of transferDocs) {
-        let loc = docObj.data.location || "";
-        if ((!loc || loc === "-") && docObj.data.taskId && taskCache[docObj.data.taskId]) {
-          const task = taskCache[docObj.data.taskId];
-          if (task.location) loc = task.location;
-        }
-        if (loc && loc !== "-") locationsSet.add(loc);
-      }
-      const sorted = Array.from(locationsSet).sort();
-      for (const loc of sorted) {
-        const option = document.createElement('option');
-        option.value = loc;
-        option.textContent = loc;
-        locationFilter.appendChild(option);
-      }
-    }
-
-    function restoreFilters() {
-      try {
-        const persisted = JSON.parse(localStorage.getItem('ims_transfer_filters')) || {};
-        if (persisted.employee && employeeFilter.querySelector(`option[value="${persisted.employee}"]`)) {
-          employeeFilter.value = persisted.employee;
-        } else {
-          employeeFilter.value = '';
-        }
-        if (persisted.location && locationFilter.querySelector(`option[value="${persisted.location}"]`)) {
-          locationFilter.value = persisted.location;
-        } else {
-          locationFilter.value = '';
-        }
-        dateFilter.value = persisted.date || '';
-        weekFilter.value = persisted.week || '';
-        clearFilterBtn.style.display = (employeeFilter.value || locationFilter.value || dateFilter.value || weekFilter.value) ? '' : 'none';
-      } catch {
-        employeeFilter.value = '';
-        locationFilter.value = '';
-        dateFilter.value = '';
-        weekFilter.value = '';
-        clearFilterBtn.style.display = 'none';
-      }
-    }
-
-    function saveFilters() {
-      try {
-        localStorage.setItem('ims_transfer_filters', JSON.stringify({
-          employee: employeeFilter.value,
-          location: locationFilter.value,
-          date: dateFilter.value,
-          week: weekFilter.value
-        }));
-        clearFilterBtn.style.display = (employeeFilter.value || locationFilter.value || dateFilter.value || weekFilter.value) ? '' : 'none';
-      } catch {}
-    }
-
-    employeeFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
-    locationFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
-    dateFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
-    weekFilter.addEventListener('change', () => { saveFilters(); renderTable(); });
-
-    clearFilterBtn.addEventListener('click', () => {
-      employeeFilter.value = '';
-      locationFilter.value = '';
-      dateFilter.value = '';
-      weekFilter.value = '';
-      saveFilters();
-      renderTable();
     });
+    renderTasks();
+    updateStatistics();
+    updateUnworkedHours();
+    updateEmployeeCards();
+  }, error => {
+    console.error("Error loading tasks:", error);
+    document.getElementById("tasksTableBody").innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align:center; padding:20px; color:var(--danger);">
+          Error loading tasks. Please refresh the page.
+        </td>
+      </tr>
+    `;
+  });
+}
 
-    async function saveMH(docId, newMH, inputEl, saveBtn, rowObj, updateTotalCost) {
-      saveBtn.style.display = "none";
-      inputEl.disabled = true;
-      try {
-        await updateDoc(doc(db, "locationHistory", docId), { mh: newMH });
-        rowObj.mh = String(newMH);
-        if (typeof updateTotalCost === "function") updateTotalCost();
-      } catch (e) {
-        alert("Failed to save MH. Try again.");
-        saveBtn.style.display = "";
-        inputEl.disabled = false;
-      }
-    }
+function renderTasks() {
+  const tbody = document.getElementById("tasksTableBody");
+  tbody.innerHTML = "";
+  let filteredTasks = allTasks;
+  
+  // Apply date filter if set
+  if (dateFilter) {
+    filteredTasks = applyDateFilterToTasks(filteredTasks);
+  }
+  
+  // Apply person filter if set
+  if (personFilter.person) {
+    filteredTasks = applyPersonFilterToTasks(filteredTasks);
+  }
+  
+  if (filteredTasks.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align:center; padding:20px; color:#666;">
+          No tasks found
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    return (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0);
+  });
+  
+  sortedTasks.forEach(task => {
+    const row = createTaskRow(task);
+    tbody.appendChild(row);
+  });
+}
 
-    function formatDate(ts) {
-      if (!ts) return "-";
-      const d = ts.toDate();
-      return d.toLocaleDateString() + " " + d.toLocaleTimeString();
-    }
+function createTaskRow(task) {
+  const row = document.createElement('tr');
+  const jobCell = document.createElement('td');
+  jobCell.className = 'job-cell';
+  jobCell.textContent = task.job || "No description";
+  
+  // Add expand functionality for job description
+  jobCell.addEventListener('click', function() {
+    this.classList.toggle('expanded');
+  });
+  
+  // Determine status badge class
+  let statusClass = 'status-start';
+  let statusText = 'Start';
+  
+  if (task.status === 'ongoing') {
+    statusClass = 'status-ongoing';
+    statusText = 'Ongoing';
+  } else if (task.status === 'completed') {
+    statusClass = 'status-completed';
+    statusText = 'Completed';
+  } else if (task.status === 'absent') {
+    statusClass = 'status-absent';
+    statusText = 'Absent';
+  }
+  
+  const user = getCurrentUser();
+  const isUserAdmin = isAdmin(user);
+  
+  row.innerHTML = `
+    <td>${task.taskID || task._id.substring(0, 8)}</td>
+    <td>${task.name || "Unknown"}</td>
+    <td>${task.location || "None"}</td>
+    <td class="job-cell">${task.job || "No description"}</td>
+    <td>${task.status === 'absent' ? '0' : (task.hours || 0)}</td>
+    <td>${task.date || formatDate(task.createdAt?.toDate())}</td>
+    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+    <td>${task.username || "Unknown"}</td>
+    <td>
+      <div class="action-buttons" style="${!isUserAdmin ? 'display:none' : ''}">
+        <button class="action-btn edit-btn" onclick="editTask('${task._id}', event)">
+          <i class="fas fa-edit"></i> Edit
+        </button>
+        <button class="action-btn delete-btn" onclick="deleteTask('${task._id}', event)">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>
+    </td>
+  `;
+  
+  // Replace the job cell with our custom one
+  row.replaceChild(jobCell, row.cells[3]);
+  
+  return row;
+}
 
-    // --- Week Filter Helpers ---
-    function getWeekStartEnd(weekString) {
-      // weekString is "YYYY-Wnn" (e.g. "2025-W27")
-      if (!weekString) return null;
-      const [year, week] = weekString.split('-W').map(Number);
-      if (!year || !week) return null;
-      // Start: Monday
-      const simple = new Date(year, 0, 1 + (week - 1) * 7);
-      const dayOfWeek = simple.getDay();
-      const weekStart = new Date(simple);
-      if (dayOfWeek <= 4) {
-        weekStart.setDate(simple.getDate() - simple.getDay() + 1);
+function applyDateFilterToTasks(tasks) {
+  if (!dateFilter) return tasks;
+  
+  const filterDate = new Date(dateFilter);
+  filterDate.setHours(0, 0, 0, 0);
+  const nextDay = new Date(filterDate);
+  nextDay.setDate(filterDate.getDate() + 1);
+  
+  return tasks.filter(task => {
+    const taskDate = task.date ? new Date(task.date) : task.createdAt?.toDate();
+    return taskDate >= filterDate && taskDate < nextDay;
+  });
+}
+
+function applyPersonFilterToTasks(tasks) {
+  const person = personFilter.person;
+  
+  if (!person) return tasks;
+  
+  return tasks.filter(task => {
+    return task.name === person;
+  });
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return '';
+  try {
+    const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
+    return date.toLocaleDateString();
+  } catch (e) {
+    return dateValue;
+  }
+}
+
+// ---- EMPLOYEE CARDS ----
+function updateEmployeeCards() {
+  const employeeCards = document.getElementById('employeeCards');
+  employeeCards.innerHTML = '';
+  
+  // Calculate total hours for each employee
+  const employeeHours = {};
+  const employeeAbsentDays = {};
+  
+  EMPLOYEE_NAMES.forEach(name => {
+    employeeHours[name] = 0;
+    employeeAbsentDays[name] = 0;
+  });
+  
+  allTasks.forEach(task => {
+    if (EMPLOYEE_NAMES.includes(task.name)) {
+      if (task.status === 'absent') {
+        employeeAbsentDays[task.name]++;
       } else {
-        weekStart.setDate(simple.getDate() + 8 - simple.getDay());
-      }
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      weekStart.setHours(0,0,0,0);
-      weekEnd.setHours(23,59,59,999);
-      return { start: weekStart, end: weekEnd };
-    }
-    // ---
-
-    // --- Task Selection Functions ---
-    function toggleSelectAll() {
-      const checkboxes = document.querySelectorAll('.task-select-checkbox');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAllCheckbox.checked;
-        if (selectAllCheckbox.checked) {
-          selectedTasks.add(checkbox.dataset.docid);
-        } else {
-          selectedTasks.delete(checkbox.dataset.docid);
-        }
-      });
-      updateBatchRepeatButton();
-    }
-
-    function toggleTaskSelection(docId, checkbox) {
-      if (checkbox.checked) {
-        selectedTasks.add(docId);
-      } else {
-        selectedTasks.delete(docId);
-      }
-      selectAllCheckbox.checked = selectedTasks.size > 0 && 
-        selectedTasks.size === document.querySelectorAll('.task-select-checkbox').length;
-      updateBatchRepeatButton();
-    }
-
-    function updateBatchRepeatButton() {
-      batchRepeatBtn.disabled = selectedTasks.size === 0;
-    }
-
-    selectAllCheckbox.addEventListener('change', toggleSelectAll);
-    // ---
-
-    // --- Date Management Functions ---
-    function addDate(dateInput, dateList, datesArray) {
-      const dateValue = dateInput.value;
-      if (!dateValue) {
-        alert("Please select a date first.");
-        return;
-      }
-      
-      if (datesArray.includes(dateValue)) {
-        alert("This date is already in the list.");
-        return;
-      }
-      
-      datesArray.push(dateValue);
-      renderDateList(dateList, datesArray);
-      dateInput.value = '';
-    }
-
-    function removeDate(index, dateList, datesArray) {
-      datesArray.splice(index, 1);
-      renderDateList(dateList, datesArray);
-    }
-
-    function renderDateList(dateList, datesArray) {
-      dateList.innerHTML = '';
-      if (datesArray.length === 0) {
-        dateList.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:11px;">No dates selected</div>';
-        return;
-      }
-      
-      datesArray.forEach((date, index) => {
-        const dateItem = document.createElement('div');
-        dateItem.className = 'date-item';
-        dateItem.innerHTML = `
-          <span>${date}</span>
-          <button type="button" class="remove-date" data-index="${index}">×</button>
-        `;
-        dateList.appendChild(dateItem);
-      });
-      
-      // Add event listeners to remove buttons
-      dateList.querySelectorAll('.remove-date').forEach(button => {
-        button.addEventListener('click', () => {
-          const index = parseInt(button.dataset.index);
-          removeDate(index, dateList, datesArray);
-        });
-      });
-    }
-    // ---
-
-    // --- Task Repetition Functions ---
-    function showRepeatModal(docId) {
-      currentRepeatDocId = docId;
-      repeatModalError.textContent = "";
-      repeatDateInput.value = "";
-      selectedDates = [];
-      renderDateList(dateList, selectedDates);
-      repeatModal.style.display = 'flex';
-      setTimeout(() => repeatDateInput.focus(), 120);
-    }
-
-    function hideRepeatModal() {
-      repeatModal.style.display = 'none';
-      currentRepeatDocId = null;
-      repeatDateInput.value = "";
-      selectedDates = [];
-      repeatModalError.textContent = "";
-    }
-
-    function showBatchRepeatModal() {
-      batchRepeatModalError.textContent = "";
-      batchRepeatDateInput.value = "";
-      batchSelectedDates = [];
-      renderDateList(batchDateList, batchSelectedDates);
-      batchRepeatModal.style.display = 'flex';
-      setTimeout(() => batchRepeatDateInput.focus(), 120);
-    }
-
-    function hideBatchRepeatModal() {
-      batchRepeatModal.style.display = 'none';
-      batchRepeatDateInput.value = "";
-      batchSelectedDates = [];
-      batchRepeatModalError.textContent = "";
-    }
-
-    async function repeatTask(docId, dates) {
-      try {
-        // Get the original task data
-        const originalDoc = transferDocs.find(doc => doc.id === docId);
-        if (!originalDoc) {
-          throw new Error("Original task not found");
-        }
-
-        const originalData = originalDoc.data;
-        
-        // Create tasks for each date
-        const promises = dates.map(date => {
-          // Create a new task with the same data but new date
-          const newTaskData = {
-            employeeId: originalData.employeeId || null,
-            location: originalData.location || null,
-            previousLocation: originalData.previousLocation || null,
-            projectId: originalData.projectId || null,
-            taskId: originalData.taskId || null,
-            taskDescription: originalData.taskDescription || null,
-            status: originalData.status || "pending",
-            mh: originalData.mh || 0,
-            reversed: false,
-            transferredAt: Timestamp.fromDate(new Date(date + 'T00:00:00'))
-          };
-
-          // Remove undefined values
-          Object.keys(newTaskData).forEach(key => {
-            if (newTaskData[key] === undefined) {
-              delete newTaskData[key];
-            }
-          });
-
-          // Add the new task to Firestore
-          return addDoc(collection(db, "locationHistory"), newTaskData);
-        });
-
-        await Promise.all(promises);
-        return true;
-      } catch (error) {
-        console.error("Error repeating task:", error);
-        throw error;
+        employeeHours[task.name] += parseFloat(task.hours) || 0;
       }
     }
-
-    async function repeatSelectedTasks(dates) {
-      try {
-        const results = [];
-        for (const docId of selectedTasks) {
-          try {
-            await repeatTask(docId, dates);
-            results.push({ docId, success: true });
-          } catch (error) {
-            results.push({ docId, success: false, error: error.message });
-          }
-        }
-        
-        // Show results summary
-        const successful = results.filter(r => r.success).length;
-        const failed = results.filter(r => !r.success).length;
-        
-        if (failed === 0) {
-          alert(`Successfully repeated ${successful} task(s) on ${dates.length} date(s)`);
-        } else {
-          alert(`Successfully repeated ${successful} task(s), but failed to repeat ${failed} task(s).`);
-        }
-        
-        return results;
-      } catch (error) {
-        console.error("Error in batch repetition:", error);
-        throw error;
-      }
-    }
-
-    // Event listeners for repeat modals
-    closeRepeatModalBtn.onclick = hideRepeatModal;
-    closeBatchRepeatModalBtn.onclick = hideBatchRepeatModal;
+  });
+  
+  // Create cards for each employee
+  EMPLOYEE_NAMES.forEach(name => {
+    const card = document.createElement('div');
+    card.className = 'employee-card';
+    card.dataset.name = name;
     
-    repeatModal.addEventListener('click', (e) => {
-      if (e.target === repeatModal) hideRepeatModal();
+    // Get first name for display
+    const firstName = name.split(' ')[0];
+    
+    card.innerHTML = `
+      <div class="employee-name">${firstName}</div>
+      <div class="employee-hours">${employeeHours[name].toFixed(1)}h</div>
+      <div style="font-size: 0.8em; margin-top: 5px; color: ${employeeAbsentDays[name] > 0 ? '#d32f2f' : '#666'}">
+        Absent: ${employeeAbsentDays[name]} days
+      </div>
+    `;
+    
+    card.addEventListener('click', function() {
+      // Toggle active state
+      document.querySelectorAll('.employee-card').forEach(c => {
+        c.classList.remove('active');
+      });
+      this.classList.add('active');
+      
+      // Apply person filter
+      personFilter = {
+        person: name
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('personFilter', JSON.stringify(personFilter));
+      
+      // Re-render tasks and update stats
+      renderTasks();
+      updateStatistics();
+      updateUnworkedHours();
     });
     
-    batchRepeatModal.addEventListener('click', (e) => {
-      if (e.target === batchRepeatModal) hideBatchRepeatModal();
-    });
+    employeeCards.appendChild(card);
+  });
+}
 
-    // Date addition buttons
-    addDateBtn.addEventListener('click', () => {
-      addDate(repeatDateInput, dateList, selectedDates);
-    });
-
-    addBatchDateBtn.addEventListener('click', () => {
-      addDate(batchRepeatDateInput, batchDateList, batchSelectedDates);
-    });
-
-    repeatModalForm.onsubmit = async function(e) {
+// ---- TASK ID AUTO-COMPLETE ----
+function setupTaskIDAutocomplete() {
+  const taskIDInput = document.getElementById('taskID');
+  const suggestionsContainer = document.getElementById('taskIDSuggestions');
+  
+  taskIDInput.addEventListener('input', function() {
+    const value = this.value.toLowerCase();
+    const suggestions = Array.from(allTaskIDs).filter(taskID => 
+      taskID.toLowerCase().includes(value)
+    );
+    
+    showSuggestions(suggestions);
+  });
+  
+  taskIDInput.addEventListener('focus', function() {
+    if (this.value) {
+      const value = this.value.toLowerCase();
+      const suggestions = Array.from(allTaskIDs).filter(taskID => 
+        taskID.toLowerCase().includes(value)
+      );
+      showSuggestions(suggestions);
+    } else {
+      showSuggestions(Array.from(allTaskIDs).slice(0, 10));
+    }
+  });
+  
+  taskIDInput.addEventListener('blur', function() {
+    // Hide suggestions after a short delay to allow clicking on them
+    setTimeout(() => {
+      suggestionsContainer.style.display = 'none';
+    }, 200);
+  });
+  
+  // Prevent form submission when selecting a suggestion
+  taskIDInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && suggestionsContainer.style.display !== 'none') {
       e.preventDefault();
-      repeatModalError.textContent = "";
-      
-      if (selectedDates.length === 0) {
-        repeatModalError.textContent = "Please add at least one date.";
-        return;
+      const activeSuggestion = suggestionsContainer.querySelector('.suggestion-item:hover');
+      if (activeSuggestion) {
+        activeSuggestion.click();
       }
-      
-      try {
-        await repeatTask(currentRepeatDocId, selectedDates);
-        hideRepeatModal();
-        alert(`Task successfully repeated on ${selectedDates.length} date(s)`);
-      } catch (err) {
-        repeatModalError.textContent = "Failed to repeat task. " + (err.message || "");
-      }
-    };
+    }
+  });
+}
 
-    batchRepeatModalForm.onsubmit = async function(e) {
-      e.preventDefault();
-      batchRepeatModalError.textContent = "";
-      
-      if (batchSelectedDates.length === 0) {
-        batchRepeatModalError.textContent = "Please add at least one date.";
-        return;
-      }
-      
-      try {
-        await repeatSelectedTasks(batchSelectedDates);
-        hideBatchRepeatModal();
-        // Clear selection after successful repetition
-        selectedTasks.clear();
-        selectAllCheckbox.checked = false;
-        updateBatchRepeatButton();
-        renderTable();
-      } catch (err) {
-        batchRepeatModalError.textContent = "Failed to repeat tasks. " + (err.message || "");
-      }
-    };
-    // ---
+function showSuggestions(suggestions) {
+  const suggestionsContainer = document.getElementById('taskIDSuggestions');
+  
+  if (suggestions.length === 0) {
+    suggestionsContainer.style.display = 'none';
+    return;
+  }
+  
+  suggestionsContainer.innerHTML = '';
+  suggestions.slice(0, 10).forEach(taskID => {
+    const suggestionItem = document.createElement('div');
+    suggestionItem.className = 'suggestion-item';
+    suggestionItem.textContent = taskID;
+    suggestionItem.addEventListener('mousedown', function() {
+      document.getElementById('taskID').value = taskID;
+      suggestionsContainer.style.display = 'none';
+      // Auto-fill other fields if this task ID exists
+      autoFillTaskDetails(taskID);
+    });
+    suggestionsContainer.appendChild(suggestionItem);
+  });
+  
+  suggestionsContainer.style.display = 'block';
+}
 
-    async function renderTable() {
-      tableBody.innerHTML = "";
-      let rowNum = 1;
-      const selectedEmp = employeeFilter.value;
-      const selectedLoc = locationFilter.value;
-      const selectedDate = dateFilter.value ? new Date(dateFilter.value) : null;
-      const selectedWeek = weekFilter.value;
+function autoFillTaskDetails(taskID) {
+  // Find the most recent task with this ID to auto-fill details
+  const tasksWithThisID = allTasks
+    .filter(task => task.taskID === taskID && task.status !== 'absent')
+    .sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+  
+  if (tasksWithThisID.length > 0) {
+    const latestTask = tasksWithThisID[0];
+    document.getElementById('name').value = latestTask.name || '';
+    document.getElementById('location').value = latestTask.location || '';
+    document.getElementById('job').value = latestTask.job || '';
+    document.getElementById('status').value = latestTask.status || 'start';
+  }
+}
 
-      let weekRange = getWeekStartEnd(selectedWeek);
+// ---- STATISTICS ----
+function updateStatistics() {
+  let filteredTasks = allTasks;
+  
+  // Apply person filter if set
+  if (personFilter.person) {
+    filteredTasks = applyPersonFilterToTasks(filteredTasks);
+  }
+  
+  // Apply date filter if set
+  if (dateFilter) {
+    filteredTasks = applyDateFilterToTasks(filteredTasks);
+  }
+  
+  // Count unique task IDs (excluding absent days)
+  const taskIDs = new Set();
+  const tasksWithHours = filteredTasks.filter(task => task.status !== 'absent');
+  
+  tasksWithHours.forEach(task => {
+    if (task.taskID) {
+      taskIDs.add(task.taskID);
+    }
+  });
+  
+  // Total unique tasks (by task ID)
+  document.getElementById('totalTasks').textContent = taskIDs.size;
+  
+  // Total hours (excluding absent days)
+  const totalHours = tasksWithHours.reduce((sum, task) => {
+    return sum + (parseFloat(task.hours) || 0);
+  }, 0);
+  document.getElementById('totalHours').textContent = totalHours.toFixed(1);
+  
+  // Average hours per unique task
+  const avgHours = taskIDs.size > 0 ? totalHours / taskIDs.size : 0;
+  document.getElementById('avgHours').textContent = avgHours.toFixed(1);
+  
+  // Days absent
+  const daysAbsent = filteredTasks.filter(task => task.status === 'absent').length;
+  document.getElementById('daysAbsent').textContent = daysAbsent;
+}
 
-      let rows = [];
-      for (const docObj of transferDocs) {
-        if (docObj.data.reversed) continue;
-        const data = docObj.data;
-        if (selectedEmp && data.employeeId !== selectedEmp) continue;
-
-        let empId = "-", name = "-", surname = "-";
-        if (data.employeeId && employeeCache[data.employeeId]) {
-          const emp = employeeCache[data.employeeId];
-          empId = emp.empId || "-";
-          name = emp.name || "-";
-          surname = emp.surname || "-";
-        }
-        let location = data.location || "-";
-        let projectName = "-";
-        if (data.projectId && projectCache[data.projectId]) {
-          projectName = projectCache[data.projectId].name || "-";
-        }
-        if ((location === "-" || !location) && data.taskId && taskCache[data.taskId]) {
-          const task = taskCache[data.taskId];
-          if (task.location) location = task.location;
-        }
-        if (selectedLoc && location !== selectedLoc) continue;
-
-        let transferDate = data.transferredAt ? data.transferredAt.toDate() : null;
-        // If week filter is set, ignore date filter
-        if (selectedWeek && weekRange && transferDate) {
-          if (transferDate < weekRange.start || transferDate > weekRange.end) continue;
-        } else if (selectedDate) {
-          if (!transferDate) continue;
-          const tY = transferDate.getFullYear(), tM = transferDate.getMonth(), tD = transferDate.getDate();
-          const sY = selectedDate.getFullYear(), sM = selectedDate.getMonth(), sD = selectedDate.getDate();
-          if (!(tY === sY && tM === sM && tD === sD)) continue;
-        }
-
-        rows.push({
-          docObj,
-          empId,
-          name,
-          surname,
-          projectName,
-          location,
-          taskId: data.taskId || '-',
-          taskDescription: data.taskDescription || '-',
-          status: data.status,
-          transferDate: data.transferredAt,
-          transferDateDisplay: data.transferredAt ? formatDate(data.transferredAt) : "-",
-          hasReverse: data.employeeId && data.previousLocation,
-          mh: data.mh !== undefined && data.mh !== null ? String(data.mh) : ""
-        });
-      }
-
-      // Sort by transferDate ascending
-      rows.sort((a, b) => {
-        let aDate = a.transferDate ? a.transferDate.toDate ? a.transferDate.toDate() : a.transferDate : null;
-        let bDate = b.transferDate ? b.transferDate.toDate ? b.transferDate.toDate() : b.transferDate : null;
-        if (!aDate && !bDate) return 0;
-        if (!aDate) return 1;
-        if (!bDate) return -1;
-        return aDate - bDate;
+// ---- ABSENT DAYS CALCULATION ----
+function updateUnworkedHours() {
+  const unworkedGrid = document.getElementById('unworkedGrid');
+  unworkedGrid.innerHTML = '';
+  
+  let filteredTasks = allTasks;
+  
+  // Apply person filter if set
+  if (personFilter.person) {
+    filteredTasks = applyPersonFilterToTasks(filteredTasks);
+  }
+  
+  // Apply date filter if set
+  if (dateFilter) {
+    filteredTasks = applyDateFilterToTasks(filteredTasks);
+  }
+  
+  // Calculate absent days for each employee
+  const employeeAbsentDays = {};
+  
+  // Initialize employee data
+  EMPLOYEE_NAMES.forEach(name => {
+    employeeAbsentDays[name] = 0;
+  });
+  
+  // Calculate absent days
+  filteredTasks.forEach(task => {
+    if (EMPLOYEE_NAMES.includes(task.name) && task.status === 'absent') {
+      employeeAbsentDays[task.name]++;
+    }
+  });
+  
+  // Create absent cards for employees with absent days
+  const absentData = [];
+  EMPLOYEE_NAMES.forEach(name => {
+    const absentDays = employeeAbsentDays[name];
+    
+    if (absentDays > 0) {
+      absentData.push({
+        name: name,
+        absentDays: absentDays
       });
-
-      // --- TOTAL COST AND TOTAL HOURS ---
-      let totalCost = 0;
-      let totalHours = 0;
-      let weekHours = 0;
-      for (const row of rows) {
-        if (row.mh && !isNaN(row.mh)) {
-          totalCost += Number(row.mh) * 20;
-          totalHours += Number(row.mh);
-        }
-      }
-
-      // Calculate weekHours if week filter is set, otherwise, weekHours = totalHours
-      if (selectedWeek && weekRange) {
-        weekHours = rows
-          .filter(row => {
-            if (!row.transferDate) return false;
-            const d = row.transferDate.toDate ? row.transferDate.toDate() : row.transferDate;
-            return d >= weekRange.start && d <= weekRange.end;
-          })
-          .reduce((sum, row) => sum + (row.mh && !isNaN(row.mh) ? Number(row.mh) : 0), 0);
-      } else {
-        weekHours = totalHours;
-      }
-
-      if (rows.length > 0) {
-        if (selectedWeek && weekRange) {
-          totalWeekHoursBar.style.display = "";
-          totalWeekHoursBar.textContent = `Total Hours Worked for Selected Week: ${weekHours.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} Hrs`;
-        } else {
-          totalWeekHoursBar.style.display = "none";
-        }
-        mhTotalBar.style.display = "";
-        mhTotalBar.textContent = "Total Cost for All Man Hours: K" + totalCost.toFixed(2) + " ZMW";
-        totalHoursBar.style.display = "";
-        totalHoursBar.textContent = "Total Hours Worked: " + totalHours.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + " Hrs";
-      } else {
-        mhTotalBar.style.display = "none";
-        totalHoursBar.style.display = "none";
-        totalWeekHoursBar.style.display = "none";
-      }
-      // --- END TOTAL COST/HOURS ---
-
-      for (const row of rows) {
-        const statusOptions = ["started", "ongoing", "completed", "pending", "Unavailable"];
-        const statusSelect = document.createElement("select");
-        let dropdownClass = "status-default";
-        switch ((row.status || '').toLowerCase()) {
-          case "started": dropdownClass = "status-started"; break;
-          case "ongoing": dropdownClass = "status-ongoing"; break;
-          case "completed": dropdownClass = "status-completed"; break;
-          case "pending": dropdownClass = "status-pending"; break;
-          case "unavailable": dropdownClass = "status-unavailable"; break;
-        }
-        statusSelect.className = `status-dropdown ${dropdownClass}`;
-        statusOptions.forEach(opt => {
-          const option = document.createElement("option");
-          option.value = opt;
-          option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
-          if ((row.status || '').toLowerCase() === opt.toLowerCase()) option.selected = true;
-          statusSelect.appendChild(option);
-        });
-        statusSelect.dataset.docid = row.docObj.id;
-
-        statusSelect.addEventListener('change', async function() {
-          const docId = this.dataset.docid;
-          const newStatus = this.value;
-          try {
-            await updateDoc(doc(db, "locationHistory", docId), { status: newStatus });
-            let cls = "status-default";
-            switch (newStatus.toLowerCase()) {
-              case "started": cls = "status-started"; break;
-              case "ongoing": cls = "status-ongoing"; break;
-              case "completed": cls = "status-completed"; break;
-              case "pending": cls = "status-pending"; break;
-              case "unavailable": cls = "status-unavailable"; break;
-            }
-            this.className = `status-dropdown ${cls}`;
-          } catch (e) {
-            alert("Failed to update status. Try again.");
-            this.value = row.status || '';
-          }
-        });
-
-        const mhTd = document.createElement("td");
-        const mhInput = document.createElement("input");
-        mhInput.type = "number";
-        mhInput.className = "mh-input";
-        mhInput.placeholder = "Hrs";
-        mhInput.min = "0";
-        mhInput.value = row.mh;
-        mhInput.title = "Enter man hours";
-        const mhSaveBtn = document.createElement("button");
-        mhSaveBtn.textContent = "Save";
-        mhSaveBtn.type = "button";
-        mhSaveBtn.className = "mh-save-btn";
-        mhSaveBtn.style.display = "none";
-        mhInput.addEventListener("input", function() {
-          if (mhInput.value !== String(row.mh)) {
-            mhSaveBtn.style.display = "";
-          } else {
-            mhSaveBtn.style.display = "none";
-          }
-        });
-        mhSaveBtn.addEventListener("click", () => {
-          const value = mhInput.value.trim();
-          if (value === "") return alert("Please enter a value for MH.");
-          if (isNaN(value) || Number(value) < 0) return alert("Invalid MH value.");
-          saveMH(row.docObj.id, Number(value), mhInput, mhSaveBtn, row, renderTable);
-        });
-        mhTd.appendChild(mhInput);
-        mhTd.appendChild(mhSaveBtn);
-
-        // Selection checkbox
-        const selectTd = document.createElement("td");
-        const selectCheckbox = document.createElement("input");
-        selectCheckbox.type = "checkbox";
-        selectCheckbox.className = "select-checkbox task-select-checkbox";
-        selectCheckbox.dataset.docid = row.docObj.id;
-        selectCheckbox.checked = selectedTasks.has(row.docObj.id);
-        selectCheckbox.addEventListener('change', () => toggleTaskSelection(row.docObj.id, selectCheckbox));
-        selectTd.appendChild(selectCheckbox);
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-btn";
-        editBtn.textContent = "Edit";
-        editBtn.addEventListener("click", () => {
-          showEditModal(row.docObj.id, row.transferDate ? row.transferDate.toDate() : null);
-        });
-
-        const repeatBtn = document.createElement("button");
-        repeatBtn.className = "repeat-btn";
-        repeatBtn.textContent = "Repeat";
-        repeatBtn.addEventListener("click", () => {
-          showRepeatModal(row.docObj.id);
-        });
-
-        const reverseBtn = document.createElement("button");
-        reverseBtn.className = "reverse-btn";
-        reverseBtn.textContent = "Reverse";
-        reverseBtn.addEventListener("click", async () => {
-          if (!confirm("Are you sure you want to reverse this transfer?")) return;
-          await reverseTransfer(row.docObj);
-        });
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td></td>
-          <td>${rowNum++}</td>
-          <td>${row.empId}</td>
-          <td>${row.name} ${row.surname}</td>
-          <td>${row.projectName}</td>
-          <td>${row.location}</td>
-          <td>${row.taskId}</td>
-          <td>${row.taskDescription}</td>
-          <td></td>
-          <td>${row.transferDateDisplay}</td>
-          <td></td>
-          <td></td>
-        `;
-        tr.children[0].replaceWith(selectTd);
-        tr.children[8].appendChild(statusSelect);
-        tr.children[10].replaceWith(mhTd);
-        tr.children[11].appendChild(editBtn);
-        tr.children[11].appendChild(repeatBtn);
-        if (row.hasReverse) {
-          tr.children[11].appendChild(reverseBtn);
-        }
-        tableBody.appendChild(tr);
-      }
-
-      if (rowNum === 1) tableMsg.innerHTML = "<div>No transfer events found.</div>";
-      else tableMsg.innerHTML = "";
     }
+  });
+  
+  // Sort by absent days (descending)
+  absentData.sort((a, b) => b.absentDays - a.absentDays);
+  
+  // Display absent days
+  if (absentData.length === 0) {
+    unworkedGrid.innerHTML = '<div style="text-align:center; color:#666; padding:10px;">No absent days recorded</div>';
+    return;
+  }
+  
+  absentData.forEach(employee => {
+    const absentCard = document.createElement('div');
+    absentCard.className = 'unworked-card';
+    absentCard.innerHTML = `
+      <div class="unworked-name">${employee.name}</div>
+      <div class="unworked-hours">Absent: ${employee.absentDays} days</div>
+    `;
+    unworkedGrid.appendChild(absentCard);
+  });
+}
 
-    function showEditModal(docId, currentValue) {
-      currentEditDocId = docId;
-      editModalError.textContent = "";
-      if (currentValue && !isNaN(currentValue.getTime())) {
-        let iso = currentValue.toISOString().slice(0,16);
-        editTransferAtInput.value = iso;
-      } else {
-        editTransferAtInput.value = "";
-      }
-      editModal.style.display = 'flex';
-      setTimeout(() => editTransferAtInput.focus(), 120);
-    }
-    function hideEditModal() {
-      editModal.style.display = 'none';
-      currentEditDocId = null;
-      editTransferAtInput.value = "";
-      editModalError.textContent = "";
-    }
-    closeModalBtn.onclick = hideEditModal;
-    cancelEditBtn.onclick = hideEditModal;
-    editModal.addEventListener('click', (e) => {
-      if (e.target === editModal) hideEditModal();
-    });
+// ---- DATE FILTER FUNCTIONS ----
+function applyDateFilter() {
+  dateFilter = document.getElementById('dateFilterInput').value;
+  
+  // Save to localStorage
+  localStorage.setItem('dateFilter', dateFilter);
+  
+  // Re-render tasks and update stats
+  renderTasks();
+  updateStatistics();
+  updateUnworkedHours();
+}
 
-    editModalForm.onsubmit = async function(e) {
-      e.preventDefault();
-      editModalError.textContent = "";
-      if (!currentEditDocId) return;
-      const dtStr = editTransferAtInput.value;
-      if (!dtStr) {
-        editModalError.textContent = "Please select a date and time.";
-        return;
-      }
-      let newDate;
-      try {
-        newDate = new Date(dtStr);
-        if (isNaN(newDate.getTime())) throw new Error();
-      } catch {
-        editModalError.textContent = "Invalid date/time format.";
-        return;
-      }
-      try {
-        await updateDoc(doc(db, "locationHistory", currentEditDocId), {
-          transferredAt: Timestamp.fromDate(newDate)
-        });
-        hideEditModal();
-      } catch (err) {
-        editModalError.textContent = "Failed to update. " + (err.message || "");
-      }
+// ---- TASK ACTIONS ----
+async function editTask(docId, event) {
+  event.stopPropagation();
+  
+  // Check if user can edit this task - ONLY ADMINS
+  const user = getCurrentUser();
+  
+  if (!isAdmin(user)) {
+    alert("Only admins can edit tasks");
+    return;
+  }
+  
+  try {
+    const doc = await db.collection("TASKS").doc(docId).get();
+    if (!doc.exists) { alert("Task not found"); return; }
+    const task = doc.data();
+    document.getElementById("taskId").value = docId;
+    document.getElementById("originalUsername").value = task.username || "";
+    document.getElementById("taskID").value = task.taskID || "";
+    document.getElementById("name").value = task.name || "";
+    document.getElementById("location").value = task.location || "";
+    document.getElementById("job").value = task.job || "";
+    document.getElementById("hours").value = task.hours || "";
+    document.getElementById("date").value = task.date || formatDateForInput(task.createdAt?.toDate());
+    document.getElementById("status").value = task.status || "start";
+    document.getElementById("cancelEdit").style.display = "inline-block";
+    document.getElementById("formContainer").style.display = "block";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-times"></i> Cancel';
+    document.getElementById("formContainer").scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    console.error("Error editing task:", err);
+    alert("Failed to load task for editing");
+  }
+}
+
+function formatDateForInput(dateValue) {
+  if (!dateValue) return '';
+  try {
+    const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
+    // Format for date input: YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  } catch (e) {
+    return '';
+  }
+}
+
+async function deleteTask(docId, event) {
+  event.stopPropagation();
+  
+  // Check if user can delete this task - ONLY ADMINS
+  const user = getCurrentUser();
+  
+  if (!isAdmin(user)) {
+    alert("Only admins can delete tasks");
+    return;
+  }
+  
+  if (!confirm("Are you sure you want to delete this task?")) return;
+  try {
+    await db.collection("TASKS").doc(docId).delete();
+  } catch (err) {
+    console.error("Error deleting task:", err);
+    alert("Failed to delete task");
+  }
+}
+
+// ---- ADD/UPDATE TASK ----
+document.getElementById("taskForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const user = getCurrentUser();
+  if (!user) {
+    alert("You must be logged in to submit a task");
+    return;
+  }
+  
+  // Show loading state on submit button
+  const submitBtn = document.getElementById("submitBtn");
+  const originalBtnText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<div class="loading"></div> Saving...';
+  submitBtn.disabled = true;
+  
+  try {
+    const formData = {
+      taskID: document.getElementById("taskID").value,
+      name: document.getElementById("name").value,
+      location: document.getElementById("location").value,
+      job: document.getElementById("job").value,
+      hours: parseFloat(document.getElementById("hours").value),
+      date: document.getElementById("date").value,
+      status: document.getElementById("status").value,
+      updatedAt: new Date()
     };
-
-    deleteEntryBtn.onclick = async function() {
-      if (!currentEditDocId) return;
-      if (!confirm("Are you sure you want to permanently delete this transfer entry?")) return;
-      editModalError.textContent = "";
-      try {
-        await deleteDoc(doc(db, "locationHistory", currentEditDocId));
-        hideEditModal();
-      } catch (err) {
-        editModalError.textContent = "Failed to delete entry. " + (err.message || "");
-      }
-    };
-
-    async function reverseTransfer(docObj) {
-      const { employeeId, previousLocation } = docObj.data;
-      if (!employeeId || !previousLocation) {
-        alert("Cannot reverse: missing employee or previous location info.");
+    
+    const docId = document.getElementById("taskId").value;
+    const originalUsername = document.getElementById("originalUsername").value;
+    
+    // Check for duplicate completed tasks
+    if (!docId && formData.status === 'completed') {
+      const existingCompletedTask = allTasks.find(task => 
+        task.taskID === formData.taskID && 
+        task.name === formData.name && 
+        task.status === 'completed'
+      );
+      
+      if (existingCompletedTask) {
+        alert("This task is already marked as completed for this person. You cannot create duplicate completed tasks.");
         return;
       }
-      try {
-        await updateDoc(doc(db, "employees", employeeId), { 
-          workLocation: previousLocation,
-          location: previousLocation 
-        });
-        await updateDoc(doc(db, "locationHistory", docObj.id), { reversed: true });
-        alert("Transfer reversed, employee returned to previous location.");
-      } catch (e) {
-        alert("Failed to reverse transfer: " + e.message);
-      }
     }
-
-    // Initialize the app
-    onSnapshot(query(collection(db, "locationHistory"), orderBy("transferredAt", "desc")), async (snapshot) => {
-      transferDocs = snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        data: docSnap.data()
-      }));
-      await batchFetchEmployeesTasksProjects();
-      await fillEmployeeDropdown();
-      await fillLocationDropdown();
-      restoreFilters();
-      await renderTable();
+    
+    // Preserve the original username if editing (admin editing someone else's task)
+    if (docId && originalUsername) {
+      formData.username = originalUsername;
+    } else {
+      formData.username = user;
+    }
+    
+    if (docId) {
+      const doc = await db.collection("TASKS").doc(docId).get();
+      if (doc.exists) {
+        const existingData = doc.data();
+        formData.createdAt = existingData.createdAt;
+      }
+    } else {
+      formData.createdAt = new Date();
+    }
+    
+    // Clean up data to ensure Firebase compatibility
+    Object.keys(formData).forEach(key => {
+      if (formData[key] === undefined || formData[key] === null) {
+        delete formData[key];
+      }
     });
+    
+    if (docId) {
+      await db.collection("TASKS").doc(docId).set(formData, {merge: true});
+    } else {
+      await db.collection("TASKS").add(formData);
+    }
+    
+    resetForm();
+    document.getElementById("formContainer").style.display = "none";
+    document.getElementById("addBtn").innerHTML = '<i class="fas fa-plus"></i> Add Task';
+    document.getElementById("formError").style.display = "none";
+    
+  } catch (err) {
+    const errorEl = document.getElementById("formError");
+    errorEl.textContent = "Error saving task: " + (err.message || err);
+    errorEl.style.display = 'block';
+    console.error("Task submission error:", err);
+  } finally {
+    submitBtn.innerHTML = originalBtnText;
+    submitBtn.disabled = false;
+  }
+});
 
-    // Event listener for batch repeat button
-    batchRepeatBtn.addEventListener('click', showBatchRepeatModal);
-  </script>
+// ---- MARK ABSENCE ----
+document.getElementById("absentForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const user = getCurrentUser();
+  if (!user) {
+    alert("You must be logged in to mark absence");
+    return;
+  }
+  
+  // Show loading state on submit button
+  const submitBtn = document.getElementById("submitAbsentBtn");
+  const originalBtnText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<div class="loading"></div> Saving...';
+  submitBtn.disabled = true;
+  
+  try {
+    const formData = {
+      name: document.getElementById("absentName").value,
+      date: document.getElementById("absentDate").value,
+      reason: document.getElementById("absentReason").value,
+      status: 'absent',
+      hours: 0,
+      job: 'Absent',
+      location: 'N/A',
+      username: user,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Check if absence already exists for this user on this date
+    const existingAbsence = allTasks.find(task => 
+      task.username === user && 
+      task.date === formData.date && 
+      task.status === 'absent'
+    );
+    
+    if (existingAbsence) {
+      alert("You have already marked yourself as absent for this date");
+      return;
+    }
+    
+    await db.collection("TASKS").add(formData);
+    
+    resetAbsentForm();
+    document.getElementById("absentFormContainer").style.display = "none";
+    document.getElementById("markAbsentBtn").innerHTML = '<i class="fas fa-user-times"></i> Mark Absent';
+    document.getElementById("absentFormError").style.display = "none";
+    
+  } catch (err) {
+    const errorEl = document.getElementById("absentFormError");
+    errorEl.textContent = "Error marking absence: " + (err.message || err);
+    errorEl.style.display = 'block';
+    console.error("Absence submission error:", err);
+  } finally {
+    submitBtn.innerHTML = originalBtnText;
+    submitBtn.disabled = false;
+  }
+});
+
+// ---- INIT ----
+window.onload = function() {
+  const user = getCurrentUser();
+  if (!user) { 
+    location.href = "index.html"; 
+    return; 
+  }
+  showWelcome(user);
+  setupTaskIDAutocomplete();
+  listenTasks();
+  
+  // Set default date to today
+  const today = new Date();
+  document.getElementById('dateFilterInput').valueAsDate = today;
+  dateFilter = document.getElementById('dateFilterInput').value;
+  localStorage.setItem('dateFilter', dateFilter);
+}
+</script>
 </body>
 </html>
