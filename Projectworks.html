@@ -654,6 +654,26 @@
         .category-back-btn:hover {
             background: rgba(255,255,255,0.3);
         }
+        
+        /* Hide Completed Tasks Button */
+        .hide-completed-btn {
+            background: #10b981;
+            color: white;
+            border: 1px solid #10b981;
+        }
+        .hide-completed-btn:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+        .show-completed-btn {
+            background: #6b7280;
+            color: white;
+            border: 1px solid #6b7280;
+        }
+        .show-completed-btn:hover {
+            background: #4b5563;
+            border-color: #4b5563;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -690,6 +710,9 @@
             <div class="actions">
                 <button class="btn btn-primary action-btn" id="addTaskBtn">
                     <i class="fas fa-plus"></i> Add Task
+                </button>
+                <button class="btn hide-completed-btn" id="toggleCompletedBtn">
+                    <i class="fas fa-eye-slash"></i> Hide Completed
                 </button>
                 <a href="#" class="btn btn-outline action-btn" id="completedtasksBtn">
                     <i class="fas fa-check-circle"></i> Completed Tasks
@@ -896,6 +919,7 @@ const categoryHeader = document.getElementById('categoryHeader');
 const categoryTitle = document.getElementById('categoryTitle');
 const categoryIcon = document.getElementById('categoryIcon');
 const tasksTitle = document.getElementById('tasksTitle');
+const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
 
 // Category definitions with keywords for auto-categorization
 const categories = {
@@ -951,6 +975,7 @@ let allTasks = [];
 let unsubMain = null;
 let subUnsubs = {};
 let expandedTasks = {};
+let hideCompleted = false; // New state variable for hide completed tasks
 
 // Update UI based on category
 function updateCategoryUI() {
@@ -1352,7 +1377,7 @@ async function loadAllTasks() {
     }
 }
 
-// Filter tasks with category support
+// Filter tasks with category support and hide completed
 function filterTasks(tasks) {
     const statusVal = statusFilter.value;
     const monthVal = monthFilter.value;
@@ -1360,6 +1385,11 @@ function filterTasks(tasks) {
     const searchVal = searchInput.value.toLowerCase();
     
     return tasks.filter(task => {
+        // Check hide completed filter
+        if (hideCompleted && task.status === 'COMPLETED') {
+            return false;
+        }
+        
         // Check category filter
         let matchesCategory = true;
         if (currentCategory) {
@@ -1698,6 +1728,28 @@ async function getSubSubtasks(mainId, subId) {
     return subsubtasks;
 }
 
+// Toggle hide completed tasks
+function toggleHideCompleted() {
+    hideCompleted = !hideCompleted;
+    updateHideCompletedButton();
+    localStorage.setItem('hideCompleted', hideCompleted.toString());
+    renderTasks(filterTasks(allTasks));
+    renderGanttCalendar(filterTasks(allTasks));
+}
+
+// Update hide completed button text and icon
+function updateHideCompletedButton() {
+    if (hideCompleted) {
+        toggleCompletedBtn.innerHTML = '<i class="fas fa-eye"></i> Show Completed';
+        toggleCompletedBtn.classList.remove('hide-completed-btn');
+        toggleCompletedBtn.classList.add('show-completed-btn');
+    } else {
+        toggleCompletedBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Completed';
+        toggleCompletedBtn.classList.remove('show-completed-btn');
+        toggleCompletedBtn.classList.add('hide-completed-btn');
+    }
+}
+
 // Render tasks with the new give target column
 function renderTasks(tasks) {
     taskList.innerHTML = '';
@@ -1711,6 +1763,11 @@ function renderTasks(tasks) {
     let totalCost = 0;
     
     tasks.forEach(task => {
+        // Skip completed tasks if hideCompleted is true
+        if (hideCompleted && task.status === 'COMPLETED') {
+            return;
+        }
+        
         visibleCount++;
         const hours = task._durationHours || 0;
         const materialCost = task._materialCost || 0;
@@ -1772,6 +1829,11 @@ function renderTasks(tasks) {
                 taskList.appendChild(trSub);
             } else {
                 task.subTasks.forEach(sub => {
+                    // Skip completed subtasks if hideCompleted is true
+                    if (hideCompleted && sub.status === 'COMPLETED') {
+                        return;
+                    }
+                    
                     const subHours = sub._durationHours || 0;
                     const subMaterialCost = sub._materialCost || 0;
                     const subManCost = subHours * 20;
@@ -1817,6 +1879,11 @@ function renderTasks(tasks) {
 
                     if (sub.subSubtasks && sub.subSubtasks.length) {
                         sub.subSubtasks.forEach(subsub => {
+                            // Skip completed sub-subtasks if hideCompleted is true
+                            if (hideCompleted && subsub.status === 'COMPLETED') {
+                                return;
+                            }
+                            
                             const subsubHours = subsub._durationHours || 0;
                             const subsubMaterialCost = subsub._materialCost || 0;
                             const subsubManCost = subsubHours * 20;
@@ -2099,6 +2166,11 @@ function renderGanttCalendar(tasks) {
     today.setHours(0, 0, 0, 0);
     
     tasks.forEach(main => {
+        // Skip completed tasks if hideCompleted is true
+        if (hideCompleted && main.status === 'COMPLETED') {
+            return;
+        }
+        
         allRows.push({
             isSub: false,
             description: main.taskDescription || '',
@@ -2114,6 +2186,11 @@ function renderGanttCalendar(tasks) {
         }
         
         (main.subTasks || []).forEach(sub => {
+            // Skip completed subtasks if hideCompleted is true
+            if (hideCompleted && sub.status === 'COMPLETED') {
+                return;
+            }
+            
             allRows.push({
                 isSub: true,
                 description: sub.taskDescription || '',
@@ -2129,6 +2206,11 @@ function renderGanttCalendar(tasks) {
             }
             
             (sub.subSubtasks || []).forEach(subsub => {
+                // Skip completed sub-subtasks if hideCompleted is true
+                if (hideCompleted && subsub.status === 'COMPLETED') {
+                    return;
+                }
+                
                 allRows.push({
                     isSubSub: true,
                     description: subsub.taskDescription || '',
@@ -2357,6 +2439,7 @@ function renderGanttCalendar(tasks) {
     showGanttBtn.addEventListener('click', toggleGanttVisibility);
     currentMonthBtn.addEventListener('click', toggleCurrentMonthView);
     fullscreenBtn.addEventListener('click', toggleFullscreen);
+    toggleCompletedBtn.addEventListener('click', toggleHideCompleted);
 
     // Fullscreen event listeners
     document.addEventListener('fullscreenchange', () => {
@@ -2382,6 +2465,7 @@ function renderGanttCalendar(tasks) {
         const savedSearch = localStorage.getItem('taskSearchFilter');
         const savedGanttVisible = localStorage.getItem('ganttVisible');
         const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
+        const savedHideCompleted = localStorage.getItem('hideCompleted');
         
         if (savedStatus) statusFilter.value = savedStatus;
         if (savedMonth) monthFilter.value = savedMonth;
@@ -2397,6 +2481,9 @@ function renderGanttCalendar(tasks) {
         if (savedShowCurrentMonthOnly === 'true') {
             showCurrentMonthOnly = true;
             currentMonthBtn.textContent = "All Months";
+        }
+        if (savedHideCompleted === 'true') {
+            hideCompleted = true;
         }
     }
 
@@ -2443,6 +2530,7 @@ function renderGanttCalendar(tasks) {
     updateCategoryUI();
     loadFilterStates();
     loadExpandedTasks();
+    updateHideCompletedButton();
     
     // Set initial Gantt visibility
     if (ganttVisible) {
