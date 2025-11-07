@@ -97,7 +97,6 @@
         }
 
         .container {
-        
             margin: 0 auto;
         }
 
@@ -223,6 +222,11 @@
             display: flex;
             flex-direction: column;
             border: 1px solid rgba(230, 126, 34, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .notes-sidebar.hidden {
+            display: none;
         }
 
         .sidebar-header {
@@ -511,6 +515,8 @@
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow-y: auto;
             overflow-x: hidden;
+            /* Remove spellcheck underline */
+            spellcheck: false;
         }
 
         /* Hide scrollbar for textarea */
@@ -594,6 +600,23 @@
             color: #2c3e50;
         }
 
+        .toggle-sidebar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            z-index: 100;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         /* Responsive */
         @media (max-width: 968px) {
             .notes-container {
@@ -647,6 +670,10 @@
     </style>
 </head>
 <body>
+    <button class="toggle-sidebar" id="toggleSidebar">
+        <i class="fas fa-bars"></i> Toggle Sidebar
+    </button>
+    
     <div class="container">
         <header>
             <div class="logo">
@@ -671,7 +698,7 @@
         </header>
 
         <div class="notes-container">
-            <div class="notes-sidebar">
+            <div class="notes-sidebar" id="notesSidebar">
                 <div class="sidebar-header">
                     <div class="sidebar-title">Project Notes</div>
                     <div class="notes-count" id="notesCount">0 notes</div>
@@ -743,13 +770,30 @@
         const columnsCount = document.getElementById('columnsCount');
         const columnsContainer = document.getElementById('columnsContainer');
         const addColumnBtn = document.getElementById('addColumnBtn');
+        const notesSidebar = document.getElementById('notesSidebar');
+        const toggleSidebar = document.getElementById('toggleSidebar');
 
         // Initialize the app after Firebase is ready
         window.initNotesApp = function() {
             loadNotesFromFirebase();
             setupEventListeners();
             initializeSpreadsheet();
+            loadSidebarState();
         };
+
+        // Load sidebar state from localStorage
+        function loadSidebarState() {
+            const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
+            if (sidebarHidden) {
+                notesSidebar.classList.add('hidden');
+            }
+        }
+
+        // Toggle sidebar visibility
+        function toggleSidebarVisibility() {
+            notesSidebar.classList.toggle('hidden');
+            localStorage.setItem('sidebarHidden', notesSidebar.classList.contains('hidden'));
+        }
 
         // Load notes from Firebase with real-time updates
         function loadNotesFromFirebase() {
@@ -822,6 +866,17 @@
             }
         }
 
+        // Move column to first position
+        function moveColumnToFirst(columnId) {
+            const columnIndex = columns.findIndex(col => col.id === columnId);
+            if (columnIndex !== -1 && columnIndex !== 0) {
+                const column = columns.splice(columnIndex, 1)[0];
+                columns.unshift(column);
+                renderColumns();
+                scheduleSave();
+            }
+        }
+
         // Render all columns
         function renderColumns() {
             columnsContainer.innerHTML = '';
@@ -845,7 +900,7 @@
                         </div>
                     </div>
                     <div class="column-content">
-                        <textarea placeholder="Enter column content..." data-column-id="${column.id}">${column.content}</textarea>
+                        <textarea placeholder="Enter column content..." data-column-id="${column.id}" spellcheck="false">${column.content}</textarea>
                     </div>
                     <div class="resize-handle" data-column-id="${column.id}"></div>
                 `;
@@ -859,6 +914,7 @@
                 // Add textarea event listener
                 const textarea = columnElement.querySelector('textarea');
                 textarea.addEventListener('input', handleColumnContentChange);
+                textarea.addEventListener('focus', handleColumnFocus);
                 
                 // Make column header editable
                 const header = columnElement.querySelector('.column-header span');
@@ -875,6 +931,12 @@
             });
             
             updateColumnsCount();
+        }
+
+        // Handle column focus - move to first position
+        function handleColumnFocus(e) {
+            const columnId = e.target.getAttribute('data-column-id');
+            moveColumnToFirst(columnId);
         }
 
         // Start column resize
@@ -1197,6 +1259,9 @@
             
             // Add column button
             addColumnBtn.addEventListener('click', () => createColumn());
+            
+            // Toggle sidebar button
+            toggleSidebar.addEventListener('click', toggleSidebarVisibility);
             
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
