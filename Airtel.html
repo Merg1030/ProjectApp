@@ -16,6 +16,7 @@
     #toggle-form-btn:hover { background: #125195; }
     .controls-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 15px; }
     .week-selector { padding: 7px 10px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
+    .company-filter { padding: 7px 10px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
     .download-btn {
       background:  #1976d2;
       color: #fff;
@@ -122,7 +123,18 @@
         Week:
         <select id="week-selector" class="week-selector"></select>
       </label>
-      <button id="download-week-btn" class="download-btn" type="button">Download Weekly Report</button>
+      <label>
+        Company:
+        <select id="company-filter" class="company-filter">
+          <option value="ALL">All Companies</option>
+          <option value="FPS">FPS</option>
+          <option value="HML">HML</option>
+          <option value="HL">HL</option>
+          <option value="HFL">HFL</option>
+          <option value="HEL">HEL</option>
+        </select>
+      </label>
+      <button id="download-week-btn" class="download-btn" type="button">Download Filtered Report</button>
     </div>
     <form id="expense-form" autocomplete="off" class="hide">
       <div><label for="exp-date">Date</label><br><input type="date" id="exp-date"></div>
@@ -206,6 +218,7 @@
     const toggleFormBtn = document.getElementById("toggle-form-btn");
     const companySummaryDiv = document.getElementById("company-summary");
     const weekSelector = document.getElementById("week-selector");
+    const companyFilter = document.getElementById("company-filter");
     const downloadWeekBtn = document.getElementById("download-week-btn");
     const panelToExport = document.getElementById("panel-to-export");
 
@@ -304,19 +317,36 @@
       }
     );
 
-    function renderSummaryBar() {
+    // --- Get filtered data based on current filters ---
+    function getFilteredData() {
       const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
+      const selectedCompany = companyFilter.value;
+      
+      let filtered = allExpenses.filter(exp =>
+        exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear
+      );
+      
+      // Apply company filter
+      if (selectedCompany !== "ALL") {
+        filtered = filtered.filter(exp => exp.company === selectedCompany);
+      }
+      
+      return filtered;
+    }
+
+    function renderSummaryBar() {
+      const filtered = getFilteredData();
       const companies = ["FPS", "HML", "HL", "HFL", "HEL"];
       const totals = {};
       companies.forEach(c => totals[c] = 0);
-      allExpenses.forEach(exp => {
-        if (exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear) {
-          if (companies.includes(exp.company)) {
-            const t = (parseFloat(exp.lunch) || 0) + (parseFloat(exp.transport) || 0);
-            totals[exp.company] += t;
-          }
+      
+      filtered.forEach(exp => {
+        if (companies.includes(exp.company)) {
+          const t = (parseFloat(exp.lunch) || 0) + (parseFloat(exp.transport) || 0);
+          totals[exp.company] += t;
         }
       });
+      
       let html = "";
       companies.forEach(c => {
         html += `<div class="company-summary-card">
@@ -336,15 +366,14 @@
     }
 
     function renderTable() {
-      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
-      let filtered = allExpenses.filter(exp =>
-        exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear
-      );
+      let filtered = getFilteredData();
+      
+      // Sort in descending date order (newest first)
       filtered.sort((a, b) => {
         if ((a.date || "") === (b.date || "")) {
-          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+          return ((b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         }
-        return (a.date || "") < (b.date || "") ? -1 : 1;
+        return (b.date || "") < (a.date || "") ? -1 : 1;
       });
 
       expensesTableBody.innerHTML = "";
@@ -371,6 +400,7 @@
         expensesTableBody.appendChild(tRow);
       });
 
+      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
       const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
       const satString = formatDate(satDate.toISOString().split("T")[0]);
       // Show only Saturday date, then 5 blanks, then the sums in the correct columns.
@@ -398,6 +428,10 @@
       renderSummaryBar(); renderTable();
     });
 
+    companyFilter.addEventListener("change", ()=>{
+      renderSummaryBar(); renderTable();
+    });
+
     function formatDate(isoDateStr) {
       const date = new Date(isoDateStr);
       if (isNaN(date.getTime())) return isoDateStr;
@@ -407,59 +441,79 @@
       return `${dd}/${mm}/${yyyy}`;
     }
 
-    // --- Download Weekly Report Logic ---
+    // --- Download Filtered Report Logic ---
     downloadWeekBtn.onclick = function() {
+      const filtered = getFilteredData();
       const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
+      const selectedCompany = companyFilter.value;
+      
+      // Sort in descending date order for PDF too
+      const sortedForPDF = [...filtered].sort((a, b) => {
+        if ((a.date || "") === (b.date || "")) {
+          return ((b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        }
+        return (b.date || "") < (a.date || "") ? -1 : 1;
+      });
+      
+      // Create compact PDF layout
       let pdfHTML = `
-        <div style="font-family: Arial, sans-serif; max-width: 1100px;">
-          <div class="pdf-heading-main">Lunch and Transport Rations</div>
-          <div class="pdf-heading-sub">WEEK ${selectedWeek}, ${selectedYear}</div>
-          <div class="company-summary-row" style="margin-bottom:10px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;">
+        <div style="font-family: Arial, sans-serif; max-width: 100%; font-size: 10px;">
+          <div style="color: #1976d2; font-size: 16px; font-weight: bold; margin-bottom: 5px; text-align:center;">
+            Lunch and Transport Rations
+          </div>
+          <div style="color: #333; font-size: 12px; font-weight: bold; letter-spacing: 0.06em; margin-bottom: 5px; text-align:center;">
+            WEEK ${selectedWeek}, ${selectedYear}
+          </div>
+          <div style="color: #666; font-size: 11px; margin-top: 2px; margin-bottom: 8px; text-align:center;">
+            ${selectedCompany === "ALL" ? "All Companies" : `Company: ${selectedCompany}`}
+          </div>
       `;
 
-      const companies = ["FPS", "HML", "HL", "HFL", "HEL"];
-      const totals = {};
-      companies.forEach(c => totals[c] = 0);
+      // Only show company summary if viewing all companies
+      if (selectedCompany === "ALL") {
+        pdfHTML += `<div style="margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">`;
+        
+        const companies = ["FPS", "HML", "HL", "HFL", "HEL"];
+        const totals = {};
+        companies.forEach(c => totals[c] = 0);
 
-      let filtered = allExpenses.filter(exp =>
-        exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear
-      );
-      filtered.forEach(exp => {
-        if (companies.includes(exp.company)) {
-          const t = (parseFloat(exp.lunch) || 0) + (parseFloat(exp.transport) || 0);
-          totals[exp.company] += t;
-        }
-      });
-      companies.forEach(c => {
-        pdfHTML += `
-          <div class="company-summary-card" style="display:flex;flex-direction:column;align-items:center;background:#f1f6ff;border:2px solid #1976d2;border-radius:8px;min-width:120px;max-width:160px;box-shadow:0 2px 8px #1976d218;padding:10px 20px 8px 20px;margin-right:4px;margin-bottom:8px;font-size:1.07em;">
-            <span class="company-label" style="font-weight:bold;color:#1976d2;font-size:1.12em;margin-bottom:7px;">${c}</span>
-            <span class="company-cost" style="font-weight:bold;color:#b71c1c;font-size:1.25em;background:#fff;border-radius:6px;border:1.5px solid #b71c1c;padding:2px 8px;margin-top:3px;">ZMW ${totals[c].toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})}</span>
-          </div>
-        `;
-      });
-      pdfHTML += `</div>`;
+        filtered.forEach(exp => {
+          if (companies.includes(exp.company)) {
+            const t = (parseFloat(exp.lunch) || 0) + (parseFloat(exp.transport) || 0);
+            totals[exp.company] += t;
+          }
+        });
+        companies.forEach(c => {
+          pdfHTML += `
+            <div style="display:flex;flex-direction:column;align-items:center;background:#f1f6ff;border:1px solid #1976d2;border-radius:6px;min-width:90px;max-width:110px;padding:6px 10px 4px 10px;margin-right:2px;margin-bottom:4px;">
+              <span style="font-weight:bold;color:#1976d2;font-size:10px;margin-bottom:3px;">${c}</span>
+              <span style="font-weight:bold;color:#b71c1c;font-size:11px;background:#fff;border-radius:4px;border:1px solid #b71c1c;padding:1px 4px;">ZMW ${totals[c].toLocaleString(undefined,{maximumFractionDigits:2,minimumFractionDigits:2})}</span>
+            </div>
+          `;
+        });
+        pdfHTML += `</div>`;
+      }
 
       pdfHTML += `
-        <table style="width:100%;border-collapse:collapse;background:#fff;margin-bottom:18px;">
+        <table style="width:100%;border-collapse:collapse;background:#fff;margin-bottom:10px; font-size: 9px;">
           <thead>
             <tr>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Date</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Personnel</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Purpose</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Company</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Task ID</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Location</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Transport</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Airtime</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Lunch</th>
-              <th style="padding:8px 6px;border:1px solid #ddd;background:#f1f6ff;">Total</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Date</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Personnel</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Purpose</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Company</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Task ID</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Location</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Transport</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Airtime</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Lunch</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Total</th>
             </tr>
           </thead>
           <tbody>
       `;
       let sumTransport = 0, sumAirtime = 0, sumLunch = 0, sumTotal = 0;
-      filtered.forEach(exp => {
+      sortedForPDF.forEach(exp => {
         const tval = (parseFloat(exp.transport) || 0) + (parseFloat(exp.airtime) || 0) + (parseFloat(exp.lunch) || 0);
         sumTransport += parseFloat(exp.transport) || 0;
         sumAirtime += parseFloat(exp.airtime) || 0;
@@ -467,16 +521,16 @@
         sumTotal += tval;
         pdfHTML += `
           <tr>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.date ? formatDate(exp.date) : "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.personnel || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.purpose || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.company || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.taskId || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.location || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.transport !== undefined ? exp.transport : ""}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.airtime !== undefined ? exp.airtime : ""}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.lunch !== undefined ? exp.lunch : ""}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.date ? formatDate(exp.date) : "-"}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.personnel || "-"}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.purpose || "-"}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.company || "-"}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.taskId || "-"}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.location || "-"}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${exp.transport !== undefined ? exp.transport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${exp.airtime !== undefined ? exp.airtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${exp.lunch !== undefined ? exp.lunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
           </tr>
         `;
       });
@@ -485,17 +539,17 @@
       pdfHTML += `
           </tbody>
           <tfoot>
-            <tr class="total-row" style="font-weight:bold;background:#f9eee2;">
-              <td style="padding:8px 6px;border:1px solid #eee;">${satString}<br><b>TOTAL</b></td>
+            <tr style="font-weight:bold;background:#f9eee2;font-size:9px;">
+              <td style="padding:4px 3px;border:1px solid #eee;">${satString}<br><b>TOTAL</b></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
-              <td style="padding:8px 6px;border:1px solid #eee;">${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-              <td style="padding:8px 6px;border:1px solid #eee;">${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-              <td style="padding:8px 6px;border:1px solid #eee;">${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-              <td style="padding:8px 6px;border:1px solid #eee;">${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
             </tr>
           </tfoot>
         </table>
@@ -506,12 +560,22 @@
       tempDiv.innerHTML = pdfHTML;
       document.body.appendChild(tempDiv);
 
+      const companySuffix = selectedCompany === "ALL" ? "" : `-${selectedCompany}`;
       html2pdf().from(tempDiv).set({
-        margin: 0.6,
-        filename: `lunch-transport-rations-week${selectedWeek}-${selectedYear}.pdf`,
+        margin: 0.3,
+        filename: `lunch-transport-rations-week${selectedWeek}-${selectedYear}${companySuffix}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+        html2canvas: { 
+          scale: 2,
+          width: 1150, // Slightly wider to fit all columns
+          height: tempDiv.scrollHeight
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'landscape',
+          compress: true
+        }
       }).save().then(() => {
         document.body.removeChild(tempDiv);
       });
