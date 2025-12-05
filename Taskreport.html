@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Task Material & Employee Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7fafd;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(44,62,80,0.06);
+    margin: 20px auto;
+    padding: 25px;
+    max-width: 95%;
+  }
+
+  .panel-heading {
+    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+    color: #fff;
+    padding: 20px 30px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+    margin: -25px -25px 25px -25px;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .filter-bar {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 15px;
+    align-items: center;
+  }
+
+  .filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 250px;
+  }
+
+  label {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.9rem;
+  }
+
+  select, input[type="text"] {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    width: 100%;
+    background: white;
+  }
+
+  button {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    height: 40px;
+  }
+
+  button:hover {
+    background: linear-gradient(135deg, #1565c0 0%, #0a2d5c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .download-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+  }
+
+  .download-btn:hover {
+    background: linear-gradient(135deg, #43A047 0%, #1B5E20 100%);
+  }
+
+  /* NEW LAYOUT: Task Info on left, Cost Summary on right */
+  .task-info-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin: 25px 0;
+  }
+
+  /* Materials and Employees take full width */
+  .full-width-section {
+    width: 100%;
+    margin: 25px 0;
+  }
+
+  .section-box {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .section-header {
+    font-size: 1.2rem;
+    color: #1976d2;
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  /* Table Styles */
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.95rem;
+  }
+
+  .report-table th {
+    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+    color: white;
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+  }
+
+  .report-table td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  .report-table tr:hover {
+    background: #f1f5f9;
+  }
+
+  .report-table tr.total-row {
+    background: #e8f5e8;
+    font-weight: bold;
+  }
+
+  .report-table tr.total-row td {
+    border-top: 2px solid #43A047;
+    border-bottom: 2px solid #43A047;
+    color: #1b5e20;
+  }
+
+  .cost-cell {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+  }
+
+  /* Task List Styles */
+  .task-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8fafc;
+  }
+
+  .task-item {
+    padding: 12px 15px;
+    margin: 5px 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .task-item:hover {
+    background: #e3f2fd;
+    border-color: #1976d2;
+  }
+
+  .task-item.selected {
+    background: #1976d2;
+    color: white;
+    border-color: #0d47a1;
+  }
+
+  .task-id {
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+  }
+
+  .task-desc {
+    flex: 1;
+    margin-left: 15px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .task-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .status-completed {
+    background: #e8f5e9;
+    color: #2E7D32;
+  }
+
+  .status-ongoing {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+
+  .status-pending {
+    background: #fff3e0;
+    color: #EF6C00;
+  }
+
+  /* Material List Styles - FULL WIDTH */
+  .material-item {
+    padding: 15px;
+    margin: 10px 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .material-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .material-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+  }
+
+  .material-details {
+    font-size: 0.85rem;
+    color: #64748b;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .material-quantity, .material-price, .material-total {
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+    text-align: right;
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  .material-total {
+    font-weight: bold;
+    color: #1b5e20;
+    font-size: 1.1rem;
+  }
+
+  /* Employee List Styles */
+  .employee-item {
+    padding: 12px 15px;
+    margin: 8px 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .employee-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+  }
+
+  .employee-hours {
+    font-weight: 500;
+    color: #1976d2;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+  }
+
+  /* Loading Spinner */
+  .loading {
+    text-align: center;
+    padding: 40px;
+  }
+
+  .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #1976d2;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Summary Cards */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+  }
+
+  .summary-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #1976d2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+
+  .summary-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1a237e;
+    margin-bottom: 5px;
+  }
+
+  .summary-label {
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+
+  /* Material Grid for better layout */
+  .materials-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  /* PRINT/PDF SPECIFIC STYLES */
+  @media print {
+    body {
+      background: white;
+      padding: 0;
+      margin: 0;
+      font-size: 10pt !important;
+    }
+    
+    .panel {
+      box-shadow: none;
+      margin: 0;
+      padding: 10px;
+      max-width: 100% !important;
+      width: 100% !important;
+      page-break-inside: avoid;
+    }
+    
+    /* HIDE FILTERS AND BUTTONS */
+    .filter-bar,
+    .button-group,
+    .panel-heading a {
+      display: none !important;
+    }
+    
+    /* KEEP ONLY ESSENTIAL ELEMENTS */
+    .panel-heading {
+      margin: 0 0 20px 0;
+      padding: 15px;
+      font-size: 16pt;
+      page-break-after: avoid;
+    }
+    
+    /* SUMMARY CARDS FOR PDF */
+    .summary-cards {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 15px 0;
+      page-break-inside: avoid;
+    }
+    
+    .summary-card {
+      padding: 15px;
+      page-break-inside: avoid;
+    }
+    
+    .summary-value {
+      font-size: 14pt;
+    }
+    
+    /* TASK INFO LAYOUT FOR PDF */
+    .task-info-grid {
+      grid-template-columns: 2fr 1fr;
+      gap: 15px;
+      margin: 15px 0;
+      page-break-inside: avoid;
+    }
+    
+    /* TABLES FOR PDF */
+    .report-table {
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+    
+    .report-table td {
+      padding: 6px 8px;
+    }
+    
+    /* MATERIAL ITEMS FOR PDF */
+    .material-item {
+      grid-template-columns: 3fr 1fr 1fr 1fr;
+      padding: 10px;
+      gap: 10px;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+    
+    .material-name {
+      font-size: 9pt;
+    }
+    
+    /* EMPLOYEE ITEMS FOR PDF */
+    .employee-item {
+      padding: 8px 10px;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+    
+    /* FORCE LANDSCAPE ORIENTATION */
+    @page {
+      size: landscape;
+      margin: 0.5cm;
+    }
+    
+    /* PREVENT UNNECESSARY PAGE BREAKS */
+    .section-box {
+      page-break-inside: avoid;
+      page-break-before: auto;
+    }
+    
+    .material-item, .employee-item {
+      page-break-inside: avoid;
+    }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .task-info-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    
+    .filter-group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .filter-item {
+      min-width: 100%;
+    }
+    
+    .material-item {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 12px;
+    }
+    
+    .material-quantity, .material-price, .material-total {
+      text-align: left;
+      padding-left: 10px;
+    }
+    
+    .material-info {
+      min-width: auto;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .material-item {
+      grid-template-columns: 3fr 1fr 1fr 1fr;
+      gap: 25px;
+      padding: 18px 20px;
+    }
+    
+    .material-name {
+      font-size: 1.1rem;
+    }
+    
+    .material-total {
+      font-size: 1.2rem;
+    }
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1976d2;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #0d47a1;
+  }
+</style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-heading">
+      <div>
+        <h1 style="margin: 0; font-size: 1.5rem;">Task Material & Employee Report</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 0.9rem;">View all materials and employees assigned to specific tasks</p>
+      </div>
+      <a href="dashboard.html" style="color: white; text-decoration: none; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 5px;">← Dashboard</a>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-group">
+        <div class="filter-item">
+          <label for="project-select">Select Project</label>
+          <select id="project-select">
+            <option value="">Select a project...</option>
+          </select>
+        </div>
+        
+        <div class="filter-item">
+          <label for="task-select">Select Task</label>
+          <select id="task-select">
+            <option value="">All tasks from project</option>
+          </select>
+        </div>
+        
+        <div class="filter-item">
+          <label for="show-all-toggle">View Mode</label>
+          <select id="show-all-toggle">
+            <option value="single">Single Task View</option>
+            <option value="all">All Tasks View</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <button id="load-tasks-btn">Load Project Tasks</button>
+        <button id="generate-report-btn">Generate Report</button>
+        <button id="download-pdf-btn" class="download-btn" disabled>Download PDF</button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="summary-cards" class="summary-cards" style="display: none;">
+      <!-- Filled dynamically -->
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="report-output">
+      <div class="loading" id="initial-loading">
+        <div class="spinner"></div>
+        <p>Loading data...</p>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+  authDomain: "project-task-588c4.firebaseapp.com",
+  projectId: "project-task-588c4",
+  storageBucket: "project-task-588c4.appspot.com",
+  messagingSenderId: "411882772509",
+  appId: "1:411882772509:web:08d613186c101a99f38ef4",
+  measurementId: "G-JMFLFYEM0F"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// DOM Elements
+const projectSelect = document.getElementById('project-select');
+const taskSelect = document.getElementById('task-select');
+const showAllToggle = document.getElementById('show-all-toggle');
+const loadTasksBtn = document.getElementById('load-tasks-btn');
+const generateBtn = document.getElementById('generate-report-btn');
+const downloadPdfBtn = document.getElementById('download-pdf-btn');
+const reportOutput = document.getElementById('report-output');
+const summaryCards = document.getElementById('summary-cards');
+const initialLoading = document.getElementById('initial-loading');
+
+// Global Data Storage
+let projectsData = [];
+let allTasksData = [];
+let allMaterialsData = [];
+let allEmployeesData = [];
+let selectedProjectTasks = [];
+let selectedTaskMaterials = [];
+let selectedTaskEmployees = [];
+let currentProjectId = null;
+
+// Constants
+const LABOUR_COST_PER_HOUR = 20;
+
+// Initialize Application
+async function initializeAppData() {
+  try {
+    // Load all projects
+    const projectsSnapshot = await getDocs(collection(db, "projectDashboard"));
+    projectsData = projectsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Populate project dropdown
+    projectsData.forEach(project => {
+      const option = document.createElement('option');
+      option.value = project.id;
+      option.textContent = project.name || project.id;
+      projectSelect.appendChild(option);
+    });
+
+    // Load all materials
+    const materialsSnapshot = await getDocs(collection(db, "materialsUsage"));
+    allMaterialsData = materialsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Load all employees
+    const employeesSnapshot = await getDocs(collection(db, "employees"));
+    allEmployeesData = employeesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    console.log('Initial data loaded:', {
+      projects: projectsData.length,
+      materials: allMaterialsData.length,
+      employees: allEmployeesData.length
+    });
+
+    initialLoading.style.display = 'none';
+
+  } catch (error) {
+    console.error('Error loading initial data:', error);
+    initialLoading.innerHTML = `<div style="color: red; text-align: center;">Error loading data: ${error.message}</div>`;
+  }
+}
+
+// Load tasks for selected project
+async function loadProjectTasks() {
+  const projectId = projectSelect.value;
+  if (!projectId) {
+    alert('Please select a project first');
+    return;
+  }
+
+  currentProjectId = projectId;
+  loadTasksBtn.disabled = true;
+  loadTasksBtn.textContent = 'Loading...';
+
+  try {
+    // Clear task dropdown
+    taskSelect.innerHTML = '<option value="">All tasks from project</option>';
+    selectedProjectTasks = [];
+
+    // Get project name
+    const projectDoc = await getDoc(doc(db, "projectDashboard", projectId));
+    const projectName = projectDoc.exists() ? projectDoc.data().name : 'Unknown Project';
+
+    // Get main tasks for this project
+    const tasksQuery = query(
+      collection(db, "projectTasks"),
+      where("projectId", "==", projectId)
+    );
+    
+    const tasksSnapshot = await getDocs(tasksQuery);
+    
+    for (const taskDoc of tasksSnapshot.docs) {
+      const taskData = taskDoc.data();
+      const taskId = taskData.taskId || taskDoc.id;
+      
+      // Get subtasks
+      const subtasksSnapshot = await getDocs(
+        collection(db, "projectTasks", taskDoc.id, "subtasks")
+      );
+      
+      // Add main task
+      const mainTask = {
+        id: taskId,
+        docId: taskDoc.id,
+        isSubtask: false,
+        parentTaskId: null,
+        ...taskData,
+        projectName: projectName
+      };
+      selectedProjectTasks.push(mainTask);
+      
+      // Add to dropdown
+      const option = document.createElement('option');
+      option.value = taskId;
+      option.textContent = `${taskId}: ${taskData.taskDescription || 'No description'}`;
+      taskSelect.appendChild(option);
+      
+      // Add subtasks
+      for (const subDoc of subtasksSnapshot.docs) {
+        const subData = subDoc.data();
+        const subTaskId = subData.taskId || subDoc.id;
+        
+        const subtask = {
+          id: subTaskId,
+          docId: subDoc.id,
+          isSubtask: true,
+          parentTaskId: taskId,
+          ...subData,
+          projectName: projectName
+        };
+        selectedProjectTasks.push(subtask);
+        
+        // Add to dropdown
+        const subOption = document.createElement('option');
+        subOption.value = subTaskId;
+        subOption.textContent = `  ↳ ${subTaskId}: ${subData.taskDescription || 'No description'}`;
+        taskSelect.appendChild(subOption);
+        
+        // Get sub-subtasks
+        const subSubSnapshot = await getDocs(
+          collection(db, "projectTasks", taskDoc.id, "subtasks", subDoc.id, "subsubtasks")
+        );
+        
+        for (const subSubDoc of subSubSnapshot.docs) {
+          const subSubData = subSubDoc.data();
+          const subSubTaskId = subSubData.taskId || subSubDoc.id;
+          
+          const subsubtask = {
+            id: subSubTaskId,
+            docId: subSubDoc.id,
+            isSubtask: true,
+            parentTaskId: subTaskId,
+            ...subSubData,
+            projectName: projectName
+          };
+          selectedProjectTasks.push(subsubtask);
+          
+          // Add to dropdown
+          const subSubOption = document.createElement('option');
+          subSubOption.value = subSubTaskId;
+          subSubOption.textContent = `    ↳ ${subSubTaskId}: ${subSubData.taskDescription || 'No description'}`;
+          taskSelect.appendChild(subSubOption);
+        }
+      }
+    }
+
+    console.log(`Loaded ${selectedProjectTasks.length} tasks for project ${projectName}`);
+    
+    // Enable generate button if we have tasks
+    if (selectedProjectTasks.length > 0) {
+      generateBtn.disabled = false;
+    }
+
+  } catch (error) {
+    console.error('Error loading project tasks:', error);
+    alert(`Error loading tasks: ${error.message}`);
+  } finally {
+    loadTasksBtn.disabled = false;
+    loadTasksBtn.textContent = 'Load Project Tasks';
+  }
+}
+
+// Get all materials for a specific task
+async function getMaterialsForTask(taskId) {
+  try {
+    // Filter materials by taskId
+    const taskMaterials = allMaterialsData.filter(material => 
+      material.taskId === taskId && !material.reversed
+    );
+
+    // Enhance materials with additional info
+    const enhancedMaterials = [];
+    
+    for (const material of taskMaterials) {
+      let enhancedMaterial = { ...material };
+      
+      // Try to get material details from materials collection
+      if (material.materialId) {
+        try {
+          const materialDoc = await getDoc(doc(db, "materials", material.materialId));
+          if (materialDoc.exists()) {
+            const materialData = materialDoc.data();
+            enhancedMaterial.materialName = materialData.materialName || materialData.name || 'Unknown';
+            enhancedMaterial.unitPrice = materialData.unitPrice || material.unitPrice || 0;
+            enhancedMaterial.category = materialData.category || materialData.type || 'General';
+          }
+        } catch (err) {
+          console.warn('Could not fetch material details:', err);
+        }
+      }
+      
+      // Calculate total if we have quantity and price
+      if (enhancedMaterial.quantity && enhancedMaterial.unitPrice) {
+        enhancedMaterial.totalCost = parseFloat(enhancedMaterial.quantity) * parseFloat(enhancedMaterial.unitPrice);
+      } else if (enhancedMaterial.amount) {
+        enhancedMaterial.totalCost = parseFloat(enhancedMaterial.amount);
+        enhancedMaterial.quantity = 1;
+      }
+      
+      enhancedMaterials.push(enhancedMaterial);
+    }
+    
+    return enhancedMaterials;
+    
+  } catch (error) {
+    console.error('Error getting materials for task:', error);
+    return [];
+  }
+}
+
+// Get all employees for a specific task
+async function getEmployeesForTask(taskId) {
+  try {
+    // Get location history for this task
+    const locationQuery = query(
+      collection(db, "locationHistory"),
+      where("taskId", "==", taskId)
+    );
+    
+    const locationSnapshot = await getDocs(locationQuery);
+    const employeeHours = {};
+    
+    for (const locDoc of locationSnapshot.docs) {
+      const locData = locDoc.data();
+      if (locData.reversed || !locData.employeeId || !locData.mh) continue;
+      
+      const employeeId = locData.employeeId;
+      const hours = parseFloat(locData.mh) || 0;
+      
+      if (!employeeHours[employeeId]) {
+        employeeHours[employeeId] = {
+          totalHours: 0,
+          records: []
+        };
+      }
+      
+      employeeHours[employeeId].totalHours += hours;
+      employeeHours[employeeId].records.push({
+        date: locData.transferredAt?.toDate?.() || new Date(),
+        hours: hours,
+        description: locData.taskDescription || 'Work hours'
+      });
+    }
+    
+    // Enhance with employee details
+    const enhancedEmployees = [];
+    
+    for (const [employeeId, data] of Object.entries(employeeHours)) {
+      // Find employee in our loaded data
+      const employee = allEmployeesData.find(emp => emp.id === employeeId);
+      
+      enhancedEmployees.push({
+        id: employeeId,
+        name: employee ? 
+          `${employee.name || ''} ${employee.surname || ''}`.trim() || employeeId : 
+          `Employee ${employeeId}`,
+        totalHours: data.totalHours,
+        labourCost: data.totalHours * LABOUR_COST_PER_HOUR,
+        records: data.records,
+        details: employee || null
+      });
+    }
+    
+    return enhancedEmployees;
+    
+  } catch (error) {
+    console.error('Error getting employees for task:', error);
+    return [];
+  }
+}
+
+// Generate the report
+async function generateReport() {
+  const selectedTaskId = taskSelect.value;
+  const showAll = showAllToggle.value === 'all';
+  
+  generateBtn.disabled = true;
+  generateBtn.textContent = 'Generating...';
+  
+  try {
+    let tasksToProcess = [];
+    
+    if (showAll) {
+      // Process all tasks for the project
+      tasksToProcess = selectedProjectTasks;
+    } else if (selectedTaskId) {
+      // Process only selected task
+      const selectedTask = selectedProjectTasks.find(t => t.id === selectedTaskId);
+      if (selectedTask) {
+        tasksToProcess = [selectedTask];
+      }
+    } else {
+      // Process all tasks from project (default)
+      tasksToProcess = selectedProjectTasks;
+    }
+    
+    if (tasksToProcess.length === 0) {
+      reportOutput.innerHTML = '<div class="loading"><p>No tasks to display.</p></div>';
+      return;
+    }
+    
+    // Process each task
+    const processedTasks = [];
+    let totalMaterialCost = 0;
+    let totalLabourCost = 0;
+    let totalMaterialsCount = 0;
+    let totalEmployeesCount = 0;
+    
+    for (const task of tasksToProcess) {
+      // Get materials for this task
+      const taskMaterials = await getMaterialsForTask(task.id);
+      
+      // Get employees for this task
+      const taskEmployees = await getEmployeesForTask(task.id);
+      
+      // Calculate costs
+      const materialCost = taskMaterials.reduce((sum, mat) => sum + (mat.totalCost || 0), 0);
+      const labourCost = taskEmployees.reduce((sum, emp) => sum + emp.labourCost, 0);
+      
+      processedTasks.push({
+        ...task,
+        materials: taskMaterials,
+        employees: taskEmployees,
+        materialCost,
+        labourCost,
+        totalCost: materialCost + labourCost
+      });
+      
+      totalMaterialCost += materialCost;
+      totalLabourCost += labourCost;
+      totalMaterialsCount += taskMaterials.length;
+      totalEmployeesCount += taskEmployees.length;
+    }
+    
+    // Update summary cards
+    updateSummaryCards({
+      tasksCount: processedTasks.length,
+      materialsCount: totalMaterialsCount,
+      employeesCount: totalEmployeesCount,
+      materialCost: totalMaterialCost,
+      labourCost: totalLabourCost,
+      totalCost: totalMaterialCost + totalLabourCost
+    });
+    
+    // Generate the report HTML
+    generateReportHTML(processedTasks, showAll);
+    
+    // Enable download button
+    downloadPdfBtn.disabled = false;
+    
+  } catch (error) {
+    console.error('Error generating report:', error);
+    reportOutput.innerHTML = `<div style="color: red; padding: 20px; text-align: center;">Error: ${error.message}</div>`;
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = 'Generate Report';
+  }
+}
+
+// Update summary cards
+function updateSummaryCards(totals) {
+  summaryCards.style.display = 'grid';
+  summaryCards.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-value">${totals.tasksCount}</div>
+      <div class="summary-label">Tasks</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value">${totals.materialsCount}</div>
+      <div class="summary-label">Materials</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value">${totals.employeesCount}</div>
+      <div class="summary-label">Employees</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value">ZMW ${totals.materialCost.toFixed(2)}</div>
+      <div class="summary-label">Material Cost</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value">ZMW ${totals.labourCost.toFixed(2)}</div>
+      <div class="summary-label">Labour Cost</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value">ZMW ${totals.totalCost.toFixed(2)}</div>
+      <div class="summary-label">Total Cost</div>
+    </div>
+  `;
+}
+
+// Generate report HTML
+function generateReportHTML(tasks, showAll) {
+  let html = '';
+  
+  if (showAll) {
+    // Show all tasks in the project
+    html += `
+      <div class="full-width-section">
+        <div class="section-box">
+          <h3 class="section-header">All Tasks in Project</h3>
+          <div class="task-list-container">
+    `;
+    
+    tasks.forEach(task => {
+      const statusClass = `status-${(task.status || 'pending').toLowerCase()}`;
+      
+      html += `
+        <div class="task-item">
+          <div class="task-id">${task.id}</div>
+          <div class="task-desc">${task.taskDescription || 'No description'}</div>
+          <div class="task-status ${statusClass}">${task.status || 'Pending'}</div>
+        </div>
+      `;
+    });
+    
+    html += `
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Generate detailed view for each task
+  tasks.forEach((task, index) => {
+    const statusClass = `status-${(task.status || 'pending').toLowerCase()}`;
+    
+    html += `
+      <!-- SUMMARY CARDS -->
+      <div id="summary-cards-print" style="display: none;">
+        ${summaryCards.innerHTML}
+      </div>
+      
+      <!-- NEW LAYOUT: Task Info on left, Cost Summary on right -->
+      <div class="task-info-grid">
+        <!-- Task Information (Left - 2/3 width) -->
+        <div class="section-box">
+          <h3 class="section-header">Task Information</h3>
+          <table class="report-table">
+            <tr>
+              <td style="width: 30%;"><strong>Task ID:</strong></td>
+              <td>${task.id}</td>
+            </tr>
+            <tr>
+              <td><strong>Description:</strong></td>
+              <td>${task.taskDescription || 'No description'}</td>
+            </tr>
+            <tr>
+              <td><strong>Project:</strong></td>
+              <td>${task.projectName || 'Unknown'}</td>
+            </tr>
+            <tr>
+              <td><strong>Status:</strong></td>
+              <td><span class="task-status ${statusClass}">${task.status || 'Pending'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>Assigned To:</strong></td>
+              <td>${task.assignedTo || 'Not assigned'}</td>
+            </tr>
+            <tr>
+              <td><strong>Location:</strong></td>
+              <td>${task.location || 'Not specified'}</td>
+            </tr>
+            <tr>
+              <td><strong>Start Date:</strong></td>
+              <td>${task.startDate ? 
+                (task.startDate.toDate ? task.startDate.toDate().toLocaleDateString() : task.startDate) : 
+                'Not set'}</td>
+            </tr>
+            <tr>
+              <td><strong>End Date:</strong></td>
+              <td>${task.endDate ? 
+                (task.endDate.toDate ? task.endDate.toDate().toLocaleDateString() : task.endDate) : 
+                'Not set'}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <!-- Cost Summary (Right - 1/3 width) -->
+        <div class="section-box">
+          <h3 class="section-header">Cost Summary</h3>
+          <table class="report-table">
+            <tr>
+              <td><strong>Material Cost:</strong></td>
+              <td class="cost-cell">ZMW ${task.materialCost.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td><strong>Labour Cost:</strong></td>
+              <td class="cost-cell">ZMW ${task.labourCost.toFixed(2)}</td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>Total Cost:</strong></td>
+              <td class="cost-cell">ZMW ${task.totalCost.toFixed(2)}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Materials Section - FULL WIDTH -->
+      <div class="full-width-section">
+        <div class="section-box">
+          <h3 class="section-header">Materials Assigned (${task.materials.length})</h3>
+          ${task.materials.length > 0 ? `
+            <div class="materials-grid">
+              ${task.materials.map(material => `
+                <div class="material-item">
+                  <div class="material-info">
+                    <div class="material-name">${material.materialName || material.materialId || 'Unknown Material'}</div>
+                    <div class="material-details">
+                      ${material.category ? `<span>Category: ${material.category}</span>` : ''}
+                      ${material.date ? `<span>Date: ${material.date.toDate ? material.date.toDate().toLocaleDateString() : material.date}</span>` : ''}
+                      ${material.notes ? `<span>Notes: ${material.notes}</span>` : ''}
+                    </div>
+                  </div>
+                  <div class="material-quantity">
+                    ${material.quantity || 1} ${material.unit || 'units'}
+                  </div>
+                  <div class="material-price">
+                    ZMW ${(material.unitPrice || material.amount || 0).toFixed(2)} each
+                  </div>
+                  <div class="material-total">
+                    ZMW ${(material.totalCost || material.amount || 0).toFixed(2)}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<p style="text-align: center; color: #666; padding: 20px;">No materials assigned to this task</p>'}
+        </div>
+      </div>
+      
+      <!-- Employees Section - FULL WIDTH -->
+      <div class="full-width-section">
+        <div class="section-box">
+          <h3 class="section-header">Employees Assigned (${task.employees.length})</h3>
+          ${task.employees.length > 0 ? `
+            <div style="width: 100%;">
+              ${task.employees.map(employee => `
+                <div class="employee-item">
+                  <div class="employee-name">${employee.name}</div>
+                  <div class="employee-hours">
+                    ${employee.totalHours.toFixed(1)} hours • ZMW ${employee.labourCost.toFixed(2)}
+                  </div>
+                </div>
+                ${employee.records.length > 0 ? `
+                  <div style="margin-left: 20px; padding: 10px; background: #f8fafc; border-radius: 4px; margin-top: 5px; width: calc(100% - 40px);">
+                    <small style="color: #64748b;">Work sessions:</small>
+                    ${employee.records.map(record => `
+                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 2px 0;">
+                        <span>${record.date.toLocaleDateString()}</span>
+                        <span>${record.hours.toFixed(1)} hours</span>
+                        <span>${record.description}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              `).join('')}
+            </div>
+          ` : '<p style="text-align: center; color: #666; padding: 20px;">No employees assigned to this task</p>'}
+        </div>
+      </div>
+      
+      ${index < tasks.length - 1 ? '<hr style="margin: 30px 0; border: none; border-top: 2px solid #e2e8f0; width: 100%;">' : ''}
+    `;
+  });
+  
+  reportOutput.innerHTML = html;
+}
+
+// Export to PDF
+downloadPdfBtn.addEventListener('click', () => {
+  // Create a clone of the report content for PDF export
+  const originalContent = reportOutput.innerHTML;
+  const originalSummary = summaryCards.innerHTML;
+  
+  // Get the main panel
+  const element = document.querySelector('.panel');
+  
+  // Configuration for landscape PDF
+  const opt = {
+    margin: [0.5, 0.5, 0.5, 0.5], // T, R, B, L
+    filename: `task-report-${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { 
+      type: 'jpeg', 
+      quality: 0.98 
+    },
+    html2canvas: { 
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      windowWidth: 1920 // Force larger width for landscape
+    },
+    jsPDF: { 
+      unit: 'in', 
+      format: 'a4', 
+      orientation: 'landscape' // LANDSCAPE ORIENTATION
+    }
+  };
+  
+  // Create and save PDF
+  html2pdf().set(opt).from(element).save();
+});
+
+// Event Listeners
+projectSelect.addEventListener('change', () => {
+  taskSelect.innerHTML = '<option value="">All tasks from project</option>';
+  generateBtn.disabled = true;
+  downloadPdfBtn.disabled = true;
+  reportOutput.innerHTML = '<div class="loading"><p>Select a task or click "Load Project Tasks"</p></div>';
+});
+
+loadTasksBtn.addEventListener('click', loadProjectTasks);
+generateBtn.addEventListener('click', generateReport);
+
+// Initialize
+document.addEventListener('DOMContentLoaded', initializeAppData);
+
+// Auto-load first project tasks if available
+setTimeout(() => {
+  if (projectSelect.options.length > 1) {
+    projectSelect.selectedIndex = 1;
+    loadProjectTasks();
+  }
+}, 1000);
+</script>
+</body>
+</html>
