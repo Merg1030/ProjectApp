@@ -4,563 +4,607 @@
   <meta charset="utf-8" />
   <title>Task Material & Employee Report</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f7fafd;
-    margin: 0;
-    padding: 20px;
-  }
-
-  .panel {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(44,62,80,0.06);
-    margin: 20px auto;
-    padding: 25px;
-    max-width: 95%;
-  }
-
-  .panel-heading {
-    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
-    color: #fff;
-    padding: 20px 30px;
-    font-size: 1.4rem;
-    font-weight: bold;
-    border-radius: 8px 8px 0 0;
-    margin: -25px -25px 25px -25px;
-    letter-spacing: 0.05em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .filter-bar {
-    background: #f8fafc;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid #e2e8f0;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 15px;
-    align-items: center;
-  }
-
-  .filter-item {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex: 1;
-    min-width: 250px;
-  }
-
-  label {
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 0.9rem;
-  }
-
-  select, input[type="text"] {
-    padding: 10px 12px;
-    border: 1px solid #cbd5e0;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    width: 100%;
-    background: white;
-  }
-
-  button {
-    padding: 10px 24px;
-    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s;
-    height: 40px;
-  }
-
-  button:hover {
-    background: linear-gradient(135deg, #1565c0 0%, #0a2d5c 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
-  }
-
-  .button-group {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-  }
-
-  .download-btn {
-    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-  }
-
-  .download-btn:hover {
-    background: linear-gradient(135deg, #43A047 0%, #1B5E20 100%);
-  }
-
-  /* NEW LAYOUT: Task Info on left, Cost Summary on right */
-  .task-info-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
-    margin: 25px 0;
-  }
-
-  /* Materials and Employees take full width */
-  .full-width-section {
-    width: 100%;
-    margin: 25px 0;
-  }
-
-  .section-box {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .section-header {
-    font-size: 1.2rem;
-    color: #1976d2;
-    margin: 0 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #e2e8f0;
-  }
-
-  /* Table Styles */
-  .report-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    font-size: 0.95rem;
-  }
-
-  .report-table th {
-    background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
-    color: white;
-    padding: 12px 10px;
-    text-align: left;
-    font-weight: 600;
-    position: sticky;
-    top: 0;
-  }
-
-  .report-table td {
-    padding: 10px;
-    border-bottom: 1px solid #e2e8f0;
-    vertical-align: top;
-  }
-
-  .report-table tr:hover {
-    background: #f1f5f9;
-  }
-
-  .report-table tr.total-row {
-    background: #e8f5e8;
-    font-weight: bold;
-  }
-
-  .report-table tr.total-row td {
-    border-top: 2px solid #43A047;
-    border-bottom: 2px solid #43A047;
-    color: #1b5e20;
-  }
-
-  .cost-cell {
-    text-align: right;
-    font-family: 'Courier New', monospace;
-    font-weight: 500;
-  }
-
-  /* Task List Styles */
-  .task-list-container {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    margin: 10px 0;
-    padding: 10px;
-    background: #f8fafc;
-  }
-
-  .task-item {
-    padding: 12px 15px;
-    margin: 5px 0;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .task-item:hover {
-    background: #e3f2fd;
-    border-color: #1976d2;
-  }
-
-  .task-item.selected {
-    background: #1976d2;
-    color: white;
-    border-color: #0d47a1;
-  }
-
-  .task-id {
-    font-weight: bold;
-    font-family: 'Courier New', monospace;
-  }
-
-  .task-desc {
-    flex: 1;
-    margin-left: 15px;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .task-status {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .status-completed {
-    background: #e8f5e9;
-    color: #2E7D32;
-  }
-
-  .status-ongoing {
-    background: #e3f2fd;
-    color: #1976d2;
-  }
-
-  .status-pending {
-    background: #fff3e0;
-    color: #EF6C00;
-  }
-
-  /* Material List Styles - FULL WIDTH */
-  .material-item {
-    padding: 15px;
-    margin: 10px 0;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    display: grid;
-    grid-template-columns: 3fr 1fr 1fr 1fr;
-    gap: 20px;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .material-info {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .material-name {
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 1rem;
-  }
-
-  .material-details {
-    font-size: 0.85rem;
-    color: #64748b;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .material-quantity, .material-price, .material-total {
-    font-weight: 500;
-    font-family: 'Courier New', monospace;
-    text-align: right;
-    font-size: 1rem;
-    white-space: nowrap;
-  }
-
-  .material-total {
-    font-weight: bold;
-    color: #1b5e20;
-    font-size: 1.1rem;
-  }
-
-  /* Employee List Styles */
-  .employee-item {
-    padding: 12px 15px;
-    margin: 8px 0;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-
-  .employee-name {
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 1rem;
-  }
-
-  .employee-hours {
-    font-weight: 500;
-    color: #1976d2;
-    font-family: 'Courier New', monospace;
-    font-size: 1rem;
-  }
-
-  /* Loading Spinner */
-  .loading {
-    text-align: center;
-    padding: 40px;
-  }
-
-  .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #1976d2;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 20px auto;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  /* Summary Cards */
-  .summary-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin: 20px 0;
-  }
-
-  .summary-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 4px solid #1976d2;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    text-align: center;
-  }
-
-  .summary-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #1a237e;
-    margin-bottom: 5px;
-  }
-
-  .summary-label {
-    color: #64748b;
-    font-size: 0.85rem;
-  }
-
-  /* Material Grid for better layout */
-  .materials-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-
-  /* PRINT/PDF SPECIFIC STYLES */
-  @media print {
+  <style>
     body {
-      background: white;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f7fafd;
       margin: 0;
-      font-size: 10pt !important;
+      padding: 20px;
     }
-    
+
     .panel {
-      box-shadow: none;
-      margin: 0;
-      padding: 10px;
-      max-width: 100% !important;
-      width: 100% !important;
-      page-break-inside: avoid;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(44,62,80,0.06);
+      margin: 20px auto;
+      padding: 25px;
+      max-width: 95%;
     }
-    
-    /* HIDE FILTERS AND BUTTONS */
-    .filter-bar,
-    .button-group,
-    .panel-heading a {
-      display: none !important;
-    }
-    
-    /* KEEP ONLY ESSENTIAL ELEMENTS */
+
     .panel-heading {
-      margin: 0 0 20px 0;
-      padding: 15px;
-      font-size: 16pt;
-      page-break-after: avoid;
+      background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+      color: #fff;
+      padding: 20px 30px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      border-radius: 8px 8px 0 0;
+      margin: -25px -25px 25px -25px;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    
-    /* SUMMARY CARDS FOR PDF */
-    .summary-cards {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 15px 0;
-      page-break-inside: avoid;
-    }
-    
-    .summary-card {
-      padding: 15px;
-      page-break-inside: avoid;
-    }
-    
-    .summary-value {
-      font-size: 14pt;
-    }
-    
-    /* TASK INFO LAYOUT FOR PDF */
-    .task-info-grid {
-      grid-template-columns: 2fr 1fr;
-      gap: 15px;
-      margin: 15px 0;
-      page-break-inside: avoid;
-    }
-    
-    /* TABLES FOR PDF */
-    .report-table {
-      font-size: 9pt;
-      page-break-inside: avoid;
-    }
-    
-    .report-table td {
-      padding: 6px 8px;
-    }
-    
-    /* MATERIAL ITEMS FOR PDF */
-    .material-item {
-      grid-template-columns: 3fr 1fr 1fr 1fr;
-      padding: 10px;
-      gap: 10px;
-      font-size: 9pt;
-      page-break-inside: avoid;
-    }
-    
-    .material-name {
-      font-size: 9pt;
-    }
-    
-    /* EMPLOYEE ITEMS FOR PDF */
-    .employee-item {
-      padding: 8px 10px;
-      font-size: 9pt;
-      page-break-inside: avoid;
-    }
-    
-    /* FORCE LANDSCAPE ORIENTATION */
-    @page {
-      size: landscape;
-      margin: 0.5cm;
-    }
-    
-    /* PREVENT UNNECESSARY PAGE BREAKS */
-    .section-box {
-      page-break-inside: avoid;
-      page-break-before: auto;
-    }
-    
-    .material-item, .employee-item {
-      page-break-inside: avoid;
-    }
-  }
 
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .task-info-grid {
-      grid-template-columns: 1fr;
-      gap: 20px;
+    .filter-bar {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      border: 1px solid #e2e8f0;
     }
-    
+
     .filter-group {
-      flex-direction: column;
-      align-items: stretch;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 15px;
+      align-items: center;
     }
-    
-    .filter-item {
-      min-width: 100%;
-    }
-    
-    .material-item {
-      grid-template-columns: 1fr;
-      gap: 10px;
-      padding: 12px;
-    }
-    
-    .material-quantity, .material-price, .material-total {
-      text-align: left;
-      padding-left: 10px;
-    }
-    
-    .material-info {
-      min-width: auto;
-    }
-  }
 
-  @media (min-width: 1200px) {
-    .material-item {
-      grid-template-columns: 3fr 1fr 1fr 1fr;
-      gap: 25px;
-      padding: 18px 20px;
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      min-width: 250px;
     }
-    
+
+    label {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 0.9rem;
+    }
+
+    select, input[type="text"] {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+      background: white;
+    }
+
+    button {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      height: 40px;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #1565c0 0%, #0a2d5c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+    }
+
+    .download-btn:hover {
+      background: linear-gradient(135deg, #43A047 0%, #1B5E20 100%);
+    }
+
+    /* NEW LAYOUT: Task Info on left, Cost Summary on right */
+    .task-info-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin: 25px 0;
+    }
+
+    /* Materials and Employees take full width */
+    .full-width-section {
+      width: 100%;
+      margin: 25px 0;
+    }
+
+    .section-box {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .section-header {
+      font-size: 1.2rem;
+      color: #1976d2;
+      margin: 0 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* Table Styles */
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 0.95rem;
+    }
+
+    .report-table th {
+      background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+      color: white;
+      padding: 12px 10px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .report-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    .report-table tr:hover {
+      background: #f1f5f9;
+    }
+
+    .report-table tr.total-row {
+      background: #e8f5e8;
+      font-weight: bold;
+    }
+
+    .report-table tr.total-row td {
+      border-top: 2px solid #43A047;
+      border-bottom: 2px solid #43A047;
+      color: #1b5e20;
+    }
+
+    .cost-cell {
+      text-align: right;
+      font-family: 'Courier New', monospace;
+      font-weight: 500;
+    }
+
+    /* Task List Styles */
+    .task-list-container {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8fafc;
+    }
+
+    .task-item {
+      padding: 12px 15px;
+      margin: 5px 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-item:hover {
+      background: #e3f2fd;
+      border-color: #1976d2;
+    }
+
+    .task-item.selected {
+      background: #1976d2;
+      color: white;
+      border-color: #0d47a1;
+    }
+
+    .task-id {
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    .task-desc {
+      flex: 1;
+      margin-left: 15px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-status {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-completed {
+      background: #e8f5e9;
+      color: #2E7D32;
+    }
+
+    .status-ongoing {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .status-pending {
+      background: #fff3e0;
+      color: #EF6C00;
+    }
+
+    /* Material List Styles - FULL WIDTH */
+    .material-item {
+      padding: 15px;
+      margin: 10px 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      display: grid;
+      grid-template-columns: 3fr 1fr 1fr 1fr;
+      gap: 20px;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .material-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
     .material-name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 1rem;
+    }
+
+    .material-details {
+      font-size: 0.85rem;
+      color: #64748b;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .material-quantity, .material-price, .material-total {
+      font-weight: 500;
+      font-family: 'Courier New', monospace;
+      text-align: right;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    .material-total {
+      font-weight: bold;
+      color: #1b5e20;
       font-size: 1.1rem;
     }
-    
-    .material-total {
-      font-size: 1.2rem;
+
+    /* Employee List Styles */
+    .employee-item {
+      padding: 12px 15px;
+      margin: 8px 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
     }
-  }
 
-  /* Scrollbar Styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
+    .employee-name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 1rem;
+    }
 
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-  }
+    .employee-hours {
+      font-weight: 500;
+      color: #1976d2;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+    }
 
-  ::-webkit-scrollbar-thumb {
-    background: #1976d2;
-    border-radius: 4px;
-  }
+    /* Allowance Display */
+    .allowance-details {
+      background: #fff8e1;
+      border: 1px solid #ffd54f;
+      border-radius: 6px;
+      padding: 10px 15px;
+      margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: #0d47a1;
-  }
-</style>
+    .allowance-label {
+      font-weight: 600;
+      color: #ff8f00;
+    }
+
+    .allowance-value {
+      font-weight: bold;
+      color: #e65100;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+    }
+
+    /* Loading Spinner */
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1976d2;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .summary-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #1976d2;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+
+    .summary-card.allowance {
+      border-left-color: #ff9800;
+      background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #1a237e;
+      margin-bottom: 5px;
+    }
+
+    .summary-label {
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    /* Material Grid for better layout */
+    .materials-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* PRINT/PDF SPECIFIC STYLES */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+        font-size: 10pt !important;
+      }
+      
+      .panel {
+        box-shadow: none;
+        margin: 0;
+        padding: 10px;
+        max-width: 100% !important;
+        width: 100% !important;
+        page-break-inside: avoid;
+      }
+      
+      /* HIDE FILTERS AND BUTTONS */
+      .filter-bar,
+      .button-group,
+      .panel-heading a {
+        display: none !important;
+      }
+      
+      /* KEEP ONLY ESSENTIAL ELEMENTS */
+      .panel-heading {
+        margin: 0 0 20px 0;
+        padding: 15px;
+        font-size: 16pt;
+        page-break-after: avoid;
+      }
+      
+      /* SUMMARY CARDS FOR PDF */
+      .summary-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 15px 0;
+        page-break-inside: avoid;
+      }
+      
+      .summary-card {
+        padding: 15px;
+        page-break-inside: avoid;
+      }
+      
+      .summary-value {
+        font-size: 14pt;
+      }
+      
+      /* TASK INFO LAYOUT FOR PDF */
+      .task-info-grid {
+        grid-template-columns: 2fr 1fr;
+        gap: 15px;
+        margin: 15px 0;
+        page-break-inside: avoid;
+      }
+      
+      /* TABLES FOR PDF */
+      .report-table {
+        font-size: 9pt;
+        page-break-inside: avoid;
+      }
+      
+      .report-table td {
+        padding: 6px 8px;
+      }
+      
+      /* MATERIAL ITEMS FOR PDF */
+      .material-item {
+        grid-template-columns: 3fr 1fr 1fr 1fr;
+        padding: 10px;
+        gap: 10px;
+        font-size: 9pt;
+        page-break-inside: avoid;
+      }
+      
+      .material-name {
+        font-size: 9pt;
+      }
+      
+      /* EMPLOYEE ITEMS FOR PDF */
+      .employee-item {
+        padding: 8px 10px;
+        font-size: 9pt;
+        page-break-inside: avoid;
+      }
+      
+      /* ALLOWANCE ITEMS FOR PDF */
+      .allowance-details {
+        padding: 6px 10px;
+        font-size: 9pt;
+        page-break-inside: avoid;
+      }
+      
+      /* FORCE LANDSCAPE ORIENTATION */
+      @page {
+        size: landscape;
+        margin: 0.5cm;
+      }
+      
+      /* PREVENT UNNECESSARY PAGE BREAKS */
+      .section-box {
+        page-break-inside: avoid;
+        page-break-before: auto;
+      }
+      
+      .material-item, .employee-item, .allowance-details {
+        page-break-inside: avoid;
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .task-info-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .filter-item {
+        min-width: 100%;
+      }
+      
+      .material-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px;
+      }
+      
+      .material-quantity, .material-price, .material-total {
+        text-align: left;
+        padding-left: 10px;
+      }
+      
+      .material-info {
+        min-width: auto;
+      }
+      
+      .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .material-item {
+        grid-template-columns: 3fr 1fr 1fr 1fr;
+        gap: 25px;
+        padding: 18px 20px;
+      }
+      
+      .material-name {
+        font-size: 1.1rem;
+      }
+      
+      .material-total {
+        font-size: 1.2rem;
+      }
+      
+      .summary-cards {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #1976d2;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0d47a1;
+    }
+  </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -595,6 +639,15 @@
           <select id="show-all-toggle">
             <option value="single">Single Task View</option>
             <option value="all">All Tasks View</option>
+          </select>
+        </div>
+
+        <!-- NEW: Allowance Filter -->
+        <div class="filter-item">
+          <label for="allowance-source">Allowance Source</label>
+          <select id="allowance-source">
+            <option value="from-file">From Personnel Expenses File</option>
+            <option value="fixed-rate">Fixed Daily Rate</option>
           </select>
         </div>
       </div>
@@ -649,6 +702,7 @@ const db = getFirestore(app);
 const projectSelect = document.getElementById('project-select');
 const taskSelect = document.getElementById('task-select');
 const showAllToggle = document.getElementById('show-all-toggle');
+const allowanceSource = document.getElementById('allowance-source');
 const loadTasksBtn = document.getElementById('load-tasks-btn');
 const generateBtn = document.getElementById('generate-report-btn');
 const downloadPdfBtn = document.getElementById('download-pdf-btn');
@@ -661,13 +715,16 @@ let projectsData = [];
 let allTasksData = [];
 let allMaterialsData = [];
 let allEmployeesData = [];
+let personnelExpensesData = []; // NEW: Store personnel expenses data
 let selectedProjectTasks = [];
 let selectedTaskMaterials = [];
 let selectedTaskEmployees = [];
 let currentProjectId = null;
 
-// Constants
+// Constants - Fixed rates (can be adjusted)
 const LABOUR_COST_PER_HOUR = 20;
+const FIXED_LUNCH_ALLOWANCE = 50; // ZMW 50 per day
+const FIXED_TRANSPORT_ALLOWANCE = 30; // ZMW 30 per day
 
 // Initialize Application
 async function initializeAppData() {
@@ -701,10 +758,18 @@ async function initializeAppData() {
       ...doc.data()
     }));
 
+    // NEW: Load personnel expenses data from PersonnelExpenses collection
+    const expensesSnapshot = await getDocs(collection(db, "PersonnelExpenses"));
+    personnelExpensesData = expensesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
     console.log('Initial data loaded:', {
       projects: projectsData.length,
       materials: allMaterialsData.length,
-      employees: allEmployeesData.length
+      employees: allEmployeesData.length,
+      expenses: personnelExpensesData.length // NEW: log expenses count
     });
 
     initialLoading.style.display = 'none';
@@ -832,6 +897,74 @@ async function loadProjectTasks() {
   } finally {
     loadTasksBtn.disabled = false;
     loadTasksBtn.textContent = 'Load Project Tasks';
+  }
+}
+
+// NEW: Get lunch and transport allowance for a task
+async function getAllowanceForTask(taskId) {
+  const source = allowanceSource.value;
+  
+  if (source === 'from-file') {
+    // Get from PersonnelExpenses collection
+    const taskExpenses = personnelExpensesData.filter(expense => 
+      expense.taskId === taskId
+    );
+    
+    let totalLunch = 0;
+    let totalTransport = 0;
+    let totalAirtime = 0;
+    
+    taskExpenses.forEach(expense => {
+      totalLunch += parseFloat(expense.lunch) || 0;
+      totalTransport += parseFloat(expense.transport) || 0;
+      totalAirtime += parseFloat(expense.airtime) || 0;
+    });
+    
+    const totalAllowance = totalLunch + totalTransport + totalAirtime;
+    
+    return {
+      lunch: totalLunch,
+      transport: totalTransport,
+      airtime: totalAirtime,
+      total: totalAllowance,
+      source: 'file',
+      entries: taskExpenses,
+      daysCount: taskExpenses.length // Count of days with expenses
+    };
+  } else {
+    // Fixed daily rate calculation based on employee days worked
+    // We need to get employee attendance first
+    const employees = await getEmployeesForTask(taskId);
+    
+    // Count unique work days from employees
+    const uniqueDays = new Set();
+    
+    employees.forEach(employee => {
+      employee.records?.forEach(record => {
+        if (record.date) {
+          const dateKey = record.date.toISOString ? record.date.toISOString().split('T')[0] : record.date;
+          uniqueDays.add(dateKey);
+        }
+      });
+    });
+    
+    const daysCount = uniqueDays.size;
+    const totalLunch = daysCount * FIXED_LUNCH_ALLOWANCE;
+    const totalTransport = daysCount * FIXED_TRANSPORT_ALLOWANCE;
+    const totalAllowance = totalLunch + totalTransport;
+    
+    return {
+      lunch: totalLunch,
+      transport: totalTransport,
+      airtime: 0,
+      total: totalAllowance,
+      source: 'fixed',
+      daysCount: daysCount,
+      dailyRate: {
+        lunch: FIXED_LUNCH_ALLOWANCE,
+        transport: FIXED_TRANSPORT_ALLOWANCE
+      }
+    };
   }
 }
 
@@ -978,8 +1111,10 @@ async function generateReport() {
     const processedTasks = [];
     let totalMaterialCost = 0;
     let totalLabourCost = 0;
+    let totalAllowanceCost = 0; // NEW
     let totalMaterialsCount = 0;
     let totalEmployeesCount = 0;
+    let totalAllowanceDays = 0; // NEW
     
     for (const task of tasksToProcess) {
       // Get materials for this task
@@ -988,23 +1123,31 @@ async function generateReport() {
       // Get employees for this task
       const taskEmployees = await getEmployeesForTask(task.id);
       
+      // NEW: Get allowance for this task
+      const taskAllowance = await getAllowanceForTask(task.id);
+      
       // Calculate costs
       const materialCost = taskMaterials.reduce((sum, mat) => sum + (mat.totalCost || 0), 0);
       const labourCost = taskEmployees.reduce((sum, emp) => sum + emp.labourCost, 0);
+      const allowanceCost = taskAllowance.total; // NEW
       
       processedTasks.push({
         ...task,
         materials: taskMaterials,
         employees: taskEmployees,
+        allowance: taskAllowance, // NEW
         materialCost,
         labourCost,
-        totalCost: materialCost + labourCost
+        allowanceCost, // NEW
+        totalCost: materialCost + labourCost + allowanceCost // UPDATED: include allowance
       });
       
       totalMaterialCost += materialCost;
       totalLabourCost += labourCost;
+      totalAllowanceCost += allowanceCost; // NEW
       totalMaterialsCount += taskMaterials.length;
       totalEmployeesCount += taskEmployees.length;
+      totalAllowanceDays += taskAllowance.daysCount || 0; // NEW
     }
     
     // Update summary cards
@@ -1014,7 +1157,9 @@ async function generateReport() {
       employeesCount: totalEmployeesCount,
       materialCost: totalMaterialCost,
       labourCost: totalLabourCost,
-      totalCost: totalMaterialCost + totalLabourCost
+      allowanceCost: totalAllowanceCost, // NEW
+      allowanceDays: totalAllowanceDays, // NEW
+      totalCost: totalMaterialCost + totalLabourCost + totalAllowanceCost // UPDATED
     });
     
     // Generate the report HTML
@@ -1056,9 +1201,15 @@ function updateSummaryCards(totals) {
       <div class="summary-value">ZMW ${totals.labourCost.toFixed(2)}</div>
       <div class="summary-label">Labour Cost</div>
     </div>
-    <div class="summary-card">
+    <div class="summary-card allowance">
+      <div class="summary-value">ZMW ${totals.allowanceCost.toFixed(2)}</div>
+      <div class="summary-label">Allowance Cost</div>
+      <small style="color: #666; font-size: 0.75rem;">(${totals.allowanceDays} days)</small>
+    </div>
+    <div class="summary-card" style="background: #e8f5e9; border-left-color: #4CAF50;">
       <div class="summary-value">ZMW ${totals.totalCost.toFixed(2)}</div>
       <div class="summary-label">Total Cost</div>
+      <small style="color: #666; font-size: 0.75rem;">(incl. allowance)</small>
     </div>
   `;
 }
@@ -1098,13 +1249,9 @@ function generateReportHTML(tasks, showAll) {
   // Generate detailed view for each task
   tasks.forEach((task, index) => {
     const statusClass = `status-${(task.status || 'pending').toLowerCase()}`;
+    const allowanceSourceText = task.allowance.source === 'file' ? 'From Personnel Expenses' : 'Fixed Daily Rate';
     
     html += `
-      <!-- SUMMARY CARDS -->
-      <div id="summary-cards-print" style="display: none;">
-        ${summaryCards.innerHTML}
-      </div>
-      
       <!-- NEW LAYOUT: Task Info on left, Cost Summary on right -->
       <div class="task-info-grid">
         <!-- Task Information (Left - 2/3 width) -->
@@ -1147,6 +1294,11 @@ function generateReportHTML(tasks, showAll) {
                 (task.endDate.toDate ? task.endDate.toDate().toLocaleDateString() : task.endDate) : 
                 'Not set'}</td>
             </tr>
+            <!-- NEW: Allowance Source Info -->
+            <tr>
+              <td><strong>Allowance Source:</strong></td>
+              <td>${allowanceSourceText}</td>
+            </tr>
           </table>
         </div>
         
@@ -1162,13 +1314,102 @@ function generateReportHTML(tasks, showAll) {
               <td><strong>Labour Cost:</strong></td>
               <td class="cost-cell">ZMW ${task.labourCost.toFixed(2)}</td>
             </tr>
+            <tr style="background: #fff8e1;">
+              <td><strong>Allowance Cost:</strong></td>
+              <td class="cost-cell">ZMW ${task.allowanceCost.toFixed(2)}</td>
+            </tr>
             <tr class="total-row">
               <td><strong>Total Cost:</strong></td>
               <td class="cost-cell">ZMW ${task.totalCost.toFixed(2)}</td>
             </tr>
           </table>
+          
+          <!-- NEW: Allowance Breakdown -->
+          <div style="margin-top: 20px; padding: 15px; background: #fff8e1; border-radius: 6px; border: 1px solid #ffd54f;">
+            <h4 style="margin: 0 0 10px 0; color: #ff8f00;">Allowance Breakdown</h4>
+            <table style="width: 100%; font-size: 0.9rem;">
+              <tr>
+                <td>Lunch Allowance:</td>
+                <td style="text-align: right; font-weight: bold;">ZMW ${task.allowance.lunch.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td>Transport Allowance:</td>
+                <td style="text-align: right; font-weight: bold;">ZMW ${task.allowance.transport.toFixed(2)}</td>
+              </tr>
+              ${task.allowance.airtime > 0 ? `
+              <tr>
+                <td>Airtime Allowance:</td>
+                <td style="text-align: right; font-weight: bold;">ZMW ${task.allowance.airtime.toFixed(2)}</td>
+              </tr>
+              ` : ''}
+              <tr style="border-top: 1px solid #ffd54f;">
+                <td><strong>Total Allowance:</strong></td>
+                <td style="text-align: right; font-weight: bold; color: #e65100;">ZMW ${task.allowance.total.toFixed(2)}</td>
+              </tr>
+              ${task.allowance.daysCount ? `
+              <tr>
+                <td colspan="2" style="font-size: 0.8rem; color: #666; text-align: center;">
+                  Based on ${task.allowance.daysCount} work day${task.allowance.daysCount !== 1 ? 's' : ''}
+                </td>
+              </tr>
+              ` : ''}
+            </table>
+          </div>
         </div>
       </div>
+      
+      <!-- NEW: Detailed Allowance Information Section -->
+      ${task.allowance.source === 'file' && task.allowance.entries && task.allowance.entries.length > 0 ? `
+      <div class="full-width-section">
+        <div class="section-box">
+          <h3 class="section-header">Allowance Details (From Personnel Expenses)</h3>
+          <div style="overflow-x: auto;">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Personnel</th>
+                  <th>Purpose</th>
+                  <th>Company</th>
+                  <th>Location</th>
+                  <th>Transport</th>
+                  <th>Airtime</th>
+                  <th>Lunch</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${task.allowance.entries.map(entry => {
+                  const entryTotal = (parseFloat(entry.transport) || 0) + (parseFloat(entry.airtime) || 0) + (parseFloat(entry.lunch) || 0);
+                  return `
+                  <tr>
+                    <td>${entry.date || '-'}</td>
+                    <td>${entry.personnel || '-'}</td>
+                    <td>${entry.purpose || '-'}</td>
+                    <td>${entry.company || '-'}</td>
+                    <td>${entry.location || '-'}</td>
+                    <td style="text-align: right;">${entry.transport ? parseFloat(entry.transport).toFixed(2) : '0.00'}</td>
+                    <td style="text-align: right;">${entry.airtime ? parseFloat(entry.airtime).toFixed(2) : '0.00'}</td>
+                    <td style="text-align: right;">${entry.lunch ? parseFloat(entry.lunch).toFixed(2) : '0.00'}</td>
+                    <td style="text-align: right; font-weight: bold;">${entryTotal.toFixed(2)}</td>
+                  </tr>
+                  `;
+                }).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background: #fff8e1; font-weight: bold;">
+                  <td colspan="5">TOTAL ALLOWANCE</td>
+                  <td style="text-align: right;">${task.allowance.transport.toFixed(2)}</td>
+                  <td style="text-align: right;">${task.allowance.airtime.toFixed(2)}</td>
+                  <td style="text-align: right;">${task.allowance.lunch.toFixed(2)}</td>
+                  <td style="text-align: right; color: #e65100;">${task.allowance.total.toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      ` : ''}
       
       <!-- Materials Section - FULL WIDTH -->
       <div class="full-width-section">
@@ -1243,16 +1484,12 @@ function generateReportHTML(tasks, showAll) {
 // Export to PDF
 downloadPdfBtn.addEventListener('click', () => {
   // Create a clone of the report content for PDF export
-  const originalContent = reportOutput.innerHTML;
-  const originalSummary = summaryCards.innerHTML;
-  
-  // Get the main panel
   const element = document.querySelector('.panel');
   
   // Configuration for landscape PDF
   const opt = {
     margin: [0.5, 0.5, 0.5, 0.5], // T, R, B, L
-    filename: `task-report-${new Date().toISOString().split('T')[0]}.pdf`,
+    filename: `task-report-with-allowance-${new Date().toISOString().split('T')[0]}.pdf`,
     image: { 
       type: 'jpeg', 
       quality: 0.98 
