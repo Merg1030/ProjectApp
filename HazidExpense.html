@@ -411,14 +411,24 @@
     const projectCollapseBtn = document.getElementById("project-collapse-btn");
 
     // --- Filter State ---
-    let selectedAccount = localStorage.getItem('ims_selectedAccount') || "";
-    let selectedProjectFilter = localStorage.getItem('ims_selectedProject') || ""; // "" = all projects
-    let persistedSearchFilter = localStorage.getItem('ims_searchFilter') || "";
-    let persistedWeekFilter = localStorage.getItem('ims_weekFilter') || "all";
-    let persistedMonthFilter = localStorage.getItem('ims_monthFilter') || "all";
-    let projectBtnsVisible = localStorage.getItem('ims_projectBtnsVisible') !== 'false';
+    let selectedAccount = localStorage.getItem('expenses_selectedAccount') || "";
+    let selectedProjectFilter = localStorage.getItem('expenses_selectedProject') || "";
+    let persistedSearchFilter = localStorage.getItem('expenses_searchFilter') || "";
+    let persistedWeekFilter = localStorage.getItem('expenses_weekFilter') || "ALL";
+    let persistedMonthFilter = localStorage.getItem('expenses_monthFilter') || "all";
+    let projectBtnsVisible = localStorage.getItem('expenses_projectBtnsVisible') !== 'false';
     let checkboxesVisible = false;
     let selectedTransactions = new Set();
+
+    // --- Filter Persistence ---
+    function saveFilters() {
+      localStorage.setItem('expenses_selectedAccount', selectedAccount);
+      localStorage.setItem('expenses_selectedProject', selectedProjectFilter);
+      localStorage.setItem('expenses_searchFilter', searchFilter.value);
+      localStorage.setItem('expenses_weekFilter', weekFilter.value);
+      localStorage.setItem('expenses_monthFilter', monthFilter.value);
+      localStorage.setItem('expenses_projectBtnsVisible', projectBtnsVisible);
+    }
 
     // --- Credit Account Button Logic ---
     creditAccountBtn.onclick = function() {
@@ -431,33 +441,39 @@
     };
 
     // --- Week Filter Dropdown ---
-    function fillWeekDropdown() {
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentWeek = getWeekNumber(now);
-      let options = `<option value="all">All Weeks</option>`;
-      for (let y = currentYear; y >= currentYear - 5; y--) {
-        let maxW = (y === currentYear) ? currentWeek : 53;
-        for (let w = maxW; w >= 1; w--) {
-          options += `<option value="${y}-${w}">Week ${w}, ${y}</option>`;
-        }
-      }
-      weekFilter.innerHTML = options;
+    function fillWeekDropdown(data) {
+      const weeksSet = new Set();
       
-      // Set persisted week filter if it exists
-      if (persistedWeekFilter) {
-        const optionExists = Array.from(weekFilter.options).some(opt => opt.value === persistedWeekFilter);
-        if (optionExists) {
-          weekFilter.value = persistedWeekFilter;
+      // Get unique weeks from data
+      data.forEach(exp => {
+        if (exp.date) {
+          const d = new Date(exp.date);
+          const weekYear = getWeekYear(d);
+          weeksSet.add(`${weekYear.year}-${weekYear.week}`);
         }
-      }
+      });
+      
+      // Convert to array and sort by year/week (newest first)
+      const weeksArray = Array.from(weeksSet)
+        .map(w => {
+          const [year, week] = w.split('-').map(Number);
+          return { year, week, label: `Week ${week}, ${year}` };
+        })
+        .sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.week - a.week;
+        });
+      
+      let options = `<option value="ALL"${persistedWeekFilter === "ALL" ? ' selected' : ''}>All Weeks</option>`;
+      
+      weeksArray.forEach(w => {
+        const value = `${w.year}-${w.week}`;
+        const selected = value === persistedWeekFilter ? ' selected' : '';
+        options += `<option value="${value}"${selected}>${w.label}</option>`;
+      });
+      
+      weekFilter.innerHTML = options;
     }
-    fillWeekDropdown();
-
-    weekFilter.addEventListener("change", function() {
-      localStorage.setItem('ims_weekFilter', weekFilter.value);
-      renderTable();
-    });
 
     // --- Month Filter Dropdown ---
     function fillMonthDropdown() {
@@ -466,28 +482,15 @@
         "July", "August", "September", "October", "November", "December"
       ];
       const d = new Date();
-      let options = `<option value="all">All Months</option>`;
+      let options = `<option value="all"${persistedMonthFilter === "all" ? ' selected' : ''}>All Months</option>`;
       for (let y = d.getFullYear(); y >= d.getFullYear() - 10; y--) {
         for (let m = 11; m >= 0; m--) {
-          options += `<option value="${y}-${String(m+1).padStart(2,'0')}">${months[m]} ${y}</option>`;
+          options += `<option value="${y}-${String(m+1).padStart(2,'0')}"${`${y}-${String(m+1).padStart(2,'0')}` === persistedMonthFilter ? ' selected' : ''}>${months[m]} ${y}</option>`;
         }
       }
       monthFilter.innerHTML = options;
-      
-      // Set persisted month filter if it exists
-      if (persistedMonthFilter) {
-        const optionExists = Array.from(monthFilter.options).some(opt => opt.value === persistedMonthFilter);
-        if (optionExists) {
-          monthFilter.value = persistedMonthFilter;
-        }
-      }
     }
     fillMonthDropdown();
-
-    monthFilter.addEventListener("change", function() {
-      localStorage.setItem('ims_monthFilter', monthFilter.value);
-      renderTable();
-    });
 
     // --- Show/Hide Form Logic ---
     let formVisible = false;
@@ -532,8 +535,6 @@
       projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
       projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
       projectCollapseBtn.title = projectBtnsVisible ? "Hide Projects" : "Show Projects";
-      
-      renderTable();
     });
 
     // Account filter buttons
@@ -542,9 +543,27 @@
         accountBtns.forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         selectedAccount = btn.getAttribute("data-account");
-        localStorage.setItem('ims_selectedAccount', selectedAccount);
+        saveFilters();
         renderTable();
       });
+    });
+
+    // Week filter change
+    weekFilter.addEventListener("change", function() {
+      saveFilters();
+      renderTable();
+    });
+
+    // Month filter change
+    monthFilter.addEventListener("change", function() {
+      saveFilters();
+      renderTable();
+    });
+
+    // Search filter input
+    searchFilter.addEventListener("input", function() {
+      saveFilters();
+      renderTable();
     });
 
     // --- Collapsible Project Filter Buttons ---
@@ -553,7 +572,7 @@
       projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
       projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
       projectCollapseBtn.title = projectBtnsVisible ? "Hide Projects" : "Show Projects";
-      localStorage.setItem('ims_projectBtnsVisible', projectBtnsVisible);
+      saveFilters();
     };
 
     // --- Project Filter Button Logic ---
@@ -571,7 +590,7 @@
           projectBtnsContainer.querySelectorAll(".project-btn").forEach(b => b.classList.remove("selected"));
           btn.classList.add("selected");
           selectedProjectFilter = btn.getAttribute("data-project");
-          localStorage.setItem('ims_selectedProject', selectedProjectFilter);
+          saveFilters();
           renderTable();
         });
       });
@@ -632,15 +651,20 @@
     // --- Real-time Table Sync ---
     let allExpenses = [];
     let filteredExpenses = [];
+    
     onSnapshot(
       collection(db, "General expenses"),
       (snapshot) => {
         allExpenses = [];
         snapshot.forEach(docSnap => {
           const exp = docSnap.data();
-          exp.id = docSnap.id; // Add document ID
+          exp.id = docSnap.id;
           allExpenses.push(exp);
         });
+        
+        // Fill week dropdown with weeks from data
+        fillWeekDropdown(allExpenses);
+        
         renderTable();
       }
     );
@@ -661,9 +685,9 @@
         );
       }
 
-      // Week filter
+      // Week filter - only apply if not "ALL"
       const weekVal = weekFilter.value;
-      if (weekVal && weekVal !== "all") {
+      if (weekVal && weekVal !== "ALL") {
         const [filterYear, filterWeek] = weekVal.split("-").map(Number);
         filtered = filtered.filter(exp => {
           if (!exp.date) return false;
@@ -741,11 +765,6 @@
       });
     }
 
-    searchFilter.addEventListener("input", function() {
-      localStorage.setItem('ims_searchFilter', searchFilter.value);
-      renderTable();
-    });
-
     // --- Week number helpers ---
     function getWeekNumber(d) {
       d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -754,6 +773,7 @@
       var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
       return weekNo;
     }
+    
     function getWeekYear(date) {
       let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
       d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -796,6 +816,10 @@
         <div style="font-family:Arial,sans-serif;max-width:1000px;">
           <h2 style="color:#1976d2;">Expenses Report</h2>
           <div style="margin-bottom:10px;font-weight:bold;">${filename.includes('selected') ? 'Selected' : 'Filtered'} Export</div>
+          <div style="margin-bottom:10px;color:#666;">
+            ${weekFilter.value === "ALL" ? "All Weeks" : "Week: " + weekFilter.options[weekFilter.selectedIndex].text} | 
+            ${monthFilter.value === "all" ? "All Months" : "Month: " + monthFilter.options[monthFilter.selectedIndex].text}
+          </div>
           <table style="width:100%;border-collapse:collapse;background:#fff;">
             <thead>
               <tr>
