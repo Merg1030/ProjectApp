@@ -120,8 +120,10 @@
     <div class="controls-bar">
       <button id="toggle-form-btn" type="button">Add Entry</button>
       <label>
-        Week:
-        <select id="week-selector" class="week-selector"></select>
+        Week Filter:
+        <select id="week-selector" class="week-selector">
+          <option value="ALL">All Weeks</option>
+        </select>
       </label>
       <label>
         Company:
@@ -177,6 +179,7 @@
             <th>Airtime</th>
             <th>Lunch</th>
             <th>Total</th>
+            <th>Week</th>
           </tr>
         </thead>
         <tbody id="expenses-table-body"></tbody>
@@ -221,6 +224,27 @@
     const companyFilter = document.getElementById("company-filter");
     const downloadWeekBtn = document.getElementById("download-week-btn");
     const panelToExport = document.getElementById("panel-to-export");
+
+    // --- Filter Persistence ---
+    const FILTER_STORAGE_KEY = 'personnelExpensesFilters';
+    
+    // Load saved filters or use defaults
+    let savedFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{}');
+    let currentFilters = {
+      week: savedFilters.week || 'ALL',
+      company: savedFilters.company || 'ALL'
+    };
+
+    // Save filters to localStorage
+    function saveFilters() {
+      localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(currentFilters));
+    }
+
+    // Apply filters from storage
+    function applySavedFilters() {
+      weekSelector.value = currentFilters.week;
+      companyFilter.value = currentFilters.company;
+    }
 
     // --- Show/Hide Form Logic ---
     let formVisible = false;
@@ -274,6 +298,7 @@
       var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
       return weekNo;
     }
+    
     function getWeekYear(date) {
       // Returns { week: <int>, year: <int> }
       let d = new Date(date);
@@ -283,26 +308,45 @@
       var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
       return {week: weekNo, year: d.getUTCFullYear()};
     }
-    function currentWeekYear() {
-      const today = new Date();
-      return getWeekYear(today);
-    }
-    function fillWeekSelector(minYear = 2023) {
-      let options = "";
-      const nowY = (new Date()).getFullYear();
-      const nowW = getWeekNumber(new Date());
-      for (let y = nowY; y >= minYear; y--) {
-        let maxW = (y === nowY) ? nowW : 53;
-        for (let w = maxW; w >= 1; w--) {
-          options += `<option value="${y}-${w}"${y===nowY&&w===nowW?' selected':''}>Week ${w}, ${y}</option>`;
+
+    // Get unique weeks from data
+    function getUniqueWeeksFromData(data) {
+      const weeksSet = new Set();
+      data.forEach(exp => {
+        if (exp._weekyear) {
+          weeksSet.add(`${exp._weekyear.year}-${exp._weekyear.week}`);
         }
-      }
+      });
+      
+      // Convert to array and sort by year/week (newest first)
+      return Array.from(weeksSet)
+        .map(w => {
+          const [year, week] = w.split('-').map(Number);
+          return { year, week, label: `Week ${week}, ${year}` };
+        })
+        .sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.week - a.week;
+        });
+    }
+
+    // Fill week selector with unique weeks from data
+    function fillWeekSelector(weeks) {
+      let options = '<option value="ALL">All Weeks</option>';
+      
+      weeks.forEach(w => {
+        const value = `${w.year}-${w.week}`;
+        const selected = value === currentFilters.week ? ' selected' : '';
+        options += `<option value="${value}"${selected}>${w.label}</option>`;
+      });
+      
       weekSelector.innerHTML = options;
     }
-    fillWeekSelector();
 
     // --- Real-time Table Sync ---
     let allExpenses = [];
+    let uniqueWeeks = [];
+    
     onSnapshot(
       collection(db, "PersonnelExpenses"),
       (snapshot) => {
@@ -312,6 +356,11 @@
           if (exp.date) exp._weekyear = getWeekYear(exp.date);
           allExpenses.push(exp);
         });
+        
+        // Get unique weeks and populate selector
+        uniqueWeeks = getUniqueWeeksFromData(allExpenses);
+        fillWeekSelector(uniqueWeeks);
+        
         renderSummaryBar();
         renderTable();
       }
@@ -319,14 +368,21 @@
 
     // --- Get filtered data based on current filters ---
     function getFilteredData() {
-      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
-      const selectedCompany = companyFilter.value;
+      const selectedCompany = currentFilters.company;
       
-      let filtered = allExpenses.filter(exp =>
-        exp._weekyear && exp._weekyear.week === selectedWeek && exp._weekyear.year === selectedYear
-      );
+      let filtered = [...allExpenses];
       
-      // Apply company filter
+      // Apply week filter if not "ALL"
+      if (currentFilters.week !== 'ALL') {
+        const [selectedYear, selectedWeek] = currentFilters.week.split('-').map(Number);
+        filtered = filtered.filter(exp =>
+          exp._weekyear && 
+          exp._weekyear.week === selectedWeek && 
+          exp._weekyear.year === selectedYear
+        );
+      }
+      
+      // Apply company filter if not "ALL"
       if (selectedCompany !== "ALL") {
         filtered = filtered.filter(exp => exp.company === selectedCompany);
       }
@@ -378,12 +434,16 @@
 
       expensesTableBody.innerHTML = "";
       let sumTransport = 0, sumAirtime = 0, sumLunch = 0, sumTotal = 0;
+      
       filtered.forEach(exp => {
         const tval = (parseFloat(exp.transport) || 0) + (parseFloat(exp.airtime) || 0) + (parseFloat(exp.lunch) || 0);
         sumTransport += parseFloat(exp.transport) || 0;
         sumAirtime += parseFloat(exp.airtime) || 0;
         sumLunch += parseFloat(exp.lunch) || 0;
         sumTotal += tval;
+        
+        const weekLabel = exp._weekyear ? `Week ${exp._weekyear.week}, ${exp._weekyear.year}` : "-";
+        
         const tRow = document.createElement("tr");
         tRow.innerHTML = `
           <td>${exp.date ? formatDate(exp.date) : "-"}</td>
@@ -396,41 +456,47 @@
           <td>${exp.airtime !== undefined ? exp.airtime : ""}</td>
           <td>${exp.lunch !== undefined ? exp.lunch : ""}</td>
           <td>${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${weekLabel}</td>
         `;
         expensesTableBody.appendChild(tRow);
       });
 
-      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
-      const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
-      const satString = formatDate(satDate.toISOString().split("T")[0]);
-      // Show only Saturday date, then 5 blanks, then the sums in the correct columns.
-      expensesTableTotalRow.innerHTML = `
-        <td>${satString}<br><b>TOTAL</b></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td>${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-        <td>${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-        <td>${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-        <td>${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
-      `;
+      // Show totals row (different format for "All Weeks" vs specific week)
+      let totalRowHTML = '';
+      
+      if (currentFilters.week === 'ALL') {
+        // For "All Weeks", just show total label
+        totalRowHTML = `
+          <td colspan="6"><b>TOTAL (${filtered.length} entries)</b></td>
+          <td>${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td></td>
+        `;
+      } else {
+        // For specific week, show Saturday date
+        const [selectedYear, selectedWeek] = currentFilters.week.split('-').map(Number);
+        const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
+        const satString = formatDate(satDate.toISOString().split("T")[0]);
+        
+        totalRowHTML = `
+          <td>${satString}<br><b>TOTAL</b></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td>${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td>${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+          <td></td>
+        `;
+      }
+      
+      expensesTableTotalRow.innerHTML = totalRowHTML;
     }
-
-    function getSelectedWeekYear() {
-      const val = weekSelector.value || "";
-      const [y, w] = val.split("-");
-      return {year: parseInt(y,10)||currentWeekYear().year, week: parseInt(w,10)||currentWeekYear().week};
-    }
-
-    weekSelector.addEventListener("change", ()=>{
-      renderSummaryBar(); renderTable();
-    });
-
-    companyFilter.addEventListener("change", ()=>{
-      renderSummaryBar(); renderTable();
-    });
 
     function formatDate(isoDateStr) {
       const date = new Date(isoDateStr);
@@ -441,11 +507,45 @@
       return `${dd}/${mm}/${yyyy}`;
     }
 
+    // --- Event Listeners ---
+    weekSelector.addEventListener("change", ()=>{
+      currentFilters.week = weekSelector.value;
+      saveFilters();
+      renderSummaryBar(); 
+      renderTable();
+    });
+
+    companyFilter.addEventListener("change", ()=>{
+      currentFilters.company = companyFilter.value;
+      saveFilters();
+      renderSummaryBar(); 
+      renderTable();
+    });
+
+    // Apply saved filters on load
+    applySavedFilters();
+
     // --- Download Filtered Report Logic ---
     downloadWeekBtn.onclick = function() {
       const filtered = getFilteredData();
-      const {week: selectedWeek, year: selectedYear} = getSelectedWeekYear();
-      const selectedCompany = companyFilter.value;
+      const selectedCompany = currentFilters.company;
+      
+      let title = '';
+      let filename = '';
+      
+      if (currentFilters.week === 'ALL') {
+        title = 'ALL WEEKS REPORT';
+        filename = `all-weeks-report-${new Date().toISOString().split('T')[0]}`;
+      } else {
+        const [selectedYear, selectedWeek] = currentFilters.week.split('-').map(Number);
+        title = `WEEK ${selectedWeek}, ${selectedYear}`;
+        filename = `week${selectedWeek}-${selectedYear}`;
+      }
+      
+      if (selectedCompany !== "ALL") {
+        title += ` - ${selectedCompany}`;
+        filename += `-${selectedCompany}`;
+      }
       
       // Sort in descending date order for PDF too
       const sortedForPDF = [...filtered].sort((a, b) => {
@@ -459,13 +559,13 @@
       let pdfHTML = `
         <div style="font-family: Arial, sans-serif; max-width: 100%; font-size: 10px;">
           <div style="color: #1976d2; font-size: 16px; font-weight: bold; margin-bottom: 5px; text-align:center;">
-            Lunch and Transport Rations
+            Personnel & Daily Expenses Tracker
           </div>
           <div style="color: #333; font-size: 12px; font-weight: bold; letter-spacing: 0.06em; margin-bottom: 5px; text-align:center;">
-            WEEK ${selectedWeek}, ${selectedYear}
+            ${title}
           </div>
           <div style="color: #666; font-size: 11px; margin-top: 2px; margin-bottom: 8px; text-align:center;">
-            ${selectedCompany === "ALL" ? "All Companies" : `Company: ${selectedCompany}`}
+            ${filtered.length} entries | Generated on ${new Date().toLocaleDateString()}
           </div>
       `;
 
@@ -508,6 +608,7 @@
               <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Airtime</th>
               <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Lunch</th>
               <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Total</th>
+              <th style="padding:4px 3px;border:1px solid #ddd;background:#f1f6ff;font-size:9px;">Week</th>
             </tr>
           </thead>
           <tbody>
@@ -519,6 +620,9 @@
         sumAirtime += parseFloat(exp.airtime) || 0;
         sumLunch += parseFloat(exp.lunch) || 0;
         sumTotal += tval;
+        
+        const weekLabel = exp._weekyear ? `Week ${exp._weekyear.week}, ${exp._weekyear.year}` : "-";
+        
         pdfHTML += `
           <tr>
             <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${exp.date ? formatDate(exp.date) : "-"}</td>
@@ -531,25 +635,41 @@
             <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${exp.airtime !== undefined ? exp.airtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
             <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${exp.lunch !== undefined ? exp.lunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
             <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;text-align:right;">${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+            <td style="padding:4px 3px;border:1px solid #eee;font-size:9px;">${weekLabel}</td>
           </tr>
         `;
       });
-      const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
-      const satString = formatDate(satDate.toISOString().split("T")[0]);
+      
       pdfHTML += `
           </tbody>
           <tfoot>
             <tr style="font-weight:bold;background:#f9eee2;font-size:9px;">
+      `;
+      
+      if (currentFilters.week === 'ALL') {
+        pdfHTML += `
+              <td colspan="6" style="padding:4px 3px;border:1px solid #eee;">TOTAL (${filtered.length} entries)</td>
+        `;
+      } else {
+        const [selectedYear, selectedWeek] = currentFilters.week.split('-').map(Number);
+        const satDate = getSaturdayOfWeek(selectedYear, selectedWeek);
+        const satString = formatDate(satDate.toISOString().split("T")[0]);
+        pdfHTML += `
               <td style="padding:4px 3px;border:1px solid #eee;">${satString}<br><b>TOTAL</b></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
               <td style="border:1px solid #eee;"></td>
+        `;
+      }
+      
+      pdfHTML += `
               <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumTransport ? sumTransport.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
               <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumAirtime ? sumAirtime.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
               <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumLunch ? sumLunch.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
               <td style="padding:4px 3px;border:1px solid #eee;text-align:right;">${sumTotal ? sumTotal.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
+              <td style="padding:4px 3px;border:1px solid #eee;"></td>
             </tr>
           </tfoot>
         </table>
@@ -560,14 +680,13 @@
       tempDiv.innerHTML = pdfHTML;
       document.body.appendChild(tempDiv);
 
-      const companySuffix = selectedCompany === "ALL" ? "" : `-${selectedCompany}`;
       html2pdf().from(tempDiv).set({
         margin: 0.3,
-        filename: `lunch-transport-rations-week${selectedWeek}-${selectedYear}${companySuffix}.pdf`,
+        filename: `${filename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2,
-          width: 1150, // Slightly wider to fit all columns
+          width: 1200,
           height: tempDiv.scrollHeight
         },
         jsPDF: { 
