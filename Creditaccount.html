@@ -1,635 +1,445 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <title>Simple Account Tracker</title>
+  <title>Account Tracker</title>
   <style>
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f7fa;
-      color: #333;
       padding: 20px;
-      line-height: 1.6;
+      background: #f8f9fa;
     }
     
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-      padding: 30px;
     }
     
     h1 {
-      color: #2c3e50;
+      font-size: 18px;
+      font-weight: normal;
       margin-bottom: 10px;
-      font-size: 28px;
-    }
-    
-    .subtitle {
-      color: #7f8c8d;
-      margin-bottom: 30px;
-      font-size: 16px;
-    }
-    
-    .instructions {
-      background: #e8f4fc;
-      padding: 15px;
-      border-radius: 6px;
-      margin-bottom: 25px;
-      border-left: 4px solid #3498db;
-    }
-    
-    .instructions h3 {
-      color: #2c3e50;
-      margin-bottom: 8px;
-    }
-    
-    .instructions ul {
-      padding-left: 20px;
-    }
-    
-    .instructions li {
-      margin-bottom: 5px;
-    }
-    
-    .table-container {
-      overflow-x: auto;
-      margin-top: 20px;
-      border-radius: 8px;
-      border: 1px solid #e1e8ed;
+      color: #333;
     }
     
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 800px;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      table-layout: fixed;
     }
     
     th {
-      background: #2c3e50;
-      color: white;
-      padding: 14px 12px;
+      background: #f2f2f2;
+      padding: 8px;
       text-align: left;
-      font-weight: 600;
+      border: 1px solid #ddd;
+      font-weight: normal;
+      font-size: 13px;
+      color: #333;
       position: sticky;
       top: 0;
-      border-right: 1px solid #34495e;
-    }
-    
-    th:last-child {
-      border-right: none;
     }
     
     td {
-      padding: 12px;
-      border-bottom: 1px solid #e1e8ed;
+      padding: 0;
+      border: 1px solid #ddd;
     }
     
-    tr:nth-child(even) {
-      background: #f8f9fa;
-    }
-    
-    tr:hover {
-      background: #f0f7ff;
-    }
-    
-    input[type="text"],
-    input[type="number"] {
+    input {
       width: 100%;
-      padding: 10px 8px;
-      border: 2px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border 0.2s;
+      height: 100%;
+      padding: 8px;
+      border: none;
+      outline: none;
+      font-size: 13px;
+      background: transparent;
     }
     
-    input[type="text"]:focus,
-    input[type="number"]:focus {
-      outline: none;
-      border-color: #3498db;
+    input:focus {
       background: #f8fdff;
     }
     
-    .date-input {
-      min-width: 100px;
-    }
-    
-    .transaction-input {
-      min-width: 180px;
-    }
-    
-    .reference-input {
-      min-width: 150px;
-    }
-    
-    .amount-input {
-      min-width: 120px;
-      text-align: right;
-    }
+    .date-col { width: 100px; }
+    .trans-col { width: 200px; }
+    .ref-col { width: 150px; }
+    .cashin-col { width: 100px; }
+    .cashout-col { width: 100px; }
+    .balance-col { width: 100px; }
     
     .balance-cell {
-      font-weight: bold;
-      color: #2c3e50;
       text-align: right;
-      min-width: 120px;
-      padding-right: 15px;
-    }
-    
-    .add-row-btn {
-      background: #27ae60;
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      margin-top: 20px;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .add-row-btn:hover {
-      background: #219653;
-    }
-    
-    .add-row-btn:active {
-      transform: translateY(1px);
-    }
-    
-    .controls {
-      display: flex;
-      gap: 15px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-    
-    .btn {
-      padding: 10px 20px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-size: 15px;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-    
-    .save-btn {
-      background: #3498db;
-      color: white;
-    }
-    
-    .save-btn:hover {
-      background: #2980b9;
-    }
-    
-    .clear-btn {
-      background: #e74c3c;
-      color: white;
-    }
-    
-    .clear-btn:hover {
-      background: #c0392b;
-    }
-    
-    .reset-btn {
-      background: #f39c12;
-      color: white;
-    }
-    
-    .reset-btn:hover {
-      background: #d68910;
+      padding: 8px;
+      font-family: 'Courier New', monospace;
+      background: #f9f9f9;
     }
     
     .total-row {
-      background: #2c3e50 !important;
-      color: white;
+      background: #f2f2f2;
       font-weight: bold;
     }
     
     .total-row td {
-      padding: 14px 12px;
-      font-size: 16px;
+      padding: 8px;
+      border-top: 2px solid #666;
     }
     
-    .cash-in {
-      color: #27ae60;
+    .controls {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
     }
     
-    .cash-out {
-      color: #e74c3c;
-    }
-    
-    @media (max-width: 768px) {
-      .container {
-        padding: 15px;
-      }
-      
-      th, td {
-        padding: 10px 8px;
-        font-size: 14px;
-      }
-      
-      .btn {
-        padding: 8px 15px;
-        font-size: 14px;
-      }
-      
-      .add-row-btn {
-        padding: 10px 20px;
-        font-size: 15px;
-      }
+    .instructions {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Simple Account Tracker</h1>
-    <p class="subtitle">Type directly into the table. Balance updates automatically.</p>
+    <h1>Account Tracker</h1>
+    <div class="instructions">Just type in any cell. Tab to move right. Enter to add new row. Balance updates automatically.</div>
     
-    <div class="instructions">
-      <h3>How to use:</h3>
-      <ul>
-        <li><strong>Just start typing</strong> in any cell</li>
-        <li>Press <kbd>Tab</kbd> to move to next cell, <kbd>Shift+Tab</kbd> to go back</li>
-        <li>Press <kbd>Enter</kbd> to add a new row</li>
-        <li>Balance is calculated automatically based on cash in/out</li>
-        <li>Click "Add New Row" button to add more rows manually</li>
-      </ul>
-    </div>
-    
-    <div class="table-container">
-      <table id="accountTable">
-        <thead>
-          <tr>
-            <th width="12%">Date</th>
-            <th width="20%">Transaction</th>
-            <th width="18%">Reference</th>
-            <th width="15%">Cash In</th>
-            <th width="15%">Cash Out</th>
-            <th width="15%">Balance</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- Rows will be generated here -->
-        </tbody>
-      </table>
-    </div>
-    
-    <button id="addRowBtn" class="add-row-btn">
-      <span>+</span> Add New Row
-    </button>
+    <table>
+      <thead>
+        <tr>
+          <th class="date-col">Date</th>
+          <th class="trans-col">Transaction</th>
+          <th class="ref-col">Reference</th>
+          <th class="cashin-col">Cash In</th>
+          <th class="cashout-col">Cash Out</th>
+          <th class="balance-col">Balance</th>
+        </tr>
+      </thead>
+      <tbody id="sheet">
+        <!-- Rows will be added here -->
+      </tbody>
+    </table>
     
     <div class="controls">
-      <button id="saveBtn" class="btn save-btn">Save Data</button>
-      <button id="clearBtn" class="btn clear-btn">Clear Table</button>
-      <button id="resetBtn" class="btn reset-btn">Reset to Example</button>
+      <span>Press Enter to add row • Tab to navigate • Ctrl+S to save</span>
     </div>
   </div>
 
   <script>
-    // Sample data based on your example
-    const sampleData = [
-      { date: '23 Jan', transaction: 'top up float', reference: 'chris - hazida', cashIn: '5000', cashOut: '', balance: '5000' },
-      { date: '23 Jan', transaction: 'purchase of steel', reference: 'dominic', cashIn: '', cashOut: '500', balance: '4500' },
-      { date: '23 Jan', transaction: 'transport and lunch rations', reference: 'dabson', cashIn: '', cashOut: '400', balance: '4100' }
+    // Sample starting data
+    let data = [
+      { date: '23 Jan', trans: 'top up float', ref: 'chris - hazida', cashin: '5000', cashout: '', balance: '5000' },
+      { date: '23 Jan', trans: 'purchase of steel', ref: 'dominic', cashin: '', cashout: '500', balance: '4500' },
+      { date: '23 Jan', trans: 'transport and lunch rations', ref: 'dabson', cashin: '', cashout: '400', balance: '4100' },
+      { date: '', trans: '', ref: '', cashin: '', cashout: '', balance: '' }
     ];
 
-    let accountData = JSON.parse(localStorage.getItem('accountData')) || [...sampleData];
+    // Load from localStorage if exists
+    if (localStorage.getItem('accountSheet')) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('accountSheet'));
+        if (saved && saved.length > 0) {
+          data = saved;
+        }
+      } catch (e) {
+        console.log('Could not load saved data');
+      }
+    }
 
-    // Initialize the table
-    function initializeTable() {
-      const tableBody = document.getElementById('tableBody');
-      tableBody.innerHTML = '';
+    function renderSheet() {
+      const sheet = document.getElementById('sheet');
+      sheet.innerHTML = '';
       
       let runningBalance = 0;
+      let totalIn = 0;
+      let totalOut = 0;
       
-      accountData.forEach((row, index) => {
-        // Calculate balance
-        const cashIn = parseFloat(row.cashIn) || 0;
-        const cashOut = parseFloat(row.cashOut) || 0;
-        runningBalance = runningBalance + cashIn - cashOut;
+      data.forEach((row, index) => {
+        // Calculate cash values
+        const cashIn = parseFloat(row.cashin) || 0;
+        const cashOut = parseFloat(row.cashout) || 0;
         
-        // Update the balance in the data
-        accountData[index].balance = runningBalance;
+        // Update running totals
+        totalIn += cashIn;
+        totalOut += cashOut;
+        
+        // Calculate balance for this row
+        if (row.cashin || row.cashout) {
+          runningBalance = runningBalance + cashIn - cashOut;
+        }
         
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><input type="text" class="date-input" value="${row.date}" data-index="${index}" data-field="date"></td>
-          <td><input type="text" class="transaction-input" value="${row.transaction}" data-index="${index}" data-field="transaction"></td>
-          <td><input type="text" class="reference-input" value="${row.reference}" data-index="${index}" data-field="reference"></td>
-          <td><input type="number" step="0.01" class="amount-input cash-in" value="${row.cashIn || ''}" data-index="${index}" data-field="cashIn" placeholder="0.00"></td>
-          <td><input type="number" step="0.01" class="amount-input cash-out" value="${row.cashOut || ''}" data-index="${index}" data-field="cashOut" placeholder="0.00"></td>
-          <td class="balance-cell">${formatCurrency(runningBalance)}</td>
-        `;
-        tableBody.appendChild(tr);
+        
+        // Date cell
+        const tdDate = document.createElement('td');
+        const inputDate = document.createElement('input');
+        inputDate.type = 'text';
+        inputDate.value = row.date;
+        inputDate.placeholder = 'dd Mmm';
+        inputDate.dataset.row = index;
+        inputDate.dataset.col = 'date';
+        tdDate.appendChild(inputDate);
+        tr.appendChild(tdDate);
+        
+        // Transaction cell
+        const tdTrans = document.createElement('td');
+        const inputTrans = document.createElement('input');
+        inputTrans.type = 'text';
+        inputTrans.value = row.trans;
+        inputTrans.placeholder = 'Description';
+        inputTrans.dataset.row = index;
+        inputTrans.dataset.col = 'trans';
+        tdTrans.appendChild(inputTrans);
+        tr.appendChild(tdTrans);
+        
+        // Reference cell
+        const tdRef = document.createElement('td');
+        const inputRef = document.createElement('input');
+        inputRef.type = 'text';
+        inputRef.value = row.ref;
+        inputRef.placeholder = 'Reference';
+        inputRef.dataset.row = index;
+        inputRef.dataset.col = 'ref';
+        tdRef.appendChild(inputRef);
+        tr.appendChild(tdRef);
+        
+        // Cash In cell
+        const tdIn = document.createElement('td');
+        const inputIn = document.createElement('input');
+        inputIn.type = 'text';
+        inputIn.value = row.cashin;
+        inputIn.placeholder = '0.00';
+        inputIn.dataset.row = index;
+        inputIn.dataset.col = 'cashin';
+        tdIn.appendChild(inputIn);
+        tr.appendChild(tdIn);
+        
+        // Cash Out cell
+        const tdOut = document.createElement('td');
+        const inputOut = document.createElement('input');
+        inputOut.type = 'text';
+        inputOut.value = row.cashout;
+        inputOut.placeholder = '0.00';
+        inputOut.dataset.row = index;
+        inputOut.dataset.col = 'cashout';
+        tdOut.appendChild(inputOut);
+        tr.appendChild(tdOut);
+        
+        // Balance cell (readonly)
+        const tdBalance = document.createElement('td');
+        tdBalance.className = 'balance-cell';
+        tdBalance.textContent = runningBalance === 0 ? '' : runningBalance.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        tr.appendChild(tdBalance);
+        
+        sheet.appendChild(tr);
+        
+        // Add event listeners
+        [inputDate, inputTrans, inputRef, inputIn, inputOut].forEach(input => {
+          input.addEventListener('input', handleInput);
+          input.addEventListener('keydown', handleKeyDown);
+        });
       });
       
-      addInputListeners();
-      addTotalRow();
-    }
-
-    // Add total row at the bottom
-    function addTotalRow() {
-      const tableBody = document.getElementById('tableBody');
-      
-      // Remove existing total row if any
-      const existingTotal = document.getElementById('totalRow');
-      if (existingTotal) {
-        existingTotal.remove();
-      }
-      
-      // Calculate totals
-      let totalCashIn = 0;
-      let totalCashOut = 0;
-      let finalBalance = 0;
-      
-      accountData.forEach(row => {
-        totalCashIn += parseFloat(row.cashIn) || 0;
-        totalCashOut += parseFloat(row.cashOut) || 0;
-      });
-      
-      if (accountData.length > 0) {
-        finalBalance = accountData[accountData.length - 1].balance || 0;
-      }
-      
+      // Add total row
       const totalRow = document.createElement('tr');
-      totalRow.id = 'totalRow';
       totalRow.className = 'total-row';
       totalRow.innerHTML = `
-        <td colspan="3" style="text-align: right;">TOTALS:</td>
-        <td>${formatCurrency(totalCashIn)}</td>
-        <td>${formatCurrency(totalCashOut)}</td>
-        <td>${formatCurrency(finalBalance)}</td>
+        <td colspan="3">TOTAL</td>
+        <td>${totalIn === 0 ? '' : totalIn.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td>${totalOut === 0 ? '' : totalOut.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td class="balance-cell">${runningBalance === 0 ? '' : runningBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
       `;
-      tableBody.appendChild(totalRow);
-    }
-
-    // Format currency
-    function formatCurrency(value) {
-      if (isNaN(value) || value === 0) return '0.00';
-      return parseFloat(value).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    }
-
-    // Add event listeners to inputs
-    function addInputListeners() {
-      const inputs = document.querySelectorAll('#tableBody input');
-      
-      inputs.forEach(input => {
-        // Remove existing listeners to avoid duplicates
-        input.removeEventListener('input', handleInput);
-        input.removeEventListener('keydown', handleKeyDown);
-        
-        // Add new listeners
-        input.addEventListener('input', handleInput);
-        input.addEventListener('keydown', handleKeyDown);
-      });
-    }
-
-    // Handle input changes
-    function handleInput(e) {
-      const index = parseInt(e.target.dataset.index);
-      const field = e.target.dataset.field;
-      const value = e.target.value.trim();
-      
-      // Update the data
-      accountData[index][field] = value;
-      
-      // If it's a cash in/out field, recalculate balances
-      if (field === 'cashIn' || field === 'cashOut') {
-        recalculateBalances();
-      }
+      sheet.appendChild(totalRow);
       
       // Auto-save
-      saveToLocalStorage();
+      autoSave();
     }
 
-    // Handle keyboard navigation
-    function handleKeyDown(e) {
-      const input = e.target;
-      const index = parseInt(input.dataset.index);
+    function handleInput(e) {
+      const row = parseInt(e.target.dataset.row);
+      const col = e.target.dataset.col;
+      const value = e.target.value;
       
+      // Update data
+      data[row][col] = value;
+      
+      // If cash in/out changed, recalculate everything
+      if (col === 'cashin' || col === 'cashout') {
+        // Clear all balances after this row since they need to be recalculated
+        for (let i = row; i < data.length; i++) {
+          data[i].balance = '';
+        }
+        renderSheet();
+      }
+    }
+
+    function handleKeyDown(e) {
+      const row = parseInt(e.target.dataset.row);
+      const col = e.target.dataset.col;
+      
+      // Enter key - add new row
       if (e.key === 'Enter') {
         e.preventDefault();
-        addNewRow();
-        // Focus on the first cell of the new row
-        const newIndex = accountData.length - 1;
-        setTimeout(() => {
-          const firstInput = document.querySelector(`input[data-index="${newIndex}"][data-field="date"]`);
-          if (firstInput) firstInput.focus();
-        }, 10);
+        
+        // If this is the last row, add a new one
+        if (row === data.length - 1) {
+          data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '', balance: '' });
+          renderSheet();
+          
+          // Focus first cell of new row
+          setTimeout(() => {
+            const inputs = document.querySelectorAll(`input[data-row="${row + 1}"]`);
+            if (inputs[0]) inputs[0].focus();
+          }, 10);
+        } else {
+          // Move to next row, same column
+          const nextInput = document.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`);
+          if (nextInput) nextInput.focus();
+        }
       }
       
-      if (e.key === 'Tab') {
-        // Let default Tab behavior happen first
+      // Tab key - normal tab behavior
+      else if (e.key === 'Tab') {
+        // Let default tab behavior happen
         setTimeout(() => {
-          const allInputs = document.querySelectorAll('#tableBody input');
-          const currentIndex = Array.from(allInputs).indexOf(document.activeElement);
+          // If we're at the last cell of last row, add new row
+          const allInputs = Array.from(document.querySelectorAll('input'));
+          const currentIndex = allInputs.indexOf(e.target);
+          
           if (currentIndex === allInputs.length - 1 && !e.shiftKey) {
-            // If we're at the last input and pressing Tab (not Shift+Tab), add a new row
-            addNewRow();
+            data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '', balance: '' });
+            renderSheet();
+            
             setTimeout(() => {
-              const newInputs = document.querySelectorAll('#tableBody input');
-              if (newInputs.length > 0) newInputs[allInputs.length].focus();
+              const newInputs = document.querySelectorAll('input');
+              if (newInputs[allInputs.length]) newInputs[allInputs.length].focus();
             }, 10);
           }
         }, 10);
       }
       
+      // Arrow keys for navigation
+      else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextInput = document.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`);
+        if (nextInput) nextInput.focus();
+      }
+      else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevInput = document.querySelector(`input[data-row="${row - 1}"][data-col="${col}"]`);
+        if (prevInput) prevInput.focus();
+      }
+      else if (e.key === 'ArrowLeft') {
+        // Normal behavior, but check if at start of cell
+        if (e.target.selectionStart === 0 && e.target.selectionEnd === 0) {
+          e.preventDefault();
+          const cols = ['date', 'trans', 'ref', 'cashin', 'cashout'];
+          const currentIndex = cols.indexOf(col);
+          if (currentIndex > 0) {
+            const prevInput = document.querySelector(`input[data-row="${row}"][data-col="${cols[currentIndex - 1]}"]`);
+            if (prevInput) prevInput.focus();
+          }
+        }
+      }
+      else if (e.key === 'ArrowRight') {
+        // Normal behavior, but check if at end of cell
+        if (e.target.selectionStart === e.target.value.length && 
+            e.target.selectionEnd === e.target.value.length) {
+          e.preventDefault();
+          const cols = ['date', 'trans', 'ref', 'cashin', 'cashout'];
+          const currentIndex = cols.indexOf(col);
+          if (currentIndex < cols.length - 1) {
+            const nextInput = document.querySelector(`input[data-row="${row}"][data-col="${cols[currentIndex + 1]}"]`);
+            if (nextInput) nextInput.focus();
+          }
+        }
+      }
+      
       // Delete row with Ctrl+Delete
-      if (e.key === 'Delete' && (e.ctrlKey || e.metaKey)) {
+      else if (e.key === 'Delete' && e.ctrlKey && data.length > 1) {
         e.preventDefault();
-        if (accountData.length > 1) {
-          accountData.splice(index, 1);
-          initializeTable();
-          saveToLocalStorage();
-        }
+        data.splice(row, 1);
+        renderSheet();
+      }
+      
+      // Save with Ctrl+S
+      else if (e.key === 's' && e.ctrlKey) {
+        e.preventDefault();
+        saveData();
+        showMessage('Saved');
+      }
+      
+      // Today's date with Ctrl+T
+      else if (e.key === 't' && e.ctrlKey && col === 'date') {
+        e.preventDefault();
+        const today = new Date();
+        const day = today.getDate();
+        const month = today.toLocaleString('default', { month: 'short' });
+        e.target.value = `${day} ${month}`;
+        e.target.dispatchEvent(new Event('input'));
       }
     }
 
-    // Recalculate all balances
-    function recalculateBalances() {
-      let runningBalance = 0;
-      
-      accountData.forEach((row, index) => {
-        const cashIn = parseFloat(row.cashIn) || 0;
-        const cashOut = parseFloat(row.cashOut) || 0;
-        runningBalance = runningBalance + cashIn - cashOut;
-        accountData[index].balance = runningBalance;
-      });
-      
-      initializeTable();
+    function autoSave() {
+      localStorage.setItem('accountSheet', JSON.stringify(data));
     }
 
-    // Add a new row
-    function addNewRow() {
-      accountData.push({
-        date: '',
-        transaction: '',
-        reference: '',
-        cashIn: '',
-        cashOut: '',
-        balance: accountData.length > 0 ? accountData[accountData.length - 1].balance : 0
-      });
-      
-      initializeTable();
-      saveToLocalStorage();
-      
-      // Focus on the new row's date cell
-      const newIndex = accountData.length - 1;
-      const newDateInput = document.querySelector(`input[data-index="${newIndex}"][data-field="date"]`);
-      if (newDateInput) {
-        newDateInput.focus();
-      }
+    function saveData() {
+      autoSave();
+      showMessage('Saved to browser');
     }
 
-    // Save data to localStorage
-    function saveToLocalStorage() {
-      localStorage.setItem('accountData', JSON.stringify(accountData));
-      showNotification('Data saved!');
-    }
-
-    // Show notification
-    function showNotification(message) {
-      // Remove existing notification
-      const existingNotif = document.querySelector('.notification');
-      if (existingNotif) existingNotif.remove();
-      
-      const notif = document.createElement('div');
-      notif.className = 'notification';
-      notif.textContent = message;
-      notif.style.cssText = `
+    function showMessage(text) {
+      const msg = document.createElement('div');
+      msg.textContent = text;
+      msg.style.cssText = `
         position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #27ae60;
+        top: 10px;
+        right: 10px;
+        background: #333;
         color: white;
-        padding: 12px 20px;
-        border-radius: 6px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-        z-index: 1000;
-        font-weight: 500;
-        animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
       `;
+      document.body.appendChild(msg);
       
-      document.body.appendChild(notif);
-      
+      setTimeout(() => msg.style.opacity = '1', 10);
       setTimeout(() => {
-        if (notif.parentNode) notif.parentNode.removeChild(notif);
-      }, 2000);
+        msg.style.opacity = '0';
+        setTimeout(() => msg.remove(), 300);
+      }, 1500);
     }
 
-    // Add CSS for animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes fadeOut {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-10px); }
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Clear the table
-    function clearTable() {
-      if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-        accountData = [{
-          date: '',
-          transaction: '',
-          reference: '',
-          cashIn: '',
-          cashOut: '',
-          balance: 0
-        }];
-        initializeTable();
-        saveToLocalStorage();
+    // Add some example rows
+    for (let i = 0; i < 10; i++) {
+      if (data.length < 10) {
+        data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '', balance: '' });
       }
     }
 
-    // Reset to example data
-    function resetToExample() {
-      if (confirm('Reset to example data? Your current data will be replaced.')) {
-        accountData = [...sampleData];
-        initializeTable();
-        saveToLocalStorage();
-      }
-    }
+    // Initial render
+    renderSheet();
 
-    // Export data as CSV
-    function exportToCSV() {
-      let csv = 'Date,Transaction,Reference,Cash In,Cash Out,Balance\n';
-      
-      accountData.forEach(row => {
-        csv += `"${row.date || ''}","${row.transaction || ''}","${row.reference || ''}",${row.cashIn || 0},${row.cashOut || 0},${row.balance || 0}\n`;
-      });
-      
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'account-data.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
-      showNotification('CSV exported!');
-    }
-
-    // Initialize event listeners for buttons
-    document.getElementById('addRowBtn').addEventListener('click', addNewRow);
-    document.getElementById('saveBtn').addEventListener('click', saveToLocalStorage);
-    document.getElementById('clearBtn').addEventListener('click', clearTable);
-    document.getElementById('resetBtn').addEventListener('click', resetToExample);
-
-    // Add export button functionality
-    const exportBtn = document.createElement('button');
-    exportBtn.className = 'btn';
-    exportBtn.textContent = 'Export CSV';
-    exportBtn.style.background = '#9b59b6';
-    exportBtn.style.marginLeft = '10px';
-    exportBtn.onclick = exportToCSV;
-    exportBtn.onmouseenter = () => exportBtn.style.background = '#8e44ad';
-    exportBtn.onmouseleave = () => exportBtn.style.background = '#9b59b6';
-    document.querySelector('.controls').appendChild(exportBtn);
-
-    // Initialize the table on load
-    window.addEventListener('DOMContentLoaded', initializeTable);
-
-    // Auto-save every 30 seconds
-    setInterval(saveToLocalStorage, 30000);
-
-    // Add today's date shortcut
-    document.addEventListener('keydown', function(e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault();
-        const focused = document.activeElement;
-        if (focused && focused.classList.contains('date-input')) {
-          const today = new Date();
-          const day = today.getDate();
-          const month = today.toLocaleString('default', { month: 'short' });
-          focused.value = `${day} ${month}`;
-          focused.dispatchEvent(new Event('input'));
+    // Focus first empty cell
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('input');
+      for (let input of inputs) {
+        if (!input.value) {
+          input.focus();
+          break;
         }
       }
-    });
+    }, 100);
   </script>
 </body>
 </html>
