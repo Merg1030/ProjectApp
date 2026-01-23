@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Account Sheet</title>
+  <title>General Expenses Tracker</title>
   <style>
     * {
       margin: 0;
@@ -17,30 +17,92 @@
     }
     
     body {
-      background: #fff;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      border-bottom: 3px solid #3498db;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: normal;
+    }
+    
+    .header p {
+      font-size: 14px;
+      color: #ecf0f1;
+      margin-top: 5px;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 80px);
+    }
+    
+    .controls {
+      background: white;
+      padding: 10px 20px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .control-btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .control-btn:hover {
+      background: #2980b9;
+    }
+    
+    .delete-btn {
+      background: #e74c3c;
+    }
+    
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+    
+    .save-btn {
+      background: #27ae60;
+    }
+    
+    .save-btn:hover {
+      background: #219653;
     }
     
     #sheet-container {
-      width: 100vw;
-      height: 100vh;
-      padding: 0;
+      flex: 1;
       overflow: auto;
+      background: white;
+      margin: 0;
     }
     
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      table-layout: fixed;
     }
     
     th {
-      background: #f2f2f2;
+      background: #f8f9fa;
       padding: 12px 8px;
-      border: 1px solid #ddd;
-      font-weight: normal;
+      border: 1px solid #dee2e6;
+      font-weight: 600;
       font-size: 14px;
-      color: #333;
+      color: #2c3e50;
       position: sticky;
       top: 0;
       z-index: 10;
@@ -48,115 +110,138 @@
     
     td {
       padding: 0;
-      border: 1px solid #e0e0e0;
-      height: 35px;
+      border: 1px solid #dee2e6;
+      height: 40px;
+      min-height: 40px;
     }
     
     input {
       width: 100%;
       height: 100%;
-      padding: 0 8px;
+      padding: 0 10px;
       border: none;
       outline: none;
       font-size: 14px;
       background: transparent;
-      color: #000;
+      color: #2c3e50;
     }
     
     input:focus {
-      background: #f8fdff;
-      box-shadow: inset 0 0 0 1px #4d90fe;
+      background: #e8f4fc;
+      box-shadow: inset 0 0 0 2px #3498db;
     }
     
     .balance-cell {
-      padding: 0 8px;
+      padding: 0 10px;
       text-align: right;
       font-family: 'Courier New', monospace;
       font-size: 14px;
-      color: #000;
+      color: #2c3e50;
       background: transparent;
-      line-height: 35px;
+      line-height: 40px;
+      font-weight: bold;
     }
     
     .total-row {
-      background: #f5f5f5;
+      background: #f8f9fa;
       font-weight: bold;
     }
     
     .total-row td {
-      padding: 8px;
-      border-top: 2px solid #666;
+      padding: 10px;
+      border-top: 2px solid #2c3e50;
+      border-bottom: 2px solid #2c3e50;
     }
     
-    .add-row-btn {
-      background: #4CAF50;
+    .row-controls {
+      width: 60px;
+      text-align: center;
+    }
+    
+    .delete-row-btn {
+      background: #e74c3c;
       color: white;
       border: none;
-      padding: 8px 16px;
-      margin: 10px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       cursor: pointer;
-      border-radius: 4px;
-      font-size: 14px;
+      font-size: 12px;
+      line-height: 24px;
+      margin: 0 auto;
+      display: block;
     }
     
-    .add-row-btn:hover {
-      background: #45a049;
+    .delete-row-btn:hover {
+      background: #c0392b;
     }
     
-    .date-col { width: 120px; }
-    .trans-col { width: 250px; }
-    .ref-col { width: 200px; }
-    .cashin-col { width: 150px; }
-    .cashout-col { width: 150px; }
-    .balance-col { width: 150px; }
+    .empty-message {
+      text-align: center;
+      padding: 40px;
+      color: #7f8c8d;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
-  <div id="sheet-container">
-    <table>
-      <thead>
-        <tr>
-          <th class="date-col">Date</th>
-          <th class="trans-col">Transaction</th>
-          <th class="ref-col">Reference</th>
-          <th class="cashin-col">Cash In</th>
-          <th class="cashout-col">Cash Out</th>
-          <th class="balance-col">Balance</th>
-        </tr>
-      </thead>
-      <tbody id="sheet">
-        <!-- Rows will be added here -->
-      </tbody>
-    </table>
-    <button class="add-row-btn" onclick="addNewRow()">+ Add New Row</button>
+  <div class="header">
+    <h1>General Expenses Tracker</h1>
+    <p>Click any cell to type. Balance calculates automatically. Add/remove rows as needed.</p>
+  </div>
+  
+  <div class="container">
+    <div class="controls">
+      <button class="control-btn" onclick="addRowAtTop()">+ Add Row at Top</button>
+      <button class="control-btn" onclick="addRowAtBottom()">+ Add Row at Bottom</button>
+      <button class="control-btn delete-btn" onclick="deleteSelectedRows()">Delete Selected</button>
+      <button class="control-btn save-btn" onclick="saveData()">Save Data</button>
+      <span style="margin-left: auto; font-size: 12px; color: #7f8c8d;">
+        Press Enter to add new row • Ctrl+S to save
+      </span>
+    </div>
+    
+    <div id="sheet-container">
+      <table id="expensesTable">
+        <thead>
+          <tr>
+            <th width="60px"></th>
+            <th width="120px">Date</th>
+            <th width="250px">Transaction</th>
+            <th width="200px">Reference</th>
+            <th width="150px">Cash In</th>
+            <th width="150px">Cash Out</th>
+            <th width="150px">Balance</th>
+          </tr>
+        </thead>
+        <tbody id="sheet">
+          <!-- Rows will be added here -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script>
-    // Start with your sample data only
+    // Initialize with your sample data
     let data = [
-      { date: '23 Jan', trans: 'top up float', ref: 'chris - hazida', cashin: '5000', cashout: '' },
-      { date: '23 Jan', trans: 'purchase of steel', ref: 'dominic', cashin: '', cashout: '500' },
-      { date: '23 Jan', trans: 'transport and lunch rations', ref: 'dabson', cashin: '', cashout: '400' }
+      { date: '23 Jan', transaction: 'top up float', reference: 'chris - hazida', cashIn: '5000', cashOut: '', selected: false },
+      { date: '23 Jan', transaction: 'purchase of steel', reference: 'dominic', cashIn: '', cashOut: '500', selected: false },
+      { date: '23 Jan', transaction: 'transport and lunch rations', reference: 'dabson', cashIn: '', cashOut: '400', selected: false }
     ];
     
-    // Add one empty row for typing
-    data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
-    
-    // Try to load saved data
-    try {
-      const saved = localStorage.getItem('accountSheetData');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.length > 0) {
-          data = parsed;
-          // Ensure we have at least one empty row
-          if (data.length === 0 || (data[data.length - 1].date || data[data.length - 1].trans)) {
-            data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
+    // Load saved data if exists
+    function loadSavedData() {
+      try {
+        const saved = localStorage.getItem('generalExpensesData');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.length > 0) {
+            data = parsed;
           }
         }
+      } catch (e) {
+        console.log('No saved data found');
       }
-    } catch (e) {
-      console.log('No saved data found');
     }
     
     function renderSheet() {
@@ -170,8 +255,8 @@
       // Calculate balances first
       const calculatedBalances = [];
       data.forEach(row => {
-        const cashIn = parseFloat(row.cashin) || 0;
-        const cashOut = parseFloat(row.cashout) || 0;
+        const cashIn = parseFloat(row.cashIn) || 0;
+        const cashOut = parseFloat(row.cashOut) || 0;
         
         runningBalance = runningBalance + cashIn - cashOut;
         calculatedBalances.push(runningBalance);
@@ -184,13 +269,38 @@
       data.forEach((row, index) => {
         const tr = document.createElement('tr');
         
+        // Delete checkbox column
+        const tdCheck = document.createElement('td');
+        tdCheck.className = 'row-controls';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = row.selected;
+        checkbox.onclick = (e) => {
+          e.stopPropagation();
+          data[index].selected = checkbox.checked;
+        };
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-row-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteRow(index);
+        };
+        
+        tdCheck.appendChild(checkbox);
+        tdCheck.appendChild(document.createElement('br'));
+        tdCheck.appendChild(deleteBtn);
+        tr.appendChild(tdCheck);
+        
         // Date cell
         const tdDate = document.createElement('td');
         const inputDate = document.createElement('input');
         inputDate.type = 'text';
         inputDate.value = row.date;
-        inputDate.dataset.row = index;
-        inputDate.dataset.col = 'date';
+        inputDate.placeholder = 'DD MMM';
+        inputDate.dataset.index = index;
+        inputDate.dataset.field = 'date';
         tdDate.appendChild(inputDate);
         tr.appendChild(tdDate);
         
@@ -198,9 +308,10 @@
         const tdTrans = document.createElement('td');
         const inputTrans = document.createElement('input');
         inputTrans.type = 'text';
-        inputTrans.value = row.trans;
-        inputTrans.dataset.row = index;
-        inputTrans.dataset.col = 'trans';
+        inputTrans.value = row.transaction;
+        inputTrans.placeholder = 'Enter transaction';
+        inputTrans.dataset.index = index;
+        inputTrans.dataset.field = 'transaction';
         tdTrans.appendChild(inputTrans);
         tr.appendChild(tdTrans);
         
@@ -208,58 +319,61 @@
         const tdRef = document.createElement('td');
         const inputRef = document.createElement('input');
         inputRef.type = 'text';
-        inputRef.value = row.ref;
-        inputRef.dataset.row = index;
-        inputRef.dataset.col = 'ref';
+        inputRef.value = row.reference;
+        inputRef.placeholder = 'Enter reference';
+        inputRef.dataset.index = index;
+        inputRef.dataset.field = 'reference';
         tdRef.appendChild(inputRef);
         tr.appendChild(tdRef);
         
         // Cash In cell
         const tdIn = document.createElement('td');
         const inputIn = document.createElement('input');
-        inputIn.type = 'text';
-        inputIn.value = row.cashin;
-        inputIn.dataset.row = index;
-        inputIn.dataset.col = 'cashin';
+        inputIn.type = 'number';
+        inputIn.step = '0.01';
+        inputIn.value = row.cashIn;
+        inputIn.placeholder = '0.00';
+        inputIn.dataset.index = index;
+        inputIn.dataset.field = 'cashIn';
         tdIn.appendChild(inputIn);
         tr.appendChild(tdIn);
         
         // Cash Out cell
         const tdOut = document.createElement('td');
         const inputOut = document.createElement('input');
-        inputOut.type = 'text';
-        inputOut.value = row.cashout;
-        inputOut.dataset.row = index;
-        inputOut.dataset.col = 'cashout';
+        inputOut.type = 'number';
+        inputOut.step = '0.01';
+        inputOut.value = row.cashOut;
+        inputOut.placeholder = '0.00';
+        inputOut.dataset.index = index;
+        inputOut.dataset.field = 'cashOut';
         tdOut.appendChild(inputOut);
         tr.appendChild(tdOut);
         
-        // Balance cell - ONLY show if there's a transaction above this row
+        // Balance cell
         const tdBalance = document.createElement('td');
         tdBalance.className = 'balance-cell';
         
         const balance = calculatedBalances[index];
-        // Only show balance if it's not zero AND there's some data in this row
-        const hasData = row.date || row.trans || row.ref || row.cashin || row.cashout;
-        if (balance !== 0 && hasData) {
+        if (balance !== 0) {
           tdBalance.textContent = balance.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           });
         }
-        // Otherwise leave it blank
         
         tr.appendChild(tdBalance);
         sheet.appendChild(tr);
         
-        // Add event listeners
+        // Add event listeners for typing
         [inputDate, inputTrans, inputRef, inputIn, inputOut].forEach(input => {
           input.addEventListener('input', handleInput);
           input.addEventListener('keydown', handleKeyDown);
+          input.addEventListener('focus', handleFocus);
         });
       });
       
-      // Add total row only if there are actual totals
+      // Add total row only if there are totals
       if (totalIn > 0 || totalOut > 0) {
         const totalRow = document.createElement('tr');
         totalRow.className = 'total-row';
@@ -267,7 +381,7 @@
         const finalBalance = calculatedBalances[calculatedBalances.length - 1] || 0;
         
         totalRow.innerHTML = `
-          <td colspan="3">TOTAL</td>
+          <td colspan="4" style="text-align: right;">TOTAL:</td>
           <td>${totalIn === 0 ? '' : totalIn.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -284,38 +398,26 @@
         
         sheet.appendChild(totalRow);
       }
-      
-      // Auto-save
-      saveData();
+    }
+    
+    function handleFocus(e) {
+      e.target.select();
     }
     
     function handleInput(e) {
-      const row = parseInt(e.target.dataset.row);
-      const col = e.target.dataset.col;
+      const index = parseInt(e.target.dataset.index);
+      const field = e.target.dataset.field;
       const value = e.target.value;
       
       // Update data
-      data[row][col] = value;
+      data[index][field] = value;
       
-      // If this is the last row and something was entered, add a new empty row
-      if (row === data.length - 1 && value.trim() !== '') {
-        // Check if we should add a new row
-        const hasOtherData = Object.values(data[row]).some(val => val && val.trim() !== '');
-        if (hasOtherData) {
-          // Add new empty row
-          data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
-        }
-      }
-      
-      // Remove completely empty rows (except the last one)
-      cleanupEmptyRows();
-      
-      // Re-render
+      // Re-render to update balances
       renderSheet();
       
       // Focus back on the current input
       setTimeout(() => {
-        const currentInput = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
+        const currentInput = document.querySelector(`input[data-index="${index}"][data-field="${field}"]`);
         if (currentInput) {
           currentInput.focus();
           currentInput.select();
@@ -323,97 +425,83 @@
       }, 10);
     }
     
-    function cleanupEmptyRows() {
-      // Keep the last row even if empty, but remove other empty rows
-      const cleanedData = [];
-      
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i];
-        const isEmpty = !row.date && !row.trans && !row.ref && !row.cashin && !row.cashout;
-        
-        // Keep if not empty OR if it's the last row
-        if (!isEmpty || i === data.length - 1) {
-          cleanedData.push(row);
-        }
-      }
-      
-      data = cleanedData;
-      
-      // Always ensure at least one empty row at the end
-      if (data.length === 0 || (data[data.length - 1].date || data[data.length - 1].trans)) {
-        data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
-      }
-    }
-    
     function handleKeyDown(e) {
-      const row = parseInt(e.target.dataset.row);
-      const col = e.target.dataset.col;
+      const index = parseInt(e.target.dataset.index);
+      const field = e.target.dataset.field;
       
-      // Enter key - move down
+      // Enter key - add new row at bottom and move to it
       if (e.key === 'Enter') {
         e.preventDefault();
         
-        // If we're at the last row, ensure there's an empty row below
-        if (row === data.length - 1) {
-          // Add new empty row if last row has data
-          const hasData = Object.values(data[row]).some(val => val && val.trim() !== '');
-          if (hasData) {
-            data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
-            renderSheet();
-          }
-        }
+        // Add new row at bottom
+        data.push({ date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false });
+        renderSheet();
         
-        // Move to same column in next row
+        // Focus on first cell of new row
         setTimeout(() => {
-          const nextInput = document.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`);
-          if (nextInput) {
-            nextInput.focus();
-            nextInput.select();
+          const newIndex = data.length - 1;
+          const firstInput = document.querySelector(`input[data-index="${newIndex}"][data-field="date"]`);
+          if (firstInput) {
+            firstInput.focus();
+            firstInput.select();
           }
         }, 10);
       }
       
-      // Tab key
+      // Tab key - normal behavior
       else if (e.key === 'Tab') {
-        // Let default behavior happen, but handle edge case
+        // Let tab work normally
         setTimeout(() => {
-          // If we're at last cell of last row with data, ensure new row
-          const allInputs = Array.from(document.querySelectorAll('input'));
+          const allInputs = Array.from(document.querySelectorAll('input[type="text"], input[type="number"]'));
           const currentIndex = allInputs.indexOf(e.target);
           
+          // If we're at last input, add new row
           if (currentIndex === allInputs.length - 1 && !e.shiftKey) {
-            // Check if last row has data
-            const lastRow = data[data.length - 1];
-            const hasData = Object.values(lastRow).some(val => val && val.trim() !== '');
+            data.push({ date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false });
+            renderSheet();
             
-            if (hasData) {
-              data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
-              renderSheet();
-              
-              setTimeout(() => {
-                const newInputs = document.querySelectorAll('input');
-                if (newInputs[currentIndex + 1]) {
-                  newInputs[currentIndex + 1].focus();
-                  newInputs[currentIndex + 1].select();
-                }
-              }, 10);
-            }
+            setTimeout(() => {
+              const newInputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+              if (newInputs[currentIndex + 1]) {
+                newInputs[currentIndex + 1].focus();
+                newInputs[currentIndex + 1].select();
+              }
+            }, 10);
           }
         }, 10);
       }
       
-      // Delete row with Ctrl+Delete
-      else if (e.key === 'Delete' && e.ctrlKey) {
+      // Arrow keys for navigation
+      else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (data.length > 1) {
-          data.splice(row, 1);
-          cleanupEmptyRows();
-          renderSheet();
+        const fields = ['date', 'transaction', 'reference', 'cashIn', 'cashOut'];
+        const fieldIndex = fields.indexOf(field);
+        const nextInput = document.querySelector(`input[data-index="${index + 1}"][data-field="${field}"]`);
+        if (nextInput) {
+          nextInput.focus();
+          nextInput.select();
         }
+      }
+      else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const fields = ['date', 'transaction', 'reference', 'cashIn', 'cashOut'];
+        const fieldIndex = fields.indexOf(field);
+        const prevInput = document.querySelector(`input[data-index="${index - 1}"][data-field="${field}"]`);
+        if (prevInput) {
+          prevInput.focus();
+          prevInput.select();
+        }
+      }
+      
+      // Save with Ctrl+S
+      else if (e.key === 's' && e.ctrlKey) {
+        e.preventDefault();
+        saveData();
+        showMessage('Data saved!');
       }
       
       // Today's date with Ctrl+T
-      else if (e.key === 't' && e.ctrlKey && col === 'date') {
+      else if (e.key === 't' && e.ctrlKey) {
         e.preventDefault();
         const today = new Date();
         const day = today.getDate();
@@ -424,37 +512,129 @@
       }
     }
     
-    function addNewRow() {
-      // Always add at the end
-      data.push({ date: '', trans: '', ref: '', cashin: '', cashout: '' });
+    // Row management functions
+    function addRowAtTop() {
+      data.unshift({ date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false });
       renderSheet();
       
-      // Focus on the new row's date cell
+      // Focus on first cell of new row
       setTimeout(() => {
-        const newRowIndex = data.length - 1;
-        const dateInput = document.querySelector(`input[data-row="${newRowIndex}"][data-col="date"]`);
-        if (dateInput) {
-          dateInput.focus();
-          dateInput.select();
+        const firstInput = document.querySelector(`input[data-index="0"][data-field="date"]`);
+        if (firstInput) {
+          firstInput.focus();
+          firstInput.select();
         }
       }, 10);
     }
     
-    function saveData() {
-      localStorage.setItem('accountSheetData', JSON.stringify(data));
+    function addRowAtBottom() {
+      data.push({ date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false });
+      renderSheet();
+      
+      // Focus on first cell of new row
+      setTimeout(() => {
+        const newIndex = data.length - 1;
+        const firstInput = document.querySelector(`input[data-index="${newIndex}"][data-field="date"]`);
+        if (firstInput) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }, 10);
     }
     
-    // Initial render
-    renderSheet();
-    
-    // Focus first cell
-    setTimeout(() => {
-      const firstInput = document.querySelector('input[data-row="0"][data-col="date"]');
-      if (firstInput) {
-        firstInput.focus();
-        firstInput.select();
+    function deleteRow(index) {
+      if (data.length > 1) {
+        data.splice(index, 1);
+        renderSheet();
+      } else {
+        // If it's the last row, just clear it
+        data[0] = { date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false };
+        renderSheet();
       }
-    }, 100);
+    }
+    
+    function deleteSelectedRows() {
+      const selectedIndices = [];
+      data.forEach((row, index) => {
+        if (row.selected) {
+          selectedIndices.push(index);
+        }
+      });
+      
+      if (selectedIndices.length === 0) {
+        showMessage('No rows selected');
+        return;
+      }
+      
+      // Delete from highest index to lowest to avoid index shifting issues
+      selectedIndices.sort((a, b) => b - a).forEach(index => {
+        data.splice(index, 1);
+      });
+      
+      // If all rows were deleted, add one empty row
+      if (data.length === 0) {
+        data.push({ date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false });
+      }
+      
+      renderSheet();
+      showMessage(`Deleted ${selectedIndices.length} row(s)`);
+    }
+    
+    function saveData() {
+      localStorage.setItem('generalExpensesData', JSON.stringify(data));
+      showMessage('Data saved successfully!');
+    }
+    
+    function showMessage(text) {
+      // Remove existing message
+      const existingMsg = document.querySelector('.message');
+      if (existingMsg) existingMsg.remove();
+      
+      const msg = document.createElement('div');
+      msg.className = 'message';
+      msg.textContent = text;
+      msg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(46, 204, 113, 0.95);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      `;
+      document.body.appendChild(msg);
+      
+      setTimeout(() => {
+        msg.style.opacity = '0';
+        msg.style.transition = 'opacity 0.3s';
+        setTimeout(() => msg.remove(), 300);
+      }, 2000);
+    }
+    
+    // Initialize
+    window.onload = function() {
+      loadSavedData();
+      renderSheet();
+      
+      // Add one empty row if no data
+      if (data.length === 0) {
+        data.push({ date: '', transaction: '', reference: '', cashIn: '', cashOut: '', selected: false });
+      }
+      
+      renderSheet();
+      
+      // Focus first cell
+      setTimeout(() => {
+        const firstInput = document.querySelector('input[data-index="0"][data-field="date"]');
+        if (firstInput) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }, 100);
+    };
     
     // Auto-save every 30 seconds
     setInterval(saveData, 30000);
