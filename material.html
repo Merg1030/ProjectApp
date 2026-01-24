@@ -3,183 +3,933 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IMS | Materials</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <title>PENTA | Materials Inventory</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
   <style>
-    body { font-family: 'Open Sans', Arial, sans-serif; background:#181a22; margin: 0; }
-    .panel {
-      background: #24262e;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(44,62,80,0.04);
-      margin: 40px auto;
-      padding: 30px;
+    :root {
+      /* Construction Theme Colors - Same as Dashboard */
+      --primary: #1a365d;
+      --primary-light: #2c5282;
+      --primary-dark: #0d2b50;
+      --secondary: #ed8936;
+      --accent: #38b2ac;
+      --success: #48bb78;
+      --warning: #ed8936;
+      --danger: #f56565;
+      --info: #4299e1;
+      
+      /* Dark Mode Colors */
+      --bg-primary: #121212;
+      --bg-secondary: #1e1e1e;
+      --bg-tertiary: #2d2d2d;
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255,255,255,0.7);
+      --text-tertiary: rgba(255,255,255,0.5);
+      --border-color: #444;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Light Mode Colors */
+    .light-mode {
+      --bg-primary: #f7fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #edf2f7;
+      --text-primary: #171923;
+      --text-secondary: #4a5568;
+      --text-tertiary: #718096;
+      --border-color: #e2e8f0;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Styles - Same as Dashboard */
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-280px);
+    }
+
+    .sidebar-header {
+      padding: 0 1.5rem 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 2rem;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--secondary);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .logo-text h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .logo-text span {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+
+    /* Navigation */
+    .nav-section {
+      padding: 0 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .nav-section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.6;
+      margin-bottom: 1rem;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      border-radius: 0.5rem;
+      transition: all 0.15s ease;
       position: relative;
     }
-    .panel-sticky-top {
-      position: sticky;
-      top: 0;
-      background: #24262e;
-      z-index: 40;
-      box-shadow: 0 1px 7px rgba(44,62,80,0.05);
-      border-radius: 8px 8px 0 0;
-      margin-bottom: 0;
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transform: translateX(4px);
     }
-    .panel-heading {
-      background: #333;
-      color: #fff;
-      padding: 18px 24px;
-      font-size: 1.16rem;
-      font-weight: bold;
-      border-radius: 8px 8px 0 0;
-      margin: 0;
-      position: sticky;
-      top: 0;
-      z-index: 50;
+
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      font-weight: 500;
     }
-    .top-actions {
-      margin-bottom: 18px;
+
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60%;
+      background: var(--secondary);
+      border-radius: 0 0.375rem 0.375rem 0;
+    }
+
+    .nav-icon {
+      font-size: 1.125rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .badge {
+      margin-left: auto;
+      background: var(--secondary);
+      color: var(--primary-dark);
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
       display: flex;
-      gap: 12px;
-      background: #24262e;
-      position: sticky;
-      top: 60px;
-      z-index: 49;
-      padding-top: 6px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem;
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .btn-action {
-      background: #333;
-      color: #fff;
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.2);
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background: var(--secondary);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      transition: margin-left 0.3s ease;
+      padding: 2rem;
+    }
+
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
+    /* Top Bar - Same as Dashboard */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .top-left h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .top-left p {
+      color: var(--text-secondary);
+      margin: 0.5rem 0 0;
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    /* Search Bar */
+    .search-container {
+      position: relative;
+      width: 300px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      padding-left: 3rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      transition: all 0.15s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+    }
+
+    /* User Actions */
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .action-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .action-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--danger);
+      color: white;
+      font-size: 0.75rem;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .user-profile:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: white;
+    }
+
+    .user-info h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .user-info span {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Mobile Menu Toggle */
+    .mobile-toggle {
+      display: none;
+      background: var(--primary);
+      color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      font-size: 16px;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      cursor: pointer;
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      z-index: 1100;
+    }
+
+    /* Materials Table Panel */
+    .panel {
+      background: var(--bg-secondary);
+      border-radius: 1rem;
+      box-shadow: var(--card-shadow);
+      margin: 0;
+      padding: 2rem;
+      position: relative;
+      border: 1px solid var(--border-color);
+    }
+
+    .panel-heading {
+      color: var(--text-primary);
+      padding: 0 0 1.5rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0 0 1rem;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .back-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
-      display: inline-block;
-    }
-    .btn-action:hover { background: #4a4949; }
-    .search-bar {
-      margin-bottom: 18px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: #333;
-      position: sticky;
-      top: 110px;
-      z-index: 48;
-      padding-top: 6px;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
     }
-    .search-input {
-      padding: 9px 12px;
-      font-size: 15px;
-      border-radius: 4px;
-      border: 1px solid #777777;
-      width: 220px;
+
+    .back-btn:hover {
+      background: var(--primary-dark);
+      transform: translateX(-2px);
     }
-    .search-btn {
-      padding: 9px 20px;
-      font-size: 15px;
-      border-radius: 4px;
+
+    .top-actions {
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      background: var(--primary);
+      color: white;
       border: none;
-      background: #777777;
-      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
       font-weight: 600;
       cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
     }
-    .search-btn:hover { background: #1a5fa0; }
+
+    .btn-action:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action.secondary {
+      background: var(--secondary);
+    }
+
+    .btn-action.secondary:hover {
+      background: #d97706;
+    }
+
+    .btn-action.success {
+      background: var(--success);
+    }
+
+    .btn-action.success:hover {
+      background: #38a169;
+    }
+
+    .search-bar {
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-bar input {
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      min-width: 250px;
+      flex: 1;
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+    }
+
+    .search-bar button {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+      border-radius: 0.5rem;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+    }
+
+    .search-bar button:hover {
+      background: var(--primary-dark);
+    }
+
+    .search-bar button.secondary {
+      background: var(--secondary);
+    }
+
+    .search-bar button.secondary:hover {
+      background: #d97706;
+    }
+
+    /* Table Styles */
     .table-responsive {
       overflow-x: auto;
-      max-height: 68vh;
+      max-height: 60vh;
       position: relative;
-      background: #fff;
-      border-radius: 0 0 8px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 0.75rem;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #24262e;
       min-width: 900px;
       position: relative;
-      color: #dddddd;
     }
-    th, td {
-      padding: 14px 12px;
-      text-align: left;
-      font-size: 15px;
-      background:  #333;
-    }
+
     th {
-      font-weight: 700;
-      background: #333;
-      color: #fff;
+      text-align: left;
+      padding: 1rem;
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       position: sticky;
       top: 0;
-      z-index: 60;
+      z-index: 10;
     }
-    tr:nth-child(even) { background: #333; }
-    tr:hover { background: #333 }
+
+    td {
+      padding: 1rem;
+      font-size: 0.875rem;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    tr:hover td {
+      background: var(--bg-tertiary);
+    }
+
     td:first-child, th:first-child {
       position: sticky;
       left: 0;
-      z-index: 61;
-      background: #1e2026;;
-      color: #ffffff;
-    }
-    th:first-child { z-index: 62; }
-    #table-message {
-      position: relative;
       z-index: 20;
     }
-    .btn.btn-outline{color: white; margin-right: 20PX;}
-    @media (max-width: 700px) {
-      .panel { padding: 5px; }
-      .panel-heading { padding: 11px 6px; font-size: 1rem; }
-      .top-actions { flex-direction: column; gap: 8px; top: 49px; }
-      .search-bar { flex-direction: column; align-items: stretch; gap: 5px; top: 130px; }
-      .search-input { width: 100%; }
-      table { min-width: 500px; }
+
+    th:first-child {
+      z-index: 30;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .status-instock {
+      background: rgba(72, 187, 120, 0.1);
+      color: var(--success);
+    }
+
+    .status-lowstock {
+      background: rgba(237, 137, 54, 0.1);
+      color: var(--warning);
+    }
+
+    .status-outstock {
+      background: rgba(245, 101, 101, 0.1);
+      color: var(--danger);
+    }
+
+    /* Quantity Indicator */
+    .quantity-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .quantity-high { background: var(--success); }
+    .quantity-medium { background: var(--warning); }
+    .quantity-low { background: var(--danger); }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-280px);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .top-bar {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      
+      .search-container {
+        width: 100%;
+      }
+      
+      .panel {
+        padding: 1rem;
+      }
+      
+      .search-bar input {
+        min-width: 100%;
+      }
+      
+      table {
+        min-width: 700px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-actions {
+        flex-direction: column;
+      }
+      
+      .btn-action, .search-bar button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-tertiary);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
     }
   </style>
 </head>
-<body>
-  <div class="panel">
-    <div class="panel-heading panel-sticky-top">
-      <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>Materials Inventory</div>
-    <div class="top-actions panel-sticky-top">
-      <a href="addMaterial.html" class="btn-action"><i class="fa fa-plus"></i> Add Material</a>
-      <a href="assignMaterial.html" class="btn-action"><i class="fa fa-tasks"></i> Assign</a>
-      <a href="Materialallocation.html" class="btn-action"><i class="fa fa-history"></i> History</a>
+<body class="dark-mode">
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-toggle" id="mobileToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="logo-text">
+          <h2>PENTA</h2>
+          <span>Construction Pro</span>
+        </div>
+      </div>
     </div>
-    <div class="search-bar panel-sticky-top">
-      <input id="searchInput" class="search-input" type="text" placeholder="Search materials, category, location..."/>
-      <button id="searchBtn" class="search-btn"><i class="fa fa-search"></i> Search</button>
-      <button id="clearBtn" class="search-btn" style="background:#8c9391"><i class="fa fa-times"></i> Clear</button>
+
+    <!-- Navigation -->
+    <nav class="nav-section">
+      <h3>Dashboard</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-gauge-high nav-icon"></i>
+            <span>Overview</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="projectdashboard.html" class="nav-link">
+            <i class="fas fa-diagram-project nav-icon"></i>
+            <span>Projects</span>
+            <span class="badge">12</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Employees.html" class="nav-link">
+            <i class="fas fa-user-tie nav-icon"></i>
+            <span>Team</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Resources</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="Tool.html" class="nav-link">
+            <i class="fas fa-screwdriver-wrench nav-icon"></i>
+            <span>Equipment</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="material.html" class="nav-link active">
+            <i class="fas fa-truck-ramp-box nav-icon"></i>
+            <span>Materials</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="inventory.html" class="nav-link">
+            <i class="fas fa-warehouse nav-icon"></i>
+            <span>Inventory</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Management</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="HazidExpense.html" class="nav-link">
+            <i class="fas fa-file-invoice-dollar nav-icon"></i>
+            <span>Finances</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Table.html" class="nav-link">
+            <i class="fas fa-chart-column nav-icon"></i>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Note.html" class="nav-link">
+            <i class="fas fa-clipboard-list nav-icon"></i>
+            <span>Daily Logs</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="assessment.html" class="nav-link">
+            <i class="fas fa-clipboard-check nav-icon"></i>
+            <span>Work Assessment</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+      <div class="toggle-label">
+        <i class="fas fa-moon"></i>
+        <span>Dark Mode</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="themeToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
     </div>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Material Name</th>
-            <th>Category</th>
-            <th>Quantity</th>
-            <th>Location</th>
-            <th>Added Date</th>
-          </tr>
-        </thead>
-        <tbody id="materials-table-body">
-          <!-- Materials here -->
-        </tbody>
-      </table>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-left">
+        <h1>Materials Inventory</h1>
+        <p id="currentDate">Total Materials: <span id="materialCount">0</span> items</p>
+      </div>
+      <div class="top-right">
+        <div class="search-container">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" class="search-input" id="globalSearch" placeholder="Search across system...">
+        </div>
+        <div class="user-actions">
+          <button class="action-btn" id="fullscreenBtn">
+            <i class="fas fa-expand"></i>
+          </button>
+          <button class="action-btn" id="notificationBtn">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge">3</span>
+          </button>
+          <div class="user-profile" id="userProfile">
+            <div class="user-avatar">CC</div>
+            <div class="user-info">
+              <h4>Chris Chishela</h4>
+              <span>Project Manager</span>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="table-message"></div>
-  </div>
+
+    <!-- Materials Panel -->
+    <div class="panel fade-in">
+      <div class="panel-heading">
+        <span>Material Management</span>
+        <a href="dashboard.html" class="back-btn">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <div class="top-actions">
+        <a href="addMaterial.html" class="btn-action">
+          <i class="fas fa-plus"></i> Add New Material
+        </a>
+        <a href="assignMaterial.html" class="btn-action secondary">
+          <i class="fas fa-tasks"></i> Assign to Project
+        </a>
+        <a href="Materialallocation.html" class="btn-action success">
+          <i class="fas fa-history"></i> View Allocation History
+        </a>
+      </div>
+
+      <div class="search-bar">
+        <input id="searchInput" type="text" placeholder="Search materials by name, category, location..."/>
+        <button id="searchBtn" class="btn-action">
+          <i class="fas fa-search"></i> Search
+        </button>
+        <button id="clearBtn" class="btn-action secondary">
+          <i class="fas fa-times"></i> Clear
+        </button>
+        <button id="filterBtn" class="btn-action success">
+          <i class="fas fa-filter"></i> Filter
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Material Name</th>
+              <th>Category</th>
+              <th>Quantity</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th>Supplier</th>
+              <th>Added Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="materials-table-body">
+            <!-- Materials will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="table-message" style="margin-top: 1rem; text-align: center; color: var(--text-secondary);"></div>
+    </div>
+  </main>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
       authDomain: "project-task-588c4.firebaseapp.com",
@@ -189,79 +939,283 @@
       appId: "1:411882772509:web:08d613186c101a99f38ef4",
       measurementId: "G-JMFLFYEM0F"
     };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // DOM Elements
+    const themeToggle = document.getElementById('themeToggle');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const currentDate = document.getElementById('currentDate');
+    const materialCount = document.getElementById('materialCount');
     const tableBody = document.getElementById('materials-table-body');
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
     const clearBtn = document.getElementById('clearBtn');
+    const globalSearch = document.getElementById('globalSearch');
+    
     let materialsData = [];
 
+    // Theme Toggle
+    themeToggle.addEventListener('change', function() {
+      if (this.checked) {
+        document.body.classList.remove('light-mode');
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        document.body.classList.add('light-mode');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+      document.body.classList.add('light-mode');
+      document.body.classList.remove('dark-mode');
+      themeToggle.checked = false;
+    }
+
+    // Mobile Menu Toggle
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('active');
+      mainContent.classList.toggle('expanded');
+    });
+
+    // Fullscreen Toggle
+    fullscreenBtn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    // Update Date
+    function updateDate() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      currentDate.innerHTML = `Total Materials: <span id="materialCount">${materialsData.length}</span> items • ${now.toLocaleDateString('en-US', options)}`;
+    }
+
+    // Render Materials
     function renderMaterials(data) {
       tableBody.innerHTML = "";
       let row = 1;
+      
       if(data.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e74c3c;font-weight:bold;">No results found.</td></tr>`;
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align:center;padding: 2rem;color: var(--text-tertiary);">
+              <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+              <div style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No materials found</div>
+              <div style="font-size: 0.875rem;">Try adjusting your search or add new materials</div>
+            </td>
+          </tr>`;
         return;
       }
+      
       data.forEach(m => {
         const tr = document.createElement('tr');
+        
+        // Determine status based on quantity
+        let statusClass = 'status-instock';
+        let statusText = 'In Stock';
+        let quantityClass = 'quantity-high';
+        
+        const quantity = parseInt(m.quantity) || 0;
+        if (quantity === 0) {
+          statusClass = 'status-outstock';
+          statusText = 'Out of Stock';
+          quantityClass = 'quantity-low';
+        } else if (quantity < 10) {
+          statusClass = 'status-lowstock';
+          statusText = 'Low Stock';
+          quantityClass = 'quantity-low';
+        } else if (quantity < 50) {
+          statusClass = 'status-lowstock';
+          statusText = 'Medium Stock';
+          quantityClass = 'quantity-medium';
+        }
+        
         tr.innerHTML = `
           <td>${row++}</td>
-          <td>${m.materialName || '-'}</td>
-          <td>${m.category || '-'}</td>
-          <td>${m.quantity || '-'}</td>
-          <td>${m.location || '-'}</td>
-          <td>${m.createdAt ? m.createdAt.toDate().toLocaleString() : '-'}</td>
+          <td style="font-weight: 600;">
+            <i class="fas fa-box" style="color: var(--primary); margin-right: 0.5rem;"></i>
+            ${m.materialName || '-'}
+          </td>
+          <td>
+            <span style="background: rgba(66, 153, 225, 0.1); color: var(--info); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;">
+              ${m.category || 'Uncategorized'}
+            </span>
+          </td>
+          <td>
+            <span class="quantity-indicator ${quantityClass}"></span>
+            ${quantity}
+          </td>
+          <td>
+            <span class="status-badge ${statusClass}">
+              <i class="fas fa-circle" style="font-size: 6px;"></i>
+              ${statusText}
+            </span>
+          </td>
+          <td>${m.location || 'Storage A'}</td>
+          <td>${m.supplier || 'Local Supplier'}</td>
+          <td>${m.createdAt ? m.createdAt.toDate().toLocaleDateString() : '-'}</td>
+          <td>
+            <button class="action-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editMaterial('${m.id}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: var(--danger);" onclick="deleteMaterial('${m.id}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
         `;
         tableBody.appendChild(tr);
       });
     }
 
+    // Filter Materials
     function filterMaterials() {
       const q = searchInput.value.trim().toLowerCase();
       if(!q) {
         renderMaterials(materialsData);
+        materialCount.textContent = materialsData.length;
         return;
       }
       const filtered = materialsData.filter(m =>
         (m.materialName && m.materialName.toLowerCase().includes(q)) ||
         (m.category && m.category.toLowerCase().includes(q)) ||
         (m.location && m.location.toLowerCase().includes(q)) ||
-        (m.quantity !== undefined && String(m.quantity).includes(q)) ||
-        (m.createdAt && m.createdAt.toDate().toLocaleString().toLowerCase().includes(q))
+        (m.supplier && m.supplier.toLowerCase().includes(q)) ||
+        (m.quantity !== undefined && String(m.quantity).includes(q))
       );
       renderMaterials(filtered);
+      materialCount.textContent = filtered.length;
     }
 
-    // Search on button click
+    // Global Search
+    function performGlobalSearch() {
+      const q = globalSearch.value.trim().toLowerCase();
+      if (q) {
+        // In a real app, this would search across all collections
+        alert(`Global search for: "${q}"\nThis would search across projects, materials, employees, etc.`);
+      }
+    }
+
+    // Event Listeners
     searchBtn.addEventListener("click", filterMaterials);
-    // Search on Enter key
-    searchInput.addEventListener("keydown", e => { if(e.key === "Enter") filterMaterials(); });
-    // Clear search
+    searchInput.addEventListener("keydown", e => { 
+      if(e.key === "Enter") filterMaterials(); 
+    });
+    
     clearBtn.addEventListener("click", () => {
       searchInput.value = "";
       renderMaterials(materialsData);
+      materialCount.textContent = materialsData.length;
+    });
+    
+    globalSearch.addEventListener("keydown", e => { 
+      if(e.key === "Enter") performGlobalSearch(); 
     });
 
-    // Live data from Firestore
+    // Load Materials from Firestore
     onSnapshot(query(collection(db, "materials"), orderBy("createdAt", "desc")), (snapshot) => {
       materialsData = [];
       snapshot.forEach(doc => {
-        materialsData.push(doc.data());
+        const data = doc.data();
+        data.id = doc.id;
+        materialsData.push(data);
       });
       renderMaterials(materialsData);
+      updateDate();
     });
 
-    // Security & anti-copy measures
-    function resetInactivityTimeout() {}
-    function logout() { window.location.href = 'index.html'; }
-    resetInactivityTimeout();
-    document.addEventListener('mousemove', resetInactivityTimeout);
-    document.addEventListener('keypress', resetInactivityTimeout);
-    document.addEventListener('click', resetInactivityTimeout);
-    document.addEventListener('touchstart', resetInactivityTimeout);
+    // Edit Material (placeholder function)
+    window.editMaterial = function(id) {
+      alert(`Edit material with ID: ${id}\nRedirecting to edit page...`);
+      // In your actual implementation:
+      // window.location.href = `editMaterial.html?id=${id}`;
+    };
+
+    // Delete Material (placeholder function)
+    window.deleteMaterial = function(id) {
+      if (confirm('Are you sure you want to delete this material?')) {
+        alert(`Material with ID: ${id} would be deleted\nIn real implementation, this would remove from Firestore.`);
+        // In your actual implementation:
+        // await deleteDoc(doc(db, "materials", id));
+      }
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDate();
+      
+      // Add click outside listener for mobile menu
+      document.addEventListener('click', function(event) {
+        if (window.innerWidth <= 768 && 
+            !sidebar.contains(event.target) && 
+            !mobileToggle.contains(event.target) &&
+            sidebar.classList.contains('active')) {
+          sidebar.classList.remove('active');
+          mainContent.classList.remove('expanded');
+        }
+      });
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(event) {
+        // Ctrl/Cmd + / to focus search
+        if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+          event.preventDefault();
+          searchInput.focus();
+        }
+        
+        // Escape to close mobile menu
+        if (event.key === 'Escape' && sidebar.classList.contains('active')) {
+          sidebar.classList.remove('active');
+          mainContent.classList.remove('expanded');
+        }
+        
+        // Ctrl/Cmd + F to focus global search
+        if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+          event.preventDefault();
+          globalSearch.focus();
+        }
+      });
+      
+      // Inactivity timeout (10 minutes)
+      let inactivityTimeout;
+      function resetInactivityTimeout() {
+        clearTimeout(inactivityTimeout);
+        inactivityTimeout = setTimeout(() => {
+          if (confirm('You have been inactive for 10 minutes. Would you like to stay logged in?')) {
+            resetInactivityTimeout();
+          } else {
+            window.location.href = 'index.html';
+          }
+        }, 600000);
+      }
+      
+      resetInactivityTimeout();
+      document.addEventListener('mousemove', resetInactivityTimeout);
+      document.addEventListener('keypress', resetInactivityTimeout);
+      document.addEventListener('click', resetInactivityTimeout);
+    });
+
+    // Security measures
     document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     document.addEventListener('keydown', function (e) {
       if (
