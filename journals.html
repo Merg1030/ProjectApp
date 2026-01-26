@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Account Journal</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --panel:#fff; --muted:#6b7280; --accent:#0b74de; --border:#e6e9ee;
+    }
+    html,body{height:100%;margin:0;padding:0;background:var(--bg);font-family:Inter,system-ui,Arial;}
+    .wrap{max-width:1600px;margin:18px auto;padding:12px;box-sizing:border-box;}
+    
+    .top { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+    .top h1 { margin:0; font-size:20px; }
+    .account-name { color:var(--accent); font-weight:600; margin-top:4px; }
+    .small { font-size:12px; color:var(--muted); }
+    
+    .panel { background:var(--panel); border-radius:10px; padding:12px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(8,10,20,0.04); }
+    
+    .btn { background:var(--accent); color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn.ghost { background:#f1f3f5; color:#111; border:1px solid var(--border); }
+    .btn:hover { opacity:0.9; }
+    
+    /* Header actions */
+    .header-actions { display:flex; gap:8px; margin-top:12px; margin-bottom:12px; }
+    
+    /* Transaction Form */
+    .tx-form-section { 
+      background:var(--panel); 
+      border-radius:10px; 
+      padding:12px; 
+      border:1px solid var(--border);
+      margin-bottom:12px;
+      display: none;
+    }
+    
+    .tx-form-section.show {
+      display: block;
+    }
+    
+    .tx-form { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; align-items:end; }
+    .tx-form input, .tx-form select, .tx-form button { padding:8px 10px; border-radius:6px; border:1px solid var(--border); font-size:14px; }
+    .tx-form button { border: none; }
+    .tx-form input:focus, .tx-form select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(11,116,222,0.1); }
+    
+    /* Journal Table */
+    .table-container { overflow-x:auto; margin-top:12px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th,td { padding:10px 8px; border-bottom:1px solid #f3f5f7; text-align:left; }
+    th { background:#fbfdff; font-weight:600; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:0.05em; border-bottom:2px solid var(--border); }
+    td.right { text-align:right; font-variant-numeric:tabular-nums; }
+    
+    /* Amount colors */
+    .debit { color:#ef4444; }
+    .credit { color:#10b981; }
+    .balance { color:var(--accent); font-weight:600; }
+    
+    /* Empty state */
+    .empty { text-align:center; padding:40px; color:var(--muted); font-size:14px; }
+    
+    /* Transaction row hover */
+    tbody tr:hover { background:#f9fafb; }
+    
+    /* Loading */
+    .loading { text-align:center; padding:40px; color:var(--muted); }
+    .loading:after { content:'...'; animation:dots 1.5s infinite; }
+    
+    @keyframes dots {
+      0%, 20% { content:'.'; }
+      40% { content:'..'; }
+      60%, 100% { content:'...'; }
+    }
+    
+    /* Action Menu */
+    .action-menu { position:relative; }
+    .action-btn { background:none; border:none; padding:4px 8px; cursor:pointer; font-size:18px; color:var(--muted); }
+    .action-btn:hover { color:var(--accent); }
+    .dropdown-menu { 
+      position:absolute; 
+      right:0; 
+      top:100%; 
+      background:white; 
+      border:1px solid var(--border); 
+      border-radius:6px; 
+      box-shadow:0 4px 12px rgba(0,0,0,0.1); 
+      z-index:100; 
+      display:none; 
+      min-width:150px;
+    }
+    .dropdown-menu.show { display:block; }
+    .dropdown-item { 
+      display:block; 
+      width:100%; 
+      padding:10px 12px; 
+      text-align:left; 
+      background:none; 
+      border:none; 
+      cursor:pointer; 
+      font-size:13px; 
+      color:var(--muted);
+    }
+    .dropdown-item:hover { background:#f6f8fb; color:var(--accent); }
+    .dropdown-item.delete { color:#ef4444; }
+    .dropdown-item.delete:hover { background:#fef2f2; }
+    
+    /* Responsive */
+    @media (max-width:740px){
+      .tx-form { flex-direction:column; align-items:stretch; }
+      .wrap { padding:8px; }
+      .tx-form input, .tx-form select, .tx-form button { width:100%; }
+    }
+    
+    /* Form header */
+    .form-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    
+    /* Form select styles */
+    .form-select { 
+      background-color: white; 
+      border: 1px solid var(--border); 
+      border-radius: 6px; 
+      padding: 8px 10px; 
+      font-size: 14px; 
+      color: #333; 
+      cursor: pointer;
+    }
+    .form-select:focus { 
+      outline: none; 
+      border-color: var(--accent); 
+      box-shadow: 0 0 0 2px rgba(11,116,222,0.1); 
+    }
+    
+    /* Column widths */
+    .date-col { width: 100px; }
+    .desc-col { width: 180px; min-width: 150px; }
+    .ref-col { width: 100px; }
+    .payee-col { width: 80px; }
+    .project-col { width: 280px; min-width: 250px; }
+    .debit-col { width: 100px; }
+    .credit-col { width: 100px; }
+    .balance-col { width: 120px; }
+    .actions-col { width: 50px; }
+    
+    /* Wrap text in project column */
+    .project-cell {
+      white-space: normal;
+      word-wrap: break-word;
+      max-width: 280px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Account Journal</h1>
+        <div class="account-name" id="accountName">Loading...</div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn ghost" id="backBtn">← Back to Dashboard</button>
+      <button class="btn" id="toggleFormBtn">+ Add Transaction</button>
+    </div>
+    
+    <!-- Transaction Form (Hidden by default) -->
+    <div class="tx-form-section panel" id="txFormSection">
+      <div class="form-header">
+        <div style="font-weight:700;">Add New Transaction</div>
+        <button type="button" class="btn ghost" id="closeFormBtn">× Close</button>
+      </div>
+      <form class="tx-form" id="transactionForm">
+        <input type="date" name="date" id="dateInput" required style="width:120px;">
+        <input type="text" name="description" placeholder="Description" required style="flex:1; min-width:160px;">
+        <input type="text" name="reference" placeholder="Reference" style="width:120px;">
+        
+        <!-- Payee Dropdown -->
+        <select name="payee" id="payeeSelect" class="form-select" style="width:90px;">
+          <option value="">Select Payee</option>
+          <option value="HL">HL</option>
+          <option value="HML">HML</option>
+          <option value="FPS">FPS</option>
+          <option value="HFL">HFL</option>
+          <option value="HEL">HEL</option>
+        </select>
+        
+        <!-- Project Dropdown -->
+        <select name="project" id="projectSelect" class="form-select" style="width:220px;">
+          <option value="">Select Project</option>
+          <!-- Projects will be loaded here -->
+        </select>
+        
+        <input type="number" name="debit" step="0.01" min="0" placeholder="Debit" value="0" style="width:95px;">
+        <input type="number" name="credit" step="0.01" min="0" placeholder="Credit" value="0" style="width:95px;">
+        <button type="submit" class="btn" style="min-width:100px;">Add Transaction</button>
+      </form>
+      <div class="small" style="margin-top:8px; color:#ef4444; display:none;" id="formError"></div>
+    </div>
+    
+    <!-- Journal Table -->
+    <div class="panel">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <div style="font-weight:700">Transaction History</div>
+      </div>
+      
+      <div class="table-container">
+        <div class="loading" id="loadingState">Loading transactions</div>
+        <table id="journalTable" style="display:none;">
+          <thead>
+            <tr>
+              <th class="date-col">Date</th>
+              <th class="desc-col">Description</th>
+              <th class="ref-col">Reference</th>
+              <th class="payee-col">Payee</th>
+              <th class="project-col">Project</th>
+              <th class="debit-col" style="text-align:right">Debit</th>
+              <th class="credit-col" style="text-align:right">Credit</th>
+              <th class="balance-col" style="text-align:right">Balance</th>
+              <th class="actions-col" style="text-align:center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Transactions will load here -->
+          </tbody>
+        </table>
+        <div class="empty" id="emptyState" style="display:none;">No transactions yet. Click "Add Transaction" to start.</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      serverTimestamp,
+      Timestamp,
+      doc,
+      getDoc,
+      updateDoc,
+      deleteDoc,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const accountId = urlParams.get('account');
+    const accountName = decodeURIComponent(urlParams.get('name') || 'Unknown');
+
+    // DOM elements
+    const accountNameEl = document.getElementById('accountName');
+    const backBtn = document.getElementById('backBtn');
+    const toggleFormBtn = document.getElementById('toggleFormBtn');
+    const closeFormBtn = document.getElementById('closeFormBtn');
+    const txFormSection = document.getElementById('txFormSection');
+    const transactionForm = document.getElementById('transactionForm');
+    const dateInput = document.getElementById('dateInput');
+    const payeeSelect = document.getElementById('payeeSelect');
+    const projectSelect = document.getElementById('projectSelect');
+    const tableBody = document.getElementById('tableBody');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const journalTable = document.getElementById('journalTable');
+    const formError = document.getElementById('formError');
+
+    // State
+    let transactions = [];
+    let projects = [];
+    let unsubscribeTransactionListener = null;
+    let openingBalance = 0; // We'll get this but won't show it
+
+    // Format numbers
+    function fmt(n){ 
+      return Number(n || 0).toLocaleString(undefined,{
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }); 
+    }
+
+    // Format date
+    function formatDate(date) {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    }
+
+    // Clean project name - remove " (Freight and passengers)"
+    function cleanProjectName(name) {
+      if (!name) return '';
+      // Remove " (Freight and passengers)" if it exists at the end
+      return name.replace(/\s*\(Freight and passengers\)\s*$/i, '').trim();
+    }
+
+    // Initialize
+    async function init() {
+      accountNameEl.textContent = accountName;
+      
+      if (!accountId) {
+        alert('No account selected. Going back to dashboard.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Set today's date as default
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+      
+      await loadAccountInfo();
+      await loadProjects();
+      startTransactionListener();
+      setupEventListeners();
+    }
+
+    // Load account info (we get opening balance but don't show it)
+    async function loadAccountInfo() {
+      try {
+        const accountDoc = await getDoc(doc(db, 'accounts', accountId));
+        if (accountDoc.exists()) {
+          const data = accountDoc.data();
+          openingBalance = Number(data.openingBalance || 0);
+        }
+      } catch (error) {
+        console.error('Error loading account:', error);
+      }
+    }
+
+    // Load projects from projectDashboard collection (only uncompleted)
+    async function loadProjects() {
+      try {
+        const projectsCollection = collection(db, 'projectDashboard');
+        const querySnapshot = await getDocs(projectsCollection);
+        
+        projects = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Only include projects that are not completed
+          if (data.status !== 'completed') {
+            // Clean the project name
+            const cleanName = cleanProjectName(data.name);
+            projects.push({
+              id: doc.id,
+              originalName: data.name || 'Unnamed Project',
+              name: cleanName,
+              client: data.client || '',
+              status: data.status || 'active',
+              hidden: data.hidden || false
+            });
+          }
+        });
+        
+        // Update project dropdown
+        updateProjectDropdown();
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        projects = [];
+      }
+    }
+
+    // Update project dropdown with loaded projects
+    function updateProjectDropdown() {
+      projectSelect.innerHTML = '<option value="">Select Project</option>';
+      
+      if (projects.length === 0) {
+        projectSelect.innerHTML += '<option value="" disabled>No uncompleted projects found</option>';
+        return;
+      }
+      
+      // Filter out hidden projects and sort by name
+      const visibleProjects = projects
+        .filter(project => !project.hidden)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      visibleProjects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        // Show clean project name only
+        option.textContent = project.name;
+        // Store original name for reference if needed
+        option.dataset.originalName = project.originalName;
+        projectSelect.appendChild(option);
+      });
+    }
+
+    // Start real-time transaction listener
+    function startTransactionListener() {
+      if (unsubscribeTransactionListener) {
+        unsubscribeTransactionListener();
+      }
+      
+      try {
+        const transactionsCol = collection(db, 'accounts', accountId, 'transactions');
+        const q = query(transactionsCol, orderBy('date', 'asc'));
+        
+        unsubscribeTransactionListener = onSnapshot(q, 
+          (snapshot) => {
+            loadingState.style.display = 'none';
+            
+            transactions = [];
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              // Clean project name from stored data
+              const storedProjectName = data.projectName || '';
+              const cleanProjectNameValue = cleanProjectName(storedProjectName);
+              
+              transactions.push({
+                id: doc.id,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date || Date.now()),
+                description: data.description || '',
+                reference: data.supplier || data.reference || '',
+                payee: data.payee || '',
+                projectId: data.projectId || '',
+                projectName: cleanProjectNameValue,
+                originalProjectName: storedProjectName, // Keep original for editing
+                debit: Number(data.debit || 0),
+                credit: Number(data.credit || 0),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
+              });
+            });
+            
+            // Sort by date then created at
+            transactions.sort((a, b) => {
+              const dateDiff = a.date.getTime() - b.date.getTime();
+              if (dateDiff === 0) {
+                return (a.createdAt || 0) - (b.createdAt || 0);
+              }
+              return dateDiff;
+            });
+            
+            renderTransactions();
+          }, 
+          (error) => {
+            console.error('Transaction listener error:', error);
+            loadingState.style.display = 'none';
+            // Try without ordering
+            startSimpleTransactionListener();
+          }
+        );
+      } catch (error) {
+        console.error('Error setting up listener:', error);
+        loadingState.style.display = 'none';
+        startSimpleTransactionListener();
+      }
+    }
+
+    // Simple listener without ordering
+    function startSimpleTransactionListener() {
+      if (unsubscribeTransactionListener) {
+        unsubscribeTransactionListener();
+      }
+      
+      try {
+        const transactionsCol = collection(db, 'accounts', accountId, 'transactions');
+        
+        unsubscribeTransactionListener = onSnapshot(transactionsCol, 
+          (snapshot) => {
+            loadingState.style.display = 'none';
+            
+            transactions = [];
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              // Clean project name from stored data
+              const storedProjectName = data.projectName || '';
+              const cleanProjectNameValue = cleanProjectName(storedProjectName);
+              
+              transactions.push({
+                id: doc.id,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date || Date.now()),
+                description: data.description || '',
+                reference: data.supplier || data.reference || '',
+                payee: data.payee || '',
+                projectId: data.projectId || '',
+                projectName: cleanProjectNameValue,
+                originalProjectName: storedProjectName,
+                debit: Number(data.debit || 0),
+                credit: Number(data.credit || 0),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
+              });
+            });
+            
+            // Sort client-side by date
+            transactions.sort((a, b) => {
+              return a.date.getTime() - b.date.getTime();
+            });
+            
+            renderTransactions();
+          }, 
+          (error) => {
+            console.error('Simple listener error:', error);
+            loadingState.style.display = 'none';
+          }
+        );
+      } catch (error) {
+        console.error('Error setting up simple listener:', error);
+        loadingState.style.display = 'none';
+      }
+    }
+
+    // Get project name by ID (clean version)
+    function getProjectNameById(projectId) {
+      if (!projectId) return '';
+      const project = projects.find(p => p.id === projectId);
+      return project ? project.name : 'Unknown Project';
+    }
+
+    // Get original project name by ID (with Freight and passengers if it was there)
+    function getOriginalProjectName(projectId) {
+      if (!projectId) return '';
+      const project = projects.find(p => p.id === projectId);
+      return project ? project.originalName : 'Unknown Project';
+    }
+
+    // Render transactions table with action menus
+    function renderTransactions() {
+      if (transactions.length === 0) {
+        journalTable.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      journalTable.style.display = 'table';
+      
+      let html = '';
+      let runningBalance = openingBalance;
+      
+      transactions.forEach((tx, index) => {
+        runningBalance = runningBalance + tx.credit - tx.debit;
+        const projectName = tx.projectName || getProjectNameById(tx.projectId);
+        
+        html += `
+          <tr data-transaction-id="${tx.id}" data-index="${index}">
+            <td class="date-col">${formatDate(tx.date)}</td>
+            <td class="desc-col">${escapeHtml(tx.description)}</td>
+            <td class="ref-col">${escapeHtml(tx.reference)}</td>
+            <td class="payee-col">${escapeHtml(tx.payee)}</td>
+            <td class="project-col project-cell">${escapeHtml(projectName)}</td>
+            <td class="debit-col right debit">${tx.debit > 0 ? `K ${fmt(tx.debit)}` : ''}</td>
+            <td class="credit-col right credit">${tx.credit > 0 ? `K ${fmt(tx.credit)}` : ''}</td>
+            <td class="balance-col right balance">K ${fmt(runningBalance)}</td>
+            <td class="actions-col" style="text-align:center;">
+              <div class="action-menu">
+                <button class="action-btn" data-action="menu">⋮</button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" data-action="edit">✏️ Edit</button>
+                  <button class="dropdown-item" data-action="reverse">🔄 Reverse</button>
+                  <button class="dropdown-item delete" data-action="delete">🗑️ Delete</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      tableBody.innerHTML = html;
+      
+      // Add event listeners to action buttons
+      setupActionButtons();
+    }
+
+    // Setup action button listeners
+    function setupActionButtons() {
+      const actionButtons = document.querySelectorAll('.action-btn[data-action="menu"]');
+      const dropdownItems = document.querySelectorAll('.dropdown-item');
+      
+      // Close all dropdowns when clicking anywhere
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.action-menu')) {
+          document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+          });
+        }
+      });
+      
+      // Toggle dropdown menus
+      actionButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const dropdown = btn.nextElementSibling;
+          
+          // Close all other dropdowns
+          document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            if (menu !== dropdown) {
+              menu.classList.remove('show');
+            }
+          });
+          
+          // Toggle this dropdown
+          dropdown.classList.toggle('show');
+        });
+      });
+      
+      // Handle dropdown item clicks
+      dropdownItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = item.dataset.action;
+          const menu = item.closest('.action-menu');
+          const row = menu.closest('tr');
+          const transactionId = row.dataset.transactionId;
+          const index = parseInt(row.dataset.index);
+          
+          // Close dropdown
+          menu.querySelector('.dropdown-menu').classList.remove('show');
+          
+          // Handle action
+          handleTransactionAction(action, transactionId, index);
+        });
+      });
+    }
+
+    // Handle transaction actions
+    async function handleTransactionAction(action, transactionId, index) {
+      const transaction = transactions[index];
+      
+      switch(action) {
+        case 'edit':
+          editTransaction(transaction);
+          break;
+          
+        case 'reverse':
+          if (confirm('Reverse this transaction? This will create an opposite transaction.')) {
+            await reverseTransaction(transaction);
+          }
+          break;
+          
+        case 'delete':
+          if (confirm('Are you sure you want to delete this transaction? This cannot be undone.')) {
+            await deleteTransaction(transactionId);
+          }
+          break;
+      }
+    }
+
+    // Edit transaction
+    function editTransaction(transaction) {
+      // Fill form with transaction data
+      dateInput.value = formatDate(transaction.date);
+      document.querySelector('input[name="description"]').value = transaction.description;
+      document.querySelector('input[name="reference"]').value = transaction.reference;
+      payeeSelect.value = transaction.payee || '';
+      
+      // Set project ID if it exists
+      if (transaction.projectId) {
+        projectSelect.value = transaction.projectId;
+      }
+      
+      document.querySelector('input[name="debit"]').value = transaction.debit || 0;
+      document.querySelector('input[name="credit"]').value = transaction.credit || 0;
+      
+      // Show form
+      showForm();
+      
+      // Change form to update mode
+      const form = transactionForm;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Update Transaction';
+      submitBtn.dataset.mode = 'update';
+      submitBtn.dataset.transactionId = transaction.id;
+      
+      // Focus on description
+      document.querySelector('input[name="description"]').focus();
+    }
+
+    // Reverse transaction (create opposite entry)
+    async function reverseTransaction(transaction) {
+      try {
+        const reversedDate = new Date().toISOString().split('T')[0];
+        const reversedDescription = `Reversal: ${transaction.description}`;
+        const originalProjectName = getOriginalProjectName(transaction.projectId);
+        
+        await addDoc(collection(db, 'accounts', accountId, 'transactions'), {
+          date: Timestamp.fromDate(new Date()),
+          description: reversedDescription,
+          reference: transaction.reference,
+          payee: transaction.payee,
+          projectId: transaction.projectId,
+          projectName: originalProjectName,
+          supplier: transaction.reference,
+          debit: transaction.credit, // Swap debit and credit
+          credit: transaction.debit,
+          createdAt: serverTimestamp()
+        });
+        
+        alert('Transaction reversed successfully!');
+      } catch (error) {
+        console.error('Error reversing transaction:', error);
+        alert('Failed to reverse transaction. Please try again.');
+      }
+    }
+
+    // Delete transaction
+    async function deleteTransaction(transactionId) {
+      try {
+        await deleteDoc(doc(db, 'accounts', accountId, 'transactions', transactionId));
+        alert('Transaction deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert('Failed to delete transaction. Please try again.');
+      }
+    }
+
+    // Add transaction
+    async function addTransaction(formData) {
+      try {
+        // Clear any previous error
+        formError.style.display = 'none';
+        formError.textContent = '';
+        
+        // Validate data
+        const date = new Date(formData.date);
+        if (isNaN(date.getTime())) {
+          formError.textContent = 'Invalid date. Please select a valid date.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        const debit = parseFloat(formData.debit) || 0;
+        const credit = parseFloat(formData.credit) || 0;
+        
+        if (debit === 0 && credit === 0) {
+          formError.textContent = 'Please enter either a debit or credit amount.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        // Get original project name (with Freight and passengers if applicable)
+        const projectId = formData.project;
+        const originalProjectName = getOriginalProjectName(projectId);
+        
+        await addDoc(collection(db, 'accounts', accountId, 'transactions'), {
+          date: Timestamp.fromDate(date),
+          description: formData.description.trim(),
+          reference: formData.reference.trim(),
+          payee: formData.payee,
+          projectId: projectId,
+          projectName: originalProjectName,
+          supplier: formData.reference.trim(),
+          debit: Number(debit.toFixed(2)),
+          credit: Number(credit.toFixed(2)),
+          createdAt: serverTimestamp()
+        });
+        
+        // Reset form
+        resetForm();
+        
+        return true;
+      } catch (error) {
+        console.error('Add transaction error:', error);
+        formError.textContent = `Error: ${error.message}. Please try again.`;
+        formError.style.display = 'block';
+        return false;
+      }
+    }
+
+    // Helper: escape HTML
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Back button
+      backBtn.addEventListener('click', () => {
+        window.location.href = 'dashboard.html';
+      });
+
+      // Toggle form button
+      toggleFormBtn.addEventListener('click', () => {
+        resetForm();
+        showForm();
+      });
+
+      // Close form button
+      closeFormBtn.addEventListener('click', hideForm);
+
+      // Form submission
+      transactionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const mode = submitBtn.dataset.mode;
+        const transactionId = submitBtn.dataset.transactionId;
+        
+        const formData = {
+          date: form.date.value,
+          description: form.description.value,
+          reference: form.reference.value,
+          payee: form.payee.value,
+          project: form.project.value,
+          debit: form.debit.value,
+          credit: form.credit.value
+        };
+        
+        if (mode === 'update' && transactionId) {
+          // Update existing transaction
+          await updateTransaction(transactionId, formData);
+        } else {
+          // Add new transaction
+          await addTransaction(formData);
+        }
+      });
+    }
+
+    // Update transaction
+    async function updateTransaction(transactionId, formData) {
+      try {
+        // Clear any previous error
+        formError.style.display = 'none';
+        formError.textContent = '';
+        
+        // Validate data
+        const date = new Date(formData.date);
+        if (isNaN(date.getTime())) {
+          formError.textContent = 'Invalid date. Please select a valid date.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        const debit = parseFloat(formData.debit) || 0;
+        const credit = parseFloat(formData.credit) || 0;
+        
+        if (debit === 0 && credit === 0) {
+          formError.textContent = 'Please enter either a debit or credit amount.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        // Get original project name
+        const projectId = formData.project;
+        const originalProjectName = getOriginalProjectName(projectId);
+        
+        await updateDoc(doc(db, 'accounts', accountId, 'transactions', transactionId), {
+          date: Timestamp.fromDate(date),
+          description: formData.description.trim(),
+          reference: formData.reference.trim(),
+          payee: formData.payee,
+          projectId: projectId,
+          projectName: originalProjectName,
+          supplier: formData.reference.trim(),
+          debit: Number(debit.toFixed(2)),
+          credit: Number(credit.toFixed(2)),
+          updatedAt: serverTimestamp()
+        });
+        
+        // Reset form
+        resetForm();
+        
+        alert('Transaction updated successfully!');
+        return true;
+      } catch (error) {
+        console.error('Update transaction error:', error);
+        formError.textContent = `Error: ${error.message}. Please try again.`;
+        formError.style.display = 'block';
+        return false;
+      }
+    }
+
+    // Reset form to add mode
+    function resetForm() {
+      const form = transactionForm;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const today = new Date().toISOString().split('T')[0];
+      
+      form.reset();
+      dateInput.value = today;
+      payeeSelect.value = '';
+      projectSelect.value = '';
+      submitBtn.textContent = 'Add Transaction';
+      delete submitBtn.dataset.mode;
+      delete submitBtn.dataset.transactionId;
+      formError.style.display = 'none';
+      
+      // Reset debit/credit to 0
+      document.querySelector('input[name="debit"]').value = '0';
+      document.querySelector('input[name="credit"]').value = '0';
+    }
+
+    // Form visibility functions
+    function showForm() {
+      txFormSection.classList.add('show');
+      toggleFormBtn.style.display = 'none';
+      // Focus on description field
+      setTimeout(() => transactionForm.description.focus(), 100);
+    }
+
+    function hideForm() {
+      txFormSection.classList.remove('show');
+      toggleFormBtn.style.display = 'block';
+      resetForm();
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribeTransactionListener) {
+        unsubscribeTransactionListener();
+      }
+    });
+
+    // Initialize page
+    init();
+  </script>
+</body>
+</html>
