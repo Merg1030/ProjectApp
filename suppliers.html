@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Accounts Dashboard — Simple (Firestore)</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --panel:#fff; --muted:#6b7280; --accent:#0b74de; --border:#e6e9ee;
+    }
+    html,body{height:100%;margin:0;padding:0;background:var(--bg);font-family:Inter,system-ui,Arial;}
+    .wrap{max-width:1200px;margin:18px auto;padding:12px;box-sizing:border-box;}
+    .top { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+    .top h1 { margin:0; font-size:20px; }
+    .panel { background:var(--panel); border-radius:10px; padding:12px; border:1px solid var(--border); box-shadow:0 6px 18px rgba(8,10,20,0.04); }
+    .add-account { display:flex; gap:8px; margin-top:8px; }
+    .add-account input { padding:8px; border-radius:8px; border:1px solid var(--border); font-size:14px; }
+    .btn { background:var(--accent); color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn.ghost { background:#f1f3f5; color:#111; border:1px solid var(--border); }
+
+    /* account cards */
+    .accounts-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:12px; margin-top:12px; }
+    .account-card { padding:12px; border-radius:10px; border:1px solid var(--border); background:#fff; }
+    .account-head { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .account-meta { color:var(--muted); font-size:13px; }
+    .account-actions { display:flex; gap:8px; align-items:center; }
+
+    /* table inside card */
+    table { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; }
+    th,td { padding:8px 6px; border-bottom:1px solid #f3f5f7; text-align:left; }
+    th { background:#fbfdff; font-weight:600; }
+    td.right { text-align:right; font-variant-numeric:tabular-nums; }
+    .small { font-size:12px; color:var(--muted); }
+
+    .tx-form { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; align-items:end; }
+    .tx-form input, .tx-form button { padding:6px 8px; border-radius:6px; border:1px solid var(--border); }
+    .tx-form button { border: none; }
+
+    .empty { text-align:center; padding:18px; color:var(--muted); }
+    @media (max-width:740px){
+      .tx-form { flex-direction:column; align-items:stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Accounts Dashboard</h1>
+      <div class="small">Click "View Journal" to see an account's transaction journal in detail.</div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-weight:700">Create account</div>
+          <div class="small">Provide a name and optional opening balance (K).</div>
+        </div>
+      </div>
+
+      <div class="add-account" style="margin-top:10px">
+        <input id="acct-name" placeholder="Account name" />
+        <input id="acct-opening" type="number" step="0.01" style="width:140px" placeholder="Opening K" />
+        <button id="add-acct" class="btn">Add Account</button>
+        <button id="refresh-list" class="btn ghost">Refresh</button>
+      </div>
+
+      <div class="accounts-grid" id="accounts-grid" style="margin-top:14px">
+        <!-- account cards inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      serverTimestamp,
+      Timestamp,
+      getDocs,
+      limit
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    // same project config you used earlier
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4",
+      measurementId: "G-JMFLFYEM0F"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Collections
+    const ACCOUNTS = 'accounts';
+
+    // DOM refs
+    const acctName = document.getElementById('acct-name');
+    const acctOpening = document.getElementById('acct-opening');
+    const addAcctBtn = document.getElementById('add-acct');
+    const refreshBtn = document.getElementById('refresh-list');
+    const accountsGrid = document.getElementById('accounts-grid');
+
+    // runtime state
+    let accounts = [];
+
+    // Helpers
+    function fmt(n){ return Number(n || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+    // Add account
+    addAcctBtn.addEventListener('click', async () => {
+      const name = (acctName.value || '').trim();
+      const opening = Number(parseFloat(acctOpening.value || '0') || 0);
+      if (!name) return alert('Enter account name');
+      try {
+        await addDoc(collection(db, ACCOUNTS), {
+          name,
+          openingBalance: Number(opening.toFixed(2)),
+          createdAt: serverTimestamp()
+        });
+        acctName.value = '';
+        acctOpening.value = '';
+      } catch (err) {
+        console.error('add account', err);
+        alert('Failed to add account (see console)');
+      }
+    });
+
+    refreshBtn.addEventListener('click', () => startAccountsListener());
+
+    // Listen accounts (real-time)
+    let accountsUnsub = null;
+    function startAccountsListener() {
+      if (accountsUnsub) accountsUnsub();
+      const q = query(collection(db, ACCOUNTS), orderBy('name'));
+      accountsUnsub = onSnapshot(q, snap => {
+        accounts = [];
+        snap.forEach(s => {
+          const d = s.data();
+          accounts.push({
+            id: s.id,
+            name: d.name || 'Unnamed',
+            openingBalance: Number(d.openingBalance || 0),
+            createdAt: d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : null
+          });
+        });
+        renderAccountsGrid();
+      }, (err) => {
+        console.error('accounts listener', err);
+        accountsGrid.innerHTML = `<div class="empty">Failed to load accounts (see console)</div>`;
+      });
+    }
+
+    // Render account cards
+    function renderAccountsGrid() {
+      accountsGrid.innerHTML = '';
+      if (accounts.length === 0) {
+        accountsGrid.innerHTML = `<div class="empty">No accounts yet. Add one above.</div>`;
+        return;
+      }
+
+      for (const acc of accounts) {
+        const card = document.createElement('div');
+        card.className = 'account-card panel';
+        card.dataset.accountId = acc.id;
+
+        card.innerHTML = `
+          <div class="account-head">
+            <div>
+              <div style="font-weight:700">${acc.name}</div>
+              <div class="account-meta">Opening Balance: K ${fmt(acc.openingBalance)}</div>
+            </div>
+            <div class="account-actions">
+              <button class="btn view-journal" data-account-id="${acc.id}" data-account-name="${acc.name}">View Journal</button>
+            </div>
+          </div>
+        `;
+
+        accountsGrid.appendChild(card);
+
+        // Wire up journal navigation
+        const viewJournalBtn = card.querySelector('.view-journal');
+        viewJournalBtn.addEventListener('click', (e) => {
+          const accountId = e.target.dataset.accountId;
+          const accountName = e.target.dataset.accountName;
+          
+          // Navigate to journals.html with account ID as parameter
+          window.location.href = `journals.html?account=${accountId}&name=${encodeURIComponent(accountName)}`;
+        });
+      }
+    }
+
+    // Initialize
+    startAccountsListener();
+
+    // Cleanup listeners on unload
+    window.addEventListener('beforeunload', () => {
+      if (accountsUnsub) try { accountsUnsub(); } catch(e){}
+    });
+  </script>
+</body>
+</html>
