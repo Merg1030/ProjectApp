@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Purchases Day Book</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    :root{
+      --bg:#f6f8fb; --panel:#fff; --muted:#6b7280; --accent:#0b74de; --border:#e6e9ee;
     }
     
     html, body {
       height: 100vh;
       width: 100vw;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: Inter, system-ui, Arial;
       overflow: hidden;
-      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     }
     
     /* Full screen container */
-    .full-screen {
+    .full-screen-container {
       height: 100vh;
       width: 100vw;
       display: flex;
@@ -30,220 +30,278 @@
       padding: 20px;
     }
     
-    /* Main content box */
-    .main-box {
+    /* Main content box - centered */
+    .main-content {
       width: 100%;
-      max-width: 900px;
+      max-width: 1200px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
       overflow: hidden;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
     }
     
     /* Header - centered */
-    .header {
-      text-align: center;
-      padding: 40px 30px 30px 30px;
+    .header-section {
       background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
       color: white;
+      padding: 25px 30px;
+      text-align: center;
     }
     
-    .header h1 {
-      font-size: 32px;
+    .header-section h1 {
+      margin: 0;
+      font-size: 28px;
       font-weight: 700;
       margin-bottom: 8px;
-      letter-spacing: -0.5px;
     }
     
-    .header p {
-      font-size: 16px;
+    .account-name {
+      font-size: 18px;
       opacity: 0.9;
-      max-width: 500px;
-      margin: 0 auto;
-      line-height: 1.5;
+      font-weight: 500;
     }
     
-    /* Add Account Form - centered */
-    .add-form {
-      padding: 30px;
-      text-align: center;
-      border-bottom: 1px solid #f1f5f9;
+    /* Control section */
+    .control-section {
+      padding: 20px 30px;
       background: #f8fafc;
-    }
-    
-    .form-row {
+      border-bottom: 1px solid var(--border);
       display: flex;
-      gap: 12px;
-      justify-content: center;
-      max-width: 600px;
-      margin: 0 auto;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
     }
     
-    .form-row input {
-      flex: 1;
-      max-width: 400px;
-      padding: 14px 18px;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      font-size: 16px;
-      transition: all 0.2s;
-    }
+    .small { font-size: 13px; color: var(--muted); }
     
-    .form-row input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .btn {
-      padding: 14px 28px;
-      border-radius: 10px;
-      border: none;
+    .btn { 
+      background: var(--accent); 
+      color: #fff; 
+      border: none; 
+      padding: 10px 20px; 
+      border-radius: 8px; 
+      cursor: pointer; 
       font-weight: 600;
-      font-size: 15px;
-      cursor: pointer;
+      font-size: 14px;
       transition: all 0.2s;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      white-space: nowrap;
-      min-width: 140px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
     
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn.ghost { background: #f1f3f5; color: #111; border: 1px solid var(--border); }
+    
+    /* Transaction Form */
+    .tx-form-section { 
+      background: white; 
+      border-radius: 10px; 
+      padding: 20px;
+      border: 1px solid var(--border);
+      margin: 0 30px 20px 30px;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     
-    /* Table container */
-    .table-container {
-      max-height: 400px;
-      overflow-y: auto;
-      position: relative;
+    .tx-form-section.show {
+      display: block;
     }
     
-    /* Table */
-    table {
+    .form-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 16px; 
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    .tx-form { 
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    
+    .tx-form input, .tx-form select, .tx-form button { 
+      padding: 10px 12px; 
+      border-radius: 6px; 
+      border: 1px solid var(--border); 
+      font-size: 14px; 
       width: 100%;
+    }
+    
+    .tx-form button { 
+      border: none; 
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    
+    .tx-form input:focus, .tx-form select:focus { 
+      outline: none; 
+      border-color: var(--accent); 
+      box-shadow: 0 0 0 2px rgba(11,116,222,0.1); 
+    }
+    
+    /* Main table container */
+    .table-main-container {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      margin: 0 30px 30px 30px;
+    }
+    
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--accent);
+    }
+    
+    .table-header h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #1f2937;
+    }
+    
+    /* Journal Table */
+    .table-container { 
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: white;
+    }
+    
+    table { 
+      width: 100%; 
       border-collapse: separate;
       border-spacing: 0;
+      font-size: 14px; 
     }
     
-    thead {
-      background: #f1f5f9;
+    th, td { 
+      padding: 14px 12px; 
+      text-align: left; 
+      border-bottom: 1px solid #f3f5f7; 
+    }
+    
+    th { 
+      background: #f8fafc; 
+      font-weight: 600; 
+      color: var(--muted); 
+      font-size: 12px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.05em; 
       position: sticky;
       top: 0;
       z-index: 10;
     }
     
-    th {
-      padding: 18px 24px;
-      text-align: left;
-      font-weight: 600;
-      color: #475569;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-      background: #f8fafc;
+    td.right { text-align: right; font-variant-numeric: tabular-nums; }
+    
+    /* Amount colors */
+    .debit { color: #ef4444; font-weight: 600; }
+    .credit { color: #10b981; font-weight: 600; }
+    .balance { color: var(--accent); font-weight: 600; }
+    
+    /* Transaction row hover */
+    tbody tr:hover { background: #f9fafb; }
+    
+    /* Loading and empty states */
+    .loading, .empty { 
+      text-align: center; 
+      padding: 60px 20px; 
+      color: var(--muted); 
+      font-size: 14px; 
     }
     
-    td {
-      padding: 20px 24px;
-      border-bottom: 1px solid #f1f5f9;
-      font-size: 15px;
-      transition: background 0.2s;
+    .empty { display: none; }
+    
+    /* Action Menu */
+    .action-menu { position: relative; display: inline-block; }
+    .action-btn { 
+      background: none; 
+      border: none; 
+      padding: 6px 10px; 
+      cursor: pointer; 
+      font-size: 18px; 
+      color: var(--muted); 
+      border-radius: 4px;
     }
     
-    tbody tr {
-      cursor: pointer;
-      transition: all 0.2s;
+    .action-btn:hover { 
+      background: #f1f3f5; 
+      color: var(--accent); 
     }
     
-    tbody tr:hover {
-      background: #f8fafc;
+    .dropdown-menu { 
+      position: absolute; 
+      right: 0; 
+      top: 100%; 
+      background: white; 
+      border: 1px solid var(--border); 
+      border-radius: 6px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+      z-index: 100; 
+      display: none; 
+      min-width: 160px;
     }
     
-    tbody tr:active {
-      background: #f1f5f9;
+    .dropdown-menu.show { display: block; }
+    
+    .dropdown-item { 
+      display: block; 
+      width: 100%; 
+      padding: 10px 14px; 
+      text-align: left; 
+      background: none; 
+      border: none; 
+      cursor: pointer; 
+      font-size: 13px; 
+      color: var(--muted);
+      border-bottom: 1px solid #f3f5f7;
     }
     
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: #f6f8fb; color: var(--accent); }
+    .dropdown-item.delete { color: #ef4444; }
+    .dropdown-item.delete:hover { background: #fef2f2; }
     
-    /* Account name styling */
-    .account-name {
-      font-weight: 600;
-      color: #1e293b;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+    /* Column widths */
+    .date-col { width: 100px; min-width: 100px; }
+    .desc-col { width: 180px; min-width: 150px; }
+    .ref-col { width: 100px; min-width: 80px; }
+    .payee-col { width: 80px; min-width: 70px; }
+    .project-col { width: 200px; min-width: 150px; }
+    .debit-col { width: 100px; min-width: 80px; }
+    .credit-col { width: 100px; min-width: 80px; }
+    .balance-col { width: 120px; min-width: 100px; }
+    .actions-col { width: 60px; min-width: 60px; text-align: center; }
     
-    .account-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-    }
-    
-    /* Date styling */
-    .date-cell {
-      color: #64748b;
-      font-size: 14px;
-    }
-    
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #94a3b8;
-    }
-    
-    .empty-state i {
-      font-size: 56px;
-      margin-bottom: 20px;
-      opacity: 0.6;
-    }
-    
-    .empty-state h3 {
-      font-size: 20px;
-      color: #64748b;
-      margin-bottom: 10px;
-      font-weight: 500;
-    }
-    
-    .empty-state p {
-      font-size: 15px;
-      max-width: 400px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-    
-    /* Loading state */
-    .loading-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #64748b;
-    }
-    
-    .loading-state i {
-      font-size: 24px;
-      margin-bottom: 16px;
+    /* Wrap text in project column */
+    .project-cell {
+      white-space: normal;
+      word-wrap: break-word;
+      max-width: 200px;
     }
     
     /* Scrollbar styling */
     .table-container::-webkit-scrollbar {
       width: 8px;
+      height: 8px;
     }
     
     .table-container::-webkit-scrollbar-track {
@@ -259,121 +317,192 @@
       background: #94a3b8;
     }
     
-    /* Footer */
-    .footer {
-      text-align: center;
-      padding: 20px;
-      color: #64748b;
-      font-size: 14px;
-      border-top: 1px solid #f1f5f9;
-      background: #f8fafc;
-    }
-    
     /* Responsive */
-    @media (max-width: 768px) {
-      .full-screen {
+    @media (max-width: 1024px) {
+      .full-screen-container {
         padding: 15px;
       }
       
-      .main-box {
+      .main-content {
         max-width: 100%;
-        border-radius: 12px;
       }
       
-      .header {
-        padding: 30px 20px;
+      .header-section, .control-section {
+        padding: 20px;
       }
       
-      .header h1 {
-        font-size: 26px;
+      .tx-form-section {
+        margin: 0 20px 15px 20px;
       }
       
-      .add-form {
-        padding: 25px 20px;
+      .table-main-container {
+        margin: 0 20px 20px 20px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header-section h1 {
+        font-size: 24px;
       }
       
-      .form-row {
+      .control-section {
         flex-direction: column;
         align-items: stretch;
       }
       
-      .form-row input {
-        max-width: 100%;
+      .tx-form {
+        grid-template-columns: 1fr;
       }
       
-      .btn {
-        width: 100%;
-        margin-top: 10px;
+      .tx-form-section {
+        padding: 15px;
       }
       
       th, td {
-        padding: 16px 20px;
+        padding: 10px 8px;
+        font-size: 13px;
       }
       
-      .account-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 15px;
+      .table-container {
+        min-width: 800px;
       }
     }
     
     @media (max-width: 480px) {
-      .header h1 {
-        font-size: 24px;
+      .full-screen-container {
+        padding: 10px;
       }
       
-      .header p {
-        font-size: 14px;
+      .header-section {
+        padding: 20px 15px;
       }
       
-      th, td {
-        padding: 14px 16px;
+      .header-section h1 {
+        font-size: 22px;
+      }
+      
+      .account-name {
+        font-size: 16px;
+      }
+      
+      .btn {
+        width: 100%;
+        justify-content: center;
       }
     }
   </style>
 </head>
 <body>
-  <div class="full-screen">
-    <div class="main-box">
-      <!-- Header -->
-      <div class="header">
+  <div class="full-screen-container">
+    <div class="main-content">
+      <!-- Header Section -->
+      <div class="header-section">
         <h1>Purchases Day Book</h1>
-        <p>Manage and track all your purchase accounts in one place</p>
+        <div class="account-name" id="accountName">Loading Supplier Account...</div>
       </div>
       
-      <!-- Add Account Form -->
-      <div class="add-form">
-        <div class="form-row">
-          <input type="text" id="acct-name" placeholder="Enter supplier or account name...">
-          <button id="add-acct" class="btn">
-            + Add Account
+      <!-- Control Section -->
+      <div class="control-section">
+        <div>
+          <a href="dashboard.html" class="btn ghost">
+            ← Back to Dashboard
+          </a>
+        </div>
+        <div>
+          <button class="btn" id="toggleFormBtn">
+            + Add Transaction
           </button>
         </div>
       </div>
       
-      <!-- Accounts Table -->
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th width="60%">Account Name</th>
-              <th width="40%">Created Date</th>
-            </tr>
-          </thead>
-          <tbody id="accounts-table">
-            <tr>
-              <td colspan="2" class="loading-state">
-                <i class="fas fa-spinner fa-spin"></i>
-                <div>Loading purchase accounts...</div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Transaction Form (Hidden by default) -->
+      <div class="tx-form-section" id="txFormSection">
+        <div class="form-header">
+          <div>Add New Transaction</div>
+          <button type="button" class="btn ghost" id="closeFormBtn">× Close</button>
+        </div>
+        <form class="tx-form" id="transactionForm">
+          <div>
+            <input type="date" name="date" id="dateInput" required>
+          </div>
+          <div>
+            <input type="text" name="description" placeholder="Description" required>
+          </div>
+          <div>
+            <input type="text" name="reference" placeholder="Reference">
+          </div>
+          
+          <!-- Payee Dropdown -->
+          <div>
+            <select name="payee" id="payeeSelect" class="form-select">
+              <option value="">Select Payee</option>
+              <option value="HL">HL</option>
+              <option value="HML">HML</option>
+              <option value="FPS">FPS</option>
+              <option value="HFL">HFL</option>
+              <option value="HEL">HEL</option>
+            </select>
+          </div>
+          
+          <!-- Project Dropdown -->
+          <div>
+            <select name="project" id="projectSelect" class="form-select">
+              <option value="">Select Project</option>
+              <!-- Projects will be loaded here -->
+            </select>
+          </div>
+          
+          <div>
+            <input type="number" name="debit" step="0.01" min="0" placeholder="Debit" value="0">
+          </div>
+          <div>
+            <input type="number" name="credit" step="0.01" min="0" placeholder="Credit" value="0">
+          </div>
+          
+          <div>
+            <button type="submit" class="btn">Add Transaction</button>
+          </div>
+        </form>
+        <div class="small" style="margin-top:8px; color:#ef4444; display:none;" id="formError"></div>
       </div>
       
-      <!-- Footer -->
-      <div class="footer">
-        Click any account to view purchase transactions
+      <!-- Main Table Section -->
+      <div class="table-main-container">
+        <div class="table-header">
+          <h2>Transaction History</h2>
+          <div class="small" id="transactionCount">0 transactions</div>
+        </div>
+        
+        <div class="table-container">
+          <div class="loading" id="loadingState">Loading transactions...</div>
+          
+          <table id="journalTable" style="display:none;">
+            <thead>
+              <tr>
+                <th class="date-col">Date</th>
+                <th class="desc-col">Description</th>
+                <th class="ref-col">Reference</th>
+                <th class="payee-col">Payee</th>
+                <th class="project-col">Project</th>
+                <th class="debit-col" style="text-align:right">Debit</th>
+                <th class="credit-col" style="text-align:right">Credit</th>
+                <th class="balance-col" style="text-align:right">Balance</th>
+                <th class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Transactions will load here -->
+            </tbody>
+          </table>
+          
+          <div class="empty" id="emptyState">
+            <div style="margin-bottom: 15px;">
+              <i class="fas fa-receipt" style="font-size: 48px; opacity: 0.5;"></i>
+            </div>
+            <div style="font-size: 16px; margin-bottom: 8px; color: #4b5563;">No transactions found</div>
+            <div class="small">Click "Add Transaction" to record your first purchase</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -390,7 +519,13 @@
       onSnapshot,
       query,
       orderBy,
-      serverTimestamp
+      serverTimestamp,
+      Timestamp,
+      doc,
+      getDoc,
+      updateDoc,
+      deleteDoc,
+      getDocs
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
     // Firebase config
@@ -404,195 +539,651 @@
       measurementId: "G-JMFLFYEM0F"
     };
     
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
-    // Collections
-    const ACCOUNTS = 'purchases'; // Changed to purchases collection
-    
+
+    // Get URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const accountId = urlParams.get('account');
+    const accountName = decodeURIComponent(urlParams.get('name') || 'Unknown Supplier');
+
     // DOM elements
-    const acctName = document.getElementById('acct-name');
-    const addAcctBtn = document.getElementById('add-acct');
-    const accountsTable = document.getElementById('accounts-table');
-    
-    // Runtime state
-    let accounts = [];
-    let accountsUnsub = null;
-    
-    // Get initials from account name
-    function getInitials(name) {
-      if (!name) return 'PB';
-      const words = name.split(' ');
-      if (words.length === 1) {
-        return name.substring(0, 2).toUpperCase();
-      }
-      return (words[0][0] + words[1][0]).toUpperCase();
+    const accountNameEl = document.getElementById('accountName');
+    const toggleFormBtn = document.getElementById('toggleFormBtn');
+    const closeFormBtn = document.getElementById('closeFormBtn');
+    const txFormSection = document.getElementById('txFormSection');
+    const transactionForm = document.getElementById('transactionForm');
+    const dateInput = document.getElementById('dateInput');
+    const payeeSelect = document.getElementById('payeeSelect');
+    const projectSelect = document.getElementById('projectSelect');
+    const tableBody = document.getElementById('tableBody');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const journalTable = document.getElementById('journalTable');
+    const formError = document.getElementById('formError');
+    const transactionCount = document.getElementById('transactionCount');
+
+    // State
+    let transactions = [];
+    let projects = [];
+    let unsubscribeTransactionListener = null;
+    let openingBalance = 0;
+    let activeMenu = null;
+
+    // Format numbers as Zambian Kwacha
+    function fmt(n){ 
+      return Number(n || 0).toLocaleString('en-ZM',{
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }); 
     }
-    
+
     // Format date
     function formatDate(date) {
-      if (!date) return 'N/A';
-      const options = { 
-        weekday: 'short',
-        day: 'numeric', 
-        month: 'short', 
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-ZM', {
+        day: '2-digit',
+        month: 'short',
         year: 'numeric'
-      };
-      return date.toLocaleDateString('en-US', options);
+      });
     }
-    
-    // Navigate to purchase journal
-    function goToPurchaseJournal(accountId, accountName) {
-      window.location.href = `journals.html?account=${accountId}&name=${encodeURIComponent(accountName)}&type=purchase`;
+
+    // Clean project name
+    function cleanProjectName(name) {
+      if (!name) return '';
+      return name.replace(/\s*\(Freight and passengers\)\s*$/i, '').trim();
     }
-    
-    // Add account
-    addAcctBtn.addEventListener('click', async () => {
-      const name = acctName.value.trim();
+
+    // Initialize
+    async function init() {
+      accountNameEl.textContent = accountName;
       
-      if (!name) {
-        alert('Please enter a supplier or account name');
-        acctName.focus();
+      if (!accountId) {
+        alert('No account selected. Going back to dashboard.');
+        window.location.href = 'dashboard.html';
         return;
+      }
+
+      // Set today's date as default
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+      
+      await loadAccountInfo();
+      await loadProjects();
+      startTransactionListener();
+      setupEventListeners();
+    }
+
+    // Load account info
+    async function loadAccountInfo() {
+      try {
+        const accountDoc = await getDoc(doc(db, 'accounts', accountId));
+        if (accountDoc.exists()) {
+          const data = accountDoc.data();
+          openingBalance = Number(data.openingBalance || 0);
+        }
+      } catch (error) {
+        console.error('Error loading account:', error);
+      }
+    }
+
+    // Load projects from projectDashboard collection
+    async function loadProjects() {
+      try {
+        const projectsCollection = collection(db, 'projectDashboard');
+        const querySnapshot = await getDocs(projectsCollection);
+        
+        projects = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Only include active projects
+          if (data.status !== 'completed') {
+            const cleanName = cleanProjectName(data.name);
+            projects.push({
+              id: doc.id,
+              originalName: data.name || 'Unnamed Project',
+              name: cleanName,
+              client: data.client || '',
+              status: data.status || 'active',
+              hidden: data.hidden || false
+            });
+          }
+        });
+        
+        updateProjectDropdown();
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        projects = [];
+      }
+    }
+
+    // Update project dropdown
+    function updateProjectDropdown() {
+      projectSelect.innerHTML = '<option value="">Select Project</option>';
+      
+      if (projects.length === 0) {
+        projectSelect.innerHTML += '<option value="" disabled>No projects found</option>';
+        return;
+      }
+      
+      const visibleProjects = projects
+        .filter(project => !project.hidden)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      visibleProjects.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = project.name;
+        option.dataset.originalName = project.originalName;
+        projectSelect.appendChild(option);
+      });
+    }
+
+    // Close all dropdown menus
+    function closeAllMenus() {
+      if (activeMenu) {
+        activeMenu.classList.remove('show');
+        activeMenu = null;
+      }
+    }
+
+    // Handle clicks outside menus
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.action-menu')) {
+        closeAllMenus();
+      }
+    });
+
+    // Start real-time transaction listener
+    function startTransactionListener() {
+      if (unsubscribeTransactionListener) {
+        unsubscribeTransactionListener();
       }
       
       try {
-        await addDoc(collection(db, ACCOUNTS), {
-          name: name,
-          type: 'purchase',
-          createdAt: serverTimestamp()
-        });
+        const transactionsCol = collection(db, 'accounts', accountId, 'transactions');
+        const q = query(transactionsCol, orderBy('date', 'asc'));
         
-        // Clear form
-        acctName.value = '';
-        acctName.focus();
-        
+        unsubscribeTransactionListener = onSnapshot(q, 
+          (snapshot) => {
+            loadingState.style.display = 'none';
+            
+            transactions = [];
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const storedProjectName = data.projectName || '';
+              const cleanProjectNameValue = cleanProjectName(storedProjectName);
+              
+              transactions.push({
+                id: doc.id,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date || Date.now()),
+                description: data.description || '',
+                reference: data.supplier || data.reference || '',
+                payee: data.payee || '',
+                projectId: data.projectId || '',
+                projectName: cleanProjectNameValue,
+                originalProjectName: storedProjectName,
+                debit: Number(data.debit || 0),
+                credit: Number(data.credit || 0),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
+              });
+            });
+            
+            // Sort by date then created at
+            transactions.sort((a, b) => {
+              const dateDiff = a.date.getTime() - b.date.getTime();
+              if (dateDiff === 0) {
+                return (a.createdAt || 0) - (b.createdAt || 0);
+              }
+              return dateDiff;
+            });
+            
+            renderTransactions();
+          }, 
+          (error) => {
+            console.error('Transaction listener error:', error);
+            loadingState.style.display = 'none';
+            startSimpleTransactionListener();
+          }
+        );
       } catch (error) {
-        console.error('Error adding purchase account:', error);
-        alert('Error adding account. Please check console.');
+        console.error('Error setting up listener:', error);
+        loadingState.style.display = 'none';
+        startSimpleTransactionListener();
       }
-    });
-    
-    // Allow Enter key to submit
-    acctName.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        addAcctBtn.click();
-      }
-    });
-    
-    // Start accounts listener
-    function startAccountsListener() {
-      if (accountsUnsub) accountsUnsub();
-      
-      const q = query(collection(db, ACCOUNTS), orderBy('createdAt', 'desc'));
-      
-      accountsUnsub = onSnapshot(q, (snapshot) => {
-        accounts = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          accounts.push({
-            id: doc.id,
-            name: data.name || 'Unnamed Supplier',
-            type: data.type || 'purchase',
-            createdAt: data.createdAt?.toDate() || new Date()
-          });
-        });
-        
-        renderAccountsTable();
-      }, (error) => {
-        console.error('Error loading purchase accounts:', error);
-        accountsTable.innerHTML = `
-          <tr>
-            <td colspan="2" class="empty-state">
-              <i class="fas fa-exclamation-triangle"></i>
-              <h3>Error loading accounts</h3>
-              <p>Please check your internet connection and try again.</p>
-            </td>
-          </tr>`;
-      });
     }
-    
-    // Render accounts table
-    function renderAccountsTable() {
-      if (accounts.length === 0) {
-        accountsTable.innerHTML = `
-          <tr>
-            <td colspan="2" class="empty-state">
-              <i class="fas fa-receipt"></i>
-              <h3>No purchase accounts yet</h3>
-              <p>Add your first supplier or purchase account to get started.</p>
-            </td>
-          </tr>`;
+
+    // Simple listener without ordering
+    function startSimpleTransactionListener() {
+      if (unsubscribeTransactionListener) {
+        unsubscribeTransactionListener();
+      }
+      
+      try {
+        const transactionsCol = collection(db, 'accounts', accountId, 'transactions');
+        
+        unsubscribeTransactionListener = onSnapshot(transactionsCol, 
+          (snapshot) => {
+            loadingState.style.display = 'none';
+            
+            transactions = [];
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const storedProjectName = data.projectName || '';
+              const cleanProjectNameValue = cleanProjectName(storedProjectName);
+              
+              transactions.push({
+                id: doc.id,
+                date: data.date?.toDate ? data.date.toDate() : new Date(data.date || Date.now()),
+                description: data.description || '',
+                reference: data.supplier || data.reference || '',
+                payee: data.payee || '',
+                projectId: data.projectId || '',
+                projectName: cleanProjectNameValue,
+                originalProjectName: storedProjectName,
+                debit: Number(data.debit || 0),
+                credit: Number(data.credit || 0),
+                createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now())
+              });
+            });
+            
+            // Sort client-side by date
+            transactions.sort((a, b) => a.date.getTime() - b.date.getTime());
+            
+            renderTransactions();
+          }, 
+          (error) => {
+            console.error('Simple listener error:', error);
+            loadingState.style.display = 'none';
+          }
+        );
+      } catch (error) {
+        console.error('Error setting up simple listener:', error);
+        loadingState.style.display = 'none';
+      }
+    }
+
+    // Get project name by ID
+    function getProjectNameById(projectId) {
+      if (!projectId) return '';
+      const project = projects.find(p => p.id === projectId);
+      return project ? project.name : '';
+    }
+
+    // Get original project name
+    function getOriginalProjectName(projectId) {
+      if (!projectId) return '';
+      const project = projects.find(p => p.id === projectId);
+      return project ? project.originalName : '';
+    }
+
+    // Render transactions table
+    function renderTransactions() {
+      if (transactions.length === 0) {
+        journalTable.style.display = 'none';
+        emptyState.style.display = 'block';
+        transactionCount.textContent = '0 transactions';
         return;
       }
       
-      accountsTable.innerHTML = '';
+      emptyState.style.display = 'none';
+      journalTable.style.display = 'table';
+      transactionCount.textContent = `${transactions.length} transaction${transactions.length !== 1 ? 's' : ''}`;
       
-      accounts.forEach(account => {
-        const row = document.createElement('tr');
+      let html = '';
+      let runningBalance = openingBalance;
+      
+      transactions.forEach((tx, index) => {
+        runningBalance = runningBalance + tx.credit - tx.debit;
+        const projectName = tx.projectName || getProjectNameById(tx.projectId);
         
-        // Click event for entire row
-        row.addEventListener('click', () => {
-          goToPurchaseJournal(account.id, account.name);
-        });
-        
-        // Account name cell
-        const nameCell = document.createElement('td');
-        nameCell.innerHTML = `
-          <div class="account-name">
-            <div class="account-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-              ${getInitials(account.name)}
-            </div>
-            <div>
-              <div>${account.name}</div>
-              <div style="font-size: 13px; color: #64748b; margin-top: 4px;">
-                <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
-                  Purchase Account
-                </span>
+        html += `
+          <tr>
+            <td class="date-col">${formatDate(tx.date)}</td>
+            <td class="desc-col">${escapeHtml(tx.description)}</td>
+            <td class="ref-col">${escapeHtml(tx.reference)}</td>
+            <td class="payee-col">${escapeHtml(tx.payee)}</td>
+            <td class="project-col project-cell">${escapeHtml(projectName)}</td>
+            <td class="debit-col right debit">${tx.debit > 0 ? `ZMW ${fmt(tx.debit)}` : ''}</td>
+            <td class="credit-col right credit">${tx.credit > 0 ? `ZMW ${fmt(tx.credit)}` : ''}</td>
+            <td class="balance-col right balance">ZMW ${fmt(runningBalance)}</td>
+            <td class="actions-col">
+              <div class="action-menu">
+                <button class="action-btn" title="Actions">⋮</button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" data-action="edit" data-id="${tx.id}" data-index="${index}">✏️ Edit</button>
+                  <button class="dropdown-item" data-action="reverse" data-id="${tx.id}" data-index="${index}">🔄 Reverse</button>
+                  <button class="dropdown-item delete" data-action="delete" data-id="${tx.id}" data-index="${index}">🗑️ Delete</button>
+                </div>
               </div>
-            </div>
-          </div>
+            </td>
+          </tr>
         `;
-        
-        // Created date cell
-        const dateCell = document.createElement('td');
-        dateCell.className = 'date-cell';
-        dateCell.innerHTML = `
-          <div style="font-weight: 500; color: #334155;">${formatDate(account.createdAt)}</div>
-          <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">
-            ${account.createdAt.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: true 
-            })}
-          </div>
-        `;
-        
-        // Append cells to row
-        row.appendChild(nameCell);
-        row.appendChild(dateCell);
-        
-        // Add row to table
-        accountsTable.appendChild(row);
+      });
+      
+      tableBody.innerHTML = html;
+      setupActionButtons();
+    }
+
+    // Setup action button listeners
+    function setupActionButtons() {
+      const actionButtons = document.querySelectorAll('.action-btn');
+      const dropdownItems = document.querySelectorAll('.dropdown-item');
+      
+      // Toggle dropdown menus
+      actionButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const dropdown = btn.nextElementSibling;
+          
+          if (activeMenu === dropdown) {
+            dropdown.classList.remove('show');
+            activeMenu = null;
+          } else {
+            closeAllMenus();
+            dropdown.classList.add('show');
+            activeMenu = dropdown;
+          }
+        });
+      });
+      
+      // Handle dropdown item clicks
+      dropdownItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const action = item.dataset.action;
+          const transactionId = item.dataset.id;
+          const index = parseInt(item.dataset.index);
+          
+          closeAllMenus();
+          handleTransactionAction(action, transactionId, index);
+        });
       });
     }
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      startAccountsListener();
-    });
-    
-    // Cleanup on unload
-    window.addEventListener('beforeunload', () => {
-      if (accountsUnsub) {
-        try {
-          accountsUnsub();
-        } catch (e) {
-          console.error('Error unsubscribing:', e);
+
+    // Handle transaction actions
+    async function handleTransactionAction(action, transactionId, index) {
+      const transaction = transactions[index];
+      
+      switch(action) {
+        case 'edit':
+          editTransaction(transaction);
+          break;
+          
+        case 'reverse':
+          if (confirm('Reverse this transaction? This will create an opposite transaction.')) {
+            await reverseTransaction(transaction);
+          }
+          break;
+          
+        case 'delete':
+          if (confirm('Are you sure you want to delete this transaction? This cannot be undone.')) {
+            await deleteTransaction(transactionId);
+          }
+          break;
+      }
+    }
+
+    // Edit transaction
+    function editTransaction(transaction) {
+      // Fill form with transaction data
+      dateInput.value = formatDateForInput(transaction.date);
+      document.querySelector('input[name="description"]').value = transaction.description;
+      document.querySelector('input[name="reference"]').value = transaction.reference;
+      payeeSelect.value = transaction.payee || '';
+      
+      if (transaction.projectId) {
+        projectSelect.value = transaction.projectId;
+      }
+      
+      document.querySelector('input[name="debit"]').value = transaction.debit || 0;
+      document.querySelector('input[name="credit"]').value = transaction.credit || 0;
+      
+      // Show form
+      showForm();
+      
+      // Change form to update mode
+      const form = transactionForm;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = 'Update Transaction';
+      submitBtn.dataset.mode = 'update';
+      submitBtn.dataset.transactionId = transaction.id;
+      
+      // Focus on description
+      document.querySelector('input[name="description"]').focus();
+    }
+
+    // Format date for input field
+    function formatDateForInput(date) {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    }
+
+    // Reverse transaction
+    async function reverseTransaction(transaction) {
+      try {
+        const reversedDate = new Date().toISOString().split('T')[0];
+        const reversedDescription = `Reversal: ${transaction.description}`;
+        const originalProjectName = getOriginalProjectName(transaction.projectId);
+        
+        await addDoc(collection(db, 'accounts', accountId, 'transactions'), {
+          date: Timestamp.fromDate(new Date()),
+          description: reversedDescription,
+          reference: transaction.reference,
+          payee: transaction.payee,
+          projectId: transaction.projectId,
+          projectName: originalProjectName,
+          supplier: transaction.reference,
+          debit: transaction.credit,
+          credit: transaction.debit,
+          createdAt: serverTimestamp()
+        });
+        
+        alert('Transaction reversed successfully!');
+      } catch (error) {
+        console.error('Error reversing transaction:', error);
+        alert('Failed to reverse transaction. Please try again.');
+      }
+    }
+
+    // Delete transaction
+    async function deleteTransaction(transactionId) {
+      try {
+        await deleteDoc(doc(db, 'accounts', accountId, 'transactions', transactionId));
+        alert('Transaction deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert('Failed to delete transaction. Please try again.');
+      }
+    }
+
+    // Add transaction
+    async function addTransaction(formData) {
+      try {
+        formError.style.display = 'none';
+        formError.textContent = '';
+        
+        const date = new Date(formData.date);
+        if (isNaN(date.getTime())) {
+          formError.textContent = 'Invalid date. Please select a valid date.';
+          formError.style.display = 'block';
+          return false;
         }
+        
+        const debit = parseFloat(formData.debit) || 0;
+        const credit = parseFloat(formData.credit) || 0;
+        
+        if (debit === 0 && credit === 0) {
+          formError.textContent = 'Please enter either a debit or credit amount.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        const projectId = formData.project;
+        const originalProjectName = getOriginalProjectName(projectId);
+        
+        await addDoc(collection(db, 'accounts', accountId, 'transactions'), {
+          date: Timestamp.fromDate(date),
+          description: formData.description.trim(),
+          reference: formData.reference.trim(),
+          payee: formData.payee,
+          projectId: projectId,
+          projectName: originalProjectName,
+          supplier: formData.reference.trim(),
+          debit: Number(debit.toFixed(2)),
+          credit: Number(credit.toFixed(2)),
+          createdAt: serverTimestamp()
+        });
+        
+        resetForm();
+        return true;
+      } catch (error) {
+        console.error('Add transaction error:', error);
+        formError.textContent = `Error: ${error.message}. Please try again.`;
+        formError.style.display = 'block';
+        return false;
+      }
+    }
+
+    // Helper: escape HTML
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Toggle form button
+      toggleFormBtn.addEventListener('click', () => {
+        resetForm();
+        showForm();
+      });
+
+      // Close form button
+      closeFormBtn.addEventListener('click', hideForm);
+
+      // Form submission
+      transactionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const mode = submitBtn.dataset.mode;
+        const transactionId = submitBtn.dataset.transactionId;
+        
+        const formData = {
+          date: form.date.value,
+          description: form.description.value,
+          reference: form.reference.value,
+          payee: form.payee.value,
+          project: form.project.value,
+          debit: form.debit.value,
+          credit: form.credit.value
+        };
+        
+        if (mode === 'update' && transactionId) {
+          await updateTransaction(transactionId, formData);
+        } else {
+          await addTransaction(formData);
+        }
+      });
+    }
+
+    // Update transaction
+    async function updateTransaction(transactionId, formData) {
+      try {
+        formError.style.display = 'none';
+        formError.textContent = '';
+        
+        const date = new Date(formData.date);
+        if (isNaN(date.getTime())) {
+          formError.textContent = 'Invalid date. Please select a valid date.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        const debit = parseFloat(formData.debit) || 0;
+        const credit = parseFloat(formData.credit) || 0;
+        
+        if (debit === 0 && credit === 0) {
+          formError.textContent = 'Please enter either a debit or credit amount.';
+          formError.style.display = 'block';
+          return false;
+        }
+        
+        const projectId = formData.project;
+        const originalProjectName = getOriginalProjectName(projectId);
+        
+        await updateDoc(doc(db, 'accounts', accountId, 'transactions', transactionId), {
+          date: Timestamp.fromDate(date),
+          description: formData.description.trim(),
+          reference: formData.reference.trim(),
+          payee: formData.payee,
+          projectId: projectId,
+          projectName: originalProjectName,
+          supplier: formData.reference.trim(),
+          debit: Number(debit.toFixed(2)),
+          credit: Number(credit.toFixed(2)),
+          updatedAt: serverTimestamp()
+        });
+        
+        resetForm();
+        alert('Transaction updated successfully!');
+        return true;
+      } catch (error) {
+        console.error('Update transaction error:', error);
+        formError.textContent = `Error: ${error.message}. Please try again.`;
+        formError.style.display = 'block';
+        return false;
+      }
+    }
+
+    // Reset form
+    function resetForm() {
+      const form = transactionForm;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const today = new Date().toISOString().split('T')[0];
+      
+      form.reset();
+      dateInput.value = today;
+      payeeSelect.value = '';
+      projectSelect.value = '';
+      submitBtn.textContent = 'Add Transaction';
+      delete submitBtn.dataset.mode;
+      delete submitBtn.dataset.transactionId;
+      formError.style.display = 'none';
+      
+      document.querySelector('input[name="debit"]').value = '0';
+      document.querySelector('input[name="credit"]').value = '0';
+    }
+
+    // Form visibility
+    function showForm() {
+      txFormSection.classList.add('show');
+      toggleFormBtn.style.display = 'none';
+      setTimeout(() => transactionForm.description.focus(), 100);
+    }
+
+    function hideForm() {
+      txFormSection.classList.remove('show');
+      toggleFormBtn.style.display = 'block';
+      resetForm();
+    }
+
+    // Cleanup
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribeTransactionListener) {
+        unsubscribeTransactionListener();
       }
     });
+
+    // Initialize
+    init();
   </script>
 </body>
 </html>
