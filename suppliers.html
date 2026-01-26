@@ -3,100 +3,71 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Accounts Dashboard — Table View (Firestore)</title>
+  <title>Accounts Dashboard</title>
   <style>
-    :root {
-      --bg: #f8fafc;
-      --panel: #ffffff;
-      --muted: #64748b;
-      --accent: #1976d2;
-      --accent-dark: #1565c0;
-      --danger: #dc2626;
-      --border: #e2e8f0;
-      --success: #16a34a;
-    }
-    
-    html, body {
-      height: 100%;
+    * {
       margin: 0;
       padding: 0;
-      background: var(--bg);
+      box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     }
     
-    .container {
-      max-width: 1200px;
-      margin: 20px auto;
-      padding: 0 20px;
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background: #f5f7fa;
     }
     
-    /* Header */
+    /* Full screen container */
+    .full-screen {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Header - minimal */
     .header {
-      margin-bottom: 25px;
-      padding: 15px 0;
+      background: white;
+      padding: 15px 25px;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      flex-shrink: 0;
     }
     
     .header h1 {
-      font-size: 28px;
-      color: #1e293b;
-      margin-bottom: 8px;
-    }
-    
-    .header p {
-      color: var(--muted);
-      font-size: 15px;
-    }
-    
-    /* Add Account Form */
-    .add-panel {
-      background: var(--panel);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      margin-bottom: 25px;
-      border: 1px solid var(--border);
-    }
-    
-    .form-title {
+      font-size: 20px;
+      color: #2d3748;
       font-weight: 600;
-      font-size: 16px;
-      margin-bottom: 10px;
-      color: #1e293b;
+    }
+    
+    /* Add form - compact */
+    .add-form {
+      padding: 15px 25px;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
     }
     
     .form-row {
       display: flex;
       gap: 12px;
-      align-items: flex-end;
-      flex-wrap: wrap;
+      align-items: center;
     }
     
-    .form-group {
+    .form-row input {
       flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 15px;
       min-width: 200px;
     }
     
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: #475569;
-      font-weight: 500;
-    }
-    
-    .form-group input {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 15px;
-      transition: border 0.2s;
-    }
-    
-    .form-group input:focus {
+    .form-row input:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+      border-color: #4299e1;
     }
     
     /* Buttons */
@@ -108,58 +79,27 @@
       font-size: 14px;
       cursor: pointer;
       transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      white-space: nowrap;
     }
     
     .btn-primary {
-      background: var(--accent);
+      background: #4299e1;
       color: white;
-      min-width: 120px;
     }
     
     .btn-primary:hover {
-      background: var(--accent-dark);
+      background: #3182ce;
     }
     
-    .btn-secondary {
-      background: #f1f5f9;
-      color: #475569;
-      border: 1px solid #cbd5e1;
-    }
-    
-    .btn-secondary:hover {
-      background: #e2e8f0;
-    }
-    
-    .btn-danger {
-      background: var(--danger);
-      color: white;
-    }
-    
-    .btn-danger:hover {
-      background: #b91c1c;
-    }
-    
-    .btn-success {
-      background: var(--success);
-      color: white;
-    }
-    
-    .btn-success:hover {
-      background: #15803d;
+    /* Main table container - takes remaining space */
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      background: white;
+      margin: 0;
     }
     
     /* Table */
-    .table-container {
-      background: var(--panel);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-    
     table {
       width: 100%;
       border-collapse: collapse;
@@ -167,6 +107,9 @@
     
     thead {
       background: #f8fafc;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
     
     th {
@@ -176,8 +119,7 @@
       color: #475569;
       border-bottom: 2px solid #e2e8f0;
       font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      white-space: nowrap;
     }
     
     td {
@@ -186,123 +128,169 @@
       font-size: 15px;
     }
     
-    tbody tr {
-      transition: background 0.2s;
-    }
-    
     tbody tr:hover {
       background: #f8fafc;
     }
     
+    /* Account name styling */
     .account-name {
       font-weight: 600;
-      color: #1e293b;
-      font-size: 16px;
+      color: #2d3748;
+      font-size: 15px;
     }
     
-    .account-meta {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 4px;
+    /* Actions cell with 3-dots menu */
+    .actions-cell {
+      width: 100px;
+      text-align: center;
     }
     
-    .balance {
-      font-family: monospace, 'Courier New';
-      font-weight: 600;
-      font-size: 16px;
+    .menu-container {
+      position: relative;
+      display: inline-block;
     }
     
-    .balance.positive {
-      color: var(--success);
+    .dots-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #718096;
+      padding: 5px 10px;
+      border-radius: 4px;
+      transition: all 0.2s;
     }
     
-    .balance.negative {
-      color: var(--danger);
+    .dots-btn:hover {
+      background: #f1f5f9;
+      color: #4299e1;
     }
     
-    .actions {
+    .action-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 160px;
+      z-index: 1000;
+      display: none;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .action-menu.show {
+      display: block;
+    }
+    
+    .menu-item {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      text-decoration: none;
+      color: #4a5568;
+      font-size: 14px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      border: none;
+      width: 100%;
+      text-align: left;
     }
     
+    .menu-item:hover {
+      background: #f7fafc;
+    }
+    
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+    
+    .menu-item i {
+      width: 18px;
+      text-align: center;
+    }
+    
+    .menu-view {
+      color: #38a169;
+    }
+    
+    .menu-delete {
+      color: #e53e3e;
+    }
+    
+    /* Empty state */
     .empty-state {
       text-align: center;
-      padding: 50px 20px;
-      color: var(--muted);
+      padding: 60px 20px;
+      color: #a0aec0;
     }
     
     .empty-state i {
       font-size: 48px;
       margin-bottom: 15px;
-      color: #cbd5e1;
+      opacity: 0.5;
+    }
+    
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #718096;
     }
     
     /* Responsive */
     @media (max-width: 768px) {
-      .container {
-        padding: 0 15px;
-      }
-      
       .form-row {
-        flex-direction: column;
-        align-items: stretch;
+        flex-wrap: wrap;
       }
       
-      .form-group {
+      .form-row input {
         min-width: 100%;
-      }
-      
-      .actions {
-        flex-direction: column;
       }
       
       .btn {
         width: 100%;
-        justify-content: center;
       }
       
       th, td {
         padding: 12px 15px;
       }
+      
+      .header, .add-form {
+        padding: 15px;
+      }
     }
     
     @media (max-width: 480px) {
-      .table-container {
-        overflow-x: auto;
-      }
-      
-      table {
-        min-width: 600px;
+      .action-menu {
+        position: fixed;
+        top: auto;
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
+        min-width: auto;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="full-screen">
     <!-- Header -->
     <div class="header">
-      <h1>Accounts Management</h1>
-      <p>Create, view, and manage your accounts</p>
+      <h1>Accounts Dashboard</h1>
     </div>
     
     <!-- Add Account Form -->
-    <div class="add-panel">
-      <div class="form-title">Create New Account</div>
+    <div class="add-form">
       <div class="form-row">
-        <div class="form-group">
-          <label for="acct-name">Account Name</label>
-          <input type="text" id="acct-name" placeholder="e.g., Cash Account, Bank Account, Supplier Name">
-        </div>
-        <div class="form-group">
-          <label for="acct-opening">Opening Balance (₹)</label>
-          <input type="number" id="acct-opening" step="0.01" placeholder="0.00">
-        </div>
-        <div class="form-group">
-          <button id="add-acct" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add Account
-          </button>
-        </div>
+        <input type="text" id="acct-name" placeholder="Enter account name...">
+        <button id="add-acct" class="btn btn-primary">
+          + Add Account
+        </button>
       </div>
     </div>
     
@@ -311,19 +299,15 @@
       <table>
         <thead>
           <tr>
-            <th width="30%">Account Name</th>
-            <th width="25%">Opening Balance</th>
-            <th width="25%">Created</th>
-            <th width="20%">Actions</th>
+            <th width="60%">Account Name</th>
+            <th width="30%">Created Date</th>
+            <th width="10%">Actions</th>
           </tr>
         </thead>
         <tbody id="accounts-table">
-          <!-- Accounts will be loaded here -->
           <tr>
-            <td colspan="4" class="empty-state">
-              <i class="fas fa-book"></i>
-              <div style="font-size: 16px; margin-top: 10px;">No accounts found</div>
-              <div style="font-size: 14px; margin-top: 5px;">Create your first account above</div>
+            <td colspan="3" class="loading-state">
+              <i class="fas fa-spinner fa-spin"></i> Loading accounts...
             </td>
           </tr>
         </tbody>
@@ -331,7 +315,7 @@
     </div>
   </div>
 
-  <!-- Font Awesome for icons -->
+  <!-- Font Awesome -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
   <script type="module">
@@ -368,25 +352,33 @@
     
     // DOM elements
     const acctName = document.getElementById('acct-name');
-    const acctOpening = document.getElementById('acct-opening');
     const addAcctBtn = document.getElementById('add-acct');
     const accountsTable = document.getElementById('accounts-table');
     
     // Runtime state
     let accounts = [];
     let accountsUnsub = null;
+    let activeMenu = null;
     
-    // Helper functions
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(amount);
+    // Close all menus
+    function closeAllMenus() {
+      if (activeMenu) {
+        activeMenu.classList.remove('show');
+        activeMenu = null;
+      }
     }
     
+    // Handle clicks outside menus
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.menu-container')) {
+        closeAllMenus();
+      }
+    });
+    
+    // Format date
     function formatDate(date) {
       if (!date) return 'N/A';
-      return date.toLocaleDateString('en-IN', {
+      return date.toLocaleDateString('en-ZM', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
@@ -396,7 +388,6 @@
     // Add account
     addAcctBtn.addEventListener('click', async () => {
       const name = acctName.value.trim();
-      const opening = parseFloat(acctOpening.value) || 0;
       
       if (!name) {
         alert('Please enter an account name');
@@ -407,18 +398,23 @@
       try {
         await addDoc(collection(db, ACCOUNTS), {
           name: name,
-          openingBalance: opening,
           createdAt: serverTimestamp()
         });
         
         // Clear form
         acctName.value = '';
-        acctOpening.value = '';
         acctName.focus();
         
       } catch (error) {
         console.error('Error adding account:', error);
         alert('Error adding account. Please check console.');
+      }
+    });
+    
+    // Allow Enter key to submit
+    acctName.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addAcctBtn.click();
       }
     });
     
@@ -431,6 +427,7 @@
       try {
         await deleteDoc(doc(db, ACCOUNTS, accountId));
         console.log(`Account "${accountName}" deleted successfully`);
+        closeAllMenus();
       } catch (error) {
         console.error('Error deleting account:', error);
         alert('Error deleting account. Please check console.');
@@ -446,7 +443,7 @@
     function startAccountsListener() {
       if (accountsUnsub) accountsUnsub();
       
-      const q = query(collection(db, ACCOUNTS), orderBy('name'));
+      const q = query(collection(db, ACCOUNTS), orderBy('createdAt', 'desc'));
       
       accountsUnsub = onSnapshot(q, (snapshot) => {
         accounts = [];
@@ -455,7 +452,6 @@
           accounts.push({
             id: doc.id,
             name: data.name || 'Unnamed Account',
-            openingBalance: data.openingBalance || 0,
             createdAt: data.createdAt?.toDate() || new Date()
           });
         });
@@ -465,7 +461,7 @@
         console.error('Error loading accounts:', error);
         accountsTable.innerHTML = `
           <tr>
-            <td colspan="4" class="empty-state" style="color: #dc2626;">
+            <td colspan="3" class="empty-state" style="color: #e53e3e;">
               <i class="fas fa-exclamation-triangle"></i>
               <div>Error loading accounts</div>
               <div style="font-size: 12px; margin-top: 5px;">Check console for details</div>
@@ -479,10 +475,10 @@
       if (accounts.length === 0) {
         accountsTable.innerHTML = `
           <tr>
-            <td colspan="4" class="empty-state">
-              <i class="fas fa-book"></i>
-              <div>No accounts found</div>
-              <div style="font-size: 14px; margin-top: 5px;">Create your first account above</div>
+            <td colspan="3" class="empty-state">
+              <i class="fas fa-folder-open"></i>
+              <div style="font-size: 16px; margin-top: 10px;">No accounts found</div>
+              <div style="font-size: 14px; margin-top: 5px;">Add your first account above</div>
             </td>
           </tr>`;
         return;
@@ -497,68 +493,85 @@
         const nameCell = document.createElement('td');
         nameCell.innerHTML = `
           <div class="account-name">${account.name}</div>
-          <div class="account-meta">ID: ${account.id.substring(0, 8)}...</div>
-        `;
-        
-        // Opening balance cell
-        const balanceCell = document.createElement('td');
-        balanceCell.innerHTML = `
-          <div class="balance ${account.openingBalance >= 0 ? 'positive' : 'negative'}">
-            ₹ ${formatCurrency(account.openingBalance)}
-          </div>
         `;
         
         // Created date cell
         const dateCell = document.createElement('td');
         dateCell.innerHTML = `
           <div>${formatDate(account.createdAt)}</div>
-          <div class="account-meta">${account.createdAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
+          <div style="font-size: 12px; color: #a0aec0; margin-top: 2px;">
+            ${account.createdAt.toLocaleTimeString('en-ZM', { 
+              hour: '2-digit', 
+              minute: '2-digit'
+            })}
+          </div>
         `;
         
-        // Actions cell
+        // Actions cell with 3-dots menu
         const actionsCell = document.createElement('td');
+        actionsCell.className = 'actions-cell';
         actionsCell.innerHTML = `
-          <div class="actions">
-            <button class="btn btn-success" onclick="viewJournal('${account.id}', '${account.name.replace(/'/g, "\\'")}')">
-              <i class="fas fa-eye"></i> View
-            </button>
-            <button class="btn btn-danger" onclick="deleteAccount('${account.id}', '${account.name.replace(/'/g, "\\'")}')">
-              <i class="fas fa-trash"></i> Delete
-            </button>
+          <div class="menu-container">
+            <button class="dots-btn" title="Actions">⋯</button>
+            <div class="action-menu">
+              <button class="menu-item menu-view" data-action="view" data-id="${account.id}" data-name="${account.name}">
+                <i class="fas fa-eye"></i> View Journal
+              </button>
+              <button class="menu-item menu-delete" data-action="delete" data-id="${account.id}" data-name="${account.name}">
+                <i class="fas fa-trash"></i> Delete Account
+              </button>
+            </div>
           </div>
         `;
         
         // Append cells to row
         row.appendChild(nameCell);
-        row.appendChild(balanceCell);
         row.appendChild(dateCell);
         row.appendChild(actionsCell);
         
         // Add row to table
         accountsTable.appendChild(row);
+        
+        // Add event listeners for the menu in this row
+        const dotsBtn = row.querySelector('.dots-btn');
+        const menu = row.querySelector('.action-menu');
+        const viewBtn = row.querySelector('[data-action="view"]');
+        const deleteBtn = row.querySelector('[data-action="delete"]');
+        
+        // Toggle menu on dots click
+        dotsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (activeMenu === menu) {
+            menu.classList.remove('show');
+            activeMenu = null;
+          } else {
+            closeAllMenus();
+            menu.classList.add('show');
+            activeMenu = menu;
+          }
+        });
+        
+        // View journal action
+        viewBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const accountId = e.target.closest('[data-id]').dataset.id;
+          const accountName = e.target.closest('[data-name]').dataset.name;
+          viewJournal(accountId, accountName);
+        });
+        
+        // Delete account action
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const accountId = e.target.closest('[data-id]').dataset.id;
+          const accountName = e.target.closest('[data-name]').dataset.name;
+          deleteAccount(accountId, accountName);
+        });
       });
     }
     
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       startAccountsListener();
-      
-      // Make functions available globally for onclick handlers
-      window.viewJournal = viewJournal;
-      window.deleteAccount = deleteAccount;
-      
-      // Allow Enter key to submit form
-      acctName.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          addAcctBtn.click();
-        }
-      });
-      
-      acctOpening.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          addAcctBtn.click();
-        }
-      });
     });
     
     // Cleanup on unload
