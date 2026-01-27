@@ -654,14 +654,31 @@
 
     closeFormBtn.addEventListener("click", () => {
       formSection.classList.add("hide");
+      resetFormToAddMode();
     });
 
-    // Reset form
-    resetFormBtn.addEventListener("click", () => {
+    // Reset form to "add new" mode
+    function resetFormToAddMode() {
       cashflowForm.reset();
       txDate.value = today.toISOString().split('T')[0];
       txDebit.value = "0";
       txCredit.value = "0";
+      
+      const formHeader = formSection.querySelector('.form-header h2');
+      formHeader.innerHTML = '<i class="fa fa-plus-circle"></i> Add New Transaction';
+      
+      const submitBtn = cashflowForm.querySelector('.btn-submit');
+      submitBtn.innerHTML = '<i class="fa fa-check"></i> Add Transaction';
+      
+      // Remove any edit mode data
+      if (cashflowForm.dataset.editId) {
+        delete cashflowForm.dataset.editId;
+      }
+    }
+
+    // Reset form
+    resetFormBtn.addEventListener("click", () => {
+      resetFormToAddMode();
     });
 
     // Form submission
@@ -689,6 +706,9 @@
         }
       }
       
+      // Check if we're in edit mode
+      const isEditMode = cashflowForm.dataset.editId;
+      
       // Prepare transaction
       const transaction = {
         date: Timestamp.fromDate(new Date(txDate.value)),
@@ -700,22 +720,26 @@
       };
       
       try {
-        // Save to Firestore
-        await addDoc(collection(db, COLLECTION), transaction);
+        if (isEditMode) {
+          // Update existing transaction
+          await updateDoc(doc(db, COLLECTION, isEditMode), {
+            ...transaction,
+            updatedAt: serverTimestamp()
+          });
+          alert('Transaction updated successfully!');
+        } else {
+          // Add new transaction
+          await addDoc(collection(db, COLLECTION), transaction);
+          alert('Transaction added successfully!');
+        }
         
-        // Reset form
-        cashflowForm.reset();
-        txDate.value = today.toISOString().split('T')[0];
-        txDebit.value = "0";
-        txCredit.value = "0";
-        
-        // Hide form
+        // Reset and hide form
+        resetFormToAddMode();
         formSection.classList.add("hide");
         
-        console.log("Transaction added successfully!");
       } catch (error) {
-        console.error("Error adding transaction:", error);
-        alert("Error adding transaction. Please check console.");
+        console.error("Error saving transaction:", error);
+        alert("Error saving transaction. Please check console.");
       }
     });
 
@@ -802,7 +826,7 @@
         filtered = filtered.filter(tx => tx.credit > 0);
       }
       
-      // Sort in ascending order (oldest to newest)
+      // Sort in ASCENDING order (oldest to newest) - recent at the bottom
       filtered.sort((a, b) => a.date - b.date);
       
       filteredTransactions = filtered;
@@ -870,65 +894,17 @@
       formHeader.innerHTML = '<i class="fa fa-edit"></i> Edit Transaction';
       
       // Change submit button text
-      const submitBtn = formSection.querySelector('.btn-submit');
+      const submitBtn = cashflowForm.querySelector('.btn-submit');
       submitBtn.innerHTML = '<i class="fa fa-check"></i> Update Transaction';
       
       // Store the transaction ID for updating
       cashflowForm.dataset.editId = transaction.id;
       
-      // Modify form submission for editing
-      const originalSubmitHandler = cashflowForm.onsubmit;
-      
-      cashflowForm.onsubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!confirm('Are you sure you want to update this transaction?')) {
-          return;
-        }
-        
-        try {
-          const updatedTransaction = {
-            date: Timestamp.fromDate(new Date(txDate.value)),
-            description: txDesc.value.trim(),
-            supplier: txSupplier.value.trim(),
-            debit: parseFloat(txDebit.value || 0),
-            credit: parseFloat(txCredit.value || 0),
-            updatedAt: serverTimestamp()
-          };
-          
-          await updateDoc(doc(db, COLLECTION, transaction.id), updatedTransaction);
-          
-          // Reset form to add mode
-          cashflowForm.reset();
-          txDate.value = today.toISOString().split('T')[0];
-          txDebit.value = "0";
-          txCredit.value = "0";
-          
-          // Reset form header and button
-          formHeader.innerHTML = '<i class="fa fa-plus-circle"></i> Add New Transaction';
-          submitBtn.innerHTML = '<i class="fa fa-check"></i> Add Transaction';
-          
-          // Remove edit data
-          delete cashflowForm.dataset.editId;
-          
-          // Restore original submit handler
-          cashflowForm.onsubmit = originalSubmitHandler;
-          
-          // Hide form
-          formSection.classList.add("hide");
-          
-          alert('Transaction updated successfully!');
-        } catch (error) {
-          console.error('Error updating transaction:', error);
-          alert('Error updating transaction.');
-        }
-      };
-      
       closeAllMenus();
     }
 
-    // Real-time data listener
-    const q = query(collection(db, COLLECTION), orderBy("date", "desc"));
+    // Real-time data listener - SORT BY DATE ASCENDING
+    const q = query(collection(db, COLLECTION), orderBy("date", "asc"));
     
     onSnapshot(q, (snapshot) => {
       const transactions = [];
@@ -969,7 +945,7 @@
       });
     }
 
-    // Render transactions (ascending order - oldest to newest)
+    // Render transactions in ASCENDING order (oldest to newest, recent at bottom)
     function renderTransactions() {
       cashflowBody.innerHTML = "";
       
@@ -992,7 +968,7 @@
       let totalCredit = 0;
       let runningBalance = 0;
       
-      // First pass to calculate running balances
+      // Already sorted by date ascending, so we can use filteredTransactions directly
       const transactionsWithBalance = filteredTransactions.map(tx => {
         runningBalance = runningBalance + tx.credit - tx.debit;
         totalDebit += tx.debit;
@@ -1004,7 +980,7 @@
         };
       });
       
-      // Render in ascending order (oldest first)
+      // Render in ASCENDING order (oldest first, recent at bottom)
       transactionsWithBalance.forEach(tx => {
         const row = document.createElement("tr");
         
@@ -1023,23 +999,23 @@
         supCell.textContent = tx.supplier || "-";
         row.appendChild(supCell);
         
-        // Debit
+        // Debit - blank if zero
         const debitCell = document.createElement("td");
         debitCell.className = "text-right";
         if (tx.debit > 0) {
           debitCell.innerHTML = `<span class="debit">${formatMoney(tx.debit)}</span>`;
         } else {
-          debitCell.innerHTML = "-";
+          debitCell.innerHTML = ""; // Blank instead of "-"
         }
         row.appendChild(debitCell);
         
-        // Credit
+        // Credit - blank if zero
         const creditCell = document.createElement("td");
         creditCell.className = "text-right";
         if (tx.credit > 0) {
           creditCell.innerHTML = `<span class="credit">${formatMoney(tx.credit)}</span>`;
         } else {
-          creditCell.innerHTML = "-";
+          creditCell.innerHTML = ""; // Blank instead of "-"
         }
         row.appendChild(creditCell);
         
@@ -1118,6 +1094,42 @@
     formSection.addEventListener('transitionend', () => {
       if (!formSection.classList.contains('hide')) {
         txDesc.focus();
+      }
+    });
+
+    // Improved edit form handling
+    cashflowForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Check if we're in edit mode
+      const isEditMode = cashflowForm.dataset.editId;
+      
+      if (isEditMode) {
+        if (!confirm('Are you sure you want to update this transaction?')) {
+          return;
+        }
+        
+        try {
+          const updatedTransaction = {
+            date: Timestamp.fromDate(new Date(txDate.value)),
+            description: txDesc.value.trim(),
+            supplier: txSupplier.value.trim(),
+            debit: parseFloat(txDebit.value || 0),
+            credit: parseFloat(txCredit.value || 0),
+            updatedAt: serverTimestamp()
+          };
+          
+          await updateDoc(doc(db, COLLECTION, isEditMode), updatedTransaction);
+          
+          // Reset form to add mode
+          resetFormToAddMode();
+          formSection.classList.add("hide");
+          
+          alert('Transaction updated successfully!');
+        } catch (error) {
+          console.error('Error updating transaction:', error);
+          alert('Error updating transaction.');
+        }
       }
     });
   </script>
