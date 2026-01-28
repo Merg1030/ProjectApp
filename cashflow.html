@@ -54,6 +54,34 @@
       align-items: center;
     }
     
+    /* Search Bar */
+    .search-container {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 4px;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      min-width: 300px;
+    }
+    
+    .search-container i {
+      color: #666;
+      margin-right: 8px;
+    }
+    
+    .search-container input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 14px;
+      background: transparent;
+    }
+    
+    .search-container input::placeholder {
+      color: #999;
+    }
+    
     .btn {
       padding: 10px 20px;
       border: none;
@@ -225,10 +253,15 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       overflow: hidden;
+      height: 600px; /* Fixed height for scrolling */
+      display: flex;
+      flex-direction: column;
     }
     
     .table-responsive {
+      overflow-y: auto;
       overflow-x: auto;
+      flex: 1;
     }
     
     table {
@@ -239,6 +272,9 @@
     
     thead {
       background: #838383;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
     
     th {
@@ -247,6 +283,10 @@
       padding: 15px;
       font-weight: 600;
       font-size: 14px;
+      position: sticky;
+      top: 0;
+      background: #838383;
+      z-index: 11;
     }
     
     tbody tr {
@@ -294,12 +334,18 @@
     
     tfoot {
       background: #f8f9fa;
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
     }
     
     tfoot td {
       font-weight: 600;
       padding: 15px;
       border-top: 2px solid #1976d2;
+      background: #f8f9fa;
+      position: sticky;
+      bottom: 0;
     }
     
     .empty-state {
@@ -409,6 +455,15 @@
         text-align: center;
       }
       
+      .header-controls {
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .search-container {
+        min-width: 100%;
+      }
+      
       .filters {
         flex-direction: column;
       }
@@ -449,6 +504,12 @@
         <h1>Penta Construction Cash Flow</h1>
       </div>
       <div class="header-controls">
+        <!-- Search Bar -->
+        <div class="search-container">
+          <i class="fa fa-search"></i>
+          <input type="text" id="search-bar" placeholder="Search transactions...">
+        </div>
+        
         <a href="Accountsdashboart.html" class="btn btn-secondary">
           <i class="fa fa-book"></i> Journal
         </a>
@@ -466,10 +527,46 @@
           <option value="all">All Time</option>
           <option value="today">Today</option>
           <option value="week">This Week</option>
+          <option value="week-number">By Week Number</option>
           <option value="month" selected>This Month</option>
-          <option value="last-month">Last Month</option>
+          <option value="specific-month">By Month</option>
           <option value="quarter">This Quarter</option>
           <option value="year">This Year</option>
+        </select>
+      </div>
+      
+      <!-- Week Number Filter (Hidden by default) -->
+      <div class="filter-group" id="week-number-filter" style="display: none;">
+        <label>Week:</label>
+        <select id="week-select">
+          <!-- Will be populated with JavaScript -->
+        </select>
+      </div>
+      
+      <!-- Month Filter (Hidden by default) -->
+      <div class="filter-group" id="month-filter" style="display: none;">
+        <label>Month:</label>
+        <select id="month-select">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+      </div>
+      
+      <!-- Year Filter for Month (Hidden by default) -->
+      <div class="filter-group" id="month-year-filter" style="display: none;">
+        <label>Year:</label>
+        <select id="month-year-select">
+          <!-- Will be populated with JavaScript -->
         </select>
       </div>
       
@@ -619,6 +716,13 @@
     const endingBalanceEl = document.getElementById("ending-balance");
     const periodFilter = document.getElementById("period-filter");
     const typeFilter = document.getElementById("type-filter");
+    const searchBar = document.getElementById("search-bar");
+    const weekNumberFilter = document.getElementById("week-number-filter");
+    const weekSelect = document.getElementById("week-select");
+    const monthFilter = document.getElementById("month-filter");
+    const monthSelect = document.getElementById("month-select");
+    const monthYearFilter = document.getElementById("month-year-filter");
+    const monthYearSelect = document.getElementById("month-year-select");
 
     // Set today's date by default
     const today = new Date();
@@ -627,6 +731,7 @@
     // Filter and sort variables
     let allTransactions = [];
     let filteredTransactions = [];
+    let searchTerm = '';
 
     // Action menu management
     let activeMenu = null;
@@ -644,6 +749,139 @@
       if (!e.target.closest('.action-menu-container')) {
         closeAllMenus();
       }
+    });
+
+    // Get week number from date
+    function getWeekNumber(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    }
+
+    // Get start and end of week by week number
+    function getWeekRange(year, weekNumber) {
+      const firstDayOfYear = new Date(year, 0, 1);
+      const days = 2 + (weekNumber - 1) * 7 - firstDayOfYear.getDay();
+      const start = new Date(year, 0, days);
+      const end = new Date(year, 0, days + 6);
+      
+      // Set to beginning and end of day
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      
+      return { start, end };
+    }
+
+    // Get start and end of month
+    function getMonthRange(year, month) {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0);
+      
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      
+      return { start, end };
+    }
+
+    // Populate week select options
+    function populateWeekSelect() {
+      weekSelect.innerHTML = '';
+      
+      // Get available years from transactions
+      const years = [...new Set(allTransactions.map(tx => tx.date.getFullYear()))].sort((a, b) => b - a);
+      
+      if (years.length === 0) {
+        // Default to current year if no transactions
+        const currentYear = new Date().getFullYear();
+        for (let i = 1; i <= 52; i++) {
+          const option = document.createElement('option');
+          option.value = `${currentYear}-${i}`;
+          option.textContent = `${currentYear} - Week ${i}`;
+          weekSelect.appendChild(option);
+        }
+      } else {
+        // Create options for each year and week
+        years.forEach(year => {
+          // Add 52 weeks for each year
+          for (let week = 1; week <= 52; week++) {
+            const option = document.createElement('option');
+            option.value = `${year}-${week}`;
+            option.textContent = `${year} - Week ${week}`;
+            weekSelect.appendChild(option);
+          }
+        });
+      }
+      
+      // Set current week as default
+      const currentWeek = getWeekNumber(new Date());
+      const currentYear = new Date().getFullYear();
+      weekSelect.value = `${currentYear}-${currentWeek}`;
+    }
+
+    // Populate year select for month filter
+    function populateYearSelect() {
+      monthYearSelect.innerHTML = '';
+      
+      // Get available years from transactions
+      const years = [...new Set(allTransactions.map(tx => tx.date.getFullYear()))].sort((a, b) => b - a);
+      
+      if (years.length === 0) {
+        // Default to current year if no transactions
+        const currentYear = new Date().getFullYear();
+        const option = document.createElement('option');
+        option.value = currentYear;
+        option.textContent = currentYear;
+        monthYearSelect.appendChild(option);
+      } else {
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          monthYearSelect.appendChild(option);
+        });
+      }
+      
+      // Set current month and year as default
+      const currentDate = new Date();
+      monthSelect.value = currentDate.getMonth() + 1;
+      monthYearSelect.value = currentDate.getFullYear();
+    }
+
+    // Handle period filter change
+    periodFilter.addEventListener('change', function() {
+      const value = this.value;
+      
+      // Show/hide additional filter controls
+      if (value === 'week-number') {
+        weekNumberFilter.style.display = 'flex';
+        monthFilter.style.display = 'none';
+        monthYearFilter.style.display = 'none';
+        populateWeekSelect();
+      } else if (value === 'specific-month') {
+        weekNumberFilter.style.display = 'none';
+        monthFilter.style.display = 'flex';
+        monthYearFilter.style.display = 'flex';
+        populateYearSelect();
+      } else {
+        weekNumberFilter.style.display = 'none';
+        monthFilter.style.display = 'none';
+        monthYearFilter.style.display = 'none';
+      }
+      
+      filterTransactions();
+    });
+
+    // Add event listeners for week and month filters
+    weekSelect.addEventListener('change', filterTransactions);
+    monthSelect.addEventListener('change', filterTransactions);
+    monthYearSelect.addEventListener('change', filterTransactions);
+
+    // Search functionality
+    searchBar.addEventListener('input', function() {
+      searchTerm = this.value.toLowerCase().trim();
+      filterTransactions();
     });
 
     // Form visibility
@@ -764,6 +1002,13 @@
           end.setHours(23, 59, 59, 999);
           return { start, end };
           
+        case 'week-number':
+          if (weekSelect.value) {
+            const [year, week] = weekSelect.value.split('-').map(Number);
+            return getWeekRange(year, week);
+          }
+          break;
+          
         case 'month':
           start.setDate(1);
           start.setHours(0, 0, 0, 0);
@@ -771,6 +1016,14 @@
           end.setDate(0);
           end.setHours(23, 59, 59, 999);
           return { start, end };
+          
+        case 'specific-month':
+          if (monthSelect.value && monthYearSelect.value) {
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(monthYearSelect.value);
+            return getMonthRange(year, month);
+          }
+          break;
           
         case 'last-month':
           start.setMonth(start.getMonth() - 1);
@@ -801,6 +1054,8 @@
         default:
           return { start: null, end: null };
       }
+      
+      return { start: null, end: null };
     }
 
     // Filter transactions
@@ -810,13 +1065,26 @@
       
       let filtered = [...allTransactions];
       
+      // Apply search filter
+      if (searchTerm) {
+        filtered = filtered.filter(tx => {
+          return (
+            tx.description.toLowerCase().includes(searchTerm) ||
+            tx.supplier.toLowerCase().includes(searchTerm) ||
+            tx.date.toISOString().split('T')[0].includes(searchTerm)
+          );
+        });
+      }
+      
       // Apply date filter
       if (period !== 'all') {
         const { start, end } = getDateRange(period);
-        filtered = filtered.filter(tx => {
-          const txDate = tx.date;
-          return txDate >= start && txDate <= end;
-        });
+        if (start && end) {
+          filtered = filtered.filter(tx => {
+            const txDate = tx.date;
+            return txDate >= start && txDate <= end;
+          });
+        }
       }
       
       // Apply type filter
@@ -836,6 +1104,7 @@
     // Event listeners for filters
     periodFilter.addEventListener('change', filterTransactions);
     typeFilter.addEventListener('change', filterTransactions);
+    searchBar.addEventListener('input', filterTransactions);
 
     // Action handlers
     async function reverseTransaction(transaction) {
@@ -923,6 +1192,10 @@
       
       // Store all transactions
       allTransactions = transactions;
+      
+      // Populate filter options
+      populateWeekSelect();
+      populateYearSelect();
       
       // Apply filters and render
       filterTransactions();
@@ -1094,42 +1367,6 @@
     formSection.addEventListener('transitionend', () => {
       if (!formSection.classList.contains('hide')) {
         txDesc.focus();
-      }
-    });
-
-    // Improved edit form handling
-    cashflowForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      // Check if we're in edit mode
-      const isEditMode = cashflowForm.dataset.editId;
-      
-      if (isEditMode) {
-        if (!confirm('Are you sure you want to update this transaction?')) {
-          return;
-        }
-        
-        try {
-          const updatedTransaction = {
-            date: Timestamp.fromDate(new Date(txDate.value)),
-            description: txDesc.value.trim(),
-            supplier: txSupplier.value.trim(),
-            debit: parseFloat(txDebit.value || 0),
-            credit: parseFloat(txCredit.value || 0),
-            updatedAt: serverTimestamp()
-          };
-          
-          await updateDoc(doc(db, COLLECTION, isEditMode), updatedTransaction);
-          
-          // Reset form to add mode
-          resetFormToAddMode();
-          formSection.classList.add("hide");
-          
-          alert('Transaction updated successfully!');
-        } catch (error) {
-          console.error('Error updating transaction:', error);
-          alert('Error updating transaction.');
-        }
       }
     });
   </script>
