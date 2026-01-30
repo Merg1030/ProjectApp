@@ -215,6 +215,66 @@
       transform: translateX(16px);
     }
     
+    /* Action dots in table */
+    .action-cell {
+      position: relative;
+      width: 40px;
+      text-align: center;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #666;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .row-dropdown-content {
+      display: none;
+      position: absolute;
+      right: 25px;
+      top: 0;
+      background-color: white;
+      min-width: 120px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+      border-radius: 4px;
+      z-index: 100;
+      border: 1px solid #ddd;
+    }
+    .row-dropdown-content.show {
+      display: block;
+    }
+    .row-dropdown-item {
+      color: #333;
+      padding: 8px 12px;
+      text-decoration: none;
+      display: block;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .row-dropdown-item:hover {
+      background-color: #f5f5f5;
+    }
+    .row-dropdown-item.edit:hover {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+    .row-dropdown-item.delete:hover {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+    
     .sticky-filters {
       background: none;
       padding: 0 18px;
@@ -250,6 +310,11 @@
     form textarea { resize: vertical; min-height: 24px; max-height: 90px; }
     form button { background: #1976d2; color: #fff; border: none; cursor: pointer; font-weight: bold;}
     form button:hover { background: #0d47a1;}
+    #cancel-edit-btn {
+      background: #757575;
+      margin-left: 5px;
+    }
+    #cancel-edit-btn:hover { background: #424242;}
     .account-filter-bar {
       display: flex;
       align-items: center;
@@ -442,7 +507,8 @@
         <input type="number" min="0" id="exp-amount" required placeholder="Amount">
       </div>
       <div style="align-self: flex-end;">
-        <button type="submit">Add Expense</button>
+        <button type="submit" id="submit-btn">Add Expense</button>
+        <button type="button" id="cancel-edit-btn" class="hide">Cancel Edit</button>
       </div>
       <div id="expense-form-error"></div>
     </form>
@@ -458,6 +524,7 @@
             <th>Supplier</th>
             <th>Amount</th>
             <th>Balance</th>
+            <th class="action-cell">Actions</th>
           </tr>
         </thead>
         <tbody id="expenses-table-body"></tbody>
@@ -470,6 +537,9 @@
       getFirestore,
       collection,
       addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
       onSnapshot,
       Timestamp
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
@@ -496,6 +566,9 @@
     const projectSelect = document.getElementById("exp-project");
     const supplierInput = document.getElementById("exp-supplier");
     const descriptionInput = document.getElementById("exp-description");
+    const amountInput = document.getElementById("exp-amount");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelEditBtn = document.getElementById("cancel-edit-btn");
     const searchFilter = document.getElementById("search-filter");
     const monthFilter = document.getElementById("month-filter");
     const weekFilter = document.getElementById("week-filter");
@@ -531,6 +604,7 @@
     let projectBtnsVisible = localStorage.getItem('expenses_projectBtnsVisible') !== 'false';
     let checkboxesVisible = false;
     let selectedTransactions = new Set();
+    let editingTransactionId = null;
     
     // Persistent filter visibility
     let weekFilterVisible = localStorage.getItem('expenses_weekFilterVisible') === 'true';
@@ -681,6 +755,9 @@
       formVisible = !formVisible;
       expenseForm.classList.toggle("hide", !formVisible);
       toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction";
+      if (!formVisible) {
+        cancelEdit();
+      }
     };
 
     // --- Toggle Checkboxes ---
@@ -735,6 +812,75 @@
       renderTable();
     });
 
+    // --- Cancel Edit ---
+    cancelEditBtn.addEventListener("click", cancelEdit);
+
+    function cancelEdit() {
+      editingTransactionId = null;
+      submitBtn.textContent = "Add Expense";
+      cancelEditBtn.classList.add("hide");
+      expenseForm.reset();
+      // Show form if it's hidden
+      if (!formVisible) {
+        formVisible = true;
+        expenseForm.classList.remove("hide");
+        toggleFormBtn.textContent = "Hide Form";
+      }
+    }
+
+    // --- Edit Transaction ---
+    function editTransaction(exp) {
+      editingTransactionId = exp.id;
+      dateInput.value = exp.date || "";
+      descriptionInput.value = exp.description || "";
+      supplierInput.value = exp.supplier || "";
+      amountInput.value = exp.amount || "";
+      
+      // Set account
+      accountSelect.value = exp.account || "";
+      
+      // Set project - need to find the correct option
+      setTimeout(() => {
+        const projectOptions = Array.from(projectSelect.options);
+        const matchingOption = projectOptions.find(option => 
+          option.text === exp.project || option.value === exp.project
+        );
+        if (matchingOption) {
+          projectSelect.value = matchingOption.value;
+        } else if (exp.project === "General") {
+          projectSelect.value = "_general";
+        }
+      }, 100);
+      
+      submitBtn.textContent = "Update Expense";
+      cancelEditBtn.classList.remove("hide");
+      
+      // Show form if hidden
+      if (!formVisible) {
+        formVisible = true;
+        expenseForm.classList.remove("hide");
+        toggleFormBtn.textContent = "Hide Form";
+      }
+      
+      // Scroll to form
+      expenseForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // --- Delete Transaction ---
+    async function deleteTransaction(id) {
+      if (!confirm("Are you sure you want to delete this transaction? This action cannot be undone.")) {
+        return;
+      }
+      
+      try {
+        await deleteDoc(doc(db, "General expenses", id));
+        // Remove from selected transactions if present
+        selectedTransactions.delete(id);
+      } catch (err) {
+        alert("Error deleting transaction: " + (err.message || err));
+      }
+    }
+
     // --- Collapsible Project Filter Buttons ---
     projectCollapseBtn.onclick = function() {
       projectBtnsVisible = !projectBtnsVisible;
@@ -785,7 +931,7 @@
     }
     loadProjectsForDropdown();
 
-    // --- Add Expense Handler ---
+    // --- Add/Update Expense Handler ---
     expenseForm.onsubmit = async function(e) {
       e.preventDefault();
       formError.textContent = "";
@@ -794,24 +940,36 @@
       const accountVal = accountSelect.value;
       const supplierVal = supplierInput.value.trim();
       const descriptionVal = descriptionInput.value.trim();
-      const amountVal = parseFloat(document.getElementById("exp-amount").value);
+      const amountVal = parseFloat(amountInput.value);
 
       if (!accountVal || !dateVal || !supplierVal || isNaN(amountVal) || amountVal < 0 || !projectVal) {
         formError.textContent = "Please fill all fields correctly.";
         return;
       }
 
+      const expenseData = {
+        date: dateVal,
+        project: projectVal,
+        account: accountVal,
+        supplier: supplierVal,
+        description: descriptionVal,
+        amount: amountVal,
+        updatedAt: Timestamp.now()
+      };
+
       try {
-        await addDoc(collection(db, "General expenses"), {
-          date: dateVal,
-          project: projectVal,
-          account: accountVal,
-          supplier: supplierVal,
-          description: descriptionVal,
-          amount: amountVal,
-          createdAt: Timestamp.now()
-        });
-        expenseForm.reset();
+        if (editingTransactionId) {
+          // Update existing transaction
+          await updateDoc(doc(db, "General expenses", editingTransactionId), expenseData);
+          cancelEdit();
+        } else {
+          // Add new transaction
+          await addDoc(collection(db, "General expenses"), {
+            ...expenseData,
+            createdAt: Timestamp.now()
+          });
+          expenseForm.reset();
+        }
       } catch (err) {
         formError.textContent = "Error saving expense: " + (err.message || err);
       }
@@ -916,6 +1074,19 @@
           <td>${exp.supplier || "-"}</td>
           <td>${typeof exp.amount === "number" ? exp.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
           <td>${balance ? balance.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
+          <td class="action-cell">
+            <button class="action-btn" data-id="${exp.id}">
+              <i class="fa fa-ellipsis-v"></i>
+            </button>
+            <div class="row-dropdown-content" id="dropdown-${exp.id}">
+              <button class="row-dropdown-item edit" data-id="${exp.id}">
+                <i class="fa fa-edit" style="margin-right: 6px;"></i>Edit
+              </button>
+              <button class="row-dropdown-item delete" data-id="${exp.id}">
+                <i class="fa fa-trash" style="margin-right: 6px;"></i>Delete
+              </button>
+            </div>
+          </td>
         `;
         expensesTableBody.appendChild(tr);
         
@@ -931,6 +1102,43 @@
             }
           });
         }
+        
+        // Add action button listeners
+        const actionBtn = tr.querySelector('.action-btn');
+        const rowDropdown = tr.querySelector('.row-dropdown-content');
+        const editBtn = tr.querySelector('.row-dropdown-item.edit');
+        const deleteBtn = tr.querySelector('.row-dropdown-item.delete');
+        
+        // Toggle dropdown on action button click
+        actionBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          // Close all other dropdowns
+          document.querySelectorAll('.row-dropdown-content.show').forEach(d => {
+            if (d !== rowDropdown) d.classList.remove('show');
+          });
+          rowDropdown.classList.toggle('show');
+        });
+        
+        // Edit button
+        editBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          rowDropdown.classList.remove('show');
+          editTransaction(exp);
+        });
+        
+        // Delete button
+        deleteBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          rowDropdown.classList.remove('show');
+          deleteTransaction(exp.id);
+        });
+      });
+      
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function() {
+        document.querySelectorAll('.row-dropdown-content.show').forEach(d => {
+          d.classList.remove('show');
+        });
       });
     }
 
