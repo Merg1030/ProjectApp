@@ -100,64 +100,101 @@
       margin-bottom: 18px;
       text-align:center;
     }
-    /* Action buttons styling */
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .edit-btn, .delete-btn {
+    /* Three dots button and dropdown styling */
+    .dots-btn {
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 16px;
-      padding: 5px;
+      font-size: 20px;
+      color: #666;
+      padding: 5px 10px;
       border-radius: 4px;
       transition: all 0.2s;
+    }
+    .dots-btn:hover {
+      background-color: #f0f0f0;
+      color: #1976d2;
+    }
+    .dropdown-menu {
+      position: absolute;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      min-width: 120px;
+      z-index: 100;
+      display: none;
+    }
+    .dropdown-menu.show {
+      display: block;
+    }
+    .dropdown-item {
+      padding: 8px 12px;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
+      gap: 8px;
+      transition: background 0.2s;
+      border-bottom: 1px solid #f0f0f0;
     }
-    .edit-btn {
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .dropdown-item:hover {
+      background: #f5f5f5;
+    }
+    .dropdown-item.edit {
       color: #1976d2;
-      background-color: #e3f2fd;
     }
-    .edit-btn:hover {
-      background-color: #1976d2;
-      color: white;
-    }
-    .delete-btn {
+    .dropdown-item.delete {
       color: #d32f2f;
-      background-color: #ffebee;
     }
-    .delete-btn:hover {
-      background-color: #d32f2f;
-      color: white;
+    .dropdown-container {
+      position: relative;
+      display: inline-block;
     }
-    .save-btn {
-      color: #388e3c;
-      background-color: #e8f5e9;
-    }
-    .save-btn:hover {
-      background-color: #388e3c;
-      color: white;
-    }
-    .cancel-btn {
-      color: #f57c00;
-      background-color: #fff3e0;
-    }
-    .cancel-btn:hover {
-      background-color: #f57c00;
-      color: white;
-    }
-    .edit-mode input, .edit-mode select {
-      width: 100%;
-      padding: 4px 8px;
-      border: 1px solid #1976d2;
+    /* Collapsible controls panel */
+    .toggle-controls-btn {
+      background: #6c757d;
+      color: #fff;
+      font-weight: bold;
+      border: none;
       border-radius: 4px;
-      font-size: 14px;
+      padding: 8px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.18s;
+      margin-bottom: 16px;
+    }
+    .toggle-controls-btn:hover {
+      background: #5a6268;
+    }
+    .controls-panel {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .controls-panel.show {
+      display: block;
+    }
+    .controls-panel-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .control-group label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #495057;
     }
     .btn.btn-outline{color: white; margin-right: 20PX;}
     @media (max-width: 900px) {
@@ -166,7 +203,7 @@
       table th, table td { white-space: nowrap; }
       .company-summary-row { flex-direction: column; gap: 10px;}
       .company-summary-card { min-width:unset; max-width:unset; width:100%; }
-      .controls-bar { flex-direction: column; gap: 10px;}
+      .controls-panel-content { flex-direction: column; align-items: stretch; gap: 15px;}
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -176,27 +213,40 @@
     <div class="panel-heading"><a href="dashboard.html" class="btn btn-outline">
   <i class="fas fa-arrow-left"></i> Back
 </a>Personnel & Daily Expenses Tracker</div>
-    <div class="controls-bar">
-      <button id="toggle-form-btn" type="button">Add Entry</button>
-      <label>
-        Week Filter:
-        <select id="week-selector" class="week-selector">
-          <option value="ALL">All Weeks</option>
-        </select>
-      </label>
-      <label>
-        Company:
-        <select id="company-filter" class="company-filter">
-          <option value="ALL">All Companies</option>
-          <option value="FPS">FPS</option>
-          <option value="HML">HML</option>
-          <option value="HL">HL</option>
-          <option value="HFL">HFL</option>
-          <option value="HEL">HEL</option>
-        </select>
-      </label>
-      <button id="download-week-btn" class="download-btn" type="button">Download Filtered Report</button>
+    
+    <button class="toggle-controls-btn" id="toggle-controls-btn">
+      <i class="fa fa-filter"></i> Show Filters & Tools
+    </button>
+    
+    <div class="controls-panel" id="controls-panel">
+      <div class="controls-panel-content">
+        <div class="control-group">
+          <label for="week-selector">Week Filter:</label>
+          <select id="week-selector" class="week-selector">
+            <option value="ALL">All Weeks</option>
+          </select>
+        </div>
+        
+        <div class="control-group">
+          <label for="company-filter">Company:</label>
+          <select id="company-filter" class="company-filter">
+            <option value="ALL">All Companies</option>
+            <option value="FPS">FPS</option>
+            <option value="HML">HML</option>
+            <option value="HL">HL</option>
+            <option value="HFL">HFL</option>
+            <option value="HEL">HEL</option>
+          </select>
+        </div>
+        
+        <button id="download-week-btn" class="download-btn" type="button">
+          <i class="fa fa-download"></i> Download Report
+        </button>
+      </div>
     </div>
+
+    <button id="toggle-form-btn" type="button">Add Entry</button>
+    
     <form id="expense-form" autocomplete="off" class="hide">
       <input type="hidden" id="edit-id" value="">
       <div><label for="exp-date">Date</label><br><input type="date" id="exp-date"></div>
@@ -240,7 +290,7 @@
             <th>Airtime</th>
             <th>Lunch</th>
             <th>Total</th>
-            <th>Actions</th>
+            <th style="width: 50px;">•••</th>
           </tr>
         </thead>
         <tbody id="expenses-table-body"></tbody>
@@ -287,27 +337,35 @@
     const weekSelector = document.getElementById("week-selector");
     const companyFilter = document.getElementById("company-filter");
     const downloadWeekBtn = document.getElementById("download-week-btn");
-    const panelToExport = document.getElementById("panel-to-export");
     const submitBtn = document.getElementById("submit-btn");
     const cancelEditBtn = document.getElementById("cancel-edit-btn");
     const editIdInput = document.getElementById("edit-id");
+    const toggleControlsBtn = document.getElementById("toggle-controls-btn");
+    const controlsPanel = document.getElementById("controls-panel");
+
+    // --- Toggle Controls Panel ---
+    let controlsVisible = false;
+    toggleControlsBtn.onclick = function() {
+      controlsVisible = !controlsVisible;
+      controlsPanel.classList.toggle("show", controlsVisible);
+      toggleControlsBtn.innerHTML = controlsVisible ? 
+        '<i class="fa fa-times"></i> Hide Filters & Tools' : 
+        '<i class="fa fa-filter"></i> Show Filters & Tools';
+    };
 
     // --- Filter Persistence ---
     const FILTER_STORAGE_KEY = 'personnelExpensesFilters';
     
-    // Load saved filters or use defaults
     let savedFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{}');
     let currentFilters = {
       week: savedFilters.week || 'ALL',
       company: savedFilters.company || 'ALL'
     };
 
-    // Save filters to localStorage
     function saveFilters() {
       localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(currentFilters));
     }
 
-    // Apply filters from storage
     function applySavedFilters() {
       weekSelector.value = currentFilters.week;
       companyFilter.value = currentFilters.company;
@@ -339,7 +397,6 @@
       const airtimeVal = parseFloat(document.getElementById("exp-airtime").value) || 0;
       const lunchVal = parseFloat(document.getElementById("exp-lunch").value) || 0;
 
-      // Validation
       if (!dateVal || !personnelVal || !companyVal) {
         formError.textContent = "Please fill in required fields: Date, Personnel, and Company.";
         return;
@@ -360,12 +417,10 @@
 
       try {
         if (isEditing && editIdInput.value) {
-          // Update existing document
           const docRef = doc(db, "PersonnelExpenses", editIdInput.value);
           await updateDoc(docRef, expenseData);
           cancelEdit();
         } else {
-          // Add new document
           expenseData.createdAt = Timestamp.now();
           await addDoc(collection(db, "PersonnelExpenses"), expenseData);
           expenseForm.reset();
@@ -406,12 +461,14 @@
       submitBtn.textContent = "Update Entry";
       cancelEditBtn.classList.remove("hide");
       
-      // Show form if hidden
       if (!formVisible) {
         formVisible = true;
         expenseForm.classList.remove("hide");
         toggleFormBtn.textContent = "Hide Form";
       }
+      
+      // Hide any open dropdowns
+      hideAllDropdowns();
     }
 
     // --- Delete Entry Function ---
@@ -419,21 +476,59 @@
       if (confirm("Are you sure you want to delete this entry?")) {
         try {
           await deleteDoc(doc(db, "PersonnelExpenses", docId));
+          // Hide any open dropdowns after deletion
+          hideAllDropdowns();
         } catch (err) {
           alert("Error deleting entry: " + (err.message || err));
         }
       }
     }
 
-    // --- Week Logic ---
-    function getWeekNumber(d) {
-      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-      return weekNo;
+    // --- Dropdown Management ---
+    let activeDropdown = null;
+
+    function showDropdown(dropdownId, docId, expense) {
+      // Hide any currently open dropdown
+      hideAllDropdowns();
+      
+      const dropdown = document.getElementById(dropdownId);
+      if (dropdown) {
+        dropdown.classList.add('show');
+        activeDropdown = dropdownId;
+        
+        // Update dropdown button actions
+        const editBtn = dropdown.querySelector('.dropdown-item.edit');
+        const deleteBtn = dropdown.querySelector('.dropdown-item.delete');
+        
+        if (editBtn) {
+          editBtn.onclick = () => editEntry(docId, expense);
+        }
+        if (deleteBtn) {
+          deleteBtn.onclick = () => deleteEntry(docId);
+        }
+        
+        // Close dropdown when clicking outside
+        setTimeout(() => {
+          document.addEventListener('click', closeDropdownOnClickOutside);
+        }, 10);
+      }
     }
-    
+
+    function hideAllDropdowns() {
+      document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+        dropdown.classList.remove('show');
+      });
+      activeDropdown = null;
+      document.removeEventListener('click', closeDropdownOnClickOutside);
+    }
+
+    function closeDropdownOnClickOutside(event) {
+      if (!event.target.closest('.dropdown-container') && !event.target.closest('.dropdown-menu')) {
+        hideAllDropdowns();
+      }
+    }
+
+    // --- Week Logic ---
     function getWeekYear(date) {
       let d = new Date(date);
       d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -443,7 +538,6 @@
       return {week: weekNo, year: d.getUTCFullYear()};
     }
 
-    // Get unique weeks from data
     function getUniqueWeeksFromData(data) {
       const weeksSet = new Set();
       data.forEach(exp => {
@@ -463,7 +557,6 @@
         });
     }
 
-    // Fill week selector with unique weeks from data
     function fillWeekSelector(weeks) {
       let options = '<option value="ALL">All Weeks</option>';
       
@@ -486,12 +579,11 @@
         allExpenses = [];
         snapshot.forEach(docSnap => {
           const exp = docSnap.data();
-          exp.id = docSnap.id; // Store document ID
+          exp.id = docSnap.id;
           if (exp.date) exp._weekyear = getWeekYear(exp.date);
           allExpenses.push(exp);
         });
         
-        // Get unique weeks and populate selector
         uniqueWeeks = getUniqueWeeksFromData(allExpenses);
         fillWeekSelector(uniqueWeeks);
         
@@ -506,7 +598,6 @@
       
       let filtered = [...allExpenses];
       
-      // Apply week filter if not "ALL"
       if (currentFilters.week !== 'ALL') {
         const [selectedYear, selectedWeek] = currentFilters.week.split('-').map(Number);
         filtered = filtered.filter(exp =>
@@ -516,7 +607,6 @@
         );
       }
       
-      // Apply company filter if not "ALL"
       if (selectedCompany !== "ALL") {
         filtered = filtered.filter(exp => exp.company === selectedCompany);
       }
@@ -558,7 +648,6 @@
     function renderTable() {
       let filtered = getFilteredData();
       
-      // Sort in descending date order (newest first)
       filtered.sort((a, b) => {
         if ((a.date || "") === (b.date || "")) {
           return ((b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -568,6 +657,7 @@
 
       expensesTableBody.innerHTML = "";
       let sumTransport = 0, sumAirtime = 0, sumLunch = 0, sumTotal = 0;
+      let rowIndex = 0;
       
       filtered.forEach(exp => {
         const tval = (parseFloat(exp.transport) || 0) + (parseFloat(exp.airtime) || 0) + (parseFloat(exp.lunch) || 0);
@@ -576,6 +666,7 @@
         sumLunch += parseFloat(exp.lunch) || 0;
         sumTotal += tval;
         
+        const dropdownId = `dropdown-${rowIndex}`;
         const tRow = document.createElement("tr");
         tRow.innerHTML = `
           <td>${exp.date ? formatDate(exp.date) : "-"}</td>
@@ -589,20 +680,25 @@
           <td>${exp.lunch !== undefined ? exp.lunch : ""}</td>
           <td>${tval ? tval.toLocaleString(undefined, {maximumFractionDigits:2}) : ""}</td>
           <td>
-            <div class="action-buttons">
-              <button class="edit-btn" title="Edit entry" onclick="editEntry('${exp.id}', ${JSON.stringify(exp).replace(/'/g, "\\'")})">
-                <i class="fa fa-edit"></i>
+            <div class="dropdown-container">
+              <button class="dots-btn" onclick="showDropdown('${dropdownId}', '${exp.id}', ${JSON.stringify(exp).replace(/'/g, "\\'")})">
+                •••
               </button>
-              <button class="delete-btn" title="Delete entry" onclick="deleteEntry('${exp.id}')">
-                <i class="fa fa-trash"></i>
-              </button>
+              <div id="${dropdownId}" class="dropdown-menu">
+                <div class="dropdown-item edit">
+                  <i class="fa fa-edit"></i> Edit
+                </div>
+                <div class="dropdown-item delete">
+                  <i class="fa fa-trash"></i> Delete
+                </div>
+              </div>
             </div>
           </td>
         `;
         expensesTableBody.appendChild(tRow);
+        rowIndex++;
       });
 
-      // Show totals row (different format for "All Weeks" vs specific week)
       let totalRowHTML = '';
       
       if (currentFilters.week === 'ALL') {
@@ -686,7 +782,6 @@
         filename += `-${selectedCompany}`;
       }
       
-      // Sort in descending date order for PDF too
       const sortedForPDF = [...filtered].sort((a, b) => {
         if ((a.date || "") === (b.date || "")) {
           return ((b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -694,7 +789,6 @@
         return (b.date || "") < (a.date || "") ? -1 : 1;
       });
       
-      // Create compact PDF layout
       let pdfHTML = `
         <div style="font-family: Arial, sans-serif; max-width: 100%; font-size: 10px;">
           <div style="color: #1976d2; font-size: 16px; font-weight: bold; margin-bottom: 5px; text-align:center;">
@@ -708,7 +802,6 @@
           </div>
       `;
 
-      // Only show company summary if viewing all companies
       if (selectedCompany === "ALL") {
         pdfHTML += `<div style="margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">`;
         
@@ -835,6 +928,7 @@
     };
 
     // Make functions available globally for onclick handlers
+    window.showDropdown = showDropdown;
     window.editEntry = editEntry;
     window.deleteEntry = deleteEntry;
   </script>
