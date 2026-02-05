@@ -3,380 +3,703 @@
 <head>
   <meta charset="utf-8" />
   <title>IMS | Material Usage History</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
     :root {
-  --primary: #4361ee;
-  --primary-light: #125ed7;
-  --primary-dark: #7dabffcf;
-  --success: #3b4df0;
-  --danger: #b90d0d;
-  --warning: #f8961e;
-  --info: #4895ef;
+      --primary: #1a365d;
+      --secondary: #ed8936;
+      --border-color: #e2e8f0;
+      --danger: #b90d0d;
+      --success: #48bb78;
+    }
 
-  --gray-100: #1a1a1a;
-  --gray-200: #2c2c2c;
-  --gray-300: #2c2c2c;
-  --gray-400: #2c2c2c;
-  --gray-500: #3a3838;
-  --gray-600: #2c2c2c;
-  --gray-700: #2c2c2c;
-  --gray-800:#2c2c2c;
-  --gray-900: #f0f0f0;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  --space-xs: 4px;
-  --space-sm: 6px;
-  --space-md: 12px;
-  --space-lg: 20px;
-  --space-xl: 28px;
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      background: white;
+      margin: 0;
+      font-size: 13px;
+      color: #171923;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-  --font-size-sm: 11px;
-  --font-size-md: 13px;
-  --font-size-lg: 15px;
-  --font-size-xl: 18px;
-  --font-size-xxl: 22px;
+    /* Simple White Sidebar */
+    .sidebar {
+      width: 250px;
+      background: white;
+      color: #171923;
+      padding: 1rem 0;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+      border-right: 1px solid var(--border-color);
+    }
 
-  --border-radius-sm: 4px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 10px;
+    .sidebar.collapsed {
+      transform: translateX(-250px);
+      box-shadow: none;
+    }
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 6px 12px rgba(0, 0, 0, 0.7);
-}
+    .sidebar-header {
+      padding: 0 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
 
-body {
-  font-family: 'Open Sans', Arial, sans-serif;
-  background: var(--gray-100);
-  margin: 0;
-  font-size: var(--font-size-md);
-  color: var(--gray-900);
-}
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
-.panel {
-  background: var(--gray-200);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
-  margin: var(--space-xl) auto;
-  padding: var(--space-lg);
-  
-}
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: white;
+    }
 
-.panel-heading {
-  background: var(--gray-400);
-  color: white;
-  padding: var(--space-md) var(--space-lg);
-  font-size: var(--font-size-lg);
-  font-weight: bold;
-  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
-  margin: calc(-1 * var(--space-lg)) calc(-1 * var(--space-lg)) var(--space-md) calc(-1 * var(--space-lg));
-}
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--primary);
+    }
 
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm) var(--space-lg);
-  margin-bottom: var(--space-md);
-}
+    .logo-text span {
+      font-size: 0.75rem;
+      color: #718096;
+    }
 
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
+    /* Navigation */
+    .nav-section {
+      padding: 0 1rem;
+      margin-bottom: 1.5rem;
+    }
 
-.filter-label {
-  font-weight: bold;
-  margin-right: var(--space-xs);
-  color: var(--gray-800);
-}
+    .nav-section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #718096;
+      margin-bottom: 0.75rem;
+    }
 
-.filter-select,
-.filter-input {
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-md);
-  border-radius: var(--border-radius-sm);
-  border: 1px solid var(--gray-400);
-  background: var(--gray-300);
-  color: var(--gray-900);
-}
+    .nav-links {
+      list-style: none;
+    }
 
-.search-bar {
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-md);
-  border-radius: var(--border-radius-sm);
-  border: 1px solid var(--gray-400);
-  background: var(--gray-300);
-  color: var(--gray-900);
-  margin-left: var(--space-md);
-  min-width: 220px;
-}
+    .nav-item {
+      margin-bottom: 0.25rem;
+    }
 
-.total-container {
-  font-weight: bold;
-  font-size: var(--font-size-md);
-  color: var(--primary-light);
-  white-space: nowrap;
-}
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      color: #4a5568;
+      text-decoration: none;
+      border-radius: 0.375rem;
+      transition: all 0.15s ease;
+    }
 
-.table-responsive {
-  overflow-x: auto;
-}
+    .nav-link:hover {
+      background: #f7fafc;
+      color: var(--primary);
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #303030;
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-  
-  color: #125ed7;
-}
+    .nav-link.active {
+      background: #ebf8ff;
+      color: var(--primary);
+      font-weight: 500;
+    }
 
-th,
-td {
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-md);
-  text-align: left;
-  border-bottom: 1px solid var(--gray-400);
-  color: #d2d4d6;
-}
+    .nav-icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
 
-th {
-  font-weight: 600;
-  background-color: #302c2c;
-  color: white;
-}
+    /* Sidebar Toggle */
+    .sidebar-toggle {
+      position: absolute;
+      top: 1rem;
+      right: -12px;
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.75rem;
+      z-index: 1001;
+    }
 
-tr:nth-child(even) {
-  background: var(--gray-500);
-}
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      transition: margin-left 0.3s ease;
+      padding: 1.5rem;
+      min-height: 100vh;
+      background: white;
+    }
 
-tr:hover {
-  background: var(--gray-400);
-}
+    .main-content.expanded {
+      margin-left: 0;
+    }
 
-.edit-btn,
-.reverse-btn {
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-  border-radius: var(--border-radius-sm);
-  border: none;
-  cursor: pointer;
-  color: white;
-}
+    /* Panel */
+    .panel {
+      background: white;
+      border-radius: 0.5rem;
+      margin: 0;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
 
-.edit-btn {
-  background: var(--primary);
-}
+    .panel-heading {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 0.5rem 0.5rem 0 0;
+      margin: -1.5rem -1.5rem 1rem -1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-.edit-btn:hover {
-  background: var(--primary-dark);
-}
+    .back-btn {
+      background: white;
+      color: var(--primary);
+      border: none;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
 
-.reverse-btn {
-  background: var(--danger);
-}
+    .back-btn:hover {
+      background: #f7fafc;
+    }
 
-.reverse-btn:disabled {
-  background: var(--gray-500);
-  color: var(--gray-700);
-  cursor: not-allowed;
-}
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      margin-bottom: 1rem;
+    }
 
-.reverse-btn:hover:not([disabled]) {
-  background: #d32f2f;
-}
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
 
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 99;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  align-items: center;
-  justify-content: center;
-}
+    .filter-label {
+      font-weight: 600;
+      margin-right: 0.25rem;
+      color: #4a5568;
+    }
 
-.modal.active {
-  display: flex;
-}
+    .filter-select,
+    .filter-input,
+    .search-bar {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      background: #f7fafc;
+      color: #171923;
+    }
 
-.modal-content {
-  background: var(--gray-200);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-lg);
-  min-width: 300px;
-  box-shadow: var(--shadow-lg);
-  position: relative;
-  color: var(--gray-900);
-}
+    .search-bar {
+      min-width: 200px;
+    }
 
-.modal-content label {
-  font-weight: bold;
-  margin-bottom: var(--space-xs);
-  display: block;
-  color: var(--gray-800);
-}
+    .filter-select:focus,
+    .filter-input:focus,
+    .search-bar:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+    }
 
-.modal-content input[type="datetime-local"] {
-  width: 100%;
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-md);
-  margin-bottom: var(--space-md);
-  border: 1px solid var(--gray-400);
-  border-radius: var(--border-radius-sm);
-  background: var(--gray-300);
-  color: var(--gray-900);
-}
+    .total-container {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--primary);
+      white-space: nowrap;
+    }
 
-.modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-sm);
-  text-align: right;
-}
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+    }
 
-.modal-actions button {
-  padding: var(--space-xs) var(--space-lg);
-  font-size: var(--font-size-sm);
-  border-radius: var(--border-radius-sm);
-  border: none;
-  cursor: pointer;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1000px;
+    }
 
-.modal-actions .save-btn {
-  background: var(--primary);
-  color: white;
-}
+    th {
+      text-align: left;
+      padding: 0.75rem;
+      font-weight: 600;
+      background: #f7fafc;
+      color: var(--primary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-.modal-actions .save-btn:hover {
-  background: var(--primary-dark);
-}
+    td {
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      color: #4a5568;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-.modal-actions .cancel-btn {
-  background: var(--gray-400);
-  color: white;
-}
+    tr:hover {
+      background: #f7fafc;
+    }
 
-.modal-actions .cancel-btn:hover {
-  background: var(--gray-500);
-}
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
 
-.modal-actions .reverse-btn {
-  margin-left: auto;
-  background: var(--danger);
-  color: white;
-}
+    /* 3-dots Dropdown */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
 
-.modal-actions .reverse-btn:hover:not([disabled]) {
-  background: #d32f2f;
-}
+    .dots-btn {
+      background: none;
+      border: none;
+      color: #718096;
+      cursor: pointer;
+      padding: 0.25rem;
+      font-size: 1rem;
+    }
 
-.modal-close {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: var(--gray-700);
-  cursor: pointer;
-}
+    .dots-btn:hover {
+      color: var(--primary);
+    }
 
-.modal-close:hover {
-  color: white;
-}
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background: white;
+      min-width: 120px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 0.375rem;
+      border: 1px solid var(--border-color);
+      z-index: 100;
+    }
 
-#edit-modal-error {
-  color: var(--danger);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-sm);
-}
+    .dropdown-content.show {
+      display: block;
+    }
 
-.btn.btn-outline {
-  color: white;
-  margin-right: var(--space-lg);
-}
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      text-decoration: none;
+      color: #4a5568;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .dropdown-item:hover {
+      background: #f7fafc;
+    }
+
+    .dropdown-item.edit:hover {
+      color: var(--primary);
+    }
+
+    .dropdown-item.reverse:hover {
+      color: var(--danger);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 99;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      min-width: 300px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .modal-content label {
+      font-weight: 600;
+      margin-bottom: 0.375rem;
+      display: block;
+      color: #4a5568;
+    }
+
+    .modal-content input[type="datetime-local"] {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: #f7fafc;
+      color: #171923;
+    }
+
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .modal-actions button {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      border-radius: 0.375rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .modal-actions .save-btn {
+      background: var(--primary);
+      color: white;
+    }
+
+    .modal-actions .save-btn:hover {
+      background: #0d2b50;
+    }
+
+    .modal-actions .cancel-btn {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+
+    .modal-actions .cancel-btn:hover {
+      background: #cbd5e0;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #718096;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--primary);
+    }
+
+    #edit-modal-error {
+      color: var(--danger);
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Mobile Menu Toggle */
+    .mobile-toggle {
+      display: none;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1100;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-250px);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      
+      .search-bar {
+        min-width: 100%;
+      }
+      
+      .sidebar-toggle {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .filter-group {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+      
+      .filter-select,
+      .filter-input {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="panel">
-    <div class="panel-heading"><a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a> Usage/Assignment History</div>
-    <div class="filter-bar">
-      <div class="filter-group">
-        <label class="filter-label" for="materialFilter">Material:</label>
-        <select id="materialFilter" class="filter-select">
-          <option value="">All</option>
-        </select>
-        <label class="filter-label" for="projectFilter">Project:</label>
-        <select id="projectFilter" class="filter-select">
-          <option value="">All</option>
-        </select>
-        <label class="filter-label" for="taskIdFilter">Task ID:</label>
-        <input id="taskIdFilter" class="filter-input" placeholder="Filter by Task ID"/>
-        <label class="filter-label" for="monthFilter">Month:</label>
-        <select id="monthFilter" class="filter-select">
-          <option value="">All</option>
-        </select>
-        <!-- SEARCH BAR -->
-        <input id="usageSearchBar" class="search-bar" type="text" placeholder="Search anything..." autocomplete="off" />
-      </div>
-      <div class="total-container">
-        TOTAL AMOUNT: <span id="total-assigned-value">-</span>
-      </div>
-    </div>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Material</th>
-            <th>Category</th>
-            <th>Quantity</th>
-            <th>Unit Price</th>
-            <th>Amount</th>
-            <th>Project</th>
-            <th>Task ID</th>
-            <th>Task Description</th>
-            <th>Location</th>
-            <th>Assigned Personnel</th>
-            <th>Assigned At</th>
-            <th>Edit</th>
-          </tr>
-        </thead>
-        <tbody id="usage-table-body"></tbody>
-      </table>
-    </div>
-    <div id="table-message"></div>
-  </div>
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-toggle" id="mobileToggle">
+    <i class="fas fa-bars"></i>
+  </button>
 
-  <!-- Edit Date/Time + Reverse Modal -->
-  <div id="edit-modal" class="modal">
-    <div class="modal-content">
-      <button class="modal-close" id="close-modal-btn" title="Close">&times;</button>
-      <h3 style="margin-top:0;margin-bottom:17px;">Edit Assigned Date/Time</h3>
-      <div id="edit-modal-error"></div>
-      <form id="edit-modal-form">
-        <label for="edit-assignedAt">Assigned At:</label>
-        <input type="datetime-local" id="edit-assignedAt" required />
-        <div class="modal-actions">
-          <button type="button" class="reverse-btn" id="reverse-btn" data-docid="" data-materialid="" data-qty="">Reverse</button>
-          <button type="button" class="cancel-btn" id="cancel-edit-btn">Cancel</button>
-          <button type="submit" class="save-btn">Save</button>
-        </div>
-      </form>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-chevron-left" id="toggleIcon"></i>
     </div>
-  </div>
+    
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="logo-text">
+          <h2>PENTA</h2>
+          <span>Construction Pro</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-section">
+      <h3>Dashboard</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-gauge-high nav-icon"></i>
+            <span>Overview</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="projectdashboard.html" class="nav-link">
+            <i class="fas fa-diagram-project nav-icon"></i>
+            <span>Projects</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Employees.html" class="nav-link">
+            <i class="fas fa-user-tie nav-icon"></i>
+            <span>Team</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Resources</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="Tool.html" class="nav-link">
+            <i class="fas fa-screwdriver-wrench nav-icon"></i>
+            <span>Equipment</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="material.html" class="nav-link">
+            <i class="fas fa-truck-ramp-box nav-icon"></i>
+            <span>Materials</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="inventory.html" class="nav-link">
+            <i class="fas fa-warehouse nav-icon"></i>
+            <span>Inventory</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Management</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="HazidExpense.html" class="nav-link">
+            <i class="fas fa-file-invoice-dollar nav-icon"></i>
+            <span>Finances</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Table.html" class="nav-link">
+            <i class="fas fa-chart-column nav-icon"></i>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="material_usage_history.html" class="nav-link active">
+            <i class="fas fa-history nav-icon"></i>
+            <span>Usage History</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <div class="panel">
+      <div class="panel-heading">
+        <span>Usage/Assignment History</span>
+        <a href="dashboard.html" class="back-btn">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+      
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label" for="materialFilter">Material:</label>
+          <select id="materialFilter" class="filter-select">
+            <option value="">All</option>
+          </select>
+          <label class="filter-label" for="projectFilter">Project:</label>
+          <select id="projectFilter" class="filter-select">
+            <option value="">All</option>
+          </select>
+          <label class="filter-label" for="taskIdFilter">Task ID:</label>
+          <input id="taskIdFilter" class="filter-input" placeholder="Filter by Task ID"/>
+          <label class="filter-label" for="monthFilter">Month:</label>
+          <select id="monthFilter" class="filter-select">
+            <option value="">All</option>
+          </select>
+          <!-- SEARCH BAR -->
+          <input id="usageSearchBar" class="search-bar" type="text" placeholder="Search anything..." autocomplete="off" />
+        </div>
+        <div class="total-container">
+          TOTAL AMOUNT: <span id="total-assigned-value">-</span>
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Material</th>
+              <th>Category</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Amount</th>
+              <th>Project</th>
+              <th>Task ID</th>
+              <th>Task Description</th>
+              <th>Location</th>
+              <th>Assigned Personnel</th>
+              <th>Assigned At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usage-table-body"></tbody>
+        </table>
+      </div>
+      <div id="table-message"></div>
+    </div>
+
+    <!-- Edit Date/Time + Reverse Modal -->
+    <div id="edit-modal" class="modal">
+      <div class="modal-content">
+        <button class="modal-close" id="close-modal-btn" title="Close">&times;</button>
+        <h3 style="margin-top:0;margin-bottom:17px;">Edit Assigned Date/Time</h3>
+        <div id="edit-modal-error"></div>
+        <form id="edit-modal-form">
+          <label for="edit-assignedAt">Assigned At:</label>
+          <input type="datetime-local" id="edit-assignedAt" required />
+          <div class="modal-actions">
+            <button type="button" class="cancel-btn" id="cancel-edit-btn">Cancel</button>
+            <button type="submit" class="save-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
@@ -392,6 +715,7 @@ tr:hover {
       Timestamp,
       runTransaction
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
       authDomain: "project-task-588c4.firebaseapp.com",
@@ -401,9 +725,18 @@ tr:hover {
       appId: "1:411882772509:web:08d613186c101a99f38ef4",
       measurementId: "G-JMFLFYEM0F"
     };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // DOM Elements for sidebar
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+    
+    // Table elements
     const tableBody = document.getElementById('usage-table-body');
     const materialFilter = document.getElementById('materialFilter');
     const projectFilter = document.getElementById('projectFilter');
@@ -419,35 +752,92 @@ tr:hover {
     const editModalError = document.getElementById('edit-modal-error');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
-    const reverseBtn = document.getElementById('reverse-btn');
 
     let allUsages = [];
     let uniqueMaterials = new Set();
     let uniqueProjects = new Set();
     let uniqueMonths = new Set();
+    let dropdownOpen = null;
 
-    // For modal state
-    let currentEditDocId = null;
-    let currentMaterialId = null;
-    let currentQty = null;
-    let reverseDisabled = false;
+    // Check sidebar state from localStorage
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleIcon.classList.remove('fa-chevron-left');
+      toggleIcon.classList.add('fa-chevron-right');
+    }
 
-    // Local storage keys
-    const STORAGE_KEYS = {
-      material: "ims_material_filter",
-      project: "ims_project_filter",
-      taskId: "ims_taskid_filter",
-      month: "ims_month_filter",
-      search: "ims_usage_search"
-    };
+    // Sidebar Toggle
+    sidebarToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      // Update icon
+      if (sidebar.classList.contains('collapsed')) {
+        toggleIcon.classList.remove('fa-chevron-left');
+        toggleIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleIcon.classList.remove('fa-chevron-right');
+        toggleIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
 
-    // Store current search string
-    let currentSearch = "";
+    // Mobile Menu Toggle
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('active');
+    });
 
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      if (window.innerWidth <= 768 && 
+          !sidebar.contains(event.target) && 
+          !mobileToggle.contains(event.target) &&
+          sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      if (dropdownOpen && !dropdownOpen.contains(event.target) && !event.target.classList.contains('dots-btn')) {
+        const dropdown = dropdownOpen.querySelector('.dropdown-content');
+        if (dropdown) {
+          dropdown.classList.remove('show');
+        }
+        dropdownOpen = null;
+      }
+    });
+
+    // Toggle dropdown
+    function toggleDropdown(button) {
+      const dropdown = button.parentElement.querySelector('.dropdown-content');
+      const isOpen = dropdown.classList.contains('show');
+      
+      // Close all other dropdowns
+      document.querySelectorAll('.dropdown-content').forEach(d => {
+        d.classList.remove('show');
+      });
+      
+      if (!isOpen) {
+        dropdown.classList.add('show');
+        dropdownOpen = button.parentElement;
+      } else {
+        dropdownOpen = null;
+      }
+    }
+
+    // Global functions for dropdown
+    window.toggleDropdown = toggleDropdown;
+
+    // Render Table
     function renderTable(usages) {
       tableBody.innerHTML = "";
       let row = 1;
       let totalAssigned = 0;
+      
       usages.forEach(u => {
         let projectName = u.projectName || "-";
         let unitPrice = u.unitPrice !== undefined ? u.unitPrice : "-";
@@ -473,13 +863,19 @@ tr:hover {
           <td>${assignedPersonnel}</td>
           <td>${u.assignedAt ? u.assignedAt.toDate().toLocaleString() : '-'}</td>
           <td>
-            <button class="edit-btn"
-              data-docid="${u._docId}"
-              data-current="${u.assignedAt ? u.assignedAt.toDate().toISOString().slice(0,16) : ''}"
-              data-materialid="${u.materialId || ''}"
-              data-qty="${u.quantity || 0}"
-              ${u.reversed ? "data-reversed='true'" : ""}
-            >Edit</button>
+            <div class="dropdown">
+              <button class="dots-btn" onclick="toggleDropdown(this)">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="dropdown-content">
+                <button class="dropdown-item edit" onclick="showEditModal('${u._docId}', '${u.assignedAt ? u.assignedAt.toDate().toISOString().slice(0,16) : ''}')">
+                  <i class="fas fa-edit"></i> Edit Date
+                </button>
+                <button class="dropdown-item reverse" onclick="reverseEntry('${u._docId}', '${u.materialId || ''}', '${u.quantity || 0}')" ${u.reversed ? "disabled" : ""}>
+                  <i class="fas fa-undo"></i> ${u.reversed ? "Reversed" : "Reverse"}
+                </button>
+              </div>
+            </div>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -487,18 +883,6 @@ tr:hover {
       });
 
       totalAssignedValueCell.textContent = totalAssigned ? totalAssigned.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-";
-
-      // Bind edit buttons (now includes reverse)
-      Array.from(tableBody.querySelectorAll('.edit-btn')).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const docId = btn.getAttribute('data-docid');
-          const currentVal = btn.getAttribute('data-current');
-          const materialId = btn.getAttribute('data-materialid');
-          const qty = btn.getAttribute('data-qty');
-          const isReversed = btn.getAttribute('data-reversed') === 'true';
-          showEditModal(docId, currentVal, materialId, qty, isReversed);
-        });
-      });
     }
 
     // Populate filter dropdowns
@@ -546,10 +930,11 @@ tr:hover {
 
     // Persist and get filters
     function persistFilter(name, value) {
-      localStorage.setItem(STORAGE_KEYS[name], value);
+      localStorage.setItem(`ims_${name}_filter`, value);
     }
+    
     function getPersistedFilter(name) {
-      return localStorage.getItem(STORAGE_KEYS[name]) || "";
+      return localStorage.getItem(`ims_${name}_filter`) || "";
     }
 
     // Main snapshot
@@ -569,18 +954,6 @@ tr:hover {
           const d = u.assignedAt.toDate();
           const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           uniqueMonths.add(monthStr);
-        }
-        if (u.projectId) {
-          if (!projectCache[u.projectId]) {
-            try {
-              const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
-              if (projSnap.exists()) {
-                projectCache[u.projectId] = projSnap.data().name || "-";
-              } else {
-                projectCache[u.projectId] = "-";
-              }
-            } catch { projectCache[u.projectId] = "-"; }
-          }
         }
         if (u.projectId) {
           if (!projectCache[u.projectId]) {
@@ -638,7 +1011,7 @@ tr:hover {
       const selectedProject = projectFilter.value;
       const taskIdValue = taskIdFilter.value.trim().toLowerCase();
       const selectedMonth = monthFilter.value;
-      const searchValue = currentSearch.trim().toLowerCase();
+      const searchValue = usageSearchBar.value.trim().toLowerCase();
 
       if (selectedMaterial) {
         filtered = filtered.filter(u => u.materialName === selectedMaterial);
@@ -655,7 +1028,6 @@ tr:hover {
       // SEARCH BAR FILTER (search in all columns)
       if (searchValue) {
         filtered = filtered.filter(u => {
-          // Search among all text fields
           const fields = [
             u.materialName,
             u.category,
@@ -687,7 +1059,6 @@ tr:hover {
       if (moV) monthFilter.value = moV;
       if (sV) {
         usageSearchBar.value = sV;
-        currentSearch = sV;
       }
     }
 
@@ -695,14 +1066,17 @@ tr:hover {
       persistFilter("material", materialFilter.value);
       applyFiltersAndRender();
     });
+    
     projectFilter.addEventListener('change', function() {
       persistFilter("project", projectFilter.value);
       applyFiltersAndRender();
     });
+    
     taskIdFilter.addEventListener('input', function() {
       persistFilter("taskId", taskIdFilter.value);
       applyFiltersAndRender();
     });
+    
     monthFilter.addEventListener('change', function() {
       persistFilter("month", monthFilter.value);
       applyFiltersAndRender();
@@ -710,8 +1084,7 @@ tr:hover {
 
     // SEARCH BAR
     usageSearchBar.addEventListener('input', function() {
-      currentSearch = usageSearchBar.value;
-      persistFilter("search", currentSearch);
+      persistFilter("search", usageSearchBar.value);
       applyFiltersAndRender();
     });
 
@@ -720,35 +1093,25 @@ tr:hover {
       applyFiltersAndRender();
     });
 
-    // --- Modal edit + reverse logic ---
-    function showEditModal(docId, currentValue, materialId, qty, isReversed) {
-      currentEditDocId = docId;
-      currentMaterialId = materialId;
-      currentQty = qty;
-      reverseDisabled = !!isReversed;
+    // --- Modal edit logic ---
+    function showEditModal(docId, currentValue) {
       editModalError.textContent = "";
       editAssignedAtInput.value = currentValue || "";
-
-      reverseBtn.setAttribute('data-docid', docId);
-      reverseBtn.setAttribute('data-materialid', materialId);
-      reverseBtn.setAttribute('data-qty', qty);
-      reverseBtn.disabled = reverseDisabled;
-      reverseBtn.textContent = reverseDisabled ? "Reversed" : "Reverse";
-
+      currentEditDocId = docId;
       editModal.classList.add('active');
       setTimeout(() => editAssignedAtInput.focus(), 120);
     }
+    
     function hideEditModal() {
       editModal.classList.remove('active');
       currentEditDocId = null;
-      currentMaterialId = null;
-      currentQty = null;
-      reverseBtn.disabled = false;
       editModalError.textContent = "";
       editAssignedAtInput.value = "";
     }
+    
     closeModalBtn.onclick = hideEditModal;
     cancelEditBtn.onclick = hideEditModal;
+    
     editModal.addEventListener('click', (e) => {
       if (e.target === editModal) hideEditModal();
     });
@@ -780,35 +1143,59 @@ tr:hover {
       }
     };
 
-    reverseBtn.onclick = async function() {
-      const docId = reverseBtn.getAttribute('data-docid');
-      const materialId = reverseBtn.getAttribute('data-materialid');
-      const qty = parseFloat(reverseBtn.getAttribute('data-qty'));
+    // Reverse entry function
+    async function reverseEntry(docId, materialId, qty) {
       if (!docId || !materialId || !qty) {
         alert("Invalid entry for reversal.");
         return;
       }
-      if (reverseBtn.disabled) return;
+      
+      qty = parseFloat(qty);
       if (!confirm(`Are you sure you want to reverse this entry?\nRestored Qty: ${qty}`)) return;
+      
       try {
         await runTransaction(db, async (transaction) => {
           const usageRef = doc(db, "materialsUsage", docId);
           const matRef = doc(db, "materials", materialId);
           const usageSnap = await transaction.get(usageRef);
           const matSnap = await transaction.get(matRef);
+          
           if (!usageSnap.exists()) throw new Error("Usage not found");
           if (!matSnap.exists()) throw new Error("Material not found");
           if (usageSnap.data().reversed) throw new Error("Already reversed!");
+          
           let prevQty = matSnap.data().quantity || 0;
           transaction.update(matRef, { quantity: prevQty + qty });
           transaction.update(usageRef, { reversed: true, reversedAt: Timestamp.now() });
         });
         alert("Entry reversed and quantity restored!");
-        hideEditModal();
       } catch (err) {
         alert("Failed to reverse: " + (err.message || err));
       }
-    };
+    }
+
+    // Global functions
+    window.showEditModal = showEditModal;
+    window.reverseEntry = reverseEntry;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(event) {
+        // Escape to close dropdowns
+        if (event.key === 'Escape') {
+          document.querySelectorAll('.dropdown-content').forEach(d => {
+            d.classList.remove('show');
+          });
+          dropdownOpen = null;
+          
+          // Also close modal if open
+          if (editModal.classList.contains('active')) {
+            hideEditModal();
+          }
+        }
+      });
+    });
   </script>
 </body>
 </html>
