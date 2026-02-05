@@ -2,164 +2,463 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Penta Construction | Accounts</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
+    :root {
+      --primary: #1a365d;
+      --secondary: #ed8936;
+      --success: #48bb78;
+      --warning: #ed8936;
+      --info: #4299e1;
+      --border-color: #e2e8f0;
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    
+
     body {
-      background: #f5f7fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: white;
       min-height: 100vh;
-      padding: 20px;
+      color: #171923;
+      overflow-x: hidden;
     }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
+
+    /* Simple White Sidebar */
+    .sidebar {
+      width: 250px;
+      background: white;
+      color: #171923;
+      padding: 1rem 0;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+      border-right: 1px solid var(--border-color);
     }
-    
+
+    .sidebar.collapsed {
+      transform: translateX(-250px);
+      box-shadow: none;
+    }
+
+    .sidebar-header {
+      padding: 0 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: white;
+    }
+
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--primary);
+    }
+
+    .logo-text span {
+      font-size: 0.75rem;
+      color: #718096;
+    }
+
+    /* Navigation */
+    .nav-section {
+      padding: 0 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #718096;
+      margin-bottom: 0.75rem;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      color: #4a5568;
+      text-decoration: none;
+      border-radius: 0.375rem;
+      transition: all 0.15s ease;
+    }
+
+    .nav-link:hover {
+      background: #f7fafc;
+      color: var(--primary);
+    }
+
+    .nav-link.active {
+      background: #ebf8ff;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .nav-icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Sidebar Toggle */
+    .sidebar-toggle {
+      position: absolute;
+      top: 1rem;
+      right: -12px;
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.75rem;
+      z-index: 1001;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      transition: margin-left 0.3s ease;
+      padding: 2rem;
+      min-height: 100vh;
+      background: #f7fafc;
+    }
+
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
     /* Header */
     .header {
       text-align: center;
-      margin-bottom: 40px;
-      padding-top: 20px;
+      margin-bottom: 3rem;
+      padding-top: 1rem;
     }
-    
+
     .header h1 {
-      font-size: 32px;
-      color: #1976d2;
-      margin-bottom: 8px;
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
     }
-    
+
     .header p {
-      color: #666;
-      font-size: 16px;
+      color: #718096;
+      font-size: 1rem;
     }
-    
+
     /* Cards Grid */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 25px;
-      padding: 20px;
+      gap: 1.5rem;
+      padding: 1rem;
     }
-    
+
     .card {
       background: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       text-decoration: none;
-      color: #333;
+      color: #171923;
       transition: all 0.3s ease;
-      border: 2px solid transparent;
+      border: 1px solid var(--border-color);
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    
+
     .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-      border-color: #1976d2;
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary);
     }
-    
+
     .icon {
       width: 70px;
       height: 70px;
-      border-radius: 12px;
+      border-radius: 0.75rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 1.75rem;
       color: white;
-      margin-bottom: 20px;
-      font-weight: bold;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
     }
-    
+
     .cash .icon {
-      background: linear-gradient(135deg, #1976d2, #1565c0);
+      background: linear-gradient(135deg, var(--primary), #0d2b50);
     }
-    
+
     .journal .icon {
-      background: linear-gradient(135deg, #4CAF50, #388E3C);
+      background: linear-gradient(135deg, var(--success), #38a169);
     }
-    
+
     .transport .icon {
-      background: linear-gradient(135deg, #FF9800, #F57C00);
+      background: linear-gradient(135deg, var(--warning), #d97706);
     }
-    
+
     .supplier .icon {
-      background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+      background: linear-gradient(135deg, var(--info), #3182ce);
     }
-    
+
     .card h2 {
-      font-size: 22px;
-      margin-bottom: 10px;
-      color: #333;
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      color: var(--primary);
     }
-    
+
     .card p {
-      color: #666;
-      font-size: 15px;
+      color: #718096;
+      font-size: 0.875rem;
       line-height: 1.5;
-      margin-bottom: 20px;
+      margin-bottom: 1.5rem;
     }
-    
+
+    /* Buttons */
     .btn {
-      background: #1976d2;
+      background: var(--primary);
       color: white;
       border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 0.875rem;
       cursor: pointer;
       transition: background 0.3s;
-      margin-top: 10px;
       width: 100%;
-      max-width: 200px;
+      max-width: 180px;
     }
-    
+
     .btn:hover {
-      background: #1565c0;
+      background: #0d2b50;
     }
-    
+
     /* Footer */
     .footer {
       text-align: center;
-      margin-top: 50px;
-      padding: 20px;
-      color: #666;
-      font-size: 14px;
-      border-top: 1px solid #eee;
+      margin-top: 3rem;
+      padding: 1.5rem;
+      color: #718096;
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
     }
-    
+
+    /* Mobile Menu Toggle */
+    .mobile-toggle {
+      display: none;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1100;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-250px);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
       .grid {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        padding: 10px;
+        padding: 0.5rem;
       }
       
       .card {
-        padding: 25px;
+        padding: 1.5rem;
       }
       
       .header h1 {
-        font-size: 28px;
+        font-size: 1.75rem;
+      }
+      
+      .sidebar-toggle {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 0.5rem;
+      }
+      
+      .header {
+        margin-bottom: 2rem;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+      
+      .icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-toggle" id="mobileToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-chevron-left" id="toggleIcon"></i>
+    </div>
+    
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="logo-text">
+          <h2>PENTA</h2>
+          <span>Construction Pro</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-section">
+      <h3>Dashboard</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-gauge-high nav-icon"></i>
+            <span>Overview</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="projectdashboard.html" class="nav-link">
+            <i class="fas fa-diagram-project nav-icon"></i>
+            <span>Projects</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Employees.html" class="nav-link">
+            <i class="fas fa-user-tie nav-icon"></i>
+            <span>Team</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Resources</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="Tool.html" class="nav-link">
+            <i class="fas fa-screwdriver-wrench nav-icon"></i>
+            <span>Equipment</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="material.html" class="nav-link">
+            <i class="fas fa-truck-ramp-box nav-icon"></i>
+            <span>Materials</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="inventory.html" class="nav-link">
+            <i class="fas fa-warehouse nav-icon"></i>
+            <span>Inventory</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Management</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="HazidExpense.html" class="nav-link active">
+            <i class="fas fa-file-invoice-dollar nav-icon"></i>
+            <span>Accounts</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Table.html" class="nav-link">
+            <i class="fas fa-chart-column nav-icon"></i>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="assignEmployee.html" class="nav-link">
+            <i class="fas fa-tasks nav-icon"></i>
+            <span>Assign Employees</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
     <div class="header">
       <h1>Penta Construction Accounts</h1>
       <p>Click any module to open</p>
@@ -202,9 +501,57 @@
     <div class="footer">
       Penta Construction Accounts Dashboard
     </div>
-  </div>
+  </main>
 
   <script>
+    // Sidebar elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+
+    // Check sidebar state from localStorage
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleIcon.classList.remove('fa-chevron-left');
+      toggleIcon.classList.add('fa-chevron-right');
+    }
+
+    // Sidebar Toggle
+    sidebarToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      // Update icon
+      if (sidebar.classList.contains('collapsed')) {
+        toggleIcon.classList.remove('fa-chevron-left');
+        toggleIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleIcon.classList.remove('fa-chevron-right');
+        toggleIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
+
+    // Mobile Menu Toggle
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('active');
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      if (window.innerWidth <= 768 && 
+          !sidebar.contains(event.target) && 
+          !mobileToggle.contains(event.target) &&
+          sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+      }
+    });
+
     // Make buttons click the card link
     document.querySelectorAll('.card .btn').forEach(button => {
       button.addEventListener('click', function(e) {
@@ -215,7 +562,7 @@
       });
     });
     
-    // Simple hover effect
+    // Simple hover effect for icons
     document.querySelectorAll('.card').forEach(card => {
       card.addEventListener('mouseenter', function() {
         const icon = this.querySelector('.icon');
@@ -225,6 +572,40 @@
       card.addEventListener('mouseleave', function() {
         const icon = this.querySelector('.icon');
         icon.style.transform = 'scale(1)';
+      });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(event) {
+      // Escape to close mobile menu
+      if (event.key === 'Escape' && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+      }
+      
+      // Number shortcuts for cards (1-4)
+      if (event.key >= '1' && event.key <= '4') {
+        const index = parseInt(event.key) - 1;
+        const cards = document.querySelectorAll('.card');
+        if (cards[index]) {
+          event.preventDefault();
+          window.location.href = cards[index].getAttribute('href');
+        }
+      }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add subtle animation to cards on load
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+          card.style.transition = 'all 0.5s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100);
       });
     });
   </script>
