@@ -3,467 +3,724 @@
 <head>
   <meta charset="utf-8" />
   <title>IMS | Assign Material to Project Task</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
-   html, body {
-  font-family: 'Open Sans', Arial, sans-serif;
-  background: #f4f7fa;
-  margin: 0;
-  color: #333;
-  font-size: 13px;
-}
+    :root {
+      --primary: #1a365d;
+      --secondary: #ed8936;
+      --border-color: #e2e8f0;
+      --danger: #b90d0d;
+      --success: #48bb78;
+    }
 
-#wrapper {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-.navbar {
-  background: #2c3e50;
-  color: #fff;
-  min-height: 50px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-  width: 100%;
-  position: fixed;
-  top: 0;
-  z-index: 1001;
-}
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      background: white;
+      margin: 0;
+      color: #171923;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-.navbar .navbar-header {
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-}
+    /* Simple White Sidebar */
+    .sidebar {
+      width: 250px;
+      background: white;
+      color: #171923;
+      padding: 1rem 0;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+      border-right: 1px solid var(--border-color);
+    }
 
-.navbar .navbar-brand {
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.1rem;
-  text-decoration: none;
-  margin-right: 24px;
-}
+    .sidebar.collapsed {
+      transform: translateX(-250px);
+      box-shadow: none;
+    }
 
-.navbar .navbar-brand:hover {
-  color: #1abc9c;
-}
+    .sidebar-header {
+      padding: 0 1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
 
-.btn-danger {
-  background: #666363 !important;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 14px;
-  font-size: 13px;
-  margin-left: 8px;
-  color: #fff;
-}
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
-.btn-danger:hover {
-  background: #c0392b !important;
-}
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: white;
+    }
 
-.user-info {
-  color: #fff;
-  padding: 12px 20px 4px 20px;
-  font-size: 13px;
-  float: right;
-}
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--primary);
+    }
 
-#page-wrapper {
-  margin-top: 50px;
-  padding: 20px;
-  background: #f4f7fa;
-  min-height: calc(100vh - 50px);
-}
+    .logo-text span {
+      font-size: 0.75rem;
+      color: #718096;
+    }
 
-.panel {
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(44,62,80,0.04);
-  margin-bottom: 24px;
-  border: none;
-}
+    /* Navigation */
+    .nav-section {
+      padding: 0 1rem;
+      margin-bottom: 1.5rem;
+    }
 
-.panel-heading {
-  background: #666363;
-  color: #fff;
-  padding: 12px 18px;
-  font-size: 1.05rem;
-  font-weight: bold;
-  border-radius: 6px 6px 0 0;
-  margin: 0;
-}
+    .nav-section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #718096;
+      margin-bottom: 0.75rem;
+    }
 
-.panel-body {
-  padding: 16px;
-}
+    .nav-links {
+      list-style: none;
+    }
 
-.btn-primary {
-  background: #8c9391;
-  border: none;
-  color: #fff !important;
-  border-radius: 4px;
-  padding: 8px 14px;
-  font-weight: 600;
-  margin-right: 8px;
-  font-size: 13px;
-}
+    .nav-item {
+      margin-bottom: 0.25rem;
+    }
 
-.btn-primary:hover,
-.btn-primary:focus {
-  background: #16a085;
-  color: #fff !important;
-}
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      color: #4a5568;
+      text-decoration: none;
+      border-radius: 0.375rem;
+      transition: all 0.15s ease;
+    }
 
-.btn-default {
-  background: #ecf0f1;
-  color: #2c3e50;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 14px;
-  font-weight: 600;
-  font-size: 13px;
-  margin-right: 8px;
-}
+    .nav-link:hover {
+      background: #f7fafc;
+      color: var(--primary);
+    }
 
-.btn-default:hover,
-.btn-default:focus {
-  background: #d0d7db;
-  color: #2c3e50;
-}
+    .nav-link.active {
+      background: #ebf8ff;
+      color: var(--primary);
+      font-weight: 500;
+    }
 
-.checkbox {
-  margin-bottom: 12px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-}
+    .nav-icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
 
-.checkbox label {
-  cursor: pointer;
-  width: 200px;
-}
+    /* Sidebar Toggle */
+    .sidebar-toggle {
+      position: absolute;
+      top: 1rem;
+      right: -12px;
+      width: 24px;
+      height: 24px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.75rem;
+      z-index: 1001;
+    }
 
-.material-qty-input {
-  width: 70px;
-  margin-left: 10px;
-}
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 250px;
+      transition: margin-left 0.3s ease;
+      padding: 1.5rem;
+      min-height: 100vh;
+      background: #f7fafc;
+    }
 
-.mat-stock-info {
-  margin-left: 12px;
-  font-size: 13px;
-  color: #222;
-}
+    .main-content.expanded {
+      margin-left: 0;
+    }
 
-.mat-stock-info span {
-  display: inline-block;
-  min-width: 100px;
-}
+    /* Page Header */
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
 
-.success-msg {
-  color: #1abc9c;
-  font-weight: bold;
-  margin-top: 12px;
-  font-size: 1rem;
-}
+    .page-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0 0 0.5rem 0;
+    }
 
-.error-msg {
-  color: #e74c3c;
-  font-weight: bold;
-  margin-top: 12px;
-  font-size: 1rem;
-}
+    hr {
+      border: none;
+      height: 1px;
+      background: var(--border-color);
+      margin: 1rem 0;
+    }
 
-.assign-form {
-  background: #f7fafc;
-  border-radius: 6px;
-  padding: 16px;
-  margin-top: 24px;
-  box-shadow: 0 2px 8px rgba(44,62,80,0.05);
-}
+    /* Panel */
+    .panel {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
 
-.assign-form label {
-  font-weight: 600;
-  margin-bottom: 4px;
-  display: block;
-  font-size: 13px;
-}
+    .panel-heading {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-weight: bold;
+      margin: 0;
+    }
 
-.assign-form input,
-.assign-form select {
-  border-radius: 5px;
-  font-size: 13px;
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-  width: 100%;
-}
+    .panel-body {
+      padding: 1rem;
+    }
 
-.assign-form input:focus,
-.assign-form select:focus {
-  border: 1.5px solid #1abc9c;
-  outline: none;
-}
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: all 0.15s ease;
+    }
 
-.from-supplier-section {
-  background: #fffbe9;
-  border: 1px solid #ffeb93;
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 20px;
-}
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
 
-.from-supplier-section label {
-  font-weight: bold;
-  font-size: 13px;
-}
+    .btn-primary:hover {
+      background: #0d2b50;
+    }
 
-.from-supplier-section table {
-  background: #fff;
-  border-radius: 6px;
-  border: 1px solid #eee;
-  margin-top: 6px;
-  width: 100%;
-}
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
 
-.from-supplier-section th,
-.from-supplier-section td {
-  padding: 6px 5px;
-  border: 1px solid #f7eeb8;
-  text-align: left;
-  font-size: 12.5px;
-}
+    .btn-secondary:hover {
+      background: #d97706;
+    }
 
-.from-supplier-section input[type="text"],
-.from-supplier-section input[type="number"] {
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 13px;
-}
+    .btn-default {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
 
-.from-supplier-section .remove-btn {
-  color: #e74c3c;
-  cursor: pointer;
-  border: none;
-  background: none;
-  font-size: 1em;
-}
+    .btn-default:hover {
+      background: #cbd5e0;
+    }
 
-/* Autocomplete dropdown styles */
-.autocomplete {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-}
+    .btn-outline {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
 
-.autocomplete-items {
-  position: absolute;
-  border: 1px solid #d4d4d4;
-  border-bottom: none;
-  border-top: none;
-  z-index: 99;
-  top: 100%;
-  left: 0;
-  right: 0;
-  max-height: 200px;
-  overflow-y: auto;
-  background: white;
-}
+    .btn-outline:hover {
+      background: #ebf8ff;
+    }
 
-.autocomplete-items div {
-  padding: 10px;
-  cursor: pointer;
-  background-color: #fff;
-  border-bottom: 1px solid #d4d4d4;
-  font-size: 13px;
-}
+    /* Form Styles */
+    #material-select-form {
+      margin-bottom: 1rem;
+    }
 
-.autocomplete-items div:hover {
-  background-color: #e9e9e9;
-}
+    .checkbox {
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
 
-.autocomplete-active {
-  background-color: #1abc9c !important;
-  color: #ffffff;
-}
+    .checkbox label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      width: 200px;
+    }
 
-@media (max-width: 700px) {
-  .checkbox {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .mat-stock-info {
+      font-size: 0.75rem;
+      color: #4a5568;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
 
-  .mat-stock-info {
-    margin-left: 0;
-    margin-top: 4px;
-  }
+    .material-qty-input {
+      width: 70px;
+      padding: 0.375rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: #f7fafc;
+      font-size: 0.875rem;
+    }
 
-  .from-supplier-section th,
-  .from-supplier-section td {
-    font-size: 12px;
-  }
-}
+    .material-qty-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: white;
+    }
 
-@media (max-width: 500px) {
-  .navbar {
-    min-height: 40px;
-  }
+    /* Messages */
+    .success-msg {
+      color: var(--success);
+      font-weight: 600;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+    }
 
-  .navbar .navbar-header {
-    padding: 0 6px;
-  }
+    .error-msg {
+      color: var(--danger);
+      font-weight: 600;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+    }
 
-  .navbar .navbar-brand {
-    font-size: 1rem;
-  }
+    /* From Supplier Section */
+    .from-supplier-section {
+      background: #fffbe9;
+      border: 1px solid #ffeb93;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
 
-  #page-wrapper {
-    padding: 6px 0;
-  }
+    .from-supplier-section label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
 
-  .panel-body {
-    padding: 7px 0;
-  }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.5rem 0;
+    }
 
-  .panel-heading {
-    font-size: 1rem;
-    padding: 10px 8px;
-  }
-}
+    th, td {
+      padding: 0.5rem;
+      text-align: left;
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+    }
 
-#task-select optgroup {
-  font-style: normal;
-  font-weight: bold;
-  color: #222;
-  background: #f4f7fa;
-}
+    th {
+      background: #f7fafc;
+      font-weight: 600;
+      color: var(--primary);
+    }
 
-#task-select option.subtask {
-  font-weight: normal;
-  color: #2c3e50;
-  padding-left: 2em;
-}
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 0.375rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      background: white;
+      font-size: 0.875rem;
+    }
 
-.btn.btn-outline {
-  color: white;
-  margin-right: 16px;
-}
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
 
+    /* Autocomplete */
+    .autocomplete {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid var(--border-color);
+      border-top: none;
+      z-index: 99;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 150px;
+      overflow-y: auto;
+      background: white;
+    }
+
+    .autocomplete-items div {
+      padding: 0.5rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .autocomplete-items div:hover {
+      background: #f7fafc;
+    }
+
+    .autocomplete-active {
+      background: #ebf8ff !important;
+      color: var(--primary);
+    }
+
+    /* Assign Form */
+    .assign-form {
+      background: #f7fafc;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .assign-form h4 {
+      color: var(--primary);
+      margin: 0 0 1rem 0;
+    }
+
+    .assign-form label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      display: block;
+      font-size: 0.875rem;
+    }
+
+    .assign-form select {
+      margin-bottom: 1rem;
+    }
+
+    /* Remove button */
+    .remove-btn {
+      color: var(--danger);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 1rem;
+    }
+
+    /* Mobile Menu Toggle */
+    .mobile-toggle {
+      display: none;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1100;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-250px);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .checkbox {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+      
+      .mat-stock-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+      
+      table {
+        font-size: 0.7rem;
+      }
+      
+      th, td {
+        padding: 0.25rem;
+      }
+      
+      .sidebar-toggle {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 0.5rem;
+      }
+      
+      .panel-body {
+        padding: 0.5rem;
+      }
+      
+      .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div id="wrapper">
-    <nav class="navbar" role="navigation">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="#">
-              <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>IMS Portal</a>
-        <span class="user-info" style="margin-left:auto;">Welcome Christopher Chishela&nbsp;</span>
-      </div>
-    </nav>
-    <div id="page-wrapper">
-      <div id="page-inner">
-        <h2 style="margin-top:0;">Select material(s) to assign to a task</h2>
-        <hr />
-        <div class="row">
-          <div class="col-md-12">
-            <div class="panel panel-default sticky-panel">
-              <div class="panel-heading">Select Materials, Project, Task, Person and Assign</div>
-              <div class="panel-body">
-                <form id="material-select-form" autocomplete="off">
-                  <button type="button" id="select-all" class="btn btn-primary" style="margin-bottom: 10px;">Select All</button>
-                  <button type="button" id="deselect-all" class="btn btn-primary" style="margin-bottom: 10px;">Deselect All</button>
-                  <div id="material-checkbox-list">
-                    <!-- Firestore material checkboxes will appear here -->
-                  </div>
-                  <button type="submit" class="btn btn-default">Next</button>
-                  <button type="reset" class="btn btn-primary">Reset</button>
-                  <div id="form-message"></div>
-                </form>
-                <!-- Assign from supplier section -->
-                <form id="from-supplier-form" class="from-supplier-section" style="display:none;">
-                  <label>
-                    Assign material bought directly from supplier (not in inventory):
-                  </label>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Material</th>
-                        <th>Category</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
-                        <th>Amount</th>
-                        <th>Supplier</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody id="supplier-table-body">
-                      <tr>
-                        <td>
-                          <div class="autocomplete">
-                            <input type="text" id="supplier-mat-name" placeholder="Material Name" autocomplete="off">
-                          </div>
-                        </td>
-                        <td>
-                          <div class="autocomplete">
-                            <input type="text" id="supplier-mat-category" placeholder="Category" autocomplete="off">
-                          </div>
-                        </td>
-                        <td><input type="number" id="supplier-mat-qty" min="1" placeholder="Qty"></td>
-                        <td><input type="number" id="supplier-mat-unitprice" min="0" step="0.01" placeholder="Unit Price"></td>
-                        <td><input type="text" id="supplier-mat-amount" readonly placeholder="Amount" style="background:#f1f1dd"></td>
-                        <td><input type="text" id="supplier-mat-supplier" placeholder="Supplier"></td>
-                        <td><button type="button" id="add-supplier-mat-btn" class="btn-primary">Add</button></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div id="supplier-list" style="margin-top:10px;"></div>
-                  <button type="button" class="btn btn-default" id="from-supplier-next-btn" style="margin-top:10px;">Next</button>
-                  <button type="button" class="btn btn-primary" id="from-supplier-cancel-btn" style="margin-top:10px;">Cancel</button>
-                  <div id="from-supplier-message"></div>
-                </form>
-                <!-- Project and Task Assignment Form -->
-                <form id="assign-form" class="assign-form" style="display:none;">
-                  <h4>Assign Selected Materials to Project Task</h4>
-                  <label for="project-select">Select Project:</label>
-                  <select id="project-select" required>
-                    <option value="">-- Select Project --</option>
-                  </select>
-                  <label for="task-select">Select Main Task:</label>
-                  <select id="task-select" required disabled>
-                    <option value="">-- Select Main Task --</option>
-                  </select>
-                  <label for="subtask-select">Select Subtask (optional):</label>
-                  <select id="subtask-select" disabled>
-                    <option value="">-- Assign to Main Task --</option>
-                  </select>
-                  <label for="subsubtask-select">Select Sub-Subtask (optional):</label>
-                  <select id="subsubtask-select" disabled>
-                    <option value="">-- Assign to Subtask or above --</option>
-                  </select>
-                  <label for="employee-select">Assign To (Person):</label>
-                  <select id="employee-select" required>
-                    <option value="">-- Select Name --</option>
-                  </select>
-                  <button type="submit" class="btn btn-default" id="assign-btn" disabled>Assign</button>
-                  <button type="button" class="btn btn-primary" id="cancel-assign">Cancel</button>
-                  <div id="assign-message"></div>
-                </form>
-                <div style="margin-top:18px; font-size:1.09em;">
-                  <button id="show-supplier-form-btn" type="button" class="btn btn-primary" style="margin-top:8px;">Assign bought from supplier (Not in Inventory)</button>
-                  <button id="show-inventory-form-btn" type="button" class="btn btn-primary" style="margin-top:8px;display:none;">Assign from Inventory</button>
-                </div>
-              </div>
-            </div>
-          </div>
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-toggle" id="mobileToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-chevron-left" id="toggleIcon"></i>
+    </div>
+    
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="logo-text">
+          <h2>PENTA</h2>
+          <span>Construction Pro</span>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Navigation -->
+    <nav class="nav-section">
+      <h3>Dashboard</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-gauge-high nav-icon"></i>
+            <span>Overview</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="projectdashboard.html" class="nav-link">
+            <i class="fas fa-diagram-project nav-icon"></i>
+            <span>Projects</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Employees.html" class="nav-link">
+            <i class="fas fa-user-tie nav-icon"></i>
+            <span>Team</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Resources</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="Tool.html" class="nav-link">
+            <i class="fas fa-screwdriver-wrench nav-icon"></i>
+            <span>Equipment</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="material.html" class="nav-link">
+            <i class="fas fa-truck-ramp-box nav-icon"></i>
+            <span>Materials</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="inventory.html" class="nav-link">
+            <i class="fas fa-warehouse nav-icon"></i>
+            <span>Inventory</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <nav class="nav-section">
+      <h3>Management</h3>
+      <ul class="nav-links">
+        <li class="nav-item">
+          <a href="HazidExpense.html" class="nav-link">
+            <i class="fas fa-file-invoice-dollar nav-icon"></i>
+            <span>Finances</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="Table.html" class="nav-link">
+            <i class="fas fa-chart-column nav-icon"></i>
+            <span>Reports</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="assignMaterial.html" class="nav-link active">
+            <i class="fas fa-tasks nav-icon"></i>
+            <span>Assign Materials</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="mainContent">
+    <div class="page-header">
+      <h2>Select material(s) to assign to a task</h2>
+      <hr />
+    </div>
+    
+    <div class="panel">
+      <div class="panel-heading">Select Materials, Project, Task, Person and Assign</div>
+      <div class="panel-body">
+        <form id="material-select-form" autocomplete="off">
+          <button type="button" id="select-all" class="btn btn-primary">Select All</button>
+          <button type="button" id="deselect-all" class="btn btn-primary">Deselect All</button>
+          
+          <div id="material-checkbox-list" style="margin-top: 1rem;">
+            <!-- Firestore material checkboxes will appear here -->
+          </div>
+          
+          <button type="submit" class="btn btn-default">Next</button>
+          <button type="reset" class="btn btn-primary">Reset</button>
+          <div id="form-message"></div>
+        </form>
+        
+        <!-- Assign from supplier section -->
+        <form id="from-supplier-form" class="from-supplier-section" style="display:none;">
+          <label>
+            Assign material bought directly from supplier (not in inventory):
+          </label>
+          <table>
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Category</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+                <th>Supplier</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="supplier-table-body">
+              <tr>
+                <td>
+                  <div class="autocomplete">
+                    <input type="text" id="supplier-mat-name" placeholder="Material Name" autocomplete="off">
+                  </div>
+                </td>
+                <td>
+                  <div class="autocomplete">
+                    <input type="text" id="supplier-mat-category" placeholder="Category" autocomplete="off">
+                  </div>
+                </td>
+                <td><input type="number" id="supplier-mat-qty" min="1" placeholder="Qty"></td>
+                <td><input type="number" id="supplier-mat-unitprice" min="0" step="0.01" placeholder="Unit Price"></td>
+                <td><input type="text" id="supplier-mat-amount" readonly placeholder="Amount" style="background:#f1f1dd"></td>
+                <td><input type="text" id="supplier-mat-supplier" placeholder="Supplier"></td>
+                <td><button type="button" id="add-supplier-mat-btn" class="btn-primary">Add</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <div id="supplier-list" style="margin-top:0.5rem;"></div>
+          <button type="button" class="btn btn-default" id="from-supplier-next-btn">Next</button>
+          <button type="button" class="btn btn-primary" id="from-supplier-cancel-btn">Cancel</button>
+          <div id="from-supplier-message"></div>
+        </form>
+        
+        <!-- Project and Task Assignment Form -->
+        <form id="assign-form" class="assign-form" style="display:none;">
+          <h4>Assign Selected Materials to Project Task</h4>
+          <label for="project-select">Select Project:</label>
+          <select id="project-select" required>
+            <option value="">-- Select Project --</option>
+          </select>
+          <label for="task-select">Select Main Task:</label>
+          <select id="task-select" required disabled>
+            <option value="">-- Select Main Task --</option>
+          </select>
+          <label for="subtask-select">Select Subtask (optional):</label>
+          <select id="subtask-select" disabled>
+            <option value="">-- Assign to Main Task --</option>
+          </select>
+          <label for="subsubtask-select">Select Sub-Subtask (optional):</label>
+          <select id="subsubtask-select" disabled>
+            <option value="">-- Assign to Subtask or above --</option>
+          </select>
+          <label for="employee-select">Assign To (Person):</label>
+          <select id="employee-select" required>
+            <option value="">-- Select Name --</option>
+          </select>
+          <button type="submit" class="btn btn-default" id="assign-btn" disabled>Assign</button>
+          <button type="button" class="btn btn-primary" id="cancel-assign">Cancel</button>
+          <div id="assign-message"></div>
+        </form>
+        
+        <div style="margin-top:1rem;">
+          <button id="show-supplier-form-btn" type="button" class="btn btn-primary">Assign bought from supplier (Not in Inventory)</button>
+          <button id="show-inventory-form-btn" type="button" class="btn btn-primary" style="display:none;">Assign from Inventory</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, doc, query, where, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
       authDomain: "project-task-588c4.firebaseapp.com",
@@ -473,8 +730,57 @@
       appId: "1:411882772509:web:08d613186c101a99f38ef4",
       measurementId: "G-JMFLFYEM0F"
     };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // Sidebar elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+
+    // Check sidebar state from localStorage
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleIcon.classList.remove('fa-chevron-left');
+      toggleIcon.classList.add('fa-chevron-right');
+    }
+
+    // Sidebar Toggle
+    sidebarToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      // Update icon
+      if (sidebar.classList.contains('collapsed')) {
+        toggleIcon.classList.remove('fa-chevron-left');
+        toggleIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleIcon.classList.remove('fa-chevron-right');
+        toggleIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
+
+    // Mobile Menu Toggle
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('active');
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      if (window.innerWidth <= 768 && 
+          !sidebar.contains(event.target) && 
+          !mobileToggle.contains(event.target) &&
+          sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+      }
+    });
 
     // -- Supplier Material Assignments
     let supplierMaterials = [];
@@ -1112,6 +1418,20 @@
     // Load historical data when page loads
     document.addEventListener('DOMContentLoaded', function() {
       loadHistoricalUsageData();
+      
+      // Initialize sidebar functionality
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const mainContent = document.getElementById('mainContent');
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(event) {
+        // Escape to close autocomplete
+        if (event.key === 'Escape') {
+          const autocompleteLists = document.querySelectorAll('.autocomplete-items');
+          autocompleteLists.forEach(list => list.remove());
+        }
+      });
     });
   </script>
 </body>
