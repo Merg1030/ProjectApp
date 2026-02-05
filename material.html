@@ -27,6 +27,7 @@
       color: #171923;
       line-height: 1.6;
       overflow-x: hidden;
+      transition: all 0.3s ease;
     }
 
     /* Simple White Sidebar */
@@ -41,10 +42,11 @@
       transition: all 0.3s ease;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
       border-right: 1px solid var(--border-color);
+      left: 0;
     }
 
     .sidebar.collapsed {
-      transform: translateX(-250px);
+      transform: translateX(-100%);
       box-shadow: none;
     }
 
@@ -157,14 +159,16 @@
     .main-content {
       flex: 1;
       margin-left: 250px;
-      transition: margin-left 0.3s ease;
+      transition: all 0.3s ease;
       padding: 1.5rem;
       min-height: 100vh;
       background: white;
+      width: calc(100% - 250px);
     }
 
     .main-content.expanded {
       margin-left: 0;
+      width: 100%;
     }
 
     /* Top Bar */
@@ -435,7 +439,7 @@
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
-        transform: translateX(-250px);
+        transform: translateX(-100%);
       }
       
       .sidebar.active {
@@ -444,6 +448,7 @@
       
       .main-content {
         margin-left: 0;
+        width: 100%;
         padding: 1rem;
       }
       
@@ -588,7 +593,8 @@
       <div class="top-left">
         <h1>Materials Inventory</h1>
         <p id="currentDate">Total Materials: <span id="materialCount">0</span> items</p>
-   
+      </div>
+    </div>
 
     <!-- Materials Panel -->
     <div class="panel">
@@ -606,7 +612,6 @@
         <a href="assignMaterial.html" class="btn-action">
           <i class="fas fa-tasks"></i> Assign to Project
         </a>
-         </a>
         <a href="Materialallocation.html" class="btn-action">
           <i class="fas fa-tasks"></i> Assigned material history 
         </a>
@@ -676,6 +681,7 @@
     
     let materialsData = [];
     let dropdownOpen = null;
+    let searchTimeout = null;
 
     // Check sidebar state from localStorage
     const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -854,10 +860,33 @@
       materialCount.textContent = filtered.length;
     }
 
+    // Instant search with debouncing
+    function handleSearchInput() {
+      // Clear any existing timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Set a new timeout to filter after 300ms of no typing
+      searchTimeout = setTimeout(() => {
+        filterMaterials();
+      }, 300);
+    }
+
     // Event Listeners
     searchBtn.addEventListener("click", filterMaterials);
+    
+    // Instant search as you type
+    searchInput.addEventListener("input", handleSearchInput);
+    
+    // Also filter on Enter key
     searchInput.addEventListener("keydown", e => { 
-      if(e.key === "Enter") filterMaterials(); 
+      if(e.key === "Enter") {
+        if (searchTimeout) {
+          clearTimeout(searchTimeout);
+        }
+        filterMaterials();
+      }
     });
     
     clearBtn.addEventListener("click", () => {
@@ -918,4 +947,3 @@
   </script>
 </body>
 </html>
-
