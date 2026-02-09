@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <title>Penta Construction | Cash Flow</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -112,6 +114,15 @@
     
     .btn-secondary:hover {
       background: #388E3C;
+    }
+    
+    .btn-download {
+      background: #9C27B0;
+      color: white;
+    }
+    
+    .btn-download:hover {
+      background: #7B1FA2;
     }
     
     /* Filters */
@@ -513,6 +524,12 @@
         <a href="Accountsdashboart.html" class="btn btn-secondary">
           <i class="fa fa-book"></i> Journal
         </a>
+        
+        <!-- Download PDF Button -->
+        <button id="download-pdf-btn" class="btn btn-download">
+          <i class="fa fa-download"></i> Download PDF
+        </button>
+        
         <button id="show-form-btn" class="btn btn-primary">
           <i class="fa fa-plus"></i> New Transaction
         </button>
@@ -723,6 +740,7 @@
     const monthSelect = document.getElementById("month-select");
     const monthYearFilter = document.getElementById("month-year-filter");
     const monthYearSelect = document.getElementById("month-year-select");
+    const downloadPdfBtn = document.getElementById("download-pdf-btn");
 
     // Set today's date by default
     const today = new Date();
@@ -883,6 +901,118 @@
       searchTerm = this.value.toLowerCase().trim();
       filterTransactions();
     });
+
+    // Download PDF functionality
+    downloadPdfBtn.addEventListener('click', downloadPDF);
+
+    // Download PDF function
+    function downloadPDF() {
+      if (filteredTransactions.length === 0) {
+        alert('No transactions to download!');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape');
+      
+      // Company header
+      doc.setFontSize(20);
+      doc.setTextColor(25, 118, 210);
+      doc.text('Penta Construction', 20, 20);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Cash Flow Report', 20, 30);
+      
+      // Report details
+      const period = periodFilter.options[periodFilter.selectedIndex].text;
+      const type = typeFilter.options[typeFilter.selectedIndex].text;
+      const filterDetails = `Period: ${period} | Type: ${type} | Total Transactions: ${filteredTransactions.length}`;
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(filterDetails, 20, 40);
+      
+      // Date of report
+      const reportDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Generated on: ${reportDate}`, 20, 48);
+      
+      // Calculate totals
+      let totalDebit = 0;
+      let totalCredit = 0;
+      let runningBalance = 0;
+      
+      const transactionsWithBalance = filteredTransactions.map(tx => {
+        runningBalance = runningBalance + tx.credit - tx.debit;
+        totalDebit += tx.debit;
+        totalCredit += tx.credit;
+        
+        return {
+          date: tx.date.toISOString().split('T')[0],
+          description: tx.description,
+          supplier: tx.supplier || "-",
+          debit: tx.debit > 0 ? formatMoney(tx.debit) : "",
+          credit: tx.credit > 0 ? formatMoney(tx.credit) : "",
+          balance: formatMoney(runningBalance)
+        };
+      });
+      
+      // Prepare table data
+      const tableData = transactionsWithBalance.map(tx => [
+        tx.date,
+        tx.description,
+        tx.supplier,
+        tx.debit,
+        tx.credit,
+        tx.balance
+      ]);
+      
+      // Add totals row
+      tableData.push([
+        '',
+        '',
+        'TOTALS:',
+        formatMoney(totalDebit),
+        formatMoney(totalCredit),
+        formatMoney(runningBalance)
+      ]);
+      
+      // Create the table
+      doc.autoTable({
+        head: [['Date', 'Description', 'Supplier/Category', 'Debit', 'Credit', 'Balance']],
+        body: tableData,
+        startY: 60,
+        theme: 'grid',
+        headStyles: { fillColor: [131, 131, 131] },
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 60 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 30, halign: 'right' },
+          4: { cellWidth: 30, halign: 'right' },
+          5: { cellWidth: 35, halign: 'right' }
+        },
+        didDrawPage: function(data) {
+          // Footer
+          doc.setFontSize(10);
+          doc.setTextColor(128, 128, 128);
+          doc.text(`Page ${doc.internal.getNumberOfPages()}`, 
+                   doc.internal.pageSize.width / 2, 
+                   doc.internal.pageSize.height - 10,
+                   { align: 'center' });
+        }
+      });
+      
+      // Generate filename
+      const filename = `Penta_CashFlow_${period.replace(/ /g, '_')}_${new Date().getTime()}.pdf`;
+      
+      // Save the PDF
+      doc.save(filename);
+    }
 
     // Form visibility
     showFormBtn.addEventListener("click", () => {
