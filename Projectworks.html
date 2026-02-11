@@ -3,790 +3,1053 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Tasks | Task Management</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Project Tasks | PENTA Construction Pro</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
     <style>
+        :root {
+            --primary: #1a365d;
+            --secondary: #ed8936;
+            --border-color: #e2e8f0;
+            --success: #48bb78;
+            --danger: #f56565;
+            --warning: #ed8936;
+            --info: #4299e1;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
-        body { 
-            font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif; 
-            background: #ffffff; 
-            color: #000000; 
-            margin: 0;
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: white;
+            color: #171923;
             line-height: 1.6;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
             height: 100vh;
-            overflow: hidden;
         }
-        
-        .container { 
-            width: 100%;
+
+        /* Simple White Sidebar - PENTA Style */
+        .sidebar {
+            width: 250px;
+            background: white;
+            color: #171923;
+            padding: 1rem 0;
+            position: fixed;
             height: 100vh;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            border-right: 1px solid var(--border-color);
+            left: 0;
+            overflow-y: auto;
         }
-        
-        /* Header */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 15px 25px;
-            background: #ffffff;
-            border-bottom: 1px solid #ddd;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+            box-shadow: none;
         }
-        
-        .project-title { 
-            font-size: 24px; 
-            margin: 0;
-            color: #000000; 
-            font-weight: 700;
+
+        .sidebar-header {
+            padding: 0 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
         }
-        
-        /* Buttons */
-        .btn { 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 8px; 
-            padding: 8px 16px; 
-            border-radius: 4px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            text-decoration: none; 
-            border: 1px solid #000000; 
-            font-size: 14px; 
-            transition: all 0.2s ease; 
-            background: #ffffff;
-            color: #000000;
-        }
-        
-        .btn:hover { 
-            background: #f0f0f0; 
-        }
-        
-        .btn-primary { 
-            background: #000000; 
-            color: #ffffff; 
-            border: 1px solid #000000;
-        }
-        
-        .btn-primary:hover { 
-            background: #333333;
-        }
-        
-        /* Filters Bar */
-        .filters-bar { 
-            display: flex; 
-            flex-wrap: wrap; 
-            align-items: center; 
-            gap: 15px; 
-            padding: 15px 25px; 
-            background: #f8f8f8; 
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .filter-group { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            background: #ffffff; 
-            border-radius: 4px; 
-            padding: 8px 12px; 
-            border: 1px solid #ddd;
-            flex: 1 1 150px; 
-            min-width: 150px; 
-            max-width: 200px; 
-        }
-        
-        .filter-label { 
-            font-size: 12px; 
-            font-weight: 600; 
-            color: #000000; 
-            text-transform: uppercase;
-        }
-        
-        select { 
-            border: none; 
-            background: transparent; 
-            color: #000000; 
-            font-size: 14px; 
-            font-weight: 500;
-            width: 100%;
-            outline: none;
-            cursor: pointer;
-        }
-        
-        /* Search */
-        .search-container {
+
+        .logo-container {
             display: flex;
             align-items: center;
-            background: #ffffff;
-            border-radius: 4px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            flex: 1 1 250px;
-            min-width: 250px;
-            max-width: 350px;
+            gap: 0.75rem;
         }
-        
-        .search-input {
-            border: none;
-            background: transparent;
-            padding: 0 10px;
-            width: 100%;
-            outline: none;
-            color: #000000;
-            font-size: 14px;
-        }
-        
-        .search-input::placeholder {
-            color: #888;
-        }
-        
-        /* Main Content */
-        .main-table-wrap { 
-            display: flex; 
-            flex-direction: row; 
-            align-items: stretch; 
-            width: 100%; 
-            height: 100%;
-            transition: all 0.3s; 
-            gap: 0;
-            overflow: hidden;
-            flex: 1;
-        }
-        
-        /* Task Table Card */
-        .card { 
-            background: #ffffff; 
-            padding: 0;
-            border-radius: 0;
-            border-right: 1px solid #ddd; 
-            margin-bottom: 0; 
-            flex: 1 1 70%; 
-            overflow: hidden;
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 0.375rem;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
         }
-        
-        .card.full-width { 
-            flex: 1 1 100% !important;
-            border-right: none;
+
+        .logo-text h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--primary);
         }
-        
-        .table-responsive { 
-            width: 100%; 
-            overflow: auto;
-            flex: 1;
+
+        .logo-text span {
+            font-size: 0.75rem;
+            color: #718096;
         }
-        
-        /* Task Table */
-        .task-table { 
-            width: 100%; 
-            border-collapse: separate; 
-            border-spacing: 0;
-            font-size: 14px;
-            min-width: 1200px;
+
+        /* Navigation */
+        .nav-section {
+            padding: 0 1rem;
+            margin-bottom: 1.5rem;
         }
-        
-        .task-table th, .task-table td { 
-            padding: 12px 15px; 
-            border-bottom: 1px solid #ddd; 
-            text-align: left;
-            white-space: nowrap;
+
+        .nav-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #718096;
+            margin-bottom: 0.75rem;
         }
-        
-        .task-table th { 
-            background: #f8f8f8; 
-            font-weight: 600; 
-            font-size: 12px; 
-            text-transform: uppercase; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1;
-            color: #000000;
-            border-bottom: 2px solid #000000;
+
+        .nav-links {
+            list-style: none;
         }
-        
-        .task-table tr:nth-child(even) { 
-            background: #f8f8f8;
+
+        .nav-item {
+            margin-bottom: 0.25rem;
         }
-        
-        .task-table tr:hover { 
-            background: #f0f0f0;
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 0.375rem;
+            transition: all 0.15s ease;
         }
-        
-        /* Status Badges */
-        .status-badge { 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 6px;
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            font-size: 12px; 
-            font-weight: 600; 
+
+        .nav-link:hover {
+            background: #f7fafc;
+            color: var(--primary);
         }
-        
-        .status-completed { 
-            background: #e8e8e8; 
-            color: #000000; 
-            border: 1px solid #ccc; 
+
+        .nav-link.active {
+            background: #ebf8ff;
+            color: var(--primary);
+            font-weight: 500;
         }
-        
-        .status-ongoing { 
-            background: #f0f0f0; 
-            color: #000000; 
-            border: 1px solid #ccc; 
-        }
-        
-        .status-pending { 
-            background: #f8f8f8; 
-            color: #000000; 
-            border: 1px solid #ccc; 
-        }
-        
-        .status-overdue {
-            background: #f0f0f0;
-            color: #000000;
-            border: 1px solid #ccc;
-        }
-        
-        /* Editable Fields */
-        .editable { 
-            cursor: pointer; 
-            border-radius: 4px; 
-            transition: background 0.2s;
-        }
-        
-        .editable:hover { 
-            background: #f0f0f0;
-        }
-        
-        .editable-input, .editable-select { 
-            width: 100%; 
-            padding: 6px 10px !important; 
-            border-radius: 4px; 
-            border: 1px solid #ccc; 
-            background: #ffffff; 
-            color: #000000; 
-            font-size: 14px; 
-        }
-        
-        /* Cost Badge */
-        .cost-badge { 
-            display: inline-block; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-size: 12px; 
-            font-weight: 600; 
-            background: #f0f0f0; 
-            color: #000000; 
-            border: 1px solid #ccc; 
-        }
-        
-        /* Empty State */
-        .empty-state { 
-            text-align: center; 
-            padding: 60px 20px; 
-            color: #888; 
-        }
-        
-        .empty-state i { 
-            font-size: 48px; 
-            margin-bottom: 20px;
-            color: #ddd;
-        }
-        
-        /* Gantt Chart */
-        .gantt-table-card { 
-            background: #ffffff; 
-            border-radius: 0;
-            border: none;
-            margin-bottom: 0; 
-            min-width: 400px; 
-            max-width: 100%; 
-            flex: 1 1 30%; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: stretch; 
-            transition: max-width 0.3s, min-width 0.3s;
-            border-left: 1px solid #ddd;
-        }
-        
-        .gantt-table-card.hide { 
-            display: none !important; 
-        }
-        
-        .gantt-table-header { 
-            padding: 15px; 
-            display: flex; 
-            align-items: center; 
-            font-size: 16px; 
-            color: #000000; 
-            font-weight: 600; 
-            justify-content: space-between; 
-            border-bottom: 1px solid #ddd;
-            background: #f8f8f8;
-        }
-        
-        .gantt-table-toggle { 
-            color: #000000; 
-            background: none; 
-            border: none; 
-            font-size: 16px; 
-            cursor: pointer; 
-            padding: 5px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        
-        .gantt-table-toggle:hover {
-            background: #f0f0f0;
-        }
-        
-        .toggle-bar { 
-            position: absolute; 
-            right: 0; 
-            top: 50%; 
-            transform: translateY(-50%);
-            z-index: 50; 
-            background: #000000; 
-            color: #ffffff; 
-            border: none; 
-            border-radius: 4px 0 0 4px; 
-            padding: 10px 6px; 
-            font-size: 14px; 
-            cursor: pointer; 
-            min-width: 20px; 
+
+        .nav-icon {
+            font-size: 1rem;
+            width: 20px;
             text-align: center;
         }
-        
-        .toggle-bar:hover { 
-            background: #333333; 
-        }
-        
-        .gantt-table-scroll { 
-            overflow: auto;
-            height: 100%; 
-            padding: 15px;
-        }
-        
-        .gantt-table { 
-            width: max-content; 
-            border-collapse: collapse; 
-            font-size: 13px; 
-            min-width: 600px;
-        }
-        
-        .gantt-table th, .gantt-table td { 
-            border: 1px solid #ddd; 
-            padding: 6px 8px; 
-            text-align: center; 
-            background: #ffffff;
-        }
-        
-        .gantt-table th { 
-            background: #f8f8f8; 
-            color: #000000; 
-            position: sticky; 
-            top: 0; 
-            z-index: 2; 
-            font-size: 12px;
-            font-weight: 600;
-            border-bottom: 2px solid #000000;
-        }
-        
-        .gantt-bar { 
-            background: #000000; 
-            border-radius: 2px; 
-            height: 12px; 
-            width: 90%; 
-            margin: 0 auto;
-        }
-        
-        .gantt-bar-empty { 
-            background: #f8f8f8; 
-            border: 1px dashed #ccc;
-        }
-        
-        .gantt-pct { 
-            font-weight: 600; 
-            font-size: 12px;
-            color: #000000;
-        }
-        
-        .gantt-table tr { 
-            height: 35px; 
-        }
-        
-        .hide { 
-            display: none !important; 
-        }
-        
-        /* Subtask Rows */
-        .subtask-row td { 
-            background: #f8f8f8; 
-            color: #000000 !important; 
-        }
-        
-        .subtask-row td.subtask-desc { 
-            padding-left: 40px !important; 
-        }
-        
-        .subtask-arrow { 
-            text-align: left; 
-            padding-left: 20px; 
-            color: #000000; 
-            font-size: 14px; 
-        }
-        
-        .main-task-expand { 
-            cursor: pointer; 
-            color: #000000; 
-            margin-right: 8px; 
-        }
-        
-        .subsubtask-row td { 
-            background: #f0f0f0; 
-            color: #000000 !important; 
-        }
-        
-        /* Action Buttons */
-        .action-btn {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #000000;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 12px;
-            font-weight: 500;
+
+        /* Sidebar Toggle */
+        .sidebar-toggle {
+            position: absolute;
+            top: 1rem;
+            right: -12px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
-            margin: 2px;
+            border: 2px solid white;
+            font-size: 0.75rem;
+            z-index: 1001;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+            min-height: 100vh;
+            background: white;
+            width: calc(100% - 250px);
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .top-left h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .top-left p {
+            color: #718096;
+            margin: 0.25rem 0 0;
+            font-size: 0.875rem;
+        }
+
+        /* Back Button */
+        .back-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 0.375rem;
+            transition: background 0.2s ease;
         }
-        
-        .action-btn i {
-            font-size: 12px;
+
+        .back-btn:hover {
+            background: #0d2b50;
+            color: white;
+            text-decoration: none;
         }
-        
-        .action-btn:hover {
-            background: #000000;
-            color: #ffffff;
+
+        /* Project Info */
+        .project-info-container {
+            margin: 0 0 1.5rem 0;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
         }
-        
-        .delete-btn {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #000000;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-left: 8px;
-            transition: all 0.2s;
+
+        .project-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
         }
-        
-        .delete-btn:hover {
-            background: #000000;
-            color: #ffffff;
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #4a5568;
         }
-        
-        /* Total Row */
-        .total-row {
-            font-weight: 700;
-            background-color: #f8f8f8 !important;
-            border-top: 2px solid #000000;
+
+        .project-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.875rem;
         }
-        
-        .total-row td {
-            border-top: 2px solid #000000;
+
+        .project-value {
+            color: #2d3748;
+            font-weight: 500;
         }
-        
+
         /* Category Header */
         .category-header {
-            background: #000000;
-            color: #ffffff;
-            padding: 20px 25px;
-            border-radius: 0;
-            margin-bottom: 0;
+            background: linear-gradient(135deg, var(--primary), #0d2b50);
+            color: white;
+            padding: 1.25rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
-        
+
         .category-title {
-            font-size: 20px;
+            font-size: 1.25rem;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.75rem;
         }
-        
+
         .category-icon {
-            font-size: 20px;
+            font-size: 1.25rem;
         }
-        
+
         .category-back-btn {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #ffffff;
-        }
-        
-        .category-back-btn:hover {
-            background: #f0f0f0;
-            color: #000000;
-        }
-        
-        /* Hide/Show Completed Button */
-        .hide-completed-btn {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #000000;
-        }
-        
-        .hide-completed-btn:hover {
-            background: #f0f0f0;
-        }
-        
-        .show-completed-btn {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #000000;
-        }
-        
-        .show-completed-btn:hover {
-            background: #f0f0f0;
-        }
-        
-        /* Today Highlight */
-        .today-highlight {
-            background-color: #f0f0f0 !important;
-            color: #000000 !important;
-            font-weight: bold;
-            border: 1px solid #000000 !important;
-        }
-        
-        .current-month {
-            background-color: #f8f8f8 !important;
-        }
-        
-        /* Project Info */
-        .project-info-container {
-            margin: 0;
-            padding: 20px;
-            background: #f8f8f8;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .project-header-card {
-            background: #ffffff;
-            border-radius: 4px;
-            padding: 20px;
-            border: 1px solid #ddd;
-        }
-        
-        .project-title-line {
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .project-label {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            color: #000000;
-            font-size: 14px;
-            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
         }
-        
-        .project-value {
-            font-size: 16px;
-            color: #000000;
-            font-weight: 500;
+
+        .category-back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            text-decoration: none;
         }
-        
-        .project-details-grid {
+
+        /* Action Bar */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0d2b50;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: #f7fafc;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            padding: 0.625rem;
+        }
+
+        /* Category Transfer Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .category-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
         }
-        
-        .detail-item {
+
+        .category-option {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        
-        .detail-value {
-            color: #000000;
-            margin-left: 5px;
+
+        .category-option:hover {
+            border-color: var(--primary);
+            background: #f7fafc;
+        }
+
+        .category-option.selected {
+            border-color: var(--primary);
+            background: #ebf8ff;
+        }
+
+        .category-option i {
+            width: 20px;
+            color: var(--primary);
+        }
+
+        /* Filters Bar */
+        .filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            flex: 1 1 150px;
+            min-width: 150px;
+            max-width: 200px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        select {
+            border: none;
+            background: transparent;
+            color: #2d3748;
+            font-size: 0.875rem;
             font-weight: 500;
+            width: 100%;
+            outline: none;
+            cursor: pointer;
         }
-        
+
+        /* Search Container */
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            flex: 1 1 250px;
+            min-width: 250px;
+            max-width: 350px;
+        }
+
+        .search-input {
+            border: none;
+            background: transparent;
+            padding: 0 0.75rem;
+            width: 100%;
+            outline: none;
+            color: #2d3748;
+            font-size: 0.875rem;
+        }
+
+        .search-input::placeholder {
+            color: #a0aec0;
+        }
+
+        /* Task Table Card */
+        .main-table-wrap {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            width: 100%;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            flex: 1 1 70%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: #f8fafc;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            min-width: 1400px;
+        }
+
+        .task-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--primary);
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .task-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .task-table tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .total-row {
+            background: #f8fafc !important;
+            font-weight: 700;
+            border-top: 2px solid var(--border-color);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-ongoing {
+            background: #feebc8;
+            color: #7b341e;
+        }
+
+        .status-pending {
+            background: #e9d8fd;
+            color: #44337a;
+        }
+
+        .status-overdue {
+            background: #fed7d7;
+            color: #822727;
+        }
+
+        /* Cost Badge */
+        .cost-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            background: #f7fafc;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: #4a5568;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .delete-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--danger);
+            background: white;
+            color: var(--danger);
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Transfer Button */
+        .transfer-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+        }
+
+        .transfer-btn:hover {
+            background: #dd6b20;
+        }
+
+        /* Gantt Chart */
+        .gantt-table-card {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            flex: 1 1 30%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .gantt-table-card.hide {
+            display: none;
+        }
+
+        .gantt-table-header {
+            padding: 1rem;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .gantt-table-scroll {
+            overflow-x: auto;
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .gantt-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75rem;
+        }
+
+        .gantt-table th {
+            background: #f8fafc;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .gantt-table td {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .gantt-bar {
+            background: var(--primary);
+            height: 12px;
+            border-radius: 6px;
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        .gantt-bar-empty {
+            background: #e2e8f0;
+            border: 1px dashed var(--border-color);
+        }
+
+        .today-highlight {
+            background: #feebc8 !important;
+        }
+
+        .current-month {
+            background: #ebf8ff;
+        }
+
+        /* Mobile Toggle */
+        .mobile-toggle {
+            display: none;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1100;
+        }
+
+        /* Subtask Rows */
+        .subtask-row td {
+            background: #f7fafc;
+        }
+
+        .subtask-arrow {
+            padding-left: 2rem !important;
+            color: #718096;
+        }
+
+        .subsubtask-row td {
+            background: #f8fafc;
+        }
+
+        .subtask-desc {
+            padding-left: 3rem !important;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a0aec0;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
-            .main-table-wrap { 
-                flex-direction: column; 
-                height: auto;
-                min-height: 0;
-                flex: 1;
-                overflow: auto;
+            .main-table-wrap {
+                flex-direction: column;
             }
             
-            .gantt-table-card { 
-                max-width: 100%; 
-                min-width: 100%;
-                border-left: none;
-                border-top: 1px solid #ddd;
-                flex: 0 0 300px;
-            }
-            
-            .card { 
-                flex: 1 1 auto;
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-            }
-            
-            .toggle-bar {
-                right: 20px;
-                top: auto;
-                bottom: 20px;
-                border-radius: 4px;
+            .card, .gantt-table-card {
+                flex: 1 1 100%;
+                width: 100%;
             }
         }
-        
+
         @media (max-width: 768px) {
-            .header { 
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            
+            .mobile-toggle {
+                display: block;
+            }
+            
+            .sidebar-toggle {
+                display: none;
             }
             
             .filters-bar {
-                padding: 10px;
+                flex-direction: column;
+                align-items: stretch;
             }
             
-            .filter-group {
-                min-width: 120px;
-                flex: 1 1 120px;
-            }
-            
-            .search-container {
-                min-width: 100%;
+            .filter-group, .search-container {
                 max-width: 100%;
             }
             
-            .gantt-table-card {
-                flex: 0 0 250px;
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
             }
             
-            .task-table th, .task-table td {
-                padding: 8px 10px;
-                font-size: 12px;
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .category-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+            
+            .project-details-grid {
+                grid-template-columns: 1fr;
             }
         }
-        
+
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
         }
-        
+
         ::-webkit-scrollbar-track {
-            background: #f0f0f0;
-            border-radius: 4px;
+            background: #f7fafc;
         }
-        
+
         ::-webkit-scrollbar-thumb {
-            background: #ccc;
+            background: #cbd5e0;
             border-radius: 4px;
         }
-        
+
         ::-webkit-scrollbar-thumb:hover {
-            background: #999;
-        }
-        
-        /* Always show scrollbars */
-        .table-responsive {
-            overflow: auto !important;
-        }
-        
-        .gantt-table-scroll {
-            overflow: auto !important;
-        }
-        
-        /* Ensure body scrolls when needed */
-        body {
-            overflow: auto;
-        }
-        
-        .container {
-            min-height: 100vh;
-            height: auto;
-            overflow: auto;
+            background: #a0aec0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-toggle" id="mobileToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar - PENTA Style -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-toggle" id="sidebarToggle">
+            <i class="fas fa-chevron-left" id="toggleIcon"></i>
+        </div>
+        
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="logo-text">
+                    <h2>PENTA</h2>
+                    <span>Construction Pro</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav-section">
+            <h3>Dashboard</h3>
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Dashboard')">
+                        <i class="fas fa-gauge-high nav-icon"></i>
+                        <span>Overview</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-diagram-project nav-icon"></i>
+                        <span>Projects</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Team')">
+                        <i class="fas fa-user-tie nav-icon"></i>
+                        <span>Team</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <nav class="nav-section">
+            <h3>Resources</h3>
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Equipment')">
+                        <i class="fas fa-screwdriver-wrench nav-icon"></i>
+                        <span>Equipment</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Materials')">
+                        <i class="fas fa-truck-ramp-box nav-icon"></i>
+                        <span>Materials</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Inventory')">
+                        <i class="fas fa-warehouse nav-icon"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <nav class="nav-section">
+            <h3>Management</h3>
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Finances')">
+                        <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                        <span>Finances</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('Navigate to Reports')">
+                        <i class="fas fa-chart-column nav-icon"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-left">
+                <h1 id="pageTitle">Project Tasks</h1>
+                <p id="pageSubtitle">Manage and track all project tasks</p>
+            </div>
+            <a href="#" class="back-btn" id="backToCategoriesBtn">
+                <i class="fas fa-layer-group"></i> Back to Categories
+            </a>
+        </div>
+
+        <!-- Project Info -->
+        <div class="project-info-container">
+            <div class="project-details-grid">
+                <div class="detail-item">
+                    <i class="fas fa-user" style="color: var(--primary);"></i>
+                    <span class="project-label">PROJECT MANAGER:</span>
+                    <span class="project-value" id="projectManager">Christopher Chishela</span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-user-tie" style="color: var(--primary);"></i>
+                    <span class="project-label">SUPERVISOR:</span>
+                    <span class="project-value" id="projectSupervisor">Orscar Mushimbi</span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-calendar" style="color: var(--primary);"></i>
+                    <span class="project-label">PROJECT:</span>
+                    <span class="project-value" id="projectName">Loading...</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Category Header -->
         <div class="category-header" id="categoryHeader">
             <div class="category-title">
                 <i class="fas fa-tools category-icon" id="categoryIcon"></i>
                 <span id="categoryTitle">All Tasks</span>
             </div>
-            <a href="cards.html?id=PROJECT_ID" class="btn category-back-btn" id="backToCategoriesBtn">
-                <i class="fas fa-layer-group"></i> Back to Categories
-            </a>
-        </div>
-
-        <div class="project-info-container">
-            <div class="project-header-card">
-                <div class="project-details-grid">
-                    <div class="detail-item">
-                        <a href="dashboard.html" class="btn btn-outline">
-                            <i class="fas fa-arrow-left"></i> Back to Dashboard
-                        </a>
-                        <span class="project-label">PROJECT MANAGER:</span>
-                        <span class="project-value">Christopher chishela</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="project-label">SUPERVISOR:</span>
-                        <span class="project-value">Orscar mushimbi</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="header">
-            <div class="actions">
-                <button class="btn btn-primary action-btn" id="addTaskBtn">
-                    <i class="fas fa-plus"></i> Add Task
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="category-back-btn" id="transferCategoryBtn">
+                    <i class="fas fa-arrows-alt"></i> Transfer Category
                 </button>
-                <button class="btn hide-completed-btn" id="toggleCompletedBtn">
-                    <i class="fas fa-eye-slash"></i> Hide Completed
-                </button>
-                <a href="#" class="btn btn-outline action-btn" id="completedtasksBtn">
-                    <i class="fas fa-check-circle"></i> Completed Tasks
+                <a href="#" class="category-back-btn" id="categoriesBtn">
+                    <i class="fas fa-layer-group"></i> All Categories
                 </a>
             </div>
         </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <button class="btn btn-primary" id="addTaskBtn">
+                <i class="fas fa-plus"></i> Add Task
+            </button>
+            <button class="btn btn-outline" id="toggleCompletedBtn">
+                <i class="fas fa-eye-slash"></i> Hide Completed
+            </button>
+            <a href="#" class="btn btn-outline" id="completedtasksBtn">
+                <i class="fas fa-check-circle"></i> Completed Tasks
+            </a>
+            <button class="btn btn-secondary" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Filters Bar -->
         <div class="filters-bar">
             <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search all fields...">
+                <i class="fas fa-search" style="color: #718096;"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search tasks...">
             </div>
-            <div class="filter-group"><span class="filter-label">Status:</span>
+            <div class="filter-group">
+                <span class="filter-label">Status:</span>
                 <select id="statusFilter">
                     <option value="">All</option>
                     <option value="COMPLETED">Completed</option>
@@ -795,7 +1058,8 @@
                     <option value="OVERDUE">Overdue</option>
                 </select>
             </div>
-            <div class="filter-group"><span class="filter-label">Month:</span>
+            <div class="filter-group">
+                <span class="filter-label">Month:</span>
                 <select id="monthFilter">
                     <option value="">All Months</option>
                     <option value="1">January</option>
@@ -812,7 +1076,8 @@
                     <option value="12">December</option>
                 </select>
             </div>
-            <div class="filter-group"><span class="filter-label">Year:</span>
+            <div class="filter-group">
+                <span class="filter-label">Year:</span>
                 <select id="yearFilter">
                     <option value="">All Years</option>
                     <option value="2023">2023</option>
@@ -822,10 +1087,13 @@
                 </select>
             </div>
         </div>
-        <div class="main-table-wrap" id="mainTableWrap" style="position:relative;">
+
+        <!-- Main Content Area with Table and Gantt -->
+        <div class="main-table-wrap" id="mainTableWrap">
+            <!-- Task Table Card -->
             <div class="card" id="mainCard">
-                <div class="card-header" style="padding: 10px 0 15px 0;">
-                    <h2 class="card-title" style="font-size:14px; margin:0; color:#000000; font-weight:500">
+                <div class="card-header">
+                    <h2 class="card-title">
                         <i class="fas fa-tasks"></i> <span id="tasksTitle">All Tasks</span>
                     </h2>
                 </div>
@@ -838,1076 +1106,618 @@
                                 <th>TASK LINE</th>
                                 <th>DESCRIPTION</th>
                                 <th>ASSIGNED</th>
-                                <th class="editable">STATUS</th>
-                                <th class="editable">START DATE</th>
-                                <th class="editable">END DATE</th>
+                                <th>STATUS</th>
+                                <th>CATEGORY</th>
+                                <th>START DATE</th>
+                                <th>END DATE</th>
                                 <th>GIVE TARGET</th>
-                                <th class="duration">DURATION (Hrs)</th>
-                                <th>MATERIAL COST</th>
+                                <th>DURATION</th>
+                                <th>MATERIAL</th>
                                 <th>MAN COST</th>
-                                <th>TOTAL COST</th>
+                                <th>TOTAL</th>
                                 <th>LOCATION</th>
                                 <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody id="taskList">
-                            <!-- Example rows will be populated by JavaScript -->
+                            <!-- Tasks will be populated here -->
                         </tbody>
                         <tfoot>
                             <tr class="total-row">
-                                <td colspan="9" style="text-align: right; font-weight: bold;">TOTAL:</td>
-                                <td id="totalDuration"></td>
-                                <td id="totalMaterialCost"></td>
-                                <td id="totalManCost"></td>
-                                <td id="totalCost"></td>
+                                <td colspan="10" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                                <td id="totalDuration">0</td>
+                                <td id="totalMaterialCost">ZMW 0.00</td>
+                                <td id="totalManCost">ZMW 0.00</td>
+                                <td id="totalCost">ZMW 0.00</td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-                <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-state" id="emptyState" style="display: none;">
                     <i class="fas fa-tasks"></i>
-                    <p>No tasks found.</p>
+                    <h3>No tasks found</h3>
+                    <p>Add a new task to get started</p>
                 </div>
             </div>
-            <!-- Table Gantt (side) -->
+
+            <!-- Gantt Chart Card -->
             <div class="gantt-table-card hide" id="ganttTableCard">
                 <div class="gantt-table-header">
-                    <span><i class="fas fa-calendar-alt"></i> Gantt Calendar</span>
-                    <div>
-                        <button class="current-month-btn" id="currentMonthBtn" title="Show current month">Current Month</button>
-                        <button class="gantt-table-toggle action-btn" id="toggleGanttBtn" title="Show/hide calendar"><i class="fas fa-eye"></i></button>
+                    <span style="font-weight: 600; color: var(--primary);">
+                        <i class="fas fa-calendar-alt"></i> Gantt Calendar
+                    </span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline btn-icon" id="currentMonthBtn" style="padding: 0.375rem 0.75rem;">
+                            Current Month
+                        </button>
+                        <button class="btn btn-outline btn-icon" id="toggleGanttBtn" style="padding: 0.375rem 0.75rem;">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="gantt-table-scroll" id="ganttTableScroll" style="height:100%">
-                    <table class="gantt-table" style="height:100%">
+                <div class="gantt-table-scroll" id="ganttTableScroll">
+                    <table class="gantt-table" id="ganttCalendar">
                         <thead id="ganttCalendarHead"></thead>
                         <tbody id="ganttCalendarBody"></tbody>
                     </table>
                 </div>
             </div>
-            <button id="showGanttBtn" class="toggle-bar action-btn" title="Show Gantt Calendar"><i class="fas fa-calendar-alt"></i></button>
+            
+            <button id="showGanttBtn" class="btn btn-primary" style="position: fixed; right: 2rem; bottom: 2rem; z-index: 100; display: none;">
+                <i class="fas fa-calendar-alt"></i> Show Calendar
+            </button>
         </div>
-    </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getFirestore, doc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        <!-- Category Transfer Modal -->
+        <div class="modal" id="transferModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Transfer Task Category</h3>
+                    <button class="modal-close" id="closeTransferModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="selectedTaskInfo" style="margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid var(--border-color);">
+                    <strong>Selected Task:</strong> <span id="selectedTaskName">None</span>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600; color: var(--primary);">Select New Category:</label>
+                </div>
+                <div class="category-list" id="categoryList"></div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.5rem;">
+                    <button class="btn btn-outline" id="cancelTransfer">Cancel</button>
+                    <button class="btn btn-primary" id="confirmTransfer">Transfer Task</button>
+                </div>
+            </div>
+        </div>
+    </main>
 
-    // Debugging function
-    function debugLog(message, data = null) {
-        console.log(`[DEBUG] ${message}`, data);
-    }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { 
+            getFirestore, doc, collection, query, where, onSnapshot, 
+            addDoc, updateDoc, deleteDoc, getDocs, getDoc, Timestamp 
+        } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-    // Initialize Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-        authDomain: "project-task-588c4.firebaseapp.com",
-        projectId: "project-task-588c4",
-        storageBucket: "project-task-588c4.appspot.com",
-        messagingSenderId: "411882772509",
-        appId: "1:411882772509:web:08d613186c101a99f38ef4",
-        measurementId: "G-JMFLFYEM0F"
-    };
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
 
-    let db;
-    try {
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        debugLog("Firebase initialized successfully");
-    } catch (e) {
-        debugLog("Firebase initialization error", e);
-        alert("Failed to initialize Firebase: " + e.message);
-    }
+        const db = getFirestore(app);
 
-    // Get project ID from URL
-    function getProjectIdFromURL() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const projectId = urlParams.get('id');
-        
-        if (!projectId) {
-            debugLog("No project ID found in URL");
-            const errorMsg = "Project ID is missing from URL. Please access this page from the dashboard.";
-            alert(errorMsg);
-            throw new Error(errorMsg);
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const mainContent = document.getElementById('mainContent');
+        const mobileToggle = document.getElementById('mobileToggle');
+        const ganttTableCard = document.getElementById('ganttTableCard');
+        const toggleGanttBtn = document.getElementById('toggleGanttBtn');
+        const showGanttBtn = document.getElementById('showGanttBtn');
+        const mainCard = document.getElementById('mainCard');
+        const currentMonthBtn = document.getElementById('currentMonthBtn');
+        const statusFilter = document.getElementById('statusFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        const yearFilter = document.getElementById('yearFilter');
+        const searchInput = document.getElementById('searchInput');
+        const taskList = document.getElementById('taskList');
+        const emptyState = document.getElementById('emptyState');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const categoryHeader = document.getElementById('categoryHeader');
+        const categoryTitle = document.getElementById('categoryTitle');
+        const categoryIcon = document.getElementById('categoryIcon');
+        const tasksTitle = document.getElementById('tasksTitle');
+        const backToCategoriesBtn = document.getElementById('backToCategoriesBtn');
+        const categoriesBtn = document.getElementById('categoriesBtn');
+        const transferCategoryBtn = document.getElementById('transferCategoryBtn');
+        const transferModal = document.getElementById('transferModal');
+        const closeTransferModal = document.getElementById('closeTransferModal');
+        const cancelTransfer = document.getElementById('cancelTransfer');
+        const confirmTransfer = document.getElementById('confirmTransfer');
+        const selectedTaskName = document.getElementById('selectedTaskName');
+        const categoryList = document.getElementById('categoryList');
+
+        // Get URL Parameters
+        function getProjectIdFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
         }
-        
-        debugLog("Project ID from URL", projectId);
-        return projectId;
-    }
 
-    // Get category from URL
-    function getCategoryFromURL() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('category');
-    }
-
-    const projectId = getProjectIdFromURL();
-    const currentCategory = getCategoryFromURL();
-
-    // Update back button URL
-    document.getElementById('backToCategoriesBtn').href = `cards.html?id=${projectId}`;
-
-    // Set completed tasks button href
-    document.getElementById('completedtasksBtn').href = `completedtask.html?id=${projectId}`;
-
-    // DOM Elements
-    const ganttTableCard = document.getElementById('ganttTableCard');
-    const toggleGanttBtn = document.getElementById('toggleGanttBtn');
-    const showGanttBtn = document.getElementById('showGanttBtn');
-    const mainCard = document.getElementById('mainCard');
-    const currentMonthBtn = document.getElementById('currentMonthBtn');
-    const statusFilter = document.getElementById('statusFilter');
-    const monthFilter = document.getElementById('monthFilter');
-    const yearFilter = document.getElementById('yearFilter');
-    const searchInput = document.getElementById('searchInput');
-    const taskList = document.getElementById('taskList');
-    const emptyState = document.getElementById('emptyState');
-    const ganttCalendarBody = document.getElementById('ganttCalendarBody');
-    const ganttCalendarHead = document.getElementById('ganttCalendarHead');
-    const addTaskBtn = document.getElementById('addTaskBtn');
-    const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
-    const categoryHeader = document.getElementById('categoryHeader');
-    const categoryTitle = document.getElementById('categoryTitle');
-    const categoryIcon = document.getElementById('categoryIcon');
-    const tasksTitle = document.getElementById('tasksTitle');
-
-    // Category definitions
-    const categories = {
-        'general': {
-            name: 'General Work',
-            icon: 'fas fa-tools',
-            keywords: ['general', 'maintenance', 'repair', 'work', 'task', 'service']
-        },
-        'electrical': {
-            name: 'Electrical Maintenance',
-            icon: 'fas fa-bolt',
-            keywords: ['electrical', 'wiring', 'circuit', 'power', 'lighting', 'socket', 'switch', 'breaker']
-        },
-        'plumbing': {
-            name: 'Plumbing Maintenance',
-            icon: 'fas fa-faucet',
-            keywords: ['plumbing', 'pipe', 'water', 'drain', 'faucet', 'toilet', 'sink', 'leak', 'valve']
-        },
-        'carpentry': {
-            name: 'Carpentry Maintenance',
-            icon: 'fas fa-hammer',
-            keywords: ['carpentry', 'wood', 'carpenter', 'frame', 'door', 'window', 'cabinet', 'furniture']
-        },
-        'welding': {
-            name: 'Welding Maintenance',
-            icon: 'fas fa-fire',
-            keywords: ['welding', 'weld', 'metal', 'steel', 'arc', 'solder', 'fabrication']
-        },
-        'networking': {
-            name: 'Networking and IT Maintenance',
-            icon: 'fas fa-network-wired',
-            keywords: ['network', 'it', 'computer', 'internet', 'wifi', 'server', 'cable', 'ethernet', 'router']
-        },
-        'gardening': {
-            name: 'Plants and Gardening Maintenance',
-            icon: 'fas fa-leaf',
-            keywords: ['gardening', 'garden', 'plant', 'landscape', 'lawn', 'tree', 'flower', 'irrigation']
+        function getCategoryFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('category') || 'all';
         }
-    };
 
-    // State variables
-    let ganttVisible = false;
-    let showCurrentMonthOnly = false;
-    let allTasks = [];
-    let unsubMain = null;
-    let subUnsubs = {};
-    let expandedTasks = {};
-    let hideCompleted = false;
+        const projectId = getProjectIdFromURL();
+        const currentCategory = getCategoryFromURL();
 
-    // Update UI based on category
-    function updateCategoryUI() {
-        if (currentCategory && categories[currentCategory]) {
-            const category = categories[currentCategory];
-            categoryTitle.textContent = category.name;
-            categoryIcon.className = category.icon + ' category-icon';
-            tasksTitle.textContent = `${category.name} Tasks`;
-            document.title = `${category.name} | Task Management`;
-        } else {
-            categoryTitle.textContent = 'All Tasks';
-            categoryIcon.className = 'fas fa-tasks category-icon';
-            tasksTitle.textContent = 'All Tasks';
-            document.title = 'Project Tasks | Task Management';
+        // Category Definitions
+        const categories = {
+            'general': {
+                name: 'General Work',
+                icon: 'fas fa-tools',
+                color: '#1a365d',
+                keywords: ['general', 'maintenance', 'repair', 'work']
+            },
+            'electrical': {
+                name: 'Electrical Maintenance',
+                icon: 'fas fa-bolt',
+                color: '#ed8936',
+                keywords: ['electrical', 'wiring', 'circuit', 'power', 'lighting']
+            },
+            'plumbing': {
+                name: 'Plumbing Maintenance',
+                icon: 'fas fa-faucet',
+                color: '#4299e1',
+                keywords: ['plumbing', 'pipe', 'water', 'drain', 'faucet']
+            },
+            'carpentry': {
+                name: 'Carpentry Maintenance',
+                icon: 'fas fa-hammer',
+                color: '#48bb78',
+                keywords: ['carpentry', 'wood', 'carpenter', 'frame', 'door']
+            },
+            'welding': {
+                name: 'Welding Maintenance',
+                icon: 'fas fa-fire',
+                color: '#f56565',
+                keywords: ['welding', 'weld', 'metal', 'steel', 'fabrication']
+            },
+            'networking': {
+                name: 'Networking & IT',
+                icon: 'fas fa-network-wired',
+                color: '#9f7aea',
+                keywords: ['network', 'it', 'computer', 'internet', 'wifi']
+            },
+            'gardening': {
+                name: 'Gardening & Landscaping',
+                icon: 'fas fa-leaf',
+                color: '#38a169',
+                keywords: ['garden', 'plant', 'landscape', 'lawn', 'tree']
+            },
+            'painting': {
+                name: 'Painting',
+                icon: 'fas fa-paint-roller',
+                color: '#ed64a6',
+                keywords: ['paint', 'painting', 'wall', 'color', 'brush']
+            },
+            'custom': {
+                name: 'Custom Projects',
+                icon: 'fas fa-project-diagram',
+                color: '#3182ce',
+                keywords: ['custom', 'special', 'project']
+            }
+        };
+
+        // State Variables
+        let allTasks = [];
+        let expandedTasks = {};
+        let hideCompleted = false;
+        let ganttVisible = false;
+        let showCurrentMonthOnly = false;
+        let selectedTaskForTransfer = null;
+        let selectedTaskType = null;
+        let selectedTaskIds = null;
+
+        // Initialize Sidebar
+        function initSidebar() {
+            const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+                toggleIcon.classList.remove('fa-chevron-left');
+                toggleIcon.classList.add('fa-chevron-right');
+            }
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    toggleIcon.classList.remove('fa-chevron-left');
+                    toggleIcon.classList.add('fa-chevron-right');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                } else {
+                    toggleIcon.classList.remove('fa-chevron-right');
+                    toggleIcon.classList.add('fa-chevron-left');
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                }
+            });
+
+            mobileToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 && 
+                    !sidebar.contains(event.target) && 
+                    !mobileToggle.contains(event.target) &&
+                    sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            });
         }
-    }
 
-    // Auto-categorize task based on description
-    function autoCategorizeTask(taskDescription) {
-        if (!taskDescription) return 'general';
-        
-        const desc = taskDescription.toLowerCase();
-        
-        for (const [categoryId, category] of Object.entries(categories)) {
-            if (categoryId === 'general') continue;
+        // Update Category UI
+        function updateCategoryUI() {
+            if (currentCategory && currentCategory !== 'all' && categories[currentCategory]) {
+                const category = categories[currentCategory];
+                categoryTitle.textContent = category.name;
+                categoryIcon.className = category.icon + ' category-icon';
+                tasksTitle.textContent = `${category.name} Tasks`;
+                document.title = `${category.name} | PENTA Construction Pro`;
+            } else {
+                categoryTitle.textContent = 'All Tasks';
+                categoryIcon.className = 'fas fa-tasks category-icon';
+                tasksTitle.textContent = 'All Tasks';
+                document.title = 'Project Tasks | PENTA Construction Pro';
+            }
             
-            for (const keyword of category.keywords) {
-                if (desc.includes(keyword.toLowerCase())) {
-                    return categoryId;
-                }
+            // Update back button URLs
+            if (projectId) {
+                backToCategoriesBtn.href = `cards.html?id=${projectId}`;
+                categoriesBtn.href = `cards.html?id=${projectId}`;
             }
         }
-        
-        return 'general';
-    }
 
-    // Helper functions
-    async function getProjectName(projectId) {
-        const docRef = doc(db, "projectDashboard", projectId);
-        const snap = await getDoc(docRef);
-        return snap.exists() ? snap.data().name : "";
-    }
-
-    function getInitials(name) {
-        return (name.match(/\b\w/g) || []).join('').toUpperCase();
-    }
-
-    async function getNextMainTaskNumber(projectId) {
-        const snap = await getDocs(query(collection(db, "projectTasks"), where("projectId", "==", projectId)));
-        let max = 0;
-        snap.forEach(doc => {
-            const task = doc.data();
-            if (task.taskId) {
-                const m = task.taskId.match(/-(\d+)$/);
-                if (m) max = Math.max(max, parseInt(m[1], 10));
-            }
-        });
-        return max + 1;
-    }
-
-    async function getNextSubtaskNumber(mainTaskId, mainDocId) {
-        const snap = await getDocs(collection(db, "projectTasks", mainDocId, "subtasks"));
-        let max = 0;
-        snap.forEach(doc => {
-            const task = doc.data();
-            if (task.taskId && task.taskId.startsWith(mainTaskId + "-")) {
-                const m = task.taskId.match(/-(\d+)$/);
-                if (m) max = Math.max(max, parseInt(m[1], 10));
-            }
-        });
-        return max + 1;
-    }
-
-    async function getNextSubSubtaskNumber(subTaskId, mainDocId, subDocId) {
-        const snap = await getDocs(collection(db, "projectTasks", mainDocId, "subtasks", subDocId, "subsubtasks"));
-        let max = 0;
-        snap.forEach(doc => {
-            const task = doc.data();
-            if (task.taskId && task.taskId.startsWith(subTaskId + "-")) {
-                const m = task.taskId.match(/-(\d+)$/);
-                if (m) max = Math.max(max, parseInt(m[1], 10));
-            }
-        });
-        return max + 1;
-    }
-
-    async function getWorkedHoursForTaskId(taskId) {
-        if (!taskId) return 0;
-        const q = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
-        let sum = 0;
-        const snap = await getDocs(q);
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (d.mh && !isNaN(d.mh)) sum += Number(d.mh);
-        });
-        return sum;
-    }
-
-    async function getMaterialCostForTaskId(taskId) {
-        if (!taskId) return 0;
-        const q = query(collection(db, "materialsUsage"), where("taskId", "==", taskId));
-        let sum = 0;
-        const snap = await getDocs(q);
-        
-        const materialIds = new Set();
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (d.materialId) materialIds.add(d.materialId);
-        });
-        
-        const materialPriceMap = {};
-        await Promise.all([...materialIds].map(async materialId => {
-            const matSnap = await getDoc(doc(db, "materials", materialId));
-            if (matSnap.exists()) {
-                materialPriceMap[materialId] = matSnap.data().unitPrice || 0;
-            }
-        }));
-        
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (!d.reversed) {
-                if (d.quantity && d.materialId) {
-                    const price = materialPriceMap[d.materialId] || 0;
-                    sum += Number(d.quantity) * Number(price);
-                }
-                else if (d.boughtFromSupplier && d.amount) {
-                    sum += Number(d.amount);
-                }
-                else if (d.quantity && d.unitPrice && !d.materialId) {
-                    sum += Number(d.quantity) * Number(d.unitPrice);
+        // Auto-categorize Task
+        function autoCategorizeTask(description) {
+            if (!description) return 'general';
+            const desc = description.toLowerCase();
+            
+            for (const [id, category] of Object.entries(categories)) {
+                if (id === 'general') continue;
+                for (const keyword of category.keywords) {
+                    if (desc.includes(keyword)) return id;
                 }
             }
-        });
-        
-        return sum;
-    }
-
-    // Check if task is overdue
-    function checkTaskOverdue(task) {
-        if (task.status === 'COMPLETED') return false;
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (task.giveTarget) {
-            const targetDate = task.giveTarget.toDate ? task.giveTarget.toDate() : new Date(task.giveTarget);
-            targetDate.setHours(0, 0, 0, 0);
-            return targetDate < today;
+            return 'general';
         }
-        
-        if (task.endDate) {
-            const endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
-            endDate.setHours(0, 0, 0, 0);
-            return endDate < today;
-        }
-        
-        return false;
-    }
 
-    // Update parent task status if needed
-    async function updateParentTaskStatusIfNeeded(mainTaskId) {
-        const mainTask = allTasks.find(t => t.id === mainTaskId);
-        if (!mainTask) return;
-        
-        if (checkAllSubtasksCompleted(mainTask)) {
-            if (mainTask.status !== 'COMPLETED') {
-                await updateDoc(doc(db, "projectTasks", mainTaskId), { 
-                    status: 'COMPLETED',
-                    updatedAt: new Date()
+        // Populate Category List for Transfer
+        function populateCategoryList() {
+            categoryList.innerHTML = '';
+            
+            Object.entries(categories).forEach(([id, category]) => {
+                const option = document.createElement('div');
+                option.className = 'category-option';
+                option.dataset.category = id;
+                option.innerHTML = `
+                    <i class="${category.icon}"></i>
+                    <span>${category.name}</span>
+                `;
+                
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('.category-option').forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
                 });
-            }
-        }
-    }
-
-    // Check if all subtasks are completed
-    function checkAllSubtasksCompleted(task) {
-        if (!task.subTasks || task.subTasks.length === 0) {
-            return task.status === 'COMPLETED';
-        }
-        
-        for (const subTask of task.subTasks) {
-            if (subTask.status !== 'COMPLETED') return false;
-            
-            if (subTask.subSubtasks && subTask.subSubtasks.length > 0) {
-                for (const subSubTask of subTask.subSubtasks) {
-                    if (subSubTask.status !== 'COMPLETED') return false;
+                
+                if (id === currentCategory) {
+                    option.classList.add('selected');
                 }
-            }
+                
+                categoryList.appendChild(option);
+            });
         }
-        
-        return true;
-    }
 
-    // Load all tasks
-    async function loadAllTasks() {
-        debugLog("Starting to load all tasks");
-        
-        try {
-            if (unsubMain) {
-                debugLog("Unsubscribing from previous listener");
-                unsubMain();
-            }
-            
-            if (subUnsubs) {
-                debugLog("Unsubscribing from subtask listeners");
-                Object.values(subUnsubs).forEach(fn => fn && fn());
-            }
-            
-            subUnsubs = {};
-            allTasks = [];
-            
-            debugLog("Setting up main tasks listener");
-            unsubMain = onSnapshot(
-                query(collection(db, "projectTasks"), where("projectId", "==", projectId)), 
-                async (snapshot) => {
-                    debugLog("Main tasks snapshot received", snapshot.size);
-                    
-                    allTasks = [];
-                    let promises = [];
-                    
-                    if (snapshot.empty) {
-                        debugLog("No main tasks found for project", projectId);
-                        renderTasks([]);
-                        renderGanttCalendar([]);
-                        return;
-                    }
-                    
-                    snapshot.forEach(docSnap => {
-                        const docData = { id: docSnap.id, ...docSnap.data(), subTasks: [] };
-                        docData.expanded = expandedTasks[docSnap.id] || false;
-                        
-                        if (!docData.category && docData.taskDescription) {
-                            docData.category = autoCategorizeTask(docData.taskDescription);
-                        }
-                        
-                        if (checkTaskOverdue(docData)) {
-                            docData.status = 'OVERDUE';
-                        }
-                        
-                        allTasks.push(docData);
-                        debugLog("Processing main task", docData.taskId);
-
-                        promises.push(new Promise((resolve) => {
-                            debugLog(`Setting up subtasks listener for ${docData.taskId}`);
-                            const unsub = onSnapshot(
-                                collection(db, "projectTasks", docSnap.id, "subtasks"), 
-                                async (subSnap) => {
-                                    debugLog(`Subtasks snapshot for ${docData.taskId}`, subSnap.size);
-                                    
-                                    docData.subTasks = [];
-                                    let subPromises = [];
-                                    
-                                    subSnap.forEach(subDoc => {
-                                        let subData = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
-                                        
-                                        if (!subData.category && subData.taskDescription) {
-                                            subData.category = autoCategorizeTask(subData.taskDescription);
-                                        }
-                                        
-                                        if (checkTaskOverdue(subData)) {
-                                            subData.status = 'OVERDUE';
-                                        }
-                                        
-                                        docData.subTasks.push(subData);
-                                        debugLog(`Processing subtask ${subData.taskId}`);
-                                        
-                                        subPromises.push(Promise.all([
-                                            getWorkedHoursForTaskId(subData.taskId),
-                                            getMaterialCostForTaskId(subData.taskId)
-                                        ]).then(([hours, materialCost]) => {
-                                            subData._durationHours = hours;
-                                            subData._materialCost = materialCost;
-                                            debugLog(`Got hours/costs for ${subData.taskId}`, {hours, materialCost});
-                                        }));
-                                        
-                                        subPromises.push(getSubSubtasks(docData.id, subDoc.id).then(subsubtasks => {
-                                            subData.subSubtasks = subsubtasks;
-                                            debugLog(`Got ${subsubtasks.length} sub-subtasks for ${subData.taskId}`);
-                                            
-                                            let subSubPromises = subsubtasks.map(subsub => {
-                                                if (!subsub.category && subsub.taskDescription) {
-                                                    subsub.category = autoCategorizeTask(subsub.taskDescription);
-                                                }
-                                                
-                                                if (checkTaskOverdue(subsub)) {
-                                                    subsub.status = 'OVERDUE';
-                                                }
-                                                
-                                                return Promise.all([
-                                                    getWorkedHoursForTaskId(subsub.taskId),
-                                                    getMaterialCostForTaskId(subsub.taskId)
-                                                ]).then(([hours, materialCost]) => {
-                                                    subsub._durationHours = hours;
-                                                    subsub._materialCost = materialCost;
-                                                });
-                                            });
-                                            return Promise.all(subSubPromises);
-                                        }));
-                                    });
-                                    
-                                    await Promise.all(subPromises);
-                                    
-                                    if (docData.status !== 'COMPLETED' && checkAllSubtasksCompleted(docData)) {
-                                        debugLog(`All subtasks completed for ${docData.taskId}, updating status`);
-                                        await updateDoc(doc(db, "projectTasks", docData.id), { 
-                                            status: 'COMPLETED',
-                                            updatedAt: new Date()
-                                        });
-                                    }
-                                    
-                                    resolve();
-                                },
-                                (error) => {
-                                    debugLog(`Error in subtasks listener for ${docData.taskId}`, error);
-                                    resolve();
-                                }
-                            );
-                            subUnsubs[docSnap.id] = unsub;
-                        }));
+        // Transfer Task Category
+        async function transferTaskCategory(taskId, newCategory, taskType, mainId, subId) {
+            try {
+                if (taskType === 'main') {
+                    await updateDoc(doc(db, "projectTasks", taskId), { 
+                        category: newCategory,
+                        updatedAt: new Date()
                     });
-
-                    await Promise.all(promises);
-                    debugLog("All subtasks processed");
-
-                    await Promise.all(allTasks.map(async (task) => {
-                        const [hours, materialCost] = await Promise.all([
-                            getWorkedHoursForTaskId(task.taskId),
-                            getMaterialCostForTaskId(task.taskId)
-                        ]);
-                        task._durationHours = hours;
-                        task._materialCost = materialCost;
-                        debugLog(`Got main task hours/costs for ${task.taskId}`, {hours, materialCost});
-                        
-                        if (task.subTasks && task.subTasks.length > 0) {
-                            let totalHours = hours;
-                            let totalMaterialCost = materialCost;
-                            
-                            task.subTasks.forEach(sub => {
-                                totalHours += sub._durationHours || 0;
-                                totalMaterialCost += sub._materialCost || 0;
-                                
-                                if (sub.subSubtasks && sub.subSubtasks.length > 0) {
-                                    sub.subSubtasks.forEach(subsub => {
-                                        totalHours += subsub._durationHours || 0;
-                                        totalMaterialCost += subsub._materialCost || 0;
-                                    });
-                                }
-                            });
-                            
-                            task._aggregatedDurationHours = totalHours;
-                            task._aggregatedMaterialCost = totalMaterialCost;
-                            debugLog(`Aggregated values for ${task.taskId}`, {totalHours, totalMaterialCost});
-                        }
-                    }));
-
-                    debugLog("Rendering tasks and Gantt chart");
-                    renderTasks(filterTasks(allTasks));
-                    renderGanttCalendar(filterTasks(allTasks));
-                },
-                (error) => {
-                    debugLog("Error in main tasks listener", error);
-                    alert("Error loading tasks: " + error.message);
+                } else if (taskType === 'sub') {
+                    await updateDoc(doc(db, "projectTasks", mainId, "subtasks", taskId), { 
+                        category: newCategory,
+                        updatedAt: new Date()
+                    });
+                } else if (taskType === 'subsub') {
+                    await updateDoc(doc(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks", taskId), { 
+                        category: newCategory,
+                        updatedAt: new Date()
+                    });
                 }
-            );
-        } catch (e) {
-            debugLog("Error in loadAllTasks", e);
-            alert("Failed to load tasks: " + e.message);
-        }
-    }
-
-    // Filter tasks with category support and hide completed
-    function filterTasks(tasks) {
-        const statusVal = statusFilter.value;
-        const monthVal = monthFilter.value;
-        const yearVal = yearFilter.value;
-        const searchVal = searchInput.value.toLowerCase();
-        
-        return tasks.filter(task => {
-            if (hideCompleted && task.status === 'COMPLETED') {
+                
+                alert(`Task transferred to ${categories[newCategory].name} successfully!`);
+                return true;
+            } catch (error) {
+                console.error("Error transferring task:", error);
+                alert("Failed to transfer task: " + error.message);
                 return false;
             }
+        }
+
+        // Open Transfer Modal
+        function openTransferModal(task) {
+            selectedTaskForTransfer = task;
+            selectedTaskName.textContent = `${task.taskId || 'Task'}: ${task.taskDescription || 'Unnamed Task'}`;
+            transferModal.classList.add('active');
+        }
+
+        // Format Date
+        function formatDate(date) {
+            if (!date) return '';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Format Currency
+        function formatCurrency(amount) {
+            if (amount === undefined || amount === null) return 'ZMW 0.00';
+            return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW' }).format(amount);
+        }
+
+        // Get Status Badge Class
+        function getStatusBadge(status) {
+            if (!status) return 'status-badge status-pending';
+            const s = status.toUpperCase();
+            if (s === 'COMPLETED') return 'status-badge status-completed';
+            if (s === 'ONGOING') return 'status-badge status-ongoing';
+            if (s === 'OVERDUE') return 'status-badge status-overdue';
+            return 'status-badge status-pending';
+        }
+
+        // Check if Task is Overdue
+        function checkTaskOverdue(task) {
+            if (task.status === 'COMPLETED') return false;
             
-            let matchesCategory = true;
-            if (currentCategory) {
-                if (currentCategory === 'general') {
-                    matchesCategory = (!task.category || task.category === 'general');
-                } else {
-                    matchesCategory = (task.category === currentCategory);
-                }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (task.giveTarget) {
+                const targetDate = task.giveTarget.toDate ? task.giveTarget.toDate() : new Date(task.giveTarget);
+                targetDate.setHours(0, 0, 0, 0);
+                return targetDate < today;
             }
             
-            let matchesStatus = true;
-            if (statusVal) {
-                if (statusVal.toUpperCase() === 'OVERDUE') {
-                    matchesStatus = checkTaskOverdue(task);
-                } else {
-                    matchesStatus = (task.status && task.status.toUpperCase() === statusVal.toUpperCase());
-                }
+            if (task.endDate) {
+                const endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                return endDate < today;
             }
             
-            let matchesMonth = true;
-            if (monthVal) {
-                const monthNum = parseInt(monthVal);
-                if (task.startDate) {
+            return false;
+        }
+
+        // Filter Tasks
+        function filterTasks(tasks) {
+            const statusVal = statusFilter.value;
+            const monthVal = monthFilter.value;
+            const yearVal = yearFilter.value;
+            const searchVal = searchInput.value.toLowerCase();
+            
+            return tasks.filter(task => {
+                if (hideCompleted && task.status === 'COMPLETED') return false;
+                
+                let matchesCategory = true;
+                if (currentCategory && currentCategory !== 'all') {
+                    if (currentCategory === 'general') {
+                        matchesCategory = (!task.category || task.category === 'general');
+                    } else {
+                        matchesCategory = (task.category === currentCategory);
+                    }
+                }
+                
+                let matchesStatus = true;
+                if (statusVal) {
+                    if (statusVal === 'OVERDUE') {
+                        matchesStatus = checkTaskOverdue(task);
+                    } else {
+                        matchesStatus = (task.status && task.status.toUpperCase() === statusVal.toUpperCase());
+                    }
+                }
+                
+                let matchesMonth = true;
+                if (monthVal && task.startDate) {
                     const date = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-                    matchesMonth = date.getMonth() + 1 === monthNum;
-                } else {
-                    matchesMonth = false;
+                    matchesMonth = date.getMonth() + 1 === parseInt(monthVal);
                 }
-            }
-            
-            let matchesYear = true;
-            if (yearVal) {
-                const yearNum = parseInt(yearVal);
-                if (task.startDate) {
+                
+                let matchesYear = true;
+                if (yearVal && task.startDate) {
                     const date = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-                    matchesYear = date.getFullYear() === yearNum;
-                } else {
-                    matchesYear = false;
+                    matchesYear = date.getFullYear() === parseInt(yearVal);
                 }
-            }
+                
+                let matchesSearch = true;
+                if (searchVal) {
+                    matchesSearch = (
+                        (task.taskId && task.taskId.toLowerCase().includes(searchVal)) ||
+                        (task.taskDescription && task.taskDescription.toLowerCase().includes(searchVal)) ||
+                        (task.assignedTo && task.assignedTo.toLowerCase().includes(searchVal)) ||
+                        (task.status && task.status.toLowerCase().includes(searchVal)) ||
+                        (task.location && task.location.toLowerCase().includes(searchVal))
+                    );
+                }
+                
+                return matchesCategory && matchesStatus && matchesMonth && matchesYear && matchesSearch;
+            });
+        }
+
+        // Render Tasks
+        function renderTasks(tasks) {
+            taskList.innerHTML = '';
+            let visibleCount = 0;
             
-            let matchesSearch = true;
-            if (searchVal) {
-                matchesSearch = (
-                    (task.taskId && task.taskId.toLowerCase().includes(searchVal)) ||
-                    (task.taskDescription && task.taskDescription.toLowerCase().includes(searchVal)) ||
-                    (task.assignedTo && task.assignedTo.toLowerCase().includes(searchVal)) ||
-                    (task.status && task.status.toLowerCase().includes(searchVal)) ||
-                    (task.location && task.location.toLowerCase().includes(searchVal)) ||
-                    (task.taskLine && task.taskLine.toString().includes(searchVal))
-                );
-                
-                if (!matchesSearch && task.subTasks) {
-                    for (const sub of task.subTasks) {
-                        if (
-                            (sub.taskId && sub.taskId.toLowerCase().includes(searchVal)) ||
-                            (sub.taskDescription && sub.taskDescription.toLowerCase().includes(searchVal)) ||
-                            (sub.assignedTo && sub.assignedTo.toLowerCase().includes(searchVal)) ||
-                            (sub.status && sub.status.toLowerCase().includes(searchVal)) ||
-                            (sub.location && sub.location.toLowerCase().includes(searchVal))
-                        ) {
-                            matchesSearch = true;
-                            break;
-                        }
-                        
-                        if (!matchesSearch && sub.subSubtasks) {
-                            for (const subsub of sub.subSubtasks) {
-                                if (
-                                    (subsub.taskId && subsub.taskId.toLowerCase().includes(searchVal)) ||
-                                    (subsub.taskDescription && subsub.taskDescription.toLowerCase().includes(searchVal)) ||
-                                    (subsub.assignedTo && subsub.assignedTo.toLowerCase().includes(searchVal)) ||
-                                    (subsub.status && subsub.status.toLowerCase().includes(searchVal)) ||
-                                    (subsub.location && subsub.location.toLowerCase().includes(searchVal))
-                                ) {
-                                    matchesSearch = true;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (matchesSearch) break;
-                    }
-                }
-            }
+            let totalDuration = 0;
+            let totalMaterialCost = 0;
+            let totalManCost = 0;
+            let totalCost = 0;
             
-            return matchesCategory && matchesStatus && matchesMonth && matchesYear && matchesSearch;
-        });
-    }
-
-    // Format give target display
-    function formatGiveTargetDisplay(giveTarget, status) {
-        if (!giveTarget) return '';
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const targetDate = giveTarget.toDate ? giveTarget.toDate() : new Date(giveTarget);
-        targetDate.setHours(0, 0, 0, 0);
-        
-        const formattedDate = formatDate(giveTarget);
-        
-        if (status === 'COMPLETED') {
-            return formattedDate;
-        } else if (targetDate < today) {
-            return `${formattedDate} (Overdue)`;
-        } else {
-            return formattedDate;
-        }
-    }
-
-    // Make editable input for give target
-    function makeEditableInput(cell, type, field, inputType='text') {
-        if (cell.querySelector('input')) return;
-        const val = cell.textContent.trim();
-        const input = document.createElement('input');
-        input.type = inputType;
-        if (inputType === 'date') {
-            input.value = val ? formatDateForInput(val) : '';
-        } else {
-            input.value = val;
-        }
-        input.className = 'editable-input';
-        input.setAttribute('data-field', field);
-
-        if (field === 'taskDescription' || field === 'assignedTo') {
-            input.style.textAlign = 'left';
-        } else {
-            input.style.textAlign = 'center';
-        }
-
-        cell.innerHTML = '';
-        cell.appendChild(input);
-        input.focus();
-        input.onblur = async () => {
-            let newValue = input.value;
-            if (inputType === 'date' && newValue) newValue = new Date(newValue);
-            await saveEditable(cell, type, field, newValue);
-        };
-        input.onkeypress = async (e) => {
-            if (e.key === 'Enter') {
-                input.blur();
-            }
-        };
-    }
-
-    // Make editable select for status
-    function makeEditableSelect(cell, type, field) {
-        if (cell.querySelector('select')) return;
-        const val = cell.textContent.trim();
-        const select = document.createElement('select');
-        select.className = 'editable-select';
-        select.setAttribute('data-field', field);
-        if (field === 'taskDescription' || field === 'assignedTo') {
-            select.style.textAlign = 'left';
-        } else {
-            select.style.textAlign = 'center';
-        }
-        
-        ['COMPLETED', 'ONGOING', 'PENDING', 'OVERDUE'].forEach(opt => {
-            const o = document.createElement('option');
-            o.value = opt;
-            o.textContent = opt;
-            if (val.toUpperCase() === opt) o.selected = true;
-            select.appendChild(o);
-        });
-        
-        cell.innerHTML = '';
-        cell.appendChild(select);
-        select.focus();
-        select.onblur = async () => {
-            await saveEditable(cell, type, field, select.value);
-        };
-        select.onchange = () => select.blur();
-    }
-
-    // Save editable fields including give target
-    async function saveEditable(cell, type, field, newVal) {
-        const mainId = cell.dataset.mainid || cell.dataset.id;
-        
-        try {
-            if (type === 'main') {
-                const updateData = { [field]: newVal, updatedAt: new Date() };
-                
-                if (field === 'giveTarget') {
-                    const task = allTasks.find(t => t.id === mainId);
-                    if (task && checkTaskOverdue({...task, giveTarget: newVal})) {
-                        updateData.status = 'OVERDUE';
-                    }
-                }
-                
-                await updateDoc(doc(db, "projectTasks", mainId), updateData);
-                
-                if (field === 'status' && newVal === 'COMPLETED') {
-                    await updateParentTaskStatusIfNeeded(mainId);
-                }
-            } else if (type === 'sub') {
-                const updateData = { [field]: newVal, updatedAt: new Date() };
-                
-                if (field === 'giveTarget') {
-                    const mainTask = allTasks.find(t => t.id === mainId);
-                    if (mainTask) {
-                        const subtask = mainTask.subTasks.find(s => s.id === cell.dataset.id);
-                        if (subtask && checkTaskOverdue({...subtask, giveTarget: newVal})) {
-                            updateData.status = 'OVERDUE';
-                        }
-                    }
-                }
-                
-                await updateDoc(doc(db, "projectTasks", mainId, "subtasks", cell.dataset.id), updateData);
-                
-                if (field === 'status') {
-                    await updateParentTaskStatusIfNeeded(mainId);
-                }
-            } else if (type === 'subsub') {
-                const updateData = { [field]: newVal, updatedAt: new Date() };
-                
-                if (field === 'giveTarget') {
-                    const mainTask = allTasks.find(t => t.id === cell.dataset.mainid);
-                    if (mainTask) {
-                        const subtask = mainTask.subTasks.find(s => s.id === cell.dataset.subid);
-                        if (subtask) {
-                            const subsubtask = subtask.subSubtasks.find(ss => ss.id === cell.dataset.id);
-                            if (subsubtask && checkTaskOverdue({...subsubtask, giveTarget: newVal})) {
-                                updateData.status = 'OVERDUE';
-                            }
-                        }
-                    }
-                }
-                
-                await updateDoc(doc(db, "projectTasks", cell.dataset.mainid, "subtasks", cell.dataset.subid, "subsubtasks", cell.dataset.id), updateData);
-                
-                if (field === 'status') {
-                    const subDoc = await getDoc(doc(db, "projectTasks", cell.dataset.mainid, "subtasks", cell.dataset.subid));
-                    if (subDoc.exists()) {
-                        const subData = subDoc.data();
-                        if (newVal === 'COMPLETED') {
-                            const subSubtasks = await getSubSubtasks(cell.dataset.mainid, cell.dataset.subid);
-                            const allCompleted = subSubtasks.every(s => s.status === 'COMPLETED');
-                            
-                            if (allCompleted && subData.status !== 'COMPLETED') {
-                                await updateDoc(doc(db, "projectTasks", cell.dataset.mainid, "subtasks", cell.dataset.subid), { 
-                                    status: 'COMPLETED',
-                                    updatedAt: new Date()
-                                });
-                                
-                                await updateParentTaskStatusIfNeeded(cell.dataset.mainid);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            alert("Error saving changes: " + e.message);
-        }
-    }
-
-    // Delete task function
-    async function deleteTask(type, mainId, subId, subSubId) {
-        if (!confirm("Are you sure you want to delete this task?")) return;
-        
-        try {
-            if (type === 'main') {
-                await deleteDoc(doc(db, "projectTasks", mainId));
-            } else if (type === 'sub') {
-                await deleteDoc(doc(db, "projectTasks", mainId, "subtasks", subId));
-            } else if (type === 'subsub') {
-                await deleteDoc(doc(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks", subSubId));
-            }
-            alert("Task deleted successfully!");
-        } catch (e) {
-            alert("Error deleting task: " + e.message);
-        }
-    }
-
-    // Format date for display
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-
-    // Format date for input field
-    function formatDateForInput(dateString) {
-        if (!dateString) return '';
-        const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    // Format currency
-    function formatCurrency(amount, curr='ZMW') {
-        if (!amount && amount !== 0) return '';
-        const formatter = new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency: curr || 'ZMW',
-            minimumFractionDigits: 2
-        });
-        return formatter.format(amount);
-    }
-
-    // Get status badge class
-    function getStatusBadge(status) {
-        if (!status) return '';
-        status = status.toUpperCase();
-        if (status === 'COMPLETED') return 'status-badge status-completed';
-        if (status === 'ONGOING') return 'status-badge status-ongoing';
-        if (status === 'OVERDUE') return 'status-badge status-overdue';
-        return 'status-badge status-pending';
-    }
-
-    // Get sub-subtasks
-    async function getSubSubtasks(mainId, subId) {
-        const snap = await getDocs(collection(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks"));
-        let subsubtasks = [];
-        snap.forEach(subSubDoc => {
-            subsubtasks.push({ id: subSubDoc.id, ...subSubDoc.data() });
-        });
-        return subsubtasks;
-    }
-
-    // Toggle hide completed tasks
-    function toggleHideCompleted() {
-        hideCompleted = !hideCompleted;
-        updateHideCompletedButton();
-        localStorage.setItem('hideCompleted', hideCompleted.toString());
-        renderTasks(filterTasks(allTasks));
-        renderGanttCalendar(filterTasks(allTasks));
-    }
-
-    // Update hide completed button text and icon
-    function updateHideCompletedButton() {
-        if (hideCompleted) {
-            toggleCompletedBtn.innerHTML = '<i class="fas fa-eye"></i> Show Completed';
-            toggleCompletedBtn.classList.remove('hide-completed-btn');
-            toggleCompletedBtn.classList.add('show-completed-btn');
-        } else {
-            toggleCompletedBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Completed';
-            toggleCompletedBtn.classList.remove('show-completed-btn');
-            toggleCompletedBtn.classList.add('hide-completed-btn');
-        }
-    }
-
-    // Render tasks with the new give target column
-    function renderTasks(tasks) {
-        taskList.innerHTML = '';
-        let visibleCount = 0;
-        tasks.sort((a, b) => (a.taskLine || 0) - (b.taskLine || 0));
-        
-        // Calculate totals
-        let totalDuration = 0;
-        let totalMaterialCost = 0;
-        let totalManCost = 0;
-        let totalCost = 0;
-        
-        tasks.forEach(task => {
-            if (hideCompleted && task.status === 'COMPLETED') {
-                return;
-            }
+            tasks.sort((a, b) => (a.taskLine || 0) - (b.taskLine || 0));
             
-            visibleCount++;
-            const hours = task._durationHours || 0;
-            const materialCost = task._materialCost || 0;
-            const manCost = hours * 20;
-            const taskTotalCost = manCost + materialCost;
-            
-            const displayHours = task._aggregatedDurationHours !== undefined ? task._aggregatedDurationHours : hours;
-            const displayMaterialCost = task._aggregatedMaterialCost !== undefined ? task._aggregatedMaterialCost : materialCost;
-            const displayManCost = displayHours * 20;
-            const displayTotalCost = displayManCost + displayMaterialCost;
-            
-            totalDuration += displayHours;
-            totalMaterialCost += displayMaterialCost;
-            totalManCost += displayManCost;
-            totalCost += displayTotalCost;
-            
-            const tr = document.createElement('tr');
-            tr.classList.add('main-task-row');
-            tr.innerHTML = `
-                <td>
-                    <span class="main-task-expand" data-id="${task.id}" style="font-size:17px">
-                        <i class="fas fa-${task.expanded ? "caret-down" : "caret-right"}"></i>
-                    </span>
-                </td>
-                <td data-id="${task.id}">${task.taskId || ''}</td>
-                <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine || ''}</td>
-                <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription || ''}</td>
-                <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
-                <td class="editable" data-type="main" data-field="status" data-id="${task.id}">
-                    <span class="${getStatusBadge(task.status)}">${task.status || ''}</span>
-                </td>
-                <td class="editable" data-type="main" data-field="startDate" data-id="${task.id}">${formatDate(task.startDate) || ''}</td>
-                <td class="editable" data-type="main" data-field="endDate" data-id="${task.id}">${formatDate(task.endDate) || ''}</td>
-                <td class="editable give-target-cell" data-type="main" data-field="giveTarget" data-id="${task.id}">
-                    ${formatGiveTargetDisplay(task.giveTarget, task.status)}
-                </td>
-                <td>${displayHours}</td>
-                <td><span class="cost-badge">${formatCurrency(displayMaterialCost)}</span></td>
-                <td><span class="cost-badge">${formatCurrency(displayManCost)}</span></td>
-                <td><span class="cost-badge">${formatCurrency(displayTotalCost)}</span></td>
-                <td>${task.location || ''}</td>
-                <td>
-                    <button class="add-subtask-btn action-btn" data-mainid="${task.id}">
-                        <i class="fas fa-plus"></i> Subtask
-                    </button>
-                    <button class="delete-btn" onclick="deleteTask('main', '${task.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            taskList.appendChild(tr);
-
-            if (task.expanded) {
-                if (!task.subTasks || !task.subTasks.length) {
-                    const trSub = document.createElement('tr');
-                    trSub.classList.add('subtask-row');
-                    trSub.innerHTML = `<td></td><td colspan="14">No sub tasks yet.</td>`;
-                    taskList.appendChild(trSub);
-                } else {
+            tasks.forEach(task => {
+                if (hideCompleted && task.status === 'COMPLETED') return;
+                
+                visibleCount++;
+                
+                const hours = task._durationHours || 0;
+                const materialCost = task._materialCost || 0;
+                const manCost = hours * 20;
+                const taskTotalCost = manCost + materialCost;
+                
+                totalDuration += hours;
+                totalMaterialCost += materialCost;
+                totalManCost += manCost;
+                totalCost += taskTotalCost;
+                
+                const category = categories[task.category] || categories['general'];
+                
+                const tr = document.createElement('tr');
+                tr.className = 'main-task-row';
+                tr.innerHTML = `
+                    <td>
+                        <span class="main-task-expand" data-id="${task.id}" style="cursor: pointer; font-size: 1rem;">
+                            <i class="fas fa-${task.expanded ? 'caret-down' : 'caret-right'}"></i>
+                        </span>
+                    </td>
+                    <td>${task.taskId || ''}</td>
+                    <td>${task.taskLine || ''}</td>
+                    <td>${task.taskDescription || ''}</td>
+                    <td>${task.assignedTo || ''}</td>
+                    <td><span class="${getStatusBadge(task.status)}">${task.status || 'PENDING'}</span></td>
+                    <td><span style="display: flex; align-items: center; gap: 0.25rem;"><i class="${category.icon}" style="color: ${category.color};"></i> ${category.name}</span></td>
+                    <td>${formatDate(task.startDate)}</td>
+                    <td>${formatDate(task.endDate)}</td>
+                    <td>${formatDate(task.giveTarget)}</td>
+                    <td>${hours}</td>
+                    <td>${formatCurrency(materialCost)}</td>
+                    <td>${formatCurrency(manCost)}</td>
+                    <td>${formatCurrency(taskTotalCost)}</td>
+                    <td>${task.location || ''}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            <button class="action-btn transfer-main-btn" data-id="${task.id}" data-type="main" data-title="${task.taskDescription || ''}">
+                                <i class="fas fa-arrows-alt"></i> Move
+                            </button>
+                            <button class="action-btn add-subtask-btn" data-mainid="${task.id}">
+                                <i class="fas fa-plus"></i> Sub
+                            </button>
+                            <button class="delete-btn" data-type="main" data-id="${task.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                taskList.appendChild(tr);
+                
+                // Render subtasks if expanded
+                if (task.expanded && task.subTasks) {
                     task.subTasks.forEach(sub => {
-                        if (hideCompleted && sub.status === 'COMPLETED') {
-                            return;
-                        }
+                        if (hideCompleted && sub.status === 'COMPLETED') return;
                         
                         const subHours = sub._durationHours || 0;
                         const subMaterialCost = sub._materialCost || 0;
                         const subManCost = subHours * 20;
                         const subTotalCost = subManCost + subMaterialCost;
-                        
-                        totalDuration += subHours;
-                        totalMaterialCost += subMaterialCost;
-                        totalManCost += subManCost;
-                        totalCost += subTotalCost;
+                        const subCategory = categories[sub.category] || categories['general'];
                         
                         const trSub = document.createElement('tr');
-                        trSub.classList.add('subtask-row');
+                        trSub.className = 'subtask-row';
                         trSub.innerHTML = `
-                            <td class="subtask-arrow">↪</td>
-                            <td data-mainid="${task.id}" data-id="${sub.id}">${sub.taskId || ''}</td>
+                            <td class="subtask-arrow"><i class="fas fa-level-down-alt" style="transform: rotate(90deg);"></i></td>
+                            <td>${sub.taskId || ''}</td>
                             <td></td>
-                            <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}">${sub.taskDescription || ''}</td>
-                            <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
-                            <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}">
-                                <span class="${getStatusBadge(sub.status)}">${sub.status || ''}</span>
-                            </td>
-                            <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="startDate" data-id="${sub.id}">${formatDate(sub.startDate) || ''}</td>
-                            <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="endDate" data-id="${sub.id}">${formatDate(sub.endDate) || ''}</td>
-                            <td class="editable give-target-cell" data-type="sub" data-mainid="${task.id}" data-field="giveTarget" data-id="${sub.id}">
-                                ${formatGiveTargetDisplay(sub.giveTarget, sub.status)}
-                            </td>
+                            <td style="padding-left: 2rem;">${sub.taskDescription || ''}</td>
+                            <td>${sub.assignedTo || ''}</td>
+                            <td><span class="${getStatusBadge(sub.status)}">${sub.status || 'PENDING'}</span></td>
+                            <td><span style="display: flex; align-items: center; gap: 0.25rem;"><i class="${subCategory.icon}" style="color: ${subCategory.color};"></i> ${subCategory.name}</span></td>
+                            <td>${formatDate(sub.startDate)}</td>
+                            <td>${formatDate(sub.endDate)}</td>
+                            <td>${formatDate(sub.giveTarget)}</td>
                             <td>${subHours}</td>
-                            <td><span class="cost-badge">${formatCurrency(subMaterialCost)}</span></td>
-                            <td><span class="cost-badge">${formatCurrency(subManCost)}</span></td>
-                            <td><span class="cost-badge">${formatCurrency(subTotalCost)}</span></td>
+                            <td>${formatCurrency(subMaterialCost)}</td>
+                            <td>${formatCurrency(subManCost)}</td>
+                            <td>${formatCurrency(subTotalCost)}</td>
                             <td>${sub.location || ''}</td>
                             <td>
-                                <button class="add-subsubtask-btn action-btn" data-mainid="${task.id}" data-subid="${sub.id}">
-                                    <i class="fas fa-plus"></i> Sub-Subtask
-                                </button>
-                                <button class="delete-btn" onclick="deleteTask('sub', '${task.id}', '${sub.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <button class="action-btn transfer-sub-btn" data-mainid="${task.id}" data-id="${sub.id}" data-type="sub" data-title="${sub.taskDescription || ''}">
+                                        <i class="fas fa-arrows-alt"></i>
+                                    </button>
+                                    <button class="action-btn add-subsubtask-btn" data-mainid="${task.id}" data-subid="${sub.id}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button class="delete-btn" data-type="sub" data-mainid="${task.id}" data-id="${sub.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         `;
                         taskList.appendChild(trSub);
-
-                        if (sub.subSubtasks && sub.subSubtasks.length) {
+                        
+                        // Render sub-subtasks
+                        if (sub.subSubtasks) {
                             sub.subSubtasks.forEach(subsub => {
-                                if (hideCompleted && subsub.status === 'COMPLETED') {
-                                    return;
-                                }
+                                if (hideCompleted && subsub.status === 'COMPLETED') return;
                                 
                                 const subsubHours = subsub._durationHours || 0;
                                 const subsubMaterialCost = subsub._materialCost || 0;
                                 const subsubManCost = subsubHours * 20;
                                 const subsubTotalCost = subsubManCost + subsubMaterialCost;
-                                
-                                totalDuration += subsubHours;
-                                totalMaterialCost += subsubMaterialCost;
-                                totalManCost += subsubManCost;
-                                totalCost += subsubTotalCost;
+                                const subsubCategory = categories[subsub.category] || categories['general'];
                                 
                                 const trSubSub = document.createElement('tr');
-                                trSubSub.classList.add('subsubtask-row');
+                                trSubSub.className = 'subsubtask-row';
                                 trSubSub.innerHTML = `
-                                    <td class="subtask-arrow"></td>
-                                    <td data-mainid="${task.id}" data-subid="${sub.id}" data-id="${subsub.id}">${subsub.taskId || ''}</td>
+                                    <td class="subtask-arrow"><i class="fas fa-level-down-alt" style="transform: rotate(180deg);"></i></td>
+                                    <td>${subsub.taskId || ''}</td>
                                     <td></td>
-                                    <td class="editable subtask-desc" style="padding-left:40px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${subsub.id}">${subsub.taskDescription || ''}</td>
-                                    <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${subsub.id}">${subsub.assignedTo || ''}</td>
-                                    <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${subsub.id}">
-                                        <span class="${getStatusBadge(subsub.status)}">${subsub.status || ''}</span>
-                                    </td>
-                                    <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="startDate" data-id="${subsub.id}">${formatDate(subsub.startDate) || ''}</td>
-                                    <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="endDate" data-id="${subsub.id}">${formatDate(subsub.endDate) || ''}</td>
-                                    <td class="editable give-target-cell" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="giveTarget" data-id="${subsub.id}">
-                                        ${formatGiveTargetDisplay(subsub.giveTarget, subsub.status)}
-                                    </td>
+                                    <td style="padding-left: 3rem;">↳ ${subsub.taskDescription || ''}</td>
+                                    <td>${subsub.assignedTo || ''}</td>
+                                    <td><span class="${getStatusBadge(subsub.status)}">${subsub.status || 'PENDING'}</span></td>
+                                    <td><span style="display: flex; align-items: center; gap: 0.25rem;"><i class="${subsubCategory.icon}" style="color: ${subsubCategory.color};"></i> ${subsubCategory.name}</span></td>
+                                    <td>${formatDate(subsub.startDate)}</td>
+                                    <td>${formatDate(subsub.endDate)}</td>
+                                    <td>${formatDate(subsub.giveTarget)}</td>
                                     <td>${subsubHours}</td>
-                                    <td><span class="cost-badge">${formatCurrency(subsubMaterialCost)}</span></td>
-                                    <td><span class="cost-badge">${formatCurrency(subsubManCost)}</span></td>
-                                    <td><span class="cost-badge">${formatCurrency(subsubTotalCost)}</span></td>
+                                    <td>${formatCurrency(subsubMaterialCost)}</td>
+                                    <td>${formatCurrency(subsubManCost)}</td>
+                                    <td>${formatCurrency(subsubTotalCost)}</td>
                                     <td>${subsub.location || ''}</td>
                                     <td>
-                                        <button class="delete-btn" onclick="deleteTask('subsub', '${task.id}', '${sub.id}', '${subsub.id}')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <div style="display: flex; gap: 0.25rem;">
+                                            <button class="action-btn transfer-subsub-btn" data-mainid="${task.id}" data-subid="${sub.id}" data-id="${subsub.id}" data-type="subsub" data-title="${subsub.taskDescription || ''}">
+                                                <i class="fas fa-arrows-alt"></i>
+                                            </button>
+                                            <button class="delete-btn" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-id="${subsub.id}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 `;
                                 taskList.appendChild(trSubSub);
@@ -1915,483 +1725,613 @@
                         }
                     });
                 }
-            }
-        });
-
-        document.getElementById('totalDuration').textContent = totalDuration;
-        document.getElementById('totalMaterialCost').textContent = formatCurrency(totalMaterialCost);
-        document.getElementById('totalManCost').textContent = formatCurrency(totalManCost);
-        document.getElementById('totalCost').textContent = formatCurrency(totalCost);
-
-        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
-
-        document.querySelectorAll('.main-task-expand').forEach(btn => {
-            btn.onclick = () => {
-                const mainId = btn.dataset.id;
-                expandedTasks[mainId] = !expandedTasks[mainId];
-                saveExpandedTasks();
-                allTasks.find(t => t.id === mainId).expanded = expandedTasks[mainId];
-                renderTasks(filterTasks(allTasks));
-                renderGanttCalendar(filterTasks(allTasks));
-            };
-        });
-
-        document.querySelectorAll('.add-subtask-btn').forEach(btn => {
-            btn.classList.add("action-btn");
-            btn.onclick = () => {
-                const mainId = btn.dataset.mainid;
-                addSubtask(mainId);
-            };
-        });
-        
-        document.querySelectorAll('.add-subsubtask-btn').forEach(btn => {
-            btn.classList.add("action-btn");
-            btn.onclick = () => {
-                const mainId = btn.dataset.mainid;
-                const subId = btn.dataset.subid;
-                addSubSubtask(mainId, subId);
-            };
-        });
-        
-        document.querySelectorAll('.editable').forEach(cell => {
-            cell.onclick = function() {
-                const type = this.dataset.type;
-                const field = this.dataset.field;
-                if (field === 'status') {
-                    makeEditableSelect(this, type, field);
-                } else if (field === 'startDate' || field === 'endDate' || field === 'giveTarget') {
-                    makeEditableInput(this, type, field, 'date');
-                } else if (field === 'taskLine') {
-                    makeEditableInput(this, type, field, 'number');
-                } else {
-                    makeEditableInput(this, type, field);
-                }
-            };
-        });
-    }
-
-    // Add task with start date and give target
-    addTaskBtn.onclick = async () => {
-        const projectName = await getProjectName(projectId);
-        const initials = getInitials(projectName);
-        const nextNum = await getNextMainTaskNumber(projectId);
-        const taskId = `${initials}-${nextNum}`;
-        const taskDesc = prompt("Main Task Description:");
-        if (!taskDesc) return;
-        const assignedTo = prompt("Assigned To:");
-        const location = prompt("Location:");
-        const taskLine = parseInt(prompt("Task Line (number, optional):") || 0);
-        
-        const category = autoCategorizeTask(taskDesc);
-        
-        const startDate = prompt("Start Date (YYYY-MM-DD, required):");
-        if (!startDate) {
-            alert("Start date is required!");
-            return;
-        }
-        
-        const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
-        
-        try {
-            await addDoc(collection(db, "projectTasks"), {
-                projectId,
-                taskId,
-                taskLine,
-                taskDescription: taskDesc,
-                assignedTo,
-                location,
-                category: category,
-                status: "PENDING",
-                startDate: new Date(startDate),
-                giveTarget: giveTarget ? new Date(giveTarget) : null,
-                createdAt: new Date(),
-                updatedAt: new Date()
             });
-            alert('Main task added! Category: ' + categories[category].name);
-        } catch (e) {
-            alert("Error adding main task: " + e.message);
-        }
-    };
-
-    // Add subtask with give target
-    async function addSubtask(mainId) {
-        const mainDoc = await getDoc(doc(db, "projectTasks", mainId));
-        if (!mainDoc.exists()) return alert("Main task not found!");
-        const mainTaskId = mainDoc.data().taskId;
-        const nextNum = await getNextSubtaskNumber(mainTaskId, mainId);
-        const subTaskId = `${mainTaskId}-${nextNum}`;
-        const taskDesc = prompt("Sub Task Description:");
-        if (!taskDesc) return;
-        const assignedTo = prompt("Assigned To:");
-        const location = prompt("Location:");
-        const status = prompt("Status (COMPLETED, ONGOING, PENDING):", "PENDING") || "PENDING";
-        const startDate = prompt("Start Date (YYYY-MM-DD):");
-        const endDate = prompt("End Date (YYYY-MM-DD):");
-        const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
-        const duration = parseFloat(prompt("Duration (number, hour, optional):") || 0);
-        
-        const category = autoCategorizeTask(taskDesc);
-        
-        try {
-            await addDoc(collection(db, "projectTasks", mainId, "subtasks"), {
-                taskId: subTaskId,
-                taskDescription: taskDesc,
-                assignedTo,
-                location,
-                category: category,
-                status: status.toUpperCase(),
-                startDate: startDate ? new Date(startDate) : null,
-                endDate: endDate ? new Date(endDate) : null,
-                giveTarget: giveTarget ? new Date(giveTarget) : null,
-                duration,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-        } catch (e) {
-            alert("Error adding sub task: " + e.message);
-        }
-    }
-
-    // Add sub-subtask with give target
-    async function addSubSubtask(mainId, subtaskId) {
-        const subDoc = await getDoc(doc(db, "projectTasks", mainId, "subtasks", subtaskId));
-        if (!subDoc.exists()) return alert("Subtask not found!");
-        const subTaskId = subDoc.data().taskId;
-        const nextNum = await getNextSubSubtaskNumber(subTaskId, mainId, subtaskId);
-        const subSubTaskId = `${subTaskId}-${nextNum}`;
-        const taskDesc = prompt("Sub-Subtask Description:");
-        if (!taskDesc) return;
-        const assignedTo = prompt("Assigned To:");
-        const location = prompt("Location:");
-        const status = prompt("Status (COMPLETED, ONGOING, PENDING):", "PENDING") || "PENDING";
-        const startDate = prompt("Start Date (YYYY-MM-DD):");
-        const endDate = prompt("End Date (YYYY-MM-DD):");
-        const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
-        const duration = parseFloat(prompt("Duration (number, hour, optional):") || 0);
-        
-        const category = autoCategorizeTask(taskDesc);
-        
-        try {
-            await addDoc(collection(db, "projectTasks", mainId, "subtasks", subtaskId, "subsubtasks"), {
-                taskId: subSubTaskId,
-                taskDescription: taskDesc,
-                assignedTo,
-                location,
-                category: category,
-                status: status.toUpperCase(),
-                startDate: startDate ? new Date(startDate) : null,
-                endDate: endDate ? new Date(endDate) : null,
-                giveTarget: giveTarget ? new Date(giveTarget) : null,
-                duration,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            });
-            alert('Sub-subtask added! Category: ' + categories[category].name);
-        } catch (e) {
-            alert("Error adding sub-subtask: " + e.message);
-        }
-    }
-
-    // Gantt chart functions
-    function buildGanttCalendarHeaders(baseYear, showCurrentMonthOnly) {
-        const months = [
-            {name: "Jan", days: 31},{name:"Feb",days:28},{name:"Mar",days:31},{name:"Apr",days:30},
-            {name:"May",days:31},{name:"Jun",days:30},{name:"Jul",days:31},{name:"Aug",days:31},
-            {name:"Sep",days:30},{name:"Oct",days:31},{name:"Nov",days:30},{name:"Dec",days:31}
-        ];
-        
-        if ((baseYear % 4 === 0 && baseYear % 100 !== 0) || baseYear % 400 === 0) {
-            months[1].days = 29;
-        }
-        
-        const today = new Date();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        
-        let row1 = `<tr><th rowspan="3" style="min-width:160px;text-align:left;">TASK</th>`;
-        let row2 = "<tr>";
-        let row3 = "<tr>";
-        
-        for (let m = 0; m < months.length; m++) {
-            const month = months[m];
-            const monthClass = (showCurrentMonthOnly && m === currentMonth && baseYear === currentYear) ? "current-month" : "";
             
-            if (!showCurrentMonthOnly || (m === currentMonth && baseYear === currentYear)) {
-                row1 += `<th colspan="${month.days}" class="${monthClass}">${month.name}</th>`;
-                
-                for(let d=1; d<=month.days; d++) {
-                    const dt = new Date(baseYear, m, d);
-                    const wd = ["S","M","T","W","R","F","S"][dt.getDay()];
-                    const isToday = dt.getDate() === today.getDate() && 
-                                    dt.getMonth() === today.getMonth() && 
-                                    dt.getFullYear() === today.getFullYear();
-                    const dayClass = isToday ? "today-highlight" : "";
-                    
-                    row2 += `<th class="${dayClass}">${d}</th>`;
-                    row3 += `<th class="${dayClass}">${wd}</th>`;
-                }
-            }
+            // Update totals
+            document.getElementById('totalDuration').textContent = totalDuration;
+            document.getElementById('totalMaterialCost').textContent = formatCurrency(totalMaterialCost);
+            document.getElementById('totalManCost').textContent = formatCurrency(totalManCost);
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+            
+            emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
+            
+            // Add event listeners
+            attachEventListeners();
         }
-        
-        row1 += "</tr>";
-        row2 += "</tr>";
-        row3 += "</tr>";
-        
-        ganttCalendarHead.innerHTML = row1 + row2 + row3;
-        return {months};
-    }
 
-    function renderGanttCalendar(tasks) {
-        let allRows = [];
-        let minYear = new Date().getFullYear();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        tasks.forEach(main => {
-            if (hideCompleted && main.status === 'COMPLETED') {
+        // Attach Event Listeners
+        function attachEventListeners() {
+            // Expand/Collapse
+            document.querySelectorAll('.main-task-expand').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const mainId = btn.dataset.id;
+                    expandedTasks[mainId] = !expandedTasks[mainId];
+                    localStorage.setItem('expandedTasks', JSON.stringify(expandedTasks));
+                    const task = allTasks.find(t => t.id === mainId);
+                    if (task) task.expanded = expandedTasks[mainId];
+                    renderTasks(filterTasks(allTasks));
+                };
+            });
+            
+            // Transfer buttons
+            document.querySelectorAll('.transfer-main-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const task = allTasks.find(t => t.id === btn.dataset.id);
+                    if (task) {
+                        selectedTaskForTransfer = task;
+                        selectedTaskType = 'main';
+                        selectedTaskIds = { mainId: task.id };
+                        selectedTaskName.textContent = `${task.taskId}: ${task.taskDescription}`;
+                        transferModal.classList.add('active');
+                    }
+                };
+            });
+            
+            document.querySelectorAll('.transfer-sub-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const mainTask = allTasks.find(t => t.id === btn.dataset.mainid);
+                    if (mainTask) {
+                        const subtask = mainTask.subTasks.find(s => s.id === btn.dataset.id);
+                        if (subtask) {
+                            selectedTaskForTransfer = subtask;
+                            selectedTaskType = 'sub';
+                            selectedTaskIds = { mainId: mainTask.id, subId: subtask.id };
+                            selectedTaskName.textContent = `${subtask.taskId}: ${subtask.taskDescription}`;
+                            transferModal.classList.add('active');
+                        }
+                    }
+                };
+            });
+            
+            document.querySelectorAll('.transfer-subsub-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const mainTask = allTasks.find(t => t.id === btn.dataset.mainid);
+                    if (mainTask) {
+                        const subtask = mainTask.subTasks.find(s => s.id === btn.dataset.subid);
+                        if (subtask) {
+                            const subsubtask = subtask.subSubtasks.find(ss => ss.id === btn.dataset.id);
+                            if (subsubtask) {
+                                selectedTaskForTransfer = subsubtask;
+                                selectedTaskType = 'subsub';
+                                selectedTaskIds = { 
+                                    mainId: mainTask.id, 
+                                    subId: subtask.id, 
+                                    subsubId: subsubtask.id 
+                                };
+                                selectedTaskName.textContent = `${subsubtask.taskId}: ${subsubtask.taskDescription}`;
+                                transferModal.classList.add('active');
+                            }
+                        }
+                    }
+                };
+            });
+            
+            // Delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (!confirm('Are you sure you want to delete this task?')) return;
+                    
+                    const type = btn.dataset.type;
+                    
+                    try {
+                        if (type === 'main') {
+                            await deleteDoc(doc(db, "projectTasks", btn.dataset.id));
+                        } else if (type === 'sub') {
+                            await deleteDoc(doc(db, "projectTasks", btn.dataset.mainid, "subtasks", btn.dataset.id));
+                        } else if (type === 'subsub') {
+                            await deleteDoc(doc(db, "projectTasks", btn.dataset.mainid, "subtasks", btn.dataset.subid, "subsubtasks", btn.dataset.id));
+                        }
+                        alert('Task deleted successfully!');
+                    } catch (error) {
+                        console.error("Error deleting task:", error);
+                        alert('Failed to delete task: ' + error.message);
+                    }
+                };
+            });
+            
+            // Add subtask buttons
+            document.querySelectorAll('.add-subtask-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const mainId = btn.dataset.mainid;
+                    addSubtask(mainId);
+                };
+            });
+            
+            // Add sub-subtask buttons
+            document.querySelectorAll('.add-subsubtask-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    const mainId = btn.dataset.mainid;
+                    const subId = btn.dataset.subid;
+                    addSubSubtask(mainId, subId);
+                };
+            });
+        }
+
+        // Add Main Task
+        async function addMainTask() {
+            const projectName = await getProjectName(projectId);
+            const initials = getInitials(projectName);
+            const nextNum = await getNextMainTaskNumber(projectId);
+            const taskId = `${initials}-${nextNum}`;
+            
+            const taskDesc = prompt("Task Description:");
+            if (!taskDesc) return;
+            
+            const assignedTo = prompt("Assigned To:");
+            const location = prompt("Location:");
+            const taskLine = parseInt(prompt("Task Line (number, optional):") || 0);
+            const category = autoCategorizeTask(taskDesc);
+            const startDate = prompt("Start Date (YYYY-MM-DD, required):");
+            if (!startDate) {
+                alert("Start date is required!");
                 return;
             }
             
-            allRows.push({
-                isSub: false,
-                description: main.taskDescription || '',
-                status: main.status,
-                startDate: main.startDate,
-                endDate: main.endDate,
-                giveTarget: main.giveTarget
-            });
+            const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
             
-            if (main.startDate) {
-                const y = (main.startDate?.toDate ? main.startDate.toDate() : new Date(main.startDate)).getFullYear();
-                if (y < minYear) minYear = y;
+            try {
+                await addDoc(collection(db, "projectTasks"), {
+                    projectId,
+                    taskId,
+                    taskLine,
+                    taskDescription: taskDesc,
+                    assignedTo,
+                    location,
+                    category,
+                    status: "PENDING",
+                    startDate: new Date(startDate),
+                    giveTarget: giveTarget ? new Date(giveTarget) : null,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                alert(`Task added to ${categories[category].name} category!`);
+            } catch (error) {
+                console.error("Error adding task:", error);
+                alert("Failed to add task: " + error.message);
             }
-            
-            (main.subTasks || []).forEach(sub => {
-                if (hideCompleted && sub.status === 'COMPLETED') {
+        }
+
+        // Add Subtask
+        async function addSubtask(mainId) {
+            try {
+                const mainDoc = await getDoc(doc(db, "projectTasks", mainId));
+                if (!mainDoc.exists()) {
+                    alert("Main task not found!");
                     return;
                 }
                 
-                allRows.push({
-                    isSub: true,
-                    description: sub.taskDescription || '',
-                    status: sub.status,
-                    startDate: sub.startDate,
-                    endDate: sub.endDate,
-                    giveTarget: sub.giveTarget
+                const mainTaskId = mainDoc.data().taskId;
+                const nextNum = await getNextSubtaskNumber(mainTaskId, mainId);
+                const subTaskId = `${mainTaskId}-${nextNum}`;
+                
+                const taskDesc = prompt("Subtask Description:");
+                if (!taskDesc) return;
+                
+                const assignedTo = prompt("Assigned To:");
+                const location = prompt("Location:");
+                const category = autoCategorizeTask(taskDesc);
+                const startDate = prompt("Start Date (YYYY-MM-DD):");
+                const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
+                
+                await addDoc(collection(db, "projectTasks", mainId, "subtasks"), {
+                    taskId: subTaskId,
+                    taskDescription: taskDesc,
+                    assignedTo,
+                    location,
+                    category,
+                    status: "PENDING",
+                    startDate: startDate ? new Date(startDate) : null,
+                    giveTarget: giveTarget ? new Date(giveTarget) : null,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
                 
-                if (sub.startDate) {
-                    const y = (sub.startDate?.toDate ? sub.startDate.toDate() : new Date(sub.startDate)).getFullYear();
-                    if (y < minYear) minYear = y;
-                }
-                
-                (sub.subSubtasks || []).forEach(subsub => {
-                    if (hideCompleted && subsub.status === 'COMPLETED') {
-                        return;
-                    }
-                    
-                    allRows.push({
-                        isSubSub: true,
-                        description: subsub.taskDescription || '',
-                        status: subsub.status,
-                        startDate: subsub.startDate,
-                        endDate: subsub.endDate,
-                        giveTarget: subsub.giveTarget
-                    });
-                    
-                    if (subsub.startDate) {
-                        const y = (subsub.startDate?.toDate ? subsub.startDate.toDate() : new Date(subsub.startDate)).getFullYear();
-                        if (y < minYear) minYear = y;
-                    }
-                });
-            });
-        });
-        
-        const { months } = buildGanttCalendarHeaders(minYear, showCurrentMonthOnly);
-        ganttCalendarBody.innerHTML = "";
-        
-        allRows.forEach(rowTask => {
-            let pct = "";
-            if (rowTask.status && rowTask.status.toUpperCase() === "COMPLETED") pct = "100%";
-            else if (rowTask.status && rowTask.status.toUpperCase() === "ONGOING") pct = "60%";
-            else if (rowTask.status && rowTask.status.toUpperCase() === "PENDING") pct = "0%";
-            else if (rowTask.status && rowTask.status.toUpperCase() === "OVERDUE") pct = "0%";
-            else pct = "";
-            
-            let desc = rowTask.isSubSub
-                ? '<span style="margin-left:32px;color:#666;font-size:12px;vertical-align:middle;">↪↪</span> <span style="opacity:.8;">' + rowTask.description + '</span>'
-                : rowTask.isSub
-                ? '<span style="margin-left:12px;color:#333;font-size:13px;vertical-align:middle;">↪</span> <span style="opacity:.8;">' + rowTask.description + '</span>'
-                : '<span style="font-weight:bold;color:#000;">' + rowTask.description + '</span>';
-            
-            let row = `<tr><td style="text-align:left">${desc}</td>`;
-            let start = null, end = null;
-            
-            if (rowTask.giveTarget) {
-                start = rowTask.giveTarget.toDate ? rowTask.giveTarget.toDate() : new Date(rowTask.giveTarget);
-                start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-                
-                if (rowTask.status === 'ONGOING' || rowTask.status === 'PENDING' || rowTask.status === 'OVERDUE') {
-                    end = today;
-                }
-            } else if (rowTask.startDate) {
-                start = rowTask.startDate.toDate ? rowTask.startDate.toDate() : new Date(rowTask.startDate);
-                start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-                
-                if ((rowTask.status === 'ONGOING' || rowTask.status === 'PENDING' || rowTask.status === 'OVERDUE') && !rowTask.endDate) {
-                    end = today;
-                } else if (rowTask.endDate) {
-                    end = rowTask.endDate.toDate ? rowTask.endDate.toDate() : new Date(rowTask.endDate);
-                    end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-                }
+                alert(`Subtask added to ${categories[category].name} category!`);
+            } catch (error) {
+                console.error("Error adding subtask:", error);
+                alert("Failed to add subtask: " + error.message);
             }
-            
-            let colDate = new Date(minYear, 0, 1);
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            
-            for (let m = 0; m < months.length; m++) {
-                const month = months[m];
-                
-                if (showCurrentMonthOnly && (m !== currentMonth || minYear !== currentYear)) {
-                    colDate.setMonth(colDate.getMonth() + 1);
-                    colDate.setDate(1);
-                    continue;
+        }
+
+        // Add Sub-Subtask
+        async function addSubSubtask(mainId, subId) {
+            try {
+                const subDoc = await getDoc(doc(db, "projectTasks", mainId, "subtasks", subId));
+                if (!subDoc.exists()) {
+                    alert("Subtask not found!");
+                    return;
                 }
                 
-                for (let d = 1; d <= month.days; d++) {
-                    let bar = '';
+                const subTaskId = subDoc.data().taskId;
+                const nextNum = await getNextSubSubtaskNumber(subTaskId, mainId, subId);
+                const subSubTaskId = `${subTaskId}-${nextNum}`;
+                
+                const taskDesc = prompt("Sub-Subtask Description:");
+                if (!taskDesc) return;
+                
+                const assignedTo = prompt("Assigned To:");
+                const location = prompt("Location:");
+                const category = autoCategorizeTask(taskDesc);
+                const startDate = prompt("Start Date (YYYY-MM-DD):");
+                const giveTarget = prompt("Give Target Date (YYYY-MM-DD, optional):");
+                
+                await addDoc(collection(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks"), {
+                    taskId: subSubTaskId,
+                    taskDescription: taskDesc,
+                    assignedTo,
+                    location,
+                    category,
+                    status: "PENDING",
+                    startDate: startDate ? new Date(startDate) : null,
+                    giveTarget: giveTarget ? new Date(giveTarget) : null,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                
+                alert(`Sub-subtask added to ${categories[category].name} category!`);
+            } catch (error) {
+                console.error("Error adding sub-subtask:", error);
+                alert("Failed to add sub-subtask: " + error.message);
+            }
+        }
+
+        // Helper Functions
+        async function getProjectName(projectId) {
+            try {
+                const docSnap = await getDoc(doc(db, "projectDashboard", projectId));
+                return docSnap.exists() ? docSnap.data().name : "PROJECT";
+            } catch {
+                return "PROJECT";
+            }
+        }
+
+        function getInitials(name) {
+            return (name.match(/\b\w/g) || []).join('').toUpperCase() || "PRJ";
+        }
+
+        async function getNextMainTaskNumber(projectId) {
+            const q = query(collection(db, "projectTasks"), where("projectId", "==", projectId));
+            const snap = await getDocs(q);
+            let max = 0;
+            snap.forEach(doc => {
+                const task = doc.data();
+                if (task.taskId) {
+                    const m = task.taskId.match(/-(\d+)$/);
+                    if (m) max = Math.max(max, parseInt(m[1], 10));
+                }
+            });
+            return max + 1;
+        }
+
+        async function getNextSubtaskNumber(mainTaskId, mainDocId) {
+            const snap = await getDocs(collection(db, "projectTasks", mainDocId, "subtasks"));
+            let max = 0;
+            snap.forEach(doc => {
+                const task = doc.data();
+                if (task.taskId && task.taskId.startsWith(mainTaskId + "-")) {
+                    const m = task.taskId.match(/-(\d+)$/);
+                    if (m) max = Math.max(max, parseInt(m[1], 10));
+                }
+            });
+            return max + 1;
+        }
+
+        async function getNextSubSubtaskNumber(subTaskId, mainDocId, subDocId) {
+            const snap = await getDocs(collection(db, "projectTasks", mainDocId, "subtasks", subDocId, "subsubtasks"));
+            let max = 0;
+            snap.forEach(doc => {
+                const task = doc.data();
+                if (task.taskId && task.taskId.startsWith(subTaskId + "-")) {
+                    const m = task.taskId.match(/-(\d+)$/);
+                    if (m) max = Math.max(max, parseInt(m[1], 10));
+                }
+            });
+            return max + 1;
+        }
+
+        // Load Tasks from Firebase
+        function loadTasks() {
+            if (!projectId) return;
+            
+            const tasksQuery = query(collection(db, "projectTasks"), where("projectId", "==", projectId));
+            
+            onSnapshot(tasksQuery, async (snapshot) => {
+                allTasks = [];
+                
+                for (const docSnap of snapshot.docs) {
+                    const taskData = { 
+                        id: docSnap.id, 
+                        ...docSnap.data(),
+                        expanded: expandedTasks[docSnap.id] || false,
+                        subTasks: []
+                    };
                     
-                    if (start) {
-                        let testDate = new Date(colDate.getFullYear(), colDate.getMonth(), colDate.getDate());
+                    if (!taskData.category) {
+                        taskData.category = autoCategorizeTask(taskData.taskDescription);
+                    }
+                    
+                    if (checkTaskOverdue(taskData)) {
+                        taskData.status = 'OVERDUE';
+                    }
+                    
+                    // Load subtasks
+                    const subSnap = await getDocs(collection(db, "projectTasks", docSnap.id, "subtasks"));
+                    
+                    for (const subDoc of subSnap.docs) {
+                        const subData = {
+                            id: subDoc.id,
+                            ...subDoc.data(),
+                            subSubtasks: []
+                        };
                         
-                        if (testDate >= start && (!end || testDate <= end)) {
-                            const isToday = testDate.getTime() === today.getTime();
-                            const isPast = testDate < today;
-                            
-                            if (!rowTask.isSub && !rowTask.isSubSub) {
-                                if (pct === "100%") {
-                                    bar = '<div class="gantt-bar"></div>';
-                                } else if (pct === "60%") {
-                                    bar = '<div class="gantt-bar"></div>';
-                                } else {
-                                    bar = '<div class="gantt-bar gantt-bar-empty"></div>';
-                                }
-                            } else if (rowTask.isSub) {
-                                if (pct === "100%") {
-                                    bar = '<div class="gantt-bar" style="opacity:.6"></div>';
-                                } else if (pct === "60%") {
-                                    bar = '<div class="gantt-bar" style="opacity:.8"></div>';
-                                } else {
-                                    bar = '<div class="gantt-bar gantt-bar-empty"></div>';
-                                }
-                            } else if (rowTask.isSubSub) {
-                                    if (pct === "100%") {
-                                        bar = '<div class="gantt-bar" style="opacity:.4"></div>';
-                                    } else if (pct === "60%") {
-                                        bar = '<div class="gantt-bar" style="opacity:.6"></div>';
-                                    } else {
-                                        bar = '<div class="gantt-bar gantt-bar-empty"></div>';
-                                    }
-                                }
-                            }
+                        if (!subData.category) {
+                            subData.category = autoCategorizeTask(subData.taskDescription);
                         }
                         
-                        row += `<td>${bar}</td>`;
-                        colDate.setDate(colDate.getDate() + 1);
+                        if (checkTaskOverdue(subData)) {
+                            subData.status = 'OVERDUE';
+                        }
+                        
+                        // Load sub-subtasks
+                        const subSubSnap = await getDocs(collection(db, "projectTasks", docSnap.id, "subtasks", subDoc.id, "subsubtasks"));
+                        
+                        subData.subSubtasks = subSubSnap.docs.map(subSubDoc => {
+                            const subSubData = {
+                                id: subSubDoc.id,
+                                ...subSubDoc.data()
+                            };
+                            
+                            if (!subSubData.category) {
+                                subSubData.category = autoCategorizeTask(subSubData.taskDescription);
+                            }
+                            
+                            if (checkTaskOverdue(subSubData)) {
+                                subSubData.status = 'OVERDUE';
+                            }
+                            
+                            return subSubData;
+                        });
+                        
+                        taskData.subTasks.push(subData);
+                    }
+                    
+                    allTasks.push(taskData);
+                }
+                
+                // Load expanded state from localStorage
+                const savedExpanded = localStorage.getItem('expandedTasks');
+                if (savedExpanded) {
+                    try {
+                        expandedTasks = JSON.parse(savedExpanded);
+                        allTasks.forEach(task => {
+                            if (expandedTasks[task.id]) {
+                                task.expanded = true;
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Error parsing expanded tasks:", e);
                     }
                 }
                 
-                row += `</tr>`;
-                ganttCalendarBody.innerHTML += row;
+                // Render filtered tasks
+                renderTasks(filterTasks(allTasks));
+                renderGanttCalendar(filterTasks(allTasks));
             });
         }
 
-        // Toggle Gantt visibility
+        // Render Gantt Calendar
+        function renderGanttCalendar(tasks) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Get min year from tasks
+            let minYear = today.getFullYear();
+            tasks.forEach(task => {
+                if (task.startDate) {
+                    const date = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+                    if (date.getFullYear() < minYear) minYear = date.getFullYear();
+                }
+            });
+            
+            // Build calendar headers
+            const months = [
+                { name: "Jan", days: 31 }, { name: "Feb", days: 28 }, { name: "Mar", days: 31 },
+                { name: "Apr", days: 30 }, { name: "May", days: 31 }, { name: "Jun", days: 30 },
+                { name: "Jul", days: 31 }, { name: "Aug", days: 31 }, { name: "Sep", days: 30 },
+                { name: "Oct", days: 31 }, { name: "Nov", days: 30 }, { name: "Dec", days: 31 }
+            ];
+            
+            // Check for leap year
+            if ((minYear % 4 === 0 && minYear % 100 !== 0) || minYear % 400 === 0) {
+                months[1].days = 29;
+            }
+            
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            // Build headers
+            let headHTML = '<tr><th style="min-width: 200px; text-align: left;">TASK</th>';
+            
+            for (let m = 0; m < months.length; m++) {
+                if (!showCurrentMonthOnly || (m === currentMonth && minYear === currentYear)) {
+                    headHTML += `<th colspan="${months[m].days}" style="background: ${m === currentMonth && minYear === currentYear ? '#ebf8ff' : 'transparent'};">${months[m].name}</th>`;
+                }
+            }
+            headHTML += '</tr><tr>';
+            
+            for (let m = 0; m < months.length; m++) {
+                if (!showCurrentMonthOnly || (m === currentMonth && minYear === currentYear)) {
+                    for (let d = 1; d <= months[m].days; d++) {
+                        headHTML += `<th>${d}</th>`;
+                    }
+                }
+            }
+            headHTML += '</tr><tr>';
+            
+            for (let m = 0; m < months.length; m++) {
+                if (!showCurrentMonthOnly || (m === currentMonth && minYear === currentYear)) {
+                    for (let d = 1; d <= months[m].days; d++) {
+                        const date = new Date(minYear, m, d);
+                        const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                        const isToday = date.getTime() === today.getTime();
+                        headHTML += `<th style="${isToday ? 'background: #feebc8;' : ''}">${dayNames[date.getDay()]}</th>`;
+                    }
+                }
+            }
+            headHTML += '</tr>';
+            
+            document.getElementById('ganttCalendarHead').innerHTML = headHTML;
+            
+            // Build body
+            let bodyHTML = '';
+            
+            tasks.forEach(task => {
+                if (hideCompleted && task.status === 'COMPLETED') return;
+                
+                let taskName = task.taskDescription || 'Unnamed Task';
+                if (taskName.length > 30) taskName = taskName.substring(0, 27) + '...';
+                
+                let startDate = null;
+                let endDate = null;
+                
+                if (task.giveTarget) {
+                    startDate = task.giveTarget.toDate ? task.giveTarget.toDate() : new Date(task.giveTarget);
+                    startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                    endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 1);
+                } else if (task.startDate) {
+                    startDate = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+                    startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                    
+                    if (task.endDate) {
+                        endDate = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
+                        endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+                    } else {
+                        endDate = new Date(startDate);
+                        endDate.setDate(endDate.getDate() + 7);
+                    }
+                }
+                
+                bodyHTML += '<tr>';
+                bodyHTML += `<td style="text-align: left; font-weight: 600; color: var(--primary);">${taskName}</td>`;
+                
+                for (let m = 0; m < months.length; m++) {
+                    if (!showCurrentMonthOnly || (m === currentMonth && minYear === currentYear)) {
+                        for (let d = 1; d <= months[m].days; d++) {
+                            const currentDate = new Date(minYear, m, d);
+                            let isInRange = false;
+                            
+                            if (startDate && endDate) {
+                                if (currentDate >= startDate && currentDate <= endDate) {
+                                    isInRange = true;
+                                }
+                            }
+                            
+                            if (isInRange) {
+                                let barClass = 'gantt-bar';
+                                if (task.status === 'COMPLETED') {
+                                    barClass = 'gantt-bar';
+                                } else if (task.status === 'ONGOING') {
+                                    barClass = 'gantt-bar';
+                                } else {
+                                    barClass = 'gantt-bar-empty';
+                                }
+                                bodyHTML += `<td style="background: ${currentDate.getTime() === today.getTime() ? '#feebc8' : 'transparent'};"><div class="${barClass}" style="width: 90%;"></div></td>`;
+                            } else {
+                                bodyHTML += `<td style="background: ${currentDate.getTime() === today.getTime() ? '#feebc8' : 'transparent'};"></td>`;
+                            }
+                        }
+                    }
+                }
+                
+                bodyHTML += '</tr>';
+            });
+            
+            document.getElementById('ganttCalendarBody').innerHTML = bodyHTML;
+        }
+
+        // Toggle Gantt Visibility
         function toggleGanttVisibility() {
             ganttVisible = !ganttVisible;
             if (ganttVisible) {
                 ganttTableCard.classList.remove('hide');
-                showGanttBtn.classList.add('hide');
-                mainCard.style.flexBasis = '65%';
-                ganttTableCard.style.flexBasis = '35%';
+                showGanttBtn.style.display = 'none';
+                toggleGanttBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
                 localStorage.setItem('ganttVisible', 'true');
             } else {
                 ganttTableCard.classList.add('hide');
-                showGanttBtn.classList.remove('hide');
-                mainCard.style.flexBasis = '100%';
+                showGanttBtn.style.display = 'flex';
+                toggleGanttBtn.innerHTML = '<i class="fas fa-eye"></i>';
                 localStorage.setItem('ganttVisible', 'false');
             }
         }
 
-        // Toggle current month view
+        // Toggle Current Month View
         function toggleCurrentMonthView() {
             showCurrentMonthOnly = !showCurrentMonthOnly;
-            currentMonthBtn.textContent = showCurrentMonthOnly ? "All Months" : "Current Month";
+            currentMonthBtn.innerHTML = showCurrentMonthOnly ? 'All Months' : 'Current Month';
             localStorage.setItem('showCurrentMonthOnly', showCurrentMonthOnly.toString());
             renderGanttCalendar(filterTasks(allTasks));
         }
 
-        // Event listeners
-        statusFilter.addEventListener('change', () => {
-            saveFilterStates();
+        // Toggle Hide Completed
+        function toggleHideCompleted() {
+            hideCompleted = !hideCompleted;
+            toggleCompletedBtn.innerHTML = hideCompleted ? 
+                '<i class="fas fa-eye"></i> Show Completed' : 
+                '<i class="fas fa-eye-slash"></i> Hide Completed';
+            localStorage.setItem('hideCompleted', hideCompleted.toString());
             renderTasks(filterTasks(allTasks));
             renderGanttCalendar(filterTasks(allTasks));
-        });
-        
-        monthFilter.addEventListener('change', () => {
-            saveFilterStates();
-            renderTasks(filterTasks(allTasks));
-            renderGanttCalendar(filterTasks(allTasks));
-        });
-        
-        yearFilter.addEventListener('change', () => {
-            saveFilterStates();
-            renderTasks(filterTasks(allTasks));
-            renderGanttCalendar(filterTasks(allTasks));
-        });
-        
-        searchInput.addEventListener('input', () => {
-            renderTasks(filterTasks(allTasks));
-            renderGanttCalendar(filterTasks(allTasks));
-        });
+        }
 
-        toggleGanttBtn.addEventListener('click', toggleGanttVisibility);
-        showGanttBtn.addEventListener('click', toggleGanttVisibility);
-        currentMonthBtn.addEventListener('click', toggleCurrentMonthView);
-        toggleCompletedBtn.addEventListener('click', toggleHideCompleted);
-
-        // Load filter states
-        function loadFilterStates() {
+        // Load Saved States
+        function loadSavedStates() {
+            // Load filter states
             const savedStatus = localStorage.getItem('taskStatusFilter');
-            const savedMonth = localStorage.getItem('taskMonthFilter');
-            const savedYear = localStorage.getItem('taskYearFilter');
-            const savedSearch = localStorage.getItem('taskSearchFilter');
-            const savedGanttVisible = localStorage.getItem('ganttVisible');
-            const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
-            const savedHideCompleted = localStorage.getItem('hideCompleted');
-            
             if (savedStatus) statusFilter.value = savedStatus;
+            
+            const savedMonth = localStorage.getItem('taskMonthFilter');
             if (savedMonth) monthFilter.value = savedMonth;
+            
+            const savedYear = localStorage.getItem('taskYearFilter');
             if (savedYear) yearFilter.value = savedYear;
+            
+            const savedSearch = localStorage.getItem('taskSearchFilter');
             if (savedSearch) searchInput.value = savedSearch;
+            
+            // Load gantt visibility
+            const savedGanttVisible = localStorage.getItem('ganttVisible');
             if (savedGanttVisible === 'true') {
                 ganttVisible = true;
+                ganttTableCard.classList.remove('hide');
+                showGanttBtn.style.display = 'none';
                 toggleGanttBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            } else {
-                ganttVisible = false;
-                toggleGanttBtn.innerHTML = '<i class="fas fa-eye"></i>';
             }
+            
+            // Load current month view
+            const savedShowCurrentMonthOnly = localStorage.getItem('showCurrentMonthOnly');
             if (savedShowCurrentMonthOnly === 'true') {
                 showCurrentMonthOnly = true;
-                currentMonthBtn.textContent = "All Months";
+                currentMonthBtn.innerHTML = 'All Months';
             }
+            
+            // Load hide completed
+            const savedHideCompleted = localStorage.getItem('hideCompleted');
             if (savedHideCompleted === 'true') {
                 hideCompleted = true;
+                toggleCompletedBtn.innerHTML = '<i class="fas fa-eye"></i> Show Completed';
             }
         }
 
-        // Save filter states
+        // Save Filter States
         function saveFilterStates() {
             localStorage.setItem('taskStatusFilter', statusFilter.value);
             localStorage.setItem('taskMonthFilter', monthFilter.value);
@@ -2399,46 +2339,125 @@
             localStorage.setItem('taskSearchFilter', searchInput.value);
         }
 
-        // Load expanded tasks
-        function loadExpandedTasks() {
-            try {
-                expandedTasks = JSON.parse(localStorage.getItem("expanded_tasks") || "{}");
-            } catch (e) { expandedTasks = {}; }
-        }
-
-        // Save expanded tasks
-        function saveExpandedTasks() {
-            localStorage.setItem("expanded_tasks", JSON.stringify(expandedTasks));
-        }
-
         // Initialize
-        updateCategoryUI();
-        loadFilterStates();
-        loadExpandedTasks();
-        updateHideCompletedButton();
-        
-        // Set initial Gantt visibility
-        if (ganttVisible) {
-            ganttTableCard.classList.remove('hide');
-            showGanttBtn.classList.add('hide');
-            mainCard.style.flexBasis = '65%';
-            ganttTableCard.style.flexBasis = '35%';
-        } else {
-            ganttTableCard.classList.add('hide');
-            showGanttBtn.classList.remove('hide');
-            mainCard.style.flexBasis = '100%';
+        function init() {
+            initSidebar();
+            updateCategoryUI();
+            populateCategoryList();
+            loadSavedStates();
+            
+            if (projectId) {
+                document.getElementById('projectName').textContent = `Project ID: ${projectId}`;
+                loadTasks();
+            }
+            
+            // Event Listeners
+            addTaskBtn.addEventListener('click', addMainTask);
+            toggleCompletedBtn.addEventListener('click', toggleHideCompleted);
+            refreshBtn.addEventListener('click', () => loadTasks());
+            
+            statusFilter.addEventListener('change', () => {
+                saveFilterStates();
+                renderTasks(filterTasks(allTasks));
+                renderGanttCalendar(filterTasks(allTasks));
+            });
+            
+            monthFilter.addEventListener('change', () => {
+                saveFilterStates();
+                renderTasks(filterTasks(allTasks));
+                renderGanttCalendar(filterTasks(allTasks));
+            });
+            
+            yearFilter.addEventListener('change', () => {
+                saveFilterStates();
+                renderTasks(filterTasks(allTasks));
+                renderGanttCalendar(filterTasks(allTasks));
+            });
+            
+            searchInput.addEventListener('input', () => {
+                saveFilterStates();
+                renderTasks(filterTasks(allTasks));
+                renderGanttCalendar(filterTasks(allTasks));
+            });
+            
+            toggleGanttBtn.addEventListener('click', toggleGanttVisibility);
+            showGanttBtn.addEventListener('click', toggleGanttVisibility);
+            currentMonthBtn.addEventListener('click', toggleCurrentMonthView);
+            
+            // Transfer Modal Events
+            transferCategoryBtn.addEventListener('click', () => {
+                if (!selectedTaskForTransfer) {
+                    alert('Please select a task to transfer first by clicking the "Move" button next to a task.');
+                    return;
+                }
+                transferModal.classList.add('active');
+            });
+            
+            function closeModal() {
+                transferModal.classList.remove('active');
+                selectedTaskForTransfer = null;
+                selectedTaskType = null;
+                selectedTaskIds = null;
+            }
+            
+            closeTransferModal.addEventListener('click', closeModal);
+            cancelTransfer.addEventListener('click', closeModal);
+            
+            confirmTransfer.addEventListener('click', async () => {
+                if (!selectedTaskForTransfer || !selectedTaskType) {
+                    alert('No task selected for transfer.');
+                    closeModal();
+                    return;
+                }
+                
+                const selectedOption = document.querySelector('.category-option.selected');
+                if (!selectedOption) {
+                    alert('Please select a category to transfer to.');
+                    return;
+                }
+                
+                const newCategory = selectedOption.dataset.category;
+                
+                let success = false;
+                
+                if (selectedTaskType === 'main') {
+                    success = await transferTaskCategory(
+                        selectedTaskIds.mainId,
+                        newCategory,
+                        'main'
+                    );
+                } else if (selectedTaskType === 'sub') {
+                    success = await transferTaskCategory(
+                        selectedTaskIds.subId,
+                        newCategory,
+                        'sub',
+                        selectedTaskIds.mainId
+                    );
+                } else if (selectedTaskType === 'subsub') {
+                    success = await transferTaskCategory(
+                        selectedTaskIds.subsubId,
+                        newCategory,
+                        'subsub',
+                        selectedTaskIds.mainId,
+                        selectedTaskIds.subId
+                    );
+                }
+                
+                if (success) {
+                    closeModal();
+                }
+            });
+            
+            // Click outside to close modal
+            window.addEventListener('click', (e) => {
+                if (e.target === transferModal) {
+                    closeModal();
+                }
+            });
         }
-        
-        // Load tasks
-        loadAllTasks();
 
-        // Refresh the calendar every minute to update the live ticking
-        setInterval(() => {
-            renderGanttCalendar(filterTasks(allTasks));
-        }, 60000);
-
-        // Make deleteTask function available globally
-        window.deleteTask = deleteTask;
+        // Start the application
+        init();
     </script>
 </body>
 </html>
