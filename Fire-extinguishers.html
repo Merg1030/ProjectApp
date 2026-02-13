@@ -275,9 +275,9 @@
     }
 
     .toggle-form-btn {
-      background: none;
-      border: 1px solid var(--border-color);
-      color: var(--primary);
+      background: var(--primary);
+      color: white;
+      border: none;
       padding: 0.5rem 1rem;
       border-radius: 0.375rem;
       font-size: 0.875rem;
@@ -290,8 +290,7 @@
     }
 
     .toggle-form-btn:hover {
-      background: #f7fafc;
-      border-color: var(--primary);
+      background: #0d2b50;
     }
 
     .form-grid {
@@ -426,7 +425,7 @@
       background: white;
       border-radius: 0.5rem;
       padding: 2rem;
-      max-width: 500px;
+      max-width: 600px;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
@@ -468,9 +467,48 @@
       border-color: var(--primary);
     }
 
+    /* Service History Views */
+    .history-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .history-tab {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: none;
+      color: #718096;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 0.375rem;
+    }
+
+    .history-tab:hover {
+      background: #f7fafc;
+      color: var(--primary);
+    }
+
+    .history-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .history-panel {
+      display: none;
+    }
+
+    .history-panel.active {
+      display: block;
+    }
+
     .service-history-list {
       list-style: none;
       padding: 0;
+      margin: 0;
     }
 
     .service-history-item {
@@ -497,6 +535,60 @@
       border-radius: 2rem;
       font-size: 0.75rem;
       font-weight: 600;
+    }
+
+    .bulk-service-group {
+      margin-bottom: 2rem;
+    }
+
+    .bulk-service-date {
+      background: #f7fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .bulk-service-list {
+      list-style: none;
+      padding: 0 0 0 1rem;
+    }
+
+    .bulk-service-item {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .bulk-service-item:last-child {
+      border-bottom: none;
+    }
+
+    .bulk-service-code {
+      background: #e6fffa;
+      color: #234e52;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+
+    .bulk-service-location {
+      flex: 1;
+    }
+
+    .bulk-service-type {
+      background: #e9d8fd;
+      color: #553c9a;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
     }
 
     /* Table Section */
@@ -610,6 +702,15 @@
       background: #e6fffa;
       color: #234e52;
       font-family: monospace;
+    }
+
+    .next-service-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #feebc8;
+      color: #c05621;
     }
 
     .checkbox-cell {
@@ -917,21 +1018,26 @@
           <span class="selected-count" id="selectedCount">0 selected</span>
           <span id="serviceInfo">Select extinguishers to service</span>
         </div>
-        <button class="btn-success" id="serviceSelectedBtn">
-          <i class="fas fa-tools"></i> Service Selected
-        </button>
+        <div style="display: flex; gap: 1rem;">
+          <button class="btn-success" id="serviceSelectedBtn">
+            <i class="fas fa-tools"></i> Service Selected
+          </button>
+          <button class="btn-primary" id="viewServiceHistoryBtn">
+            <i class="fas fa-history"></i> View Service History
+          </button>
+        </div>
       </div>
 
-      <!-- Add New Extinguisher Form with Hide/Unhide -->
+      <!-- Add New Extinguisher Form with Hide/Unhide (Hidden by Default) -->
       <div class="add-form-section">
         <div class="section-header">
           <h2>Add New Extinguisher</h2>
           <button class="toggle-form-btn" id="toggleFormBtn">
-            <i class="fas fa-eye-slash" id="toggleFormIcon"></i> Hide Form
+            <i class="fas fa-eye" id="toggleFormIcon"></i> Show Form
           </button>
         </div>
         
-        <div class="form-grid" id="addForm">
+        <div class="form-grid hidden" id="addForm">
           <div class="form-group">
             <label>Code/Serial</label>
             <input type="text" id="codeInput" placeholder="e.g. EXT-001, ABC-123">
@@ -995,6 +1101,7 @@
                 <th>Capacity</th>
                 <th>Expiration</th>
                 <th>Last Service</th>
+                <th>Next Service</th>
                 <th>Status</th>
                 <th>Service Count</th>
                 <th>Actions</th>
@@ -1002,9 +1109,9 @@
             </thead>
             <tbody id="tableBody">
               <tr>
-                <td colspan="10" class="empty-state">
+                <td colspan="11" class="empty-state">
                   <i class="fas fa-fire-extinguisher"></i>
-                  No extinguishers found. Add one using the form above.
+                  No extinguishers found. Click "Show Form" to add one.
                 </td>
               </tr>
             </tbody>
@@ -1037,12 +1144,46 @@
         <h3 id="historyModalTitle">Service History</h3>
         <button class="close-modal" id="closeHistoryModal">&times;</button>
       </div>
-      <div id="historyContent">
+      
+      <div class="history-tabs">
+        <button class="history-tab active" data-tab="individual">Individual History</button>
+        <button class="history-tab" data-tab="bulk">Bulk Service View</button>
+      </div>
+      
+      <div id="individualHistory" class="history-panel active">
         <ul class="service-history-list" id="serviceHistoryList">
           <li class="service-history-item">
-            <span>Loading history...</span>
+            <span>Select an extinguisher to view history</span>
           </li>
         </ul>
+      </div>
+      
+      <div id="bulkHistory" class="history-panel">
+        <div id="bulkServiceContent">
+          <!-- Bulk service history will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Modal (for selecting next service date) -->
+  <div class="modal" id="serviceModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Service Extinguishers</h3>
+        <button class="close-modal" id="closeServiceModal">&times;</button>
+      </div>
+      
+      <p id="serviceModalSelected">Selected: <span id="serviceSelectedCount">0</span> extinguishers</p>
+      
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label>Next Service Date</label>
+        <input type="date" class="password-input" id="nextServiceDate" style="margin-bottom: 0;">
+      </div>
+      
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn-success" id="confirmService">Confirm Service</button>
+        <button class="toggle-form-btn" id="cancelService">Cancel</button>
       </div>
     </div>
   </div>
@@ -1060,8 +1201,7 @@
       query, 
       orderBy,
       serverTimestamp,
-      arrayUnion,
-      getDoc
+      arrayUnion
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
     
     const firebaseConfig = {
@@ -1095,6 +1235,7 @@
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const selectedCount = document.getElementById('selectedCount');
     const serviceSelectedBtn = document.getElementById('serviceSelectedBtn');
+    const viewServiceHistoryBtn = document.getElementById('viewServiceHistoryBtn');
     
     const totalCount = document.getElementById('totalCount');
     const goodCount = document.getElementById('goodCount');
@@ -1112,6 +1253,17 @@
     const closeHistoryModal = document.getElementById('closeHistoryModal');
     const serviceHistoryList = document.getElementById('serviceHistoryList');
     const historyModalTitle = document.getElementById('historyModalTitle');
+    const historyTabs = document.querySelectorAll('.history-tab');
+    const individualHistory = document.getElementById('individualHistory');
+    const bulkHistory = document.getElementById('bulkHistory');
+    const bulkServiceContent = document.getElementById('bulkServiceContent');
+
+    const serviceModal = document.getElementById('serviceModal');
+    const closeServiceModal = document.getElementById('closeServiceModal');
+    const cancelService = document.getElementById('cancelService');
+    const confirmService = document.getElementById('confirmService');
+    const serviceSelectedCount = document.getElementById('serviceSelectedCount');
+    const nextServiceDate = document.getElementById('nextServiceDate');
 
     // Form toggle elements
     const toggleFormBtn = document.getElementById('toggleFormBtn');
@@ -1128,9 +1280,12 @@
     const today = new Date();
     const nextYear = new Date();
     nextYear.setFullYear(nextYear.getFullYear() + 1);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
     
     expirationInput.valueAsDate = nextYear;
     serviceInput.valueAsDate = today;
+    nextServiceDate.valueAsDate = nextMonth;
     capacityInput.value = '4';
 
     // Sidebar functionality
@@ -1170,14 +1325,11 @@
       }
     });
 
-    // Form toggle functionality
-    const isFormHidden = localStorage.getItem('addFormHidden') === 'true';
-    if (isFormHidden) {
-      addForm.classList.add('hidden');
-      toggleFormIcon.classList.remove('fa-eye-slash');
-      toggleFormIcon.classList.add('fa-eye');
-      toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form';
-    }
+    // Form toggle functionality - HIDDEN BY DEFAULT
+    addForm.classList.add('hidden');
+    toggleFormIcon.classList.remove('fa-eye-slash');
+    toggleFormIcon.classList.add('fa-eye');
+    toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form';
 
     toggleFormBtn.addEventListener('click', function() {
       addForm.classList.toggle('hidden');
@@ -1186,12 +1338,10 @@
         toggleFormIcon.classList.remove('fa-eye-slash');
         toggleFormIcon.classList.add('fa-eye');
         toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form';
-        localStorage.setItem('addFormHidden', 'true');
       } else {
         toggleFormIcon.classList.remove('fa-eye');
         toggleFormIcon.classList.add('fa-eye-slash');
         toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash" id="toggleFormIcon"></i> Hide Form';
-        localStorage.setItem('addFormHidden', 'false');
       }
     });
 
@@ -1209,7 +1359,58 @@
       currentExtinguisherId = null;
     }
 
-    function showHistoryModal(extinguisher) {
+    function showServiceModal() {
+      const count = selectedExtinguishers.size;
+      if (count === 0) return;
+      
+      serviceSelectedCount.textContent = count;
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      nextServiceDate.valueAsDate = nextMonth;
+      
+      serviceModal.classList.add('active');
+    }
+
+    function hideServiceModal() {
+      serviceModal.classList.remove('active');
+    }
+
+    function showHistoryModal() {
+      historyModal.classList.add('active');
+      loadIndividualHistory(null);
+      loadBulkHistory();
+    }
+
+    function showIndividualHistory(extinguisherId) {
+      historyModal.classList.add('active');
+      
+      // Switch to individual tab
+      historyTabs.forEach(tab => {
+        if (tab.dataset.tab === 'individual') {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+      
+      individualHistory.classList.add('active');
+      bulkHistory.classList.remove('active');
+      
+      const extinguisher = extinguishersData.find(e => e.id === extinguisherId);
+      loadIndividualHistory(extinguisher);
+    }
+
+    function loadIndividualHistory(extinguisher) {
+      if (!extinguisher) {
+        serviceHistoryList.innerHTML = `
+          <li class="service-history-item">
+            <span>Select an extinguisher from the menu to view its history</span>
+          </li>
+        `;
+        historyModalTitle.textContent = 'Service History';
+        return;
+      }
+      
       historyModalTitle.textContent = `Service History - ${extinguisher.code || extinguisher.location}`;
       
       const history = extinguisher.serviceHistory || [];
@@ -1228,18 +1429,108 @@
           <li class="service-history-item">
             <span class="service-date">${formatDate(entry.date)}</span>
             <span class="service-count">Service #${entry.serviceNumber}</span>
+            ${entry.nextServiceDate ? `<span class="next-service-badge">Next: ${formatDate(entry.nextServiceDate)}</span>` : ''}
           </li>
         `).join('');
       }
-      
-      historyModal.classList.add('active');
     }
+
+    function loadBulkHistory() {
+      // Collect all service events from all extinguishers
+      const allServices = [];
+      
+      extinguishersData.forEach(ext => {
+        const history = ext.serviceHistory || [];
+        history.forEach(entry => {
+          allServices.push({
+            ...entry,
+            extinguisherCode: ext.code,
+            extinguisherLocation: ext.location,
+            extinguisherType: ext.type
+          });
+        });
+      });
+      
+      // Group by date
+      const groupedByDate = {};
+      allServices.forEach(service => {
+        const dateKey = service.date;
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = [];
+        }
+        groupedByDate[dateKey].push(service);
+      });
+      
+      // Sort dates (most recent first)
+      const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+      
+      if (sortedDates.length === 0) {
+        bulkServiceContent.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-calendar"></i>
+            No service history available
+          </div>
+        `;
+        return;
+      }
+      
+      let html = '';
+      sortedDates.forEach(date => {
+        const services = groupedByDate[date];
+        html += `
+          <div class="bulk-service-group">
+            <div class="bulk-service-date">
+              <i class="fas fa-calendar"></i> ${formatDate(date)}
+              <span class="service-count">${services.length} extinguisher(s)</span>
+            </div>
+            <ul class="bulk-service-list">
+        `;
+        
+        services.forEach(service => {
+          html += `
+            <li class="bulk-service-item">
+              <span class="bulk-service-code">${service.extinguisherCode || 'N/A'}</span>
+              <span class="bulk-service-location">${service.extinguisherLocation}</span>
+              <span class="bulk-service-type">${service.extinguisherType || 'DCP'}</span>
+              <span class="service-count">Service #${service.serviceNumber}</span>
+              ${service.nextServiceDate ? `<span class="next-service-badge">Next: ${formatDate(service.nextServiceDate)}</span>` : ''}
+            </li>
+          `;
+        });
+        
+        html += `
+            </ul>
+          </div>
+        `;
+      });
+      
+      bulkServiceContent.innerHTML = html;
+    }
+
+    // Tab switching
+    historyTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        historyTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        if (tab.dataset.tab === 'individual') {
+          individualHistory.classList.add('active');
+          bulkHistory.classList.remove('active');
+        } else {
+          individualHistory.classList.remove('active');
+          bulkHistory.classList.add('active');
+          loadBulkHistory();
+        }
+      });
+    });
 
     closePasswordModal.addEventListener('click', hidePasswordModal);
     cancelPassword.addEventListener('click', hidePasswordModal);
     closeHistoryModal.addEventListener('click', () => {
       historyModal.classList.remove('active');
     });
+    closeServiceModal.addEventListener('click', hideServiceModal);
+    cancelService.addEventListener('click', hideServiceModal);
 
     submitPassword.addEventListener('click', async () => {
       const password = passwordInput.value;
@@ -1330,13 +1621,69 @@
       }
     });
 
-    // Close modal when clicking outside
+    confirmService.addEventListener('click', async () => {
+      if (selectedExtinguishers.size === 0) {
+        hideServiceModal();
+        return;
+      }
+      
+      const nextService = nextServiceDate.value;
+      if (!nextService) {
+        alert('Please select a next service date');
+        return;
+      }
+      
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        for (const id of selectedExtinguishers) {
+          const extinguisher = extinguishersData.find(e => e.id === id);
+          const serviceCount = (extinguisher.serviceCount || 0) + 1;
+          
+          // Create service history entry
+          const serviceEntry = {
+            date: today,
+            serviceNumber: serviceCount,
+            nextServiceDate: nextService,
+            timestamp: new Date().toISOString()
+          };
+          
+          await updateDoc(doc(db, "fireExtinguishers", id), {
+            lastService: today,
+            nextServiceDate: nextService,
+            serviceCount: serviceCount,
+            serviceHistory: arrayUnion(serviceEntry),
+            updatedAt: serverTimestamp()
+          });
+        }
+        
+        selectedExtinguishers.clear();
+        selectAllCheckbox.checked = false;
+        updateSelectedCount();
+        hideServiceModal();
+        alert(`${selectedExtinguishers.size} extinguisher(s) have been serviced. Next service date set to ${formatDate(nextService)}`);
+        
+      } catch (error) {
+        console.error("Error servicing:", error);
+        alert('Error servicing extinguishers');
+      }
+    });
+
+    // View service history button
+    viewServiceHistoryBtn.addEventListener('click', () => {
+      showHistoryModal();
+    });
+
+    // Close modals when clicking outside
     window.addEventListener('click', (e) => {
       if (e.target === passwordModal) {
         hidePasswordModal();
       }
       if (e.target === historyModal) {
         historyModal.classList.remove('active');
+      }
+      if (e.target === serviceModal) {
+        hideServiceModal();
       }
     });
 
@@ -1421,45 +1768,12 @@
       }
       
       updateSelectedCount();
-      renderTable(extinguishersData); // Re-render to update checkboxes
+      renderTable(extinguishersData);
     });
 
     // Handle service selected
-    serviceSelectedBtn.addEventListener('click', async () => {
-      if (selectedExtinguishers.size === 0) return;
-      
-      if (confirm(`Service ${selectedExtinguishers.size} selected extinguisher(s)?`)) {
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          
-          for (const id of selectedExtinguishers) {
-            const extinguisher = extinguishersData.find(e => e.id === id);
-            const serviceCount = (extinguisher.serviceCount || 0) + 1;
-            
-            // Create service history entry
-            const serviceEntry = {
-              date: today,
-              serviceNumber: serviceCount,
-              timestamp: new Date().toISOString()
-            };
-            
-            await updateDoc(doc(db, "fireExtinguishers", id), {
-              lastService: today,
-              serviceCount: serviceCount,
-              serviceHistory: arrayUnion(serviceEntry),
-              updatedAt: serverTimestamp()
-            });
-          }
-          
-          selectedExtinguishers.clear();
-          selectAllCheckbox.checked = false;
-          updateSelectedCount();
-          alert('Selected extinguishers have been serviced');
-        } catch (error) {
-          console.error("Error servicing:", error);
-          alert('Error servicing extinguishers');
-        }
-      }
+    serviceSelectedBtn.addEventListener('click', () => {
+      showServiceModal();
     });
 
     // Render table
@@ -1469,9 +1783,9 @@
       if (!extinguishers.length) {
         tableBody.innerHTML = `
           <tr>
-            <td colspan="10" class="empty-state">
+            <td colspan="11" class="empty-state">
               <i class="fas fa-fire-extinguisher"></i>
-              No extinguishers found. Add one using the form above.
+              No extinguishers found. Click "Show Form" to add one.
             </td>
           </tr>
         `;
@@ -1490,6 +1804,7 @@
         const rowClass = daysLeft < 0 ? 'expired-row' : '';
         const serviceCount = ext.serviceCount || 0;
         const isChecked = selectedExtinguishers.has(ext.id);
+        const nextService = ext.nextServiceDate ? formatDate(ext.nextServiceDate) : 'Not set';
 
         html += `
           <tr class="${rowClass}">
@@ -1509,6 +1824,7 @@
             <td><span class="capacity-badge">${ext.capacity || '4'} kg</span></td>
             <td>${formatDate(ext.expiration)}</td>
             <td>${formatDate(ext.lastService)}</td>
+            <td><span class="next-service-badge">${nextService}</span></td>
             <td>
               <span class="badge ${status.class}">
                 <i class="fas ${status.icon}"></i> ${status.text}
@@ -1561,10 +1877,8 @@
       document.querySelectorAll('.view-history').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const id = e.currentTarget.dataset.id;
-          const extinguisher = extinguishers.find(e => e.id === id);
-          if (extinguisher) {
-            showHistoryModal(extinguisher);
-          }
+          showIndividualHistory(id);
+          closeAllMenus();
         });
       });
 
@@ -1626,7 +1940,7 @@
       console.error("Error fetching extinguishers:", error);
       tableBody.innerHTML = `
         <tr>
-          <td colspan="10" class="empty-state">
+          <td colspan="11" class="empty-state">
             <i class="fas fa-exclamation-triangle"></i>
             Error loading data. Please check console.
           </td>
