@@ -523,15 +523,6 @@
       color: var(--danger);
     }
 
-    .password-input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--border-color);
-      border-radius: 0.375rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-    }
-
     /* Table */
     .table-section {
       background: white;
@@ -658,7 +649,7 @@
 <body>
   <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
 
-  <!-- sidebar (omitted identical, keep same) -->
+  <!-- sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left" id="toggleIcon"></i></div>
     <div class="sidebar-header"><div class="logo-container"><div class="logo-icon"><i class="fas fa-building"></i></div><div class="logo-text"><h2>PENTA</h2><span>Construction Pro</span></div></div></div>
@@ -682,13 +673,12 @@
         <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div><div class="stat-value" id="expiredCount">0</div><div class="stat-label">Expired</div></div></div></div>
       </div>
 
-      <!-- LOCATION FILTER (the man asked for it) -->
+      <!-- LOCATION FILTER -->
       <div class="filter-bar">
         <div class="filter-group">
           <label for="locationFilter"><i class="fas fa-location-dot" style="margin-right: 4px;"></i> Filter by location</label>
           <select id="locationFilter" class="location-filter-select">
             <option value="all">All locations</option>
-            <!-- dynamic options will be injected from existing locations -->
           </select>
           <button class="clear-filter-btn" id="clearFilterBtn"><i class="fas fa-times"></i> Clear</button>
         </div>
@@ -731,8 +721,7 @@
     </div>
   </main>
 
-  <!-- modals (unchanged, keep same) -->
-  <div class="modal" id="passwordModal"><div class="modal-content"><div class="modal-header"><h3>Authentication Required</h3><button class="close-modal" id="closePasswordModal">&times;</button></div><p>Enter password (1030):</p><input type="password" class="password-input" id="passwordInput"><div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn-primary" id="submitPassword">Submit</button><button class="toggle-form-btn" id="cancelPassword">Cancel</button></div></div></div>
+  <!-- modals - NO MORE PASSWORD MODAL! -->
   <div class="modal" id="historyModal"><div class="modal-content large"><div class="modal-header"><h3 id="historyModalTitle">Service History</h3><button class="close-modal" id="closeHistoryModal">&times;</button></div><div class="history-tabs"><button class="history-tab active" data-tab="individual">Individual</button><button class="history-tab" data-tab="bulk">Bulk View</button></div><div id="individualHistory" class="history-panel active"><ul class="service-history-list" id="serviceHistoryList"></ul></div><div id="bulkHistory" class="history-panel"><div id="bulkServiceContent"></div></div></div></div>
   <div class="modal" id="serviceModal"><div class="modal-content"><div class="modal-header"><h3>Service Extinguishers</h3><button class="close-modal" id="closeServiceModal">&times;</button></div><p>Selected: <span id="serviceSelectedCount">0</span></p><div class="form-group"><label>Service Date</label><input type="date" id="serviceDate" readonly></div><div class="form-group"><label>Next Service Date *</label><input type="date" id="nextServiceDate" required></div><div class="form-group"><label>New Expiration Date *</label><input type="date" id="newExpirationDate" required></div><div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn-success" id="confirmService">Confirm</button><button class="toggle-form-btn" id="cancelService">Cancel</button></div></div></div>
 
@@ -756,8 +745,8 @@
     const sidebar = document.getElementById('sidebar'), sidebarToggle = document.getElementById('sidebarToggle'), toggleIcon = document.getElementById('toggleIcon'), mainContent = document.getElementById('mainContent'), mobileToggle = document.getElementById('mobileToggle');
     const codeInput = document.getElementById('codeInput'), locationInput = document.getElementById('locationInput'), typeInput = document.getElementById('typeInput'), capacityInput = document.getElementById('capacityInput'), expirationInput = document.getElementById('expirationInput'), serviceInput = document.getElementById('serviceInput'), addBtn = document.getElementById('addBtn'), tableBody = document.getElementById('tableBody'), selectAllCheckbox = document.getElementById('selectAllCheckbox'), selectedCount = document.getElementById('selectedCount'), serviceSelectedBtn = document.getElementById('serviceSelectedBtn'), viewServiceHistoryBtn = document.getElementById('viewServiceHistoryBtn');
     const totalCount = document.getElementById('totalCount'), goodCount = document.getElementById('goodCount'), expiringCount = document.getElementById('expiringCount'), expiredCount = document.getElementById('expiredCount');
-    // modal elements
-    const passwordModal = document.getElementById('passwordModal'), closePasswordModal = document.getElementById('closePasswordModal'), cancelPassword = document.getElementById('cancelPassword'), passwordInput = document.getElementById('passwordInput'), submitPassword = document.getElementById('submitPassword');
+    
+    // modal elements - NO PASSWORD MODAL
     const historyModal = document.getElementById('historyModal'), closeHistoryModal = document.getElementById('closeHistoryModal'), serviceHistoryList = document.getElementById('serviceHistoryList'), historyModalTitle = document.getElementById('historyModalTitle'), historyTabs = document.querySelectorAll('.history-tab'), individualHistory = document.getElementById('individualHistory'), bulkHistory = document.getElementById('bulkHistory'), bulkServiceContent = document.getElementById('bulkServiceContent');
     const serviceModal = document.getElementById('serviceModal'), closeServiceModal = document.getElementById('closeServiceModal'), cancelService = document.getElementById('cancelService'), confirmService = document.getElementById('confirmService'), serviceSelectedCount = document.getElementById('serviceSelectedCount'), serviceDate = document.getElementById('serviceDate'), nextServiceDate = document.getElementById('nextServiceDate'), newExpirationDate = document.getElementById('newExpirationDate');
     const toggleFormBtn = document.getElementById('toggleFormBtn'), toggleFormIcon = document.getElementById('toggleFormIcon'), addForm = document.getElementById('addForm');
@@ -768,15 +757,24 @@
     const filterHint = document.getElementById('filterHint');
 
     // --- state ---
-    let currentAction = null, currentExtinguisherId = null, selectedExtinguishers = new Set(), extinguishersData = [];
-    let activeLocationFilter = 'all'; // 'all' or specific location string
+    let selectedExtinguishers = new Set(), extinguishersData = [];
+    let activeLocationFilter = 'all';
+    let editingId = null; // Track which extinguisher we're editing
 
     // set default dates
-    const today = new Date(); const nextYear = new Date(); nextYear.setFullYear(nextYear.getFullYear()+1);
-    const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth()+1);
-    expirationInput.valueAsDate = nextYear; serviceInput.valueAsDate = today; serviceDate.valueAsDate = today; nextServiceDate.valueAsDate = nextMonth; newExpirationDate.valueAsDate = nextYear; capacityInput.value = '4';
+    const today = new Date(); 
+    const nextYear = new Date(); 
+    nextYear.setFullYear(nextYear.getFullYear()+1);
+    const nextMonth = new Date(); 
+    nextMonth.setMonth(nextMonth.getMonth()+1);
+    expirationInput.valueAsDate = nextYear; 
+    serviceInput.valueAsDate = today; 
+    serviceDate.valueAsDate = today; 
+    nextServiceDate.valueAsDate = nextMonth; 
+    newExpirationDate.valueAsDate = nextYear; 
+    capacityInput.value = '4';
 
-    // --- sidebar / mobile (identical) ---
+    // --- sidebar / mobile ---
     if (localStorage.getItem('sidebarCollapsed')==='true') { sidebar.classList.add('collapsed'); mainContent.classList.add('expanded'); toggleIcon.classList.replace('fa-chevron-left','fa-chevron-right'); }
     sidebarToggle.addEventListener('click',()=>{ sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded'); if(sidebar.classList.contains('collapsed')){ toggleIcon.classList.replace('fa-chevron-left','fa-chevron-right'); localStorage.setItem('sidebarCollapsed','true'); } else { toggleIcon.classList.replace('fa-chevron-right','fa-chevron-left'); localStorage.setItem('sidebarCollapsed','false'); } });
     mobileToggle.addEventListener('click',()=> sidebar.classList.toggle('active'));
@@ -784,22 +782,21 @@
 
     // form toggle hidden by default
     addForm.classList.add('hidden'); toggleFormIcon.classList.add('fa-eye'); toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form';
-    toggleFormBtn.addEventListener('click', ()=>{ addForm.classList.toggle('hidden'); addForm.classList.contains('hidden') ? toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form' : toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash" id="toggleFormIcon"></i> Hide Form'; });
+    toggleFormBtn.addEventListener('click', ()=>{ 
+      addForm.classList.toggle('hidden'); 
+      addForm.classList.contains('hidden') ? toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form' : toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash" id="toggleFormIcon"></i> Hide Form'; 
+    });
 
-    // --- filter update function ---
+    // --- filter functions ---
     function renderFilteredTable() {
       let filtered = extinguishersData;
       if (activeLocationFilter !== 'all') {
         filtered = extinguishersData.filter(ext => ext.location === activeLocationFilter);
       }
-      // update hint
       filterHint.innerText = activeLocationFilter === 'all' ? `showing all ${extinguishersData.length} locations` : `filtered by "${activeLocationFilter}" (${filtered.length} items)`;
-      
-      // render table with filtered data (but keep extinguishersData global for stats unchanged)
       renderTable(filtered);
     }
 
-    // update location dropdown options from current data
     function refreshLocationFilterOptions() {
       const uniqueLocs = [...new Set(extinguishersData.map(e => e.location).filter(Boolean))].sort();
       const currentValue = locationFilter.value;
@@ -812,12 +809,11 @@
         locationFilter.appendChild(option);
       });
       if (!uniqueLocs.includes(activeLocationFilter) && activeLocationFilter !== 'all') {
-        activeLocationFilter = 'all'; // reset if location no longer exists
+        activeLocationFilter = 'all';
       }
       locationFilter.value = activeLocationFilter;
     }
 
-    // event listener for filter change
     locationFilter.addEventListener('change', (e) => {
       activeLocationFilter = e.target.value;
       renderFilteredTable();
@@ -829,77 +825,378 @@
       renderFilteredTable();
     });
 
-    // --- MODALS (unchanged) ---
-    function showPasswordModal(action,id){ currentAction=action; currentExtinguisherId=id; passwordInput.value=''; passwordModal.classList.add('active'); }
-    function hidePasswordModal(){ passwordModal.classList.remove('active'); currentAction=null; currentExtinguisherId=null; }
-    function showServiceModal(){ if(selectedExtinguishers.size===0) return; serviceSelectedCount.textContent=selectedExtinguishers.size; serviceModal.classList.add('active'); }
-    function hideServiceModal(){ serviceModal.classList.remove('active'); }
-    function showHistoryModal(){ historyModal.classList.add('active'); loadIndividualHistory(null); loadBulkHistory(); }
-    function showIndividualHistory(id){ historyModal.classList.add('active'); historyTabs.forEach(t=>t.classList.toggle('active', t.dataset.tab==='individual')); individualHistory.classList.add('active'); bulkHistory.classList.remove('active'); const ext = extinguishersData.find(e=>e.id===id); loadIndividualHistory(ext); }
-    function loadIndividualHistory(ext){ if(!ext){ serviceHistoryList.innerHTML='<li class="service-history-item"><span>Select extinguisher from menu</span></li>'; historyModalTitle.textContent='Service History'; return; } historyModalTitle.textContent=`History – ${ext.code||ext.location}`; const hist=ext.serviceHistory||[]; if(hist.length===0) serviceHistoryList.innerHTML='<li class="service-history-item"><span>No history</span></li>'; else serviceHistoryList.innerHTML=hist.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e=>`<li class="service-history-item"><div><span class="service-date">${formatDate(e.date)}</span><div style="display:flex;gap:0.5rem;">${e.nextServiceDate?`<span class="next-service-badge">Next:${formatDate(e.nextServiceDate)}</span>`:''}${e.newExpirationDate?`<span class="expiration-badge">Exp:${formatDate(e.newExpirationDate)}</span>`:''}</div></div><span class="service-count">#${e.serviceNumber}</span></li>`).join(''); }
-    function loadBulkHistory(){ const all=[]; extinguishersData.forEach(ext=>(ext.serviceHistory||[]).forEach(e=>all.push({...e,code:ext.code,loc:ext.location,type:ext.type}))); const grouped={}; all.forEach(s=>{ const d=s.date; if(!grouped[d]) grouped[d]=[]; grouped[d].push(s); }); const sorted=Object.keys(grouped).sort((a,b)=>new Date(b)-new Date(a)); if(sorted.length===0) bulkServiceContent.innerHTML='<div class="empty-state"><i class="fas fa-calendar"></i>No history</div>'; else bulkServiceContent.innerHTML=sorted.map(date=>`<div class="bulk-service-group"><div class="bulk-service-date"><i class="fas fa-calendar"></i> ${formatDate(date)}<span class="service-count">${grouped[date].length}</span></div><ul class="bulk-service-list">${grouped[date].map(s=>`<li class="bulk-service-item"><span class="bulk-service-code">${s.code||'N/A'}</span><span class="bulk-service-location">${s.loc}</span><span class="bulk-service-type">${s.type||''}</span><span class="service-info-badge">#${s.serviceNumber}</span>${s.nextServiceDate?`<span class="next-service-badge">Next:${formatDate(s.nextServiceDate)}</span>`:''}${s.newExpirationDate?`<span class="expiration-badge">Exp:${formatDate(s.newExpirationDate)}</span>`:''}</li>`).join('')}</ul></div>`).join(''); }
-
-    historyTabs.forEach(t=>t.addEventListener('click',()=>{ historyTabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); if(t.dataset.tab==='individual'){ individualHistory.classList.add('active'); bulkHistory.classList.remove('active'); } else { individualHistory.classList.remove('active'); bulkHistory.classList.add('active'); loadBulkHistory(); } }));
-    closePasswordModal.addEventListener('click',hidePasswordModal); cancelPassword.addEventListener('click',hidePasswordModal); closeHistoryModal.addEventListener('click',()=>historyModal.classList.remove('active')); closeServiceModal.addEventListener('click',hideServiceModal); cancelService.addEventListener('click',hideServiceModal);
-    window.addEventListener('click',(e)=>{ if(e.target===passwordModal)hidePasswordModal(); if(e.target===historyModal)historyModal.classList.remove('active'); if(e.target===serviceModal)hideServiceModal(); });
+    // --- MODALS (history and service only) ---
+    function showServiceModal(){ 
+      if(selectedExtinguishers.size===0) return; 
+      serviceSelectedCount.textContent=selectedExtinguishers.size; 
+      serviceModal.classList.add('active'); 
+    }
     
-    submitPassword.addEventListener('click',async()=>{ if(passwordInput.value==='1030'){ hidePasswordModal(); if(currentAction==='delete'&&currentExtinguisherId){ if(confirm('Delete?')) await deleteDoc(doc(db,"fireExtinguishers",currentExtinguisherId)); } else if(currentAction==='edit'&&currentExtinguisherId){ const ext=extinguishersData.find(e=>e.id===currentExtinguisherId); if(ext){ codeInput.value=ext.code||''; locationInput.value=ext.location; typeInput.value=ext.type||'DCP'; capacityInput.value=ext.capacity||'4'; expirationInput.value=ext.expiration; serviceInput.value=ext.lastService; addForm.scrollIntoView({behavior:'smooth'}); if(addForm.classList.contains('hidden')) toggleFormBtn.click(); addBtn.innerHTML='<i class="fas fa-save"></i> Update'; const newBtn=addBtn.cloneNode(true); addBtn.replaceWith(newBtn); document.getElementById('addBtn').addEventListener('click',async()=>{ if(!codeInput.value.trim()||!locationInput.value.trim()) return alert('fill fields'); await updateDoc(doc(db,"fireExtinguishers",currentExtinguisherId),{code:codeInput.value.trim(),location:locationInput.value.trim(),type:typeInput.value,capacity:capacityInput.value,expiration:expirationInput.value,lastService:serviceInput.value,updatedAt:serverTimestamp()}); codeInput.value=''; locationInput.value=''; typeInput.value='DCP'; capacityInput.value='4'; expirationInput.valueAsDate=nextYear; serviceInput.valueAsDate=new Date(); newBtn.innerHTML='<i class="fas fa-plus"></i> Add Extinguisher'; }); } } } else { alert('Incorrect'); passwordInput.value=''; } });
+    function hideServiceModal(){ 
+      serviceModal.classList.remove('active'); 
+    }
+    
+    function showHistoryModal(){ 
+      historyModal.classList.add('active'); 
+      loadIndividualHistory(null); 
+      loadBulkHistory(); 
+    }
+    
+    function showIndividualHistory(id){ 
+      historyModal.classList.add('active'); 
+      historyTabs.forEach(t=>t.classList.toggle('active', t.dataset.tab==='individual')); 
+      individualHistory.classList.add('active'); 
+      bulkHistory.classList.remove('active'); 
+      const ext = extinguishersData.find(e=>e.id===id); 
+      loadIndividualHistory(ext); 
+    }
+    
+    function loadIndividualHistory(ext){ 
+      if(!ext){ 
+        serviceHistoryList.innerHTML='<li class="service-history-item"><span>Select extinguisher from menu</span></li>'; 
+        historyModalTitle.textContent='Service History'; 
+        return; 
+      } 
+      historyModalTitle.textContent=`History – ${ext.code||ext.location}`; 
+      const hist=ext.serviceHistory||[]; 
+      if(hist.length===0) serviceHistoryList.innerHTML='<li class="service-history-item"><span>No history</span></li>'; 
+      else serviceHistoryList.innerHTML=hist.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e=>`<li class="service-history-item"><div><span class="service-date">${formatDate(e.date)}</span><div style="display:flex;gap:0.5rem;">${e.nextServiceDate?`<span class="next-service-badge">Next:${formatDate(e.nextServiceDate)}</span>`:''}${e.newExpirationDate?`<span class="expiration-badge">Exp:${formatDate(e.newExpirationDate)}</span>`:''}</div></div><span class="service-count">#${e.serviceNumber}</span></li>`).join(''); 
+    }
+    
+    function loadBulkHistory(){ 
+      const all=[]; 
+      extinguishersData.forEach(ext=>(ext.serviceHistory||[]).forEach(e=>all.push({...e,code:ext.code,loc:ext.location,type:ext.type}))); 
+      const grouped={}; 
+      all.forEach(s=>{ const d=s.date; if(!grouped[d]) grouped[d]=[]; grouped[d].push(s); }); 
+      const sorted=Object.keys(grouped).sort((a,b)=>new Date(b)-new Date(a)); 
+      if(sorted.length===0) bulkServiceContent.innerHTML='<div class="empty-state"><i class="fas fa-calendar"></i>No history</div>'; 
+      else bulkServiceContent.innerHTML=sorted.map(date=>`<div class="bulk-service-group"><div class="bulk-service-date"><i class="fas fa-calendar"></i> ${formatDate(date)}<span class="service-count">${grouped[date].length}</span></div><ul class="bulk-service-list">${grouped[date].map(s=>`<li class="bulk-service-item"><span class="bulk-service-code">${s.code||'N/A'}</span><span class="bulk-service-location">${s.loc}</span><span class="bulk-service-type">${s.type||''}</span><span class="service-info-badge">#${s.serviceNumber}</span>${s.nextServiceDate?`<span class="next-service-badge">Next:${formatDate(s.nextServiceDate)}</span>`:''}${s.newExpirationDate?`<span class="expiration-badge">Exp:${formatDate(s.newExpirationDate)}</span>`:''}</li>`).join('')}</ul></div>`).join(''); 
+    }
 
-    confirmService.addEventListener('click',async()=>{ if(selectedExtinguishers.size===0){ hideServiceModal(); return; } const sDate=serviceDate.value, nxt=nextServiceDate.value, newExp=newExpirationDate.value; if(!nxt||!newExp){ alert('select dates'); return; } for(const id of selectedExtinguishers){ const ext=extinguishersData.find(e=>e.id===id); const cnt=(ext.serviceCount||0)+1; await updateDoc(doc(db,"fireExtinguishers",id),{lastService:sDate,nextServiceDate:nxt,expiration:newExp,serviceCount:cnt,serviceHistory:arrayUnion({date:sDate,serviceNumber:cnt,nextServiceDate:nxt,newExpirationDate:newExp,timestamp:new Date().toISOString()}),updatedAt:serverTimestamp()}); } selectedExtinguishers.clear(); selectAllCheckbox.checked=false; updateSelectedCount(); hideServiceModal(); alert('Serviced'); });
+    historyTabs.forEach(t=>t.addEventListener('click',()=>{ 
+      historyTabs.forEach(x=>x.classList.remove('active')); 
+      t.classList.add('active'); 
+      if(t.dataset.tab==='individual'){ 
+        individualHistory.classList.add('active'); 
+        bulkHistory.classList.remove('active'); 
+      } else { 
+        individualHistory.classList.remove('active'); 
+        bulkHistory.classList.add('active'); 
+        loadBulkHistory(); 
+      } 
+    }));
+    
+    closeHistoryModal.addEventListener('click',()=>historyModal.classList.remove('active')); 
+    closeServiceModal.addEventListener('click',hideServiceModal); 
+    cancelService.addEventListener('click',hideServiceModal);
+    
+    window.addEventListener('click',(e)=>{ 
+      if(e.target===historyModal)historyModal.classList.remove('active'); 
+      if(e.target===serviceModal)hideServiceModal(); 
+    });
+    
+    // --- EDIT FUNCTION - NO PASSWORD NEEDED! ---
+    function startEdit(id) {
+      const ext = extinguishersData.find(e => e.id === id);
+      if (!ext) return;
+      
+      editingId = id;
+      codeInput.value = ext.code || '';
+      locationInput.value = ext.location;
+      typeInput.value = ext.type || 'DCP';
+      capacityInput.value = ext.capacity || '4';
+      expirationInput.value = ext.expiration;
+      serviceInput.value = ext.lastService;
+      
+      // Show the form if hidden
+      addForm.scrollIntoView({behavior:'smooth'});
+      if (addForm.classList.contains('hidden')) toggleFormBtn.click();
+      
+      // Change button to Update mode
+      addBtn.innerHTML = '<i class="fas fa-save"></i> Update Extinguisher';
+    }
 
-    viewServiceHistoryBtn.addEventListener('click',showHistoryModal);
+    // --- DELETE FUNCTION - NO PASSWORD NEEDED! ---
+    async function deleteExtinguisher(id) {
+      if (confirm('Are you sure you want to delete this extinguisher? This action cannot be undone.')) {
+        try {
+          await deleteDoc(doc(db, "fireExtinguishers", id));
+          // If we were editing this one, reset the form
+          if (editingId === id) {
+            resetForm();
+          }
+        } catch (error) {
+          console.error("Error deleting: ", error);
+          alert('Error deleting extinguisher. Please try again.');
+        }
+      }
+    }
+
+    // Reset form to "Add" mode
+    function resetForm() {
+      editingId = null;
+      codeInput.value = '';
+      locationInput.value = '';
+      typeInput.value = 'DCP';
+      capacityInput.value = '4';
+      expirationInput.valueAsDate = nextYear;
+      serviceInput.valueAsDate = new Date();
+      addBtn.innerHTML = '<i class="fas fa-plus"></i> Add Extinguisher';
+    }
+
+    // --- SERVICE CONFIRMATION ---
+    confirmService.addEventListener('click', async()=>{ 
+      if(selectedExtinguishers.size===0){ 
+        hideServiceModal(); 
+        return; 
+      } 
+      const sDate=serviceDate.value, nxt=nextServiceDate.value, newExp=newExpirationDate.value; 
+      if(!nxt||!newExp){ 
+        alert('Please select both Next Service Date and New Expiration Date'); 
+        return; 
+      } 
+      for(const id of selectedExtinguishers){ 
+        const ext=extinguishersData.find(e=>e.id===id); 
+        const cnt=(ext.serviceCount||0)+1; 
+        await updateDoc(doc(db,"fireExtinguishers",id),{
+          lastService:sDate,
+          nextServiceDate:nxt,
+          expiration:newExp,
+          serviceCount:cnt,
+          serviceHistory:arrayUnion({
+            date:sDate,
+            serviceNumber:cnt,
+            nextServiceDate:nxt,
+            newExpirationDate:newExp,
+            timestamp:new Date().toISOString()
+          }),
+          updatedAt:serverTimestamp()
+        }); 
+      } 
+      selectedExtinguishers.clear(); 
+      selectAllCheckbox.checked=false; 
+      updateSelectedCount(); 
+      hideServiceModal(); 
+      alert('Service completed successfully!'); 
+    });
+
+    viewServiceHistoryBtn.addEventListener('click', showHistoryModal);
 
     // helpers
-    function calculateDaysLeft(d){ const t=new Date(); t.setHours(0,0,0,0); const e=new Date(d); e.setHours(0,0,0,0); return Math.ceil((e-t)/(1000*60*60*24)); }
-    function getStatusInfo(d){ if(d<0) return {class:'badge-danger',text:'Expired',icon:'fa-times-circle'}; else if(d<=30) return {class:'badge-warning',text:'Expiring Soon',icon:'fa-exclamation-triangle'}; else return {class:'badge-success',text:'Good',icon:'fa-check-circle'}; }
-    function formatDate(d){ return new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); }
-    function updateStats(exts){ let g=0,e30=0,ex=0; exts.forEach(ext=>{ const d=calculateDaysLeft(ext.expiration); if(d<0) ex++; else if(d<=30) e30++; else g++; }); totalCount.textContent=exts.length; goodCount.textContent=g; expiringCount.textContent=e30; expiredCount.textContent=ex; }
-    function updateSelectedCount(){ const sz=selectedExtinguishers.size; selectedCount.textContent=sz+' selected'; serviceSelectedBtn.disabled=sz===0; }
-    selectAllCheckbox.addEventListener('change',(e)=>{ if(e.target.checked) extinguishersData.forEach(ext=>selectedExtinguishers.add(ext.id)); else selectedExtinguishers.clear(); updateSelectedCount(); renderFilteredTable(); });
-    serviceSelectedBtn.addEventListener('click',showServiceModal);
+    function calculateDaysLeft(d){ 
+      const t=new Date(); 
+      t.setHours(0,0,0,0); 
+      const e=new Date(d); 
+      e.setHours(0,0,0,0); 
+      return Math.ceil((e-t)/(1000*60*60*24)); 
+    }
+    
+    function getStatusInfo(d){ 
+      if(d<0) return {class:'badge-danger',text:'Expired',icon:'fa-times-circle'}; 
+      if(d<=30) return {class:'badge-warning',text:'Expiring Soon',icon:'fa-exclamation-triangle'}; 
+      return {class:'badge-success',text:'Good',icon:'fa-check-circle'}; 
+    }
+    
+    function formatDate(d){ 
+      return new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); 
+    }
+    
+    function updateStats(exts){ 
+      let g=0,e30=0,ex=0; 
+      exts.forEach(ext=>{ 
+        const d=calculateDaysLeft(ext.expiration); 
+        if(d<0) ex++; 
+        else if(d<=30) e30++; 
+        else g++; 
+      }); 
+      totalCount.textContent=exts.length; 
+      goodCount.textContent=g; 
+      expiringCount.textContent=e30; 
+      expiredCount.textContent=ex; 
+    }
+    
+    function updateSelectedCount(){ 
+      const sz=selectedExtinguishers.size; 
+      selectedCount.textContent=sz+' selected'; 
+      serviceSelectedBtn.disabled=sz===0; 
+    }
+    
+    selectAllCheckbox.addEventListener('change',(e)=>{ 
+      if(e.target.checked) 
+        extinguishersData.forEach(ext=>selectedExtinguishers.add(ext.id)); 
+      else 
+        selectedExtinguishers.clear(); 
+      updateSelectedCount(); 
+      renderFilteredTable(); 
+    });
+    
+    serviceSelectedBtn.addEventListener('click', showServiceModal);
 
     function renderTable(extinguishersToRender){
-      if(!extinguishersToRender.length) { tableBody.innerHTML='<tr><td colspan="11" class="empty-state"><i class="fas fa-fire-extinguisher"></i>No extinguishers</td></tr>'; return; }
+      if(!extinguishersToRender.length) { 
+        tableBody.innerHTML='<tr><td colspan="11" class="empty-state"><i class="fas fa-fire-extinguisher"></i>No extinguishers</td></tr>'; 
+        return; 
+      }
+      
       const sorted=[...extinguishersToRender].sort((a,b)=>calculateDaysLeft(a.expiration)-calculateDaysLeft(b.expiration));
       let html='';
+      
       sorted.forEach(ext=>{
-        const dl=calculateDaysLeft(ext.expiration); const st=getStatusInfo(dl); const rc=dl<0?'expired-row':''; const chk=selectedExtinguishers.has(ext.id); const next=ext.nextServiceDate?formatDate(ext.nextServiceDate):'Not set';
-        html+=`<tr class="${rc}"><td class="checkbox-cell"><input type="checkbox" class="ext-checkbox" data-id="${ext.id}" ${chk?'checked':''}></td><td><span class="code-badge">${ext.code||'N/A'}</span></td><td><div class="location-cell"><div class="location-icon"><i class="fas fa-fire-extinguisher"></i></div>${ext.location}</div></td><td><span class="type-badge">${ext.type||'DCP'}</span></td><td>${ext.capacity||'4'} kg</td><td>${formatDate(ext.expiration)}</td><td>${formatDate(ext.lastService)}</td><td><span class="next-service-badge">${next}</span></td><td><span class="badge ${st.class}"><i class="fas ${st.icon}"></i> ${st.text}</span></td><td><span class="service-count">${ext.serviceCount||0}</span></td><td><div class="menu-container"><button class="menu-button" onclick="toggleMenu('${ext.id}')"><i class="fas fa-ellipsis-vertical"></i></button><div class="dropdown-menu" id="menu-${ext.id}"><button class="dropdown-item view-history" data-id="${ext.id}"><i class="fas fa-history"></i> History</button><button class="dropdown-item edit-item" data-id="${ext.id}"><i class="fas fa-edit"></i> Edit</button><button class="dropdown-item delete-item" data-id="${ext.id}"><i class="fas fa-trash"></i> Delete</button></div></div></td></tr>`;
+        const dl=calculateDaysLeft(ext.expiration); 
+        const st=getStatusInfo(dl); 
+        const rc=dl<0?'expired-row':''; 
+        const chk=selectedExtinguishers.has(ext.id); 
+        const next=ext.nextServiceDate?formatDate(ext.nextServiceDate):'Not set';
+        
+        html+=`<tr class="${rc}">
+          <td class="checkbox-cell"><input type="checkbox" class="ext-checkbox" data-id="${ext.id}" ${chk?'checked':''}></td>
+          <td><span class="code-badge">${ext.code||'N/A'}</span></td>
+          <td><div class="location-cell"><div class="location-icon"><i class="fas fa-fire-extinguisher"></i></div>${ext.location}</div></td>
+          <td><span class="type-badge">${ext.type||'DCP'}</span></td>
+          <td>${ext.capacity||'4'} kg</td>
+          <td>${formatDate(ext.expiration)}</td>
+          <td>${formatDate(ext.lastService)}</td>
+          <td><span class="next-service-badge">${next}</span></td>
+          <td><span class="badge ${st.class}"><i class="fas ${st.icon}"></i> ${st.text}</span></td>
+          <td><span class="service-count">${ext.serviceCount||0}</span></td>
+          <td><div class="menu-container">
+            <button class="menu-button" onclick="toggleMenu('${ext.id}')"><i class="fas fa-ellipsis-vertical"></i></button>
+            <div class="dropdown-menu" id="menu-${ext.id}">
+              <button class="dropdown-item view-history" data-id="${ext.id}"><i class="fas fa-history"></i> History</button>
+              <button class="dropdown-item edit-item" data-id="${ext.id}"><i class="fas fa-edit"></i> Edit</button>
+              <button class="dropdown-item delete-item" data-id="${ext.id}"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+          </div></td>
+        </tr>`;
       });
+      
       tableBody.innerHTML=html;
+      
       // attach checkbox events
-      document.querySelectorAll('.ext-checkbox').forEach(cb=>cb.addEventListener('change',(e)=>{ const id=e.target.dataset.id; e.target.checked?selectedExtinguishers.add(id):selectedExtinguishers.delete(id); selectAllCheckbox.checked=selectedExtinguishers.size===extinguishersData.length&&extinguishersData.length>0; updateSelectedCount(); }));
-      document.querySelectorAll('.view-history').forEach(btn=>btn.addEventListener('click',(e)=>{ showIndividualHistory(e.currentTarget.dataset.id); closeAllMenus(); }));
-      document.querySelectorAll('.edit-item').forEach(btn=>btn.addEventListener('click',(e)=>{ showPasswordModal('edit',e.currentTarget.dataset.id); closeAllMenus(); }));
-      document.querySelectorAll('.delete-item').forEach(btn=>btn.addEventListener('click',(e)=>{ showPasswordModal('delete',e.currentTarget.dataset.id); closeAllMenus(); }));
+      document.querySelectorAll('.ext-checkbox').forEach(cb=>{
+        cb.addEventListener('change',(e)=>{ 
+          const id=e.target.dataset.id; 
+          e.target.checked?selectedExtinguishers.add(id):selectedExtinguishers.delete(id); 
+          selectAllCheckbox.checked=selectedExtinguishers.size===extinguishersData.length&&extinguishersData.length>0; 
+          updateSelectedCount(); 
+        });
+      });
+      
+      // attach action button events - DIRECTLY WITHOUT PASSWORD
+      document.querySelectorAll('.view-history').forEach(btn=>{
+        btn.addEventListener('click',(e)=>{ 
+          showIndividualHistory(e.currentTarget.dataset.id); 
+          closeAllMenus(); 
+        });
+      });
+      
+      document.querySelectorAll('.edit-item').forEach(btn=>{
+        btn.addEventListener('click',(e)=>{ 
+          startEdit(e.currentTarget.dataset.id); 
+          closeAllMenus(); 
+        });
+      });
+      
+      document.querySelectorAll('.delete-item').forEach(btn=>{
+        btn.addEventListener('click',(e)=>{ 
+          deleteExtinguisher(e.currentTarget.dataset.id); 
+          closeAllMenus(); 
+        });
+      });
     }
-    window.toggleMenu = function(id){ closeAllMenus(); document.getElementById(`menu-${id}`)?.classList.add('active'); };
-    function closeAllMenus(){ document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('active')); }
-    document.addEventListener('click',(e)=>{ if(!e.target.closest('.menu-container')) closeAllMenus(); });
+    
+    window.toggleMenu = function(id){ 
+      closeAllMenus(); 
+      document.getElementById(`menu-${id}`)?.classList.add('active'); 
+    };
+    
+    function closeAllMenus(){ 
+      document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('active')); 
+    }
+    
+    document.addEventListener('click',(e)=>{ 
+      if(!e.target.closest('.menu-container')) closeAllMenus(); 
+    });
 
     // Firestore realtime
     const q = query(collection(db,"fireExtinguishers"), orderBy("createdAt","desc"));
     onSnapshot(q, (snapshot)=>{
       const exts = snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
       extinguishersData = exts;
-      // update stats always from full dataset
       updateStats(exts);
-      // refresh dropdown options
       refreshLocationFilterOptions();
-      // apply active filter
       renderFilteredTable();
-    }, (err)=>{ console.error(err); tableBody.innerHTML='<tr><td colspan="11" class="empty-state"><i class="fas fa-exclamation-triangle"></i>Error loading</td></tr>'; });
-
-    // Add new extinguisher
-    addBtn.addEventListener('click', async()=>{
-      const code=codeInput.value.trim(), loc=locationInput.value.trim(), type=typeInput.value, cap=capacityInput.value, exp=expirationInput.value, last=serviceInput.value;
-      if(!code||!loc||!type||!cap||!exp||!last) return alert('Fill all');
-      await addDoc(collection(db,"fireExtinguishers"),{code,location:loc,type,capacity:cap,expiration:exp,lastService:last,serviceCount:0,serviceHistory:[],createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
-      codeInput.value=''; locationInput.value=''; typeInput.value='DCP'; capacityInput.value='4'; expirationInput.valueAsDate=nextYear; serviceInput.valueAsDate=new Date();
+    }, (err)=>{ 
+      console.error(err); 
+      tableBody.innerHTML='<tr><td colspan="11" class="empty-state"><i class="fas fa-exclamation-triangle"></i>Error loading</td></tr>'; 
     });
 
-    // enter key
-    [codeInput,locationInput,typeInput,capacityInput,expirationInput,serviceInput].forEach(i=>i.addEventListener('keypress',e=>{ if(e.key==='Enter'){ e.preventDefault(); addBtn.click(); } }));
+    // Add/Update extinguisher
+    addBtn.addEventListener('click', async()=>{
+      const code=codeInput.value.trim(), loc=locationInput.value.trim(), type=typeInput.value, cap=capacityInput.value, exp=expirationInput.value, last=serviceInput.value;
+      
+      if(!code||!loc||!type||!cap||!exp||!last) {
+        alert('Please fill all fields');
+        return;
+      }
+      
+      try {
+        if (editingId) {
+          // Update existing
+          await updateDoc(doc(db, "fireExtinguishers", editingId), {
+            code,
+            location: loc,
+            type,
+            capacity: cap,
+            expiration: exp,
+            lastService: last,
+            updatedAt: serverTimestamp()
+          });
+          alert('Extinguisher updated successfully!');
+        } else {
+          // Add new
+          await addDoc(collection(db,"fireExtinguishers"),{
+            code,
+            location:loc,
+            type,
+            capacity:cap,
+            expiration:exp,
+            lastService:last,
+            serviceCount:0,
+            serviceHistory:[],
+            createdAt:serverTimestamp(),
+            updatedAt:serverTimestamp()
+          });
+          alert('Extinguisher added successfully!');
+        }
+        
+        // Reset form
+        resetForm();
+        
+      } catch (error) {
+        console.error("Error saving: ", error);
+        alert('Error saving extinguisher. Please try again.');
+      }
+    });
+
+    // Enter key
+    [codeInput,locationInput,typeInput,capacityInput,expirationInput,serviceInput].forEach(i=>{
+      i.addEventListener('keypress',e=>{ 
+        if(e.key==='Enter'){ 
+          e.preventDefault(); 
+          addBtn.click(); 
+        } 
+      });
+    });
+
+    // Cancel edit with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && editingId) {
+        if (confirm('Cancel editing?')) {
+          resetForm();
+        }
+      }
+    });
   </script>
 </body>
 </html>
