@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Gantt · Task status · Budget linked</title>
+    
+    <!-- Firebase SDK v9+ -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        html, body {
+            height: 100%;
+            background: #1e3146;
+            overflow: hidden;
+        }
+        .gantt-full {
+            height: 100vh;
+            width: 100vw;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .top-space {
+            padding: 1rem 1.5rem 0.5rem 1.5rem;
+            background: white;
+            border-bottom: 1px solid #c2d2e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .top-space h2 {
+            font-weight: 400;
+            color: #1a3455;
+            font-size: 1rem;
+        }
+        .project-info {
+            font-size: 0.8rem;
+            color: #2c4d78;
+            background: #e8f0fe;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+        }
+        .toggle-form-btn {
+            background: #ffffff;
+            border: 1px solid #dfdfdf;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-decoration: none;
+            color: #555;
+        }
+        .nav-btn:hover {
+            background: #e8e8e8;
+        }
+        .nav-btn.primary {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        .form-popup {
+            background: #f5f9ff;
+            border-bottom: 2px solid #98b3d9;
+            padding: 1rem 1.5rem;
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(150px, auto));
+            gap: 15px;
+            align-items: end;
+            flex-shrink: 0;
+        }
+        .form-popup.visible {
+            display: grid;
+        }
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.7rem;
+            color: #1c3a5c;
+        }
+        .form-field input, .form-field select {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #b0c7e7;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            background: white;
+        }
+        .form-field input[type="number"] {
+            padding: 0.4rem 0.8rem;
+        }
+        .form-field button {
+            background: #1f3f64;
+            color: white;
+            border: none;
+            padding: 0.4rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 14px;
+        }
+        .form-field button:hover {
+            background: #152b47;
+        }
+        .gantt-scroll {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: white;
+        }
+        .gantt-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+            table-layout: fixed;
+            font-size: 0.7rem;
+        }
+        .gantt-table th {
+            background: #ffffff;
+            color: #1a3652;
+            font-weight: 500;
+            padding: 0.5rem 0.2rem;
+            border-right: 1px solid #b2c6e0;
+            border-bottom: 2px solid #95aecf;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            font-size: 0.65rem;
+        }
+        .gantt-table td {
+            padding: 0.3rem 0.2rem;
+            border-bottom: 1px solid #dae1ed;
+            border-right: 1px solid #d0dbea;
+            vertical-align: middle;
+        }
+        .task-col {
+            width: 240px;
+            background: white;
+            position: sticky;
+            left: 0;
+            z-index: 15;
+            cursor: context-menu;
+        }
+        .task-main {
+            font-weight: 600;
+            color: #0d2b4a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+        }
+        .subtask-item {
+            padding-left: 32px;
+            font-size: 0.7rem;
+            color: #2f4b70;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .subtask-item:before {
+            content: "—";
+            color: #7b93b5;
+            margin-right: 8px;
+            font-weight: 300;
+        }
+        .date-col {
+            width: 65px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.6rem;
+        }
+        .pred-col {
+            width: 65px;
+            text-align: center;
+            font-size: 0.6rem;
+        }
+        .budget-col {
+            width: 75px;
+            text-align: right;
+            padding-right: 12px;
+            font-size: 0.6rem;
+        }
+        .status-col {
+            width: 70px;
+            text-align: center;
+            font-size: 0.6rem;
+            font-weight: 500;
+        }
+        .gantt-col {
+            padding: 0.2rem 0.3rem !important;
+            position: relative;
+        }
+        .timeline-box {
+            position: relative;
+            width: 100%;
+            height: 34px;
+            background: #f0f5fd;
+            border-radius: 3px;
+        }
+        .task-bar {
+            position: absolute;
+            height: 20px;
+            top: 7px;
+            background: #2c4d78;
+            border-radius: 3px;
+            border: 1px solid #122b44;
+            min-width: 6px;
+            cursor: pointer;
+        }
+        .subtask-bar {
+            background: #41648b;
+            height: 16px;
+            top: 9px;
+        }
+        .completion-overlay {
+            position: absolute;
+            height: 20px;
+            top: 7px;
+            background: #2e7d5e;
+            border-radius: 3px 0 0 3px;
+            opacity: 0.9;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .subtask-bar + .completion-overlay {
+            height: 16px;
+            top: 9px;
+            background: #2e7d5e;
+        }
+        .hold-marker {
+            position: absolute;
+            width: 6px;
+            height: 28px;
+            background: #e68a2e;
+            top: 3px;
+            border-radius: 2px;
+            z-index: 12;
+            pointer-events: none;
+        }
+        .milestone-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #6a7f9e;
+            border: 1px solid white;
+            transform: rotate(45deg);
+            top: 13px;
+        }
+        .bottom-space {
+            padding: 0.8rem 1.5rem 1rem 1.5rem;
+            background: white;
+            border-top: 1px solid #c2d2e8;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .budget-summary {
+            display: flex;
+            gap: 30px;
+            margin-right: 20px;
+            font-size: 0.75rem;
+        }
+        .budget-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .budget-label {
+            color: #666;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+        }
+        .budget-value {
+            font-weight: 600;
+            color: #1a3455;
+        }
+        .budget-value.warning {
+            color: #dc3545;
+        }
+        .completion-bar-container {
+            flex: 1;
+            height: 14px;
+            background: #e2e9f3;
+            border-radius: 30px;
+            overflow: hidden;
+            border: 1px solid #a5bbda;
+        }
+        .completion-bar-fill {
+            height: 100%;
+            background: #2e7d5e;
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .completion-label {
+            font-size: 0.7rem;
+            color: #1d3a5c;
+            min-width: 100px;
+            font-weight: 500;
+        }
+        .timeline-header-row {
+            display: flex;
+            width: 100%;
+            font-size: 0.55rem;
+            color: #1e3f64;
+            font-weight: 500;
+        }
+        .month-tick {
+            flex: 1;
+            text-align: center;
+            border-left: 1px solid #b7ceec;
+        }
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #a0b9d9;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            padding: 4px 0;
+        }
+        .context-menu-item {
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: #1a3455;
+        }
+        .context-menu-item:hover {
+            background: #e2ecfc;
+        }
+        .date-picker-popup {
+            position: absolute;
+            background: white;
+            border: 1px solid #a0b9d9;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .date-picker-popup input {
+            padding: 8px;
+            border: 1px solid #b0c7e7;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
+        .date-picker-popup button {
+            background: #1f3f64;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-size: 0.6rem;
+            font-weight: 500;
+        }
+        .status-not-started { background: #edf2f9; color: #4a6382; }
+        .status-in-progress { background: #fff3d8; color: #b85e00; }
+        .status-completed { background: #dff0e4; color: #1e6f3f; }
+        .status-on-hold { background: #fee9e7; color: #b3382c; }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            font-size: 0.8rem;
+            animation: slideIn 0.3s ease;
+        }
+        .message.success {
+            background: #dff0e4;
+            color: #1e6f3f;
+        }
+        .message.error {
+            background: #fee9e7;
+            color: #b3382c;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<div class="gantt-full">
+    <div class="top-space">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2>📋 Gantt Chart · <span id="projectNameDisplay">Loading...</span></h2>
+            <span class="project-info" id="projectInfo">Project ID: —</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="nav-buttons">
+                <a href="#" class="nav-btn" onclick="goToProjects()">← Projects</a>
+                <a href="#" class="nav-btn primary" onclick="goToBudget()">💰 Budget</a>
+            </div>
+            <button class="toggle-form-btn" id="toggleFormBtn">＋ Show form</button>
+        </div>
+    </div>
+
+    <!-- form -->
+    <div class="form-popup" id="addForm">
+        <div class="form-field">
+            <label>Task name</label>
+            <input type="text" id="taskName" placeholder="e.g. 5. Documentation">
+        </div>
+        <div class="form-field">
+            <label>Budget (digits)</label>
+            <input type="number" id="budgetAmount" placeholder="e.g. 9500" value="5000">
+        </div>
+        <div class="form-field">
+            <label>Parent task</label>
+            <select id="parentTaskSelect">
+                <option value="">— main task —</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label>Predecessor</label>
+            <select id="predSelect">
+                <option value="">— none —</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <button id="submitTaskBtn">Add task</button>
+        </div>
+    </div>
+
+    <div class="gantt-scroll" id="ganttScroll">
+        <table class="gantt-table" id="ganttTable">
+            <thead>
+                <tr>
+                    <th class="task-col">Task (right-click)</th>
+                    <th class="date-col">Start</th>
+                    <th class="date-col">End</th>
+                    <th class="pred-col">Pred</th>
+                    <th class="budget-col">Budget</th>
+                    <th class="status-col">Status</th>
+                    <th style="min-width:420px;">Timeline (Feb - Jun)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Timeline row -->
+                <tr style="background:#f0f6ff;">
+                    <td class="task-col" style="background:#f0f6ff;">📅 Timeline</td>
+                    <td class="date-col"></td>
+                    <td class="date-col"></td>
+                    <td class="pred-col"></td>
+                    <td class="budget-col"></td>
+                    <td class="status-col"></td>
+                    <td class="gantt-col" style="padding:0!important;">
+                        <div class="timeline-header-row">
+                            <div class="month-tick">17 Feb</div><div class="month-tick">1 Mar</div><div class="month-tick">15 Mar</div>
+                            <div class="month-tick">1 Apr</div><div class="month-tick">15 Apr</div><div class="month-tick">1 May</div>
+                            <div class="month-tick">15 May</div><div class="month-tick">1 Jun</div><div class="month-tick">15 Jun</div>
+                            <div class="month-tick">30 Jun</div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- bottom with budget summary and completion bar -->
+    <div class="bottom-space">
+        <div class="budget-summary">
+            <div class="budget-item">
+                <span class="budget-label">Budget</span>
+                <span class="budget-value" id="totalBudget">0</span>
+            </div>
+            <div class="budget-item">
+                <span class="budget-label">Spent</span>
+                <span class="budget-value" id="spentBudget">0</span>
+            </div>
+            <div class="budget-item">
+                <span class="budget-label">Remaining</span>
+                <span class="budget-value" id="remainingBudget">0</span>
+            </div>
+        </div>
+        <div class="completion-label">Completion</div>
+        <div class="completion-bar-container">
+            <div class="completion-bar-fill" id="completionBarFill" style="width: 0%;"></div>
+        </div>
+        <div class="completion-label" id="completionPercent">0%</div>
+    </div>
+</div>
+
+<!-- Context menu and date picker popup -->
+<div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" id="menuStart">📅 Set start date</div>
+    <div class="context-menu-item" id="menuEnd">📅 Set end date</div>
+    <div class="context-menu-item" id="menuHold">⏸️ Toggle hold</div>
+    <div class="context-menu-item" id="menuComplete">✅ Mark completed</div>
+    <div class="context-menu-item" id="menuInProgress">🔄 Mark in progress</div>
+</div>
+<div class="date-picker-popup" id="datePickerPopup">
+    <input type="date" id="datePickerInput" value="2026-06-01">
+    <button id="datePickerSave">Save</button>
+</div>
+
+<script type="module">
+    // Import Firebase functions
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { 
+        getFirestore, 
+        collection, 
+        onSnapshot, 
+        addDoc, 
+        updateDoc, 
+        deleteDoc,
+        doc,
+        getDoc,
+        getDocs,
+        query,
+        where,
+        orderBy,
+        serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js";
+
+    // Firebase Configuration - Using your existing database
+    const firebaseConfig = {
+        apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+        authDomain: "project-task-588c4.firebaseapp.com",
+        projectId: "project-task-588c4",
+        storageBucket: "project-task-588c4.firebasestorage.app",
+        messagingSenderId: "411882772509",
+        appId: "1:411882772509:web:08d613186c101a99f38ef4",
+        measurementId: "G-JMFLFYEM0F"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get project ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project');
+    
+    if (!projectId) {
+        window.location.href = 'projects.html';
+    }
+
+    // DOM Elements
+    const tbody = document.getElementById('tableBody');
+    const scrollDiv = document.getElementById('ganttScroll');
+    const toggleBtn = document.getElementById('toggleFormBtn');
+    const form = document.getElementById('addForm');
+    const parentSelect = document.getElementById('parentTaskSelect');
+    const predSelect = document.getElementById('predSelect');
+    const submitBtn = document.getElementById('submitTaskBtn');
+    const completionBar = document.getElementById('completionBarFill');
+    const completionPercent = document.getElementById('completionPercent');
+    const contextMenu = document.getElementById('contextMenu');
+    const datePickerPopup = document.getElementById('datePickerPopup');
+    const datePickerInput = document.getElementById('datePickerInput');
+    const datePickerSave = document.getElementById('datePickerSave');
+    const projectNameDisplay = document.getElementById('projectNameDisplay');
+    const projectInfo = document.getElementById('projectInfo');
+    const totalBudgetEl = document.getElementById('totalBudget');
+    const spentBudgetEl = document.getElementById('spentBudget');
+    const remainingBudgetEl = document.getElementById('remainingBudget');
+
+    let tasks = [];
+    let selectedTaskId = null;
+    let currentAction = null;
+    let currentProject = null;
+
+    // Show notification messages
+    function showMessage(text, type = 'success') {
+        const msg = document.createElement('div');
+        msg.className = `message ${type}`;
+        msg.textContent = text;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
+    }
+
+    // Load project info
+    async function loadProjectInfo() {
+        try {
+            const projectDoc = await getDoc(doc(db, 'projects', projectId));
+            if (projectDoc.exists()) {
+                currentProject = { id: projectDoc.id, ...projectDoc.data() };
+                projectNameDisplay.textContent = currentProject.name || 'Unnamed Project';
+                projectInfo.textContent = `Project: ${currentProject.code || currentProject.id}`;
+            }
+        } catch (error) {
+            console.error('Error loading project:', error);
+        }
+    }
+
+    // Load budget info
+    async function loadBudgetInfo() {
+        try {
+            const budgetDoc = await getDoc(doc(db, 'projectSettings', projectId));
+            if (budgetDoc.exists()) {
+                const budget = budgetDoc.data();
+                totalBudgetEl.textContent = budget.initialBudget?.toFixed(2) || '0';
+                spentBudgetEl.textContent = budget.totalSpent?.toFixed(2) || '0';
+                const remaining = (budget.initialBudget || 0) - (budget.totalSpent || 0);
+                remainingBudgetEl.textContent = remaining.toFixed(2);
+                
+                // Color code remaining
+                if (remaining < 0) {
+                    remainingBudgetEl.classList.add('warning');
+                } else {
+                    remainingBudgetEl.classList.remove('warning');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading budget:', error);
+        }
+    }
+
+    // Format date for display
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return '—';
+        const d = new Date(dateStr + 'T12:00:00');
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).replace(/ /, ' ');
+    }
+
+    // Get status class for styling
+    function getStatusClass(status) {
+        switch(status) {
+            case 'completed': return 'status-completed';
+            case 'in-progress': return 'status-in-progress';
+            case 'on-hold': return 'status-on-hold';
+            default: return 'status-not-started';
+        }
+    }
+
+    // Get status display text
+    function getStatusText(status) {
+        switch(status) {
+            case 'completed': return 'Completed';
+            case 'in-progress': return 'In Progress';
+            case 'on-hold': return 'On Hold';
+            default: return 'Not Started';
+        }
+    }
+
+    // Get completion percentage from status
+    function getCompletionFromStatus(status) {
+        switch(status) {
+            case 'completed': return 100;
+            case 'in-progress': return 50;
+            case 'on-hold': return 25;
+            default: return 0;
+        }
+    }
+
+    // Calculate left/width from dates
+    function getLeftWidthFromDates(task) {
+        if (task.start && task.end) {
+            const startDate = new Date(task.start + 'T12:00:00');
+            const endDate = new Date(task.end + 'T12:00:00');
+            const refStart = new Date('2026-02-17T12:00:00');
+            const refEnd = new Date('2026-06-30T12:00:00');
+            const totalDays = (refEnd - refStart) / (1000*3600*24);
+            const startDays = (startDate - refStart) / (1000*3600*24);
+            const endDays = (endDate - refStart) / (1000*3600*24);
+            let left = Math.max(0, (startDays / totalDays) * 100);
+            let width = Math.min(100 - left, ((endDays - startDays) / totalDays) * 100);
+            left = Math.min(90, Math.max(0, left));
+            width = Math.min(90, Math.max(2, width));
+            return { left, width };
+        }
+        return { left: task.left || 10, width: task.width || 20 };
+    }
+
+    // Update completion percentage (weighted by budget)
+    function updateCompletion() {
+        let totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
+        let completedBudget = tasks.reduce((sum, t) => {
+            const completion = getCompletionFromStatus(t.status);
+            return sum + (t.budget * completion / 100);
+        }, 0);
+        let percent = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
+        completionBar.style.width = percent + '%';
+        completionPercent.innerText = percent + '%';
+    }
+
+    // Update dropdowns from Firebase data
+    function updateDropdowns() {
+        parentSelect.innerHTML = '<option value="">— main task —</option>';
+        predSelect.innerHTML = '<option value="">— none —</option>';
+        tasks.filter(t => t.isMain).forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            parentSelect.appendChild(opt);
+        });
+        tasks.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            predSelect.appendChild(opt);
+        });
+    }
+
+    // Render table
+    function renderTable() {
+        tbody.innerHTML = '';
+        
+        // timeline row
+        const timelineRow = document.createElement('tr');
+        timelineRow.style.background = '#f0f6ff';
+        timelineRow.innerHTML = `
+            <td class="task-col" style="background:#f0f6ff;">📅 Timeline</td>
+            <td class="date-col"></td>
+            <td class="date-col"></td>
+            <td class="pred-col"></td>
+            <td class="budget-col"></td>
+            <td class="status-col"></td>
+            <td class="gantt-col" style="padding:0!important;">
+                <div class="timeline-header-row">
+                    <div class="month-tick">17 Feb</div><div class="month-tick">1 Mar</div><div class="month-tick">15 Mar</div>
+                    <div class="month-tick">1 Apr</div><div class="month-tick">15 Apr</div><div class="month-tick">1 May</div>
+                    <div class="month-tick">15 May</div><div class="month-tick">1 Jun</div><div class="month-tick">15 Jun</div>
+                    <div class="month-tick">30 Jun</div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(timelineRow);
+
+        const sortedTasks = tasks.sort((a, b) => a.id.localeCompare(b.id));
+        
+        sortedTasks.forEach(t => {
+            if (t.start && t.end) {
+                const pos = getLeftWidthFromDates(t);
+                t.left = pos.left;
+                t.width = pos.width;
+            }
+            
+            const row = document.createElement('tr');
+            if (t.isMain) row.style.background = '#f4f9ff';
+            
+            const taskDisplay = t.isMain ? 
+                `<span class="task-main">${t.name}</span>` : 
+                `<span class="subtask-item">${t.name}</span>`;
+            
+            const barClass = t.isMain ? 'task-bar' : 'task-bar subtask-bar';
+            const startDisplay = formatDisplayDate(t.start);
+            const endDisplay = formatDisplayDate(t.end);
+            const statusClass = getStatusClass(t.status);
+            const statusText = getStatusText(t.status);
+            const completionPercent = getCompletionFromStatus(t.status);
+            const completionWidth = (completionPercent / 100) * (t.width || 20);
+            const holdMarker = t.onHold ? `<div class="hold-marker" style="left:${(t.left || 10) + (t.width || 20)/2 - 1}%;"></div>` : '';
+            
+            row.innerHTML = `
+                <td class="task-col" data-task-id="${t.id}">${taskDisplay}</td>
+                <td class="date-col">${startDisplay}</td>
+                <td class="date-col">${endDisplay}</td>
+                <td class="pred-col">${t.pred || '—'}</td>
+                <td class="budget-col">${t.budget}</td>
+                <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="gantt-col">
+                    <div class="timeline-box">
+                        <div class="${barClass}" style="left:${t.left || 10}%; width:${t.width || 20}%;" data-task-id="${t.id}"></div>
+                        <div class="completion-overlay ${!t.isMain ? 'subtask-bar' : ''}" style="left:${t.left || 10}%; width:${completionWidth}%;"></div>
+                        ${holdMarker}
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // milestone row
+        const mileRow = document.createElement('tr');
+        mileRow.style.background = '#eaf1fb';
+        mileRow.innerHTML = `
+            <td class="task-col">Milestones</td>
+            <td class="date-col">—</td>
+            <td class="date-col">—</td>
+            <td class="pred-col">—</td>
+            <td class="budget-col">—</td>
+            <td class="status-col">—</td>
+            <td class="gantt-col">
+                <div class="timeline-box" style="background:transparent;">
+                    <div class="milestone-dot" style="left:24%;" title="Design done"></div>
+                    <div class="milestone-dot" style="left:48%;" title="Feature freeze"></div>
+                    <div class="milestone-dot" style="left:68%;" title="QA complete"></div>
+                    <div class="milestone-dot" style="left:86%;" title="Launch"></div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(mileRow);
+
+        // Attach right-click listeners
+        document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
+            cell.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectedTaskId = cell.dataset.taskId;
+                contextMenu.style.display = 'flex';
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
+            });
+        });
+
+        // Bar click cycles status
+        document.querySelectorAll('.task-bar').forEach(bar => {
+            bar.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const taskId = bar.dataset.taskId;
+                if (!taskId) return;
+                
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) return;
+                
+                let newStatus = task.status;
+                if (newStatus === 'not-started') newStatus = 'in-progress';
+                else if (newStatus === 'in-progress') newStatus = 'completed';
+                else if (newStatus === 'completed') newStatus = 'not-started';
+                else if (newStatus === 'on-hold') newStatus = 'in-progress';
+                
+                await updateTaskInFirebase(task.firebaseId, { status: newStatus });
+            });
+        });
+
+        updateDropdowns();
+        updateCompletion();
+    }
+
+    // Load tasks from Firestore for this project
+    function loadTasksFromFirebase() {
+        try {
+            const q = query(
+                collection(db, 'gantt_tasks'), 
+                where('projectId', '==', projectId),
+                orderBy('createdAt', 'asc')
+            );
+            
+            onSnapshot(q, (snapshot) => {
+                tasks = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    tasks.push({
+                        id: data.id,
+                        name: data.name,
+                        start: data.start || null,
+                        end: data.end || null,
+                        pred: data.pred || '',
+                        budget: data.budget || 0,
+                        isMain: data.isMain || false,
+                        left: data.left || 10,
+                        width: data.width || 20,
+                        status: data.status || 'not-started',
+                        onHold: data.onHold || false,
+                        parentId: data.parentId || null,
+                        projectId: data.projectId,
+                        firebaseId: doc.id
+                    });
+                });
+                renderTable();
+                loadBudgetInfo(); // Refresh budget info
+            }, (error) => {
+                console.error('Error loading tasks:', error);
+                showMessage('Error loading tasks: ' + error.message, 'error');
+            });
+        } catch (error) {
+            console.error('Error setting up listener:', error);
+            showMessage('Error setting up data listener: ' + error.message, 'error');
+        }
+    }
+
+    // Update task in Firestore
+    async function updateTaskInFirebase(firebaseId, updates) {
+        try {
+            const taskRef = doc(db, 'gantt_tasks', firebaseId);
+            await updateDoc(taskRef, {
+                ...updates,
+                updatedAt: serverTimestamp()
+            });
+            showMessage('Task updated ✓', 'success');
+        } catch (error) {
+            console.error('Error updating task:', error);
+            showMessage('Error updating task: ' + error.message, 'error');
+        }
+    }
+
+    // Add new task to Firestore
+    async function addTaskToFirebase(taskData) {
+        try {
+            const docRef = await addDoc(collection(db, 'gantt_tasks'), {
+                ...taskData,
+                projectId: projectId,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('Task added with ID: ', docRef.id);
+            showMessage('Task added successfully ✓', 'success');
+            return true;
+        } catch (error) {
+            console.error('Error adding task:', error);
+            showMessage('Error adding task: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    // Navigation functions
+    window.goToProjects = function() {
+        window.location.href = 'projects.html';
+    };
+
+    window.goToBudget = function() {
+        window.location.href = `budget-tracker.html?project=${projectId}`;
+    };
+
+    // Toggle form visibility
+    toggleBtn.addEventListener('click', () => {
+        form.classList.toggle('visible');
+        toggleBtn.innerText = form.classList.contains('visible') ? '− Hide form' : '＋ Show form';
+    });
+
+    // Submit new task
+    submitBtn.addEventListener('click', async () => {
+        const name = document.getElementById('taskName').value.trim();
+        const budget = parseFloat(document.getElementById('budgetAmount').value) || 0;
+        const parentId = document.getElementById('parentTaskSelect').value;
+        const predId = document.getElementById('predSelect').value;
+
+        if (!name) {
+            showMessage('Task name is required!', 'error');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Adding...';
+
+        let newId;
+        if (parentId) {
+            const subtasks = tasks.filter(t => t.parentId === parentId);
+            const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => parseInt(t.id.split('.').pop()) || 0)) : 0;
+            newId = parentId + '.' + (maxNum + 1);
+        } else {
+            const mainTasks = tasks.filter(t => t.isMain);
+            const maxNum = mainTasks.length > 0 ? Math.max(...mainTasks.map(t => parseInt(t.id) || 0)) : 0;
+            newId = (maxNum + 1).toString();
+        }
+
+        const isMain = !parentId;
+
+        const success = await addTaskToFirebase({
+            id: newId,
+            name: name,
+            start: null,
+            end: null,
+            pred: predId || '',
+            budget: budget,
+            isMain: isMain,
+            left: 10,
+            width: 20,
+            status: 'not-started',
+            onHold: false,
+            parentId: parentId || null
+        });
+
+        if (success) {
+            document.getElementById('taskName').value = '';
+            document.getElementById('budgetAmount').value = '5000';
+            document.getElementById('parentTaskSelect').value = '';
+            document.getElementById('predSelect').value = '';
+            form.classList.remove('visible');
+            toggleBtn.innerText = '＋ Show form';
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Add task';
+    });
+
+    // Context menu actions
+    document.getElementById('menuStart').addEventListener('click', () => {
+        if (!selectedTaskId) return;
+        currentAction = 'start';
+        datePickerPopup.style.display = 'flex';
+        datePickerPopup.style.left = contextMenu.style.left;
+        datePickerPopup.style.top = contextMenu.style.top;
+        contextMenu.style.display = 'none';
+    });
+
+    document.getElementById('menuEnd').addEventListener('click', () => {
+        if (!selectedTaskId) return;
+        currentAction = 'end';
+        datePickerPopup.style.display = 'flex';
+        datePickerPopup.style.left = contextMenu.style.left;
+        datePickerPopup.style.top = contextMenu.style.top;
+        contextMenu.style.display = 'none';
+    });
+
+    document.getElementById('menuHold').addEventListener('click', async () => {
+        if (!selectedTaskId) return;
+        const task = tasks.find(t => t.id === selectedTaskId);
+        if (task) {
+            const newOnHold = !task.onHold;
+            const newStatus = newOnHold ? 'on-hold' : 'not-started';
+            await updateTaskInFirebase(task.firebaseId, { onHold: newOnHold, status: newStatus });
+        }
+        contextMenu.style.display = 'none';
+    });
+
+    document.getElementById('menuComplete').addEventListener('click', async () => {
+        if (!selectedTaskId) return;
+        const task = tasks.find(t => t.id === selectedTaskId);
+        if (task) {
+            await updateTaskInFirebase(task.firebaseId, { status: 'completed' });
+        }
+        contextMenu.style.display = 'none';
+    });
+
+    document.getElementById('menuInProgress').addEventListener('click', async () => {
+        if (!selectedTaskId) return;
+        const task = tasks.find(t => t.id === selectedTaskId);
+        if (task) {
+            await updateTaskInFirebase(task.firebaseId, { status: 'in-progress' });
+        }
+        contextMenu.style.display = 'none';
+    });
+
+    // Date picker save
+    datePickerSave.addEventListener('click', async () => {
+        if (!selectedTaskId || !currentAction) return;
+        const date = datePickerInput.value;
+        if (!date) return;
+        
+        const task = tasks.find(t => t.id === selectedTaskId);
+        if (task) {
+            const updates = currentAction === 'start' ? { start: date } : { end: date };
+            await updateTaskInFirebase(task.firebaseId, updates);
+        }
+        datePickerPopup.style.display = 'none';
+        selectedTaskId = null;
+        currentAction = null;
+    });
+
+    // Hide menus when clicking elsewhere
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target) && !datePickerPopup.contains(e.target)) {
+            contextMenu.style.display = 'none';
+            datePickerPopup.style.display = 'none';
+        }
+    });
+
+    // Initialize
+    async function init() {
+        await loadProjectInfo();
+        loadTasksFromFirebase();
+    }
+
+    init();
+</script>
+</body>
+</html>
