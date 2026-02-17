@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penta Construction - Project Dashboard</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+  
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 280px;
+      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+      padding: 20px;
+      overflow-y: auto;
+      transition: margin-left 0.3s ease, width 0.3s ease;
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1000;
+    }
+
+    .sidebar.hidden {
+      margin-left: -280px;
+      width: 0;
+      padding: 0;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    .sidebar-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .sidebar-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+    }
+
+    .sidebar-menu li {
+      margin: 15px 0;
+    }
+
+    .sidebar-menu a {
+      color: #b0b0b0;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 15px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .sidebar-menu a:hover,
+    .sidebar-menu a.active {
+      background-color: #667eea;
+      color: white;
+    }
+
+    .sidebar-menu .icon {
+      font-size: 18px;
+    }
+
+    .sidebar-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #333;
+    }
+
+    .logout-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background-color: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    .header {
+      background: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-btn:hover {
+      color: #667eea;
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-profile img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .user-info {
+      font-size: 14px;
+      color: #333;
+    }
+
+    .user-info p {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .user-info small {
+      color: #999;
+    }
+
+    /* DASHBOARD CONTENT */
+    .dashboard-content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      background: #f5f7fa;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card-title {
+      color: #999;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .stat-card-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .stat-card-change {
+      font-size: 12px;
+      color: #27ae60;
+    }
+
+    .stat-card.danger .stat-card-change {
+      color: #e74c3c;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 20px;
+    }
+
+    .projects-table {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 25px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .table-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th {
+      background: #f5f7fa;
+      padding: 15px 25px;
+      text-align: left;
+      font-weight: 600;
+      color: #666;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    table td {
+      padding: 15px 25px;
+      border-bottom: 1px solid #e0e0e0;
+      color: #333;
+      font-size: 14px;
+    }
+
+    table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table tr:hover {
+      background: #f9f9f9;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.active {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .badge.completed {
+      background: #cce5ff;
+      color: #004085;
+    }
+
+    .badge.on-hold {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #5568d3;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: absolute;
+        height: 100vh;
+        z-index: 999;
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-content {
+        padding: 15px;
+      }
+
+      .header {
+        padding: 15px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">PC</div>
+        <h2>Penta</h2>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li><a href="#" class="active"><span class="icon">📊</span> Dashboard</a></li>
+        <li><a href="#"><span class="icon">📁</span> Projects</a></li>
+        <li><a href="#"><span class="icon">👥</span> Team</a></li>
+        <li><a href="#"><span class="icon">📋</span> Tasks</a></li>
+        <li><a href="#"><span class="icon">📈</span> Reports</a></li>
+        <li><a href="#"><span class="icon">⚙️</span> Settings</a></li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-left">
+          <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+          <h1 class="header-title">Dashboard</h1>
+        </div>
+        <div class="header-right">
+          <div class="user-profile">
+            <img src="https://via.placeholder.com/40" alt="User">
+            <div class="user-info">
+              <p id="userName">PMP User</p>
+              <small>Project Manager</small>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- DASHBOARD CONTENT -->
+      <div class="dashboard-content">
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon">📦</div>
+            <div class="stat-card-title">Total Projects</div>
+            <div class="stat-card-value" id="totalProjects">0</div>
+            <div class="stat-card-change">↑ 12% from last month</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon">✅</div>
+            <div class="stat-card-title">Completed</div>
+            <div class="stat-card-value" id="completedProjects">0</div>
+            <div class="stat-card-change">↑ 8% from last month</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon">⏳</div>
+            <div class="stat-card-title">In Progress</div>
+            <div class="stat-card-value" id="inProgressProjects">0</div>
+            <div class="stat-card-change">2 projects ongoing</div>
+          </div>
+
+          <div class="stat-card danger">
+            <div class="stat-card-icon">⚠️</div>
+            <div class="stat-card-title">At Risk</div>
+            <div class="stat-card-value" id="atRiskProjects">0</div>
+            <div class="stat-card-change">↑ 3% require attention</div>
+          </div>
+        </div>
+
+        <!-- CHARTS GRID -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3 class="chart-title">Project Status Overview</h3>
+            <canvas id="statusChart"></canvas>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Budget Allocation</h3>
+            <canvas id="budgetChart"></canvas>
+          </div>
+        </div>
+
+        <!-- PROJECTS TABLE -->
+        <div class="projects-table">
+          <div class="table-header">
+            <h3>Active Projects</h3>
+          </div>
+          <table id="projectsTable">
+            <thead>
+              <tr>
+                <th>Project Name</th>
+                <th>Client</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Budget</th>
+                <th>Progress</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="projectsTableBody">
+              <!-- Data will be populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",
+      authDomain: "project-app-58ff6.firebaseapp.com",
+      databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com",
+      projectId: "project-app-58ff6",
+      storageBucket: "project-app-58ff6.appspot.com",
+      messagingSenderId: "586923989952",
+      appId: "1:586923989952:web:72b300dbc00d830e2e4625",
+      measurementId: "G-HV80KTBWSR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    // Sample Project Data (replace with Firebase data)
+    const sampleProjects = [
+      {
+        id: 1,
+        name: "City Plaza Development",
+        client: "Urban Developers Ltd",
+        startDate: "2024-01-15",
+        endDate: "2025-12-31",
+        budget: "$2,500,000",
+        progress: 65,
+        status: "active"
+      },
+      {
+        id: 2,
+        name: "Highway Expansion",
+        client: "Government Roads",
+        startDate: "2024-03-10",
+        endDate: "2026-06-30",
+        budget: "$5,800,000",
+        progress: 45,
+        status: "active"
+      },
+      {
+        id: 3,
+        name: "Shopping Mall Renovation",
+        client: "Retail Corp",
+        startDate: "2023-06-01",
+        endDate: "2025-03-31",
+        budget: "$1,200,000",
+        progress: 92,
+        status: "completed"
+      },
+      {
+        id: 4,
+        name: "Hospital Wing Extension",
+        client: "Health Services",
+        startDate: "2024-02-20",
+        endDate: "2025-08-15",
+        budget: "$3,500,000",
+        progress: 38,
+        status: "pending"
+      },
+      {
+        id: 5,
+        name: "Office Complex Build",
+        client: "Corporate Solutions",
+        startDate: "2024-04-05",
+        endDate: "2025-11-30",
+        budget: "$4,100,000",
+        progress: 58,
+        status: "active"
+      }
+    ];
+
+    // Initialize Dashboard
+    function initDashboard() {
+      loadProjects();
+      renderCharts();
+      updateStats();
+      loadUserInfo();
+    }
+
+    // Load Projects
+    function loadProjects() {
+      const tbody = document.getElementById("projectsTableBody");
+      tbody.innerHTML = "";
+
+      sampleProjects.forEach(project => {
+        const row = document.createElement("tr");
+        const statusBadgeClass = project.status === "completed" ? "completed" : 
+                                  project.status === "active" ? "active" : 
+                                  project.status === "pending" ? "pending" : "on-hold";
+
+        row.innerHTML = `
+          <td><strong>${project.name}</strong></td>
+          <td>${project.client}</td>
+          <td>${new Date(project.startDate).toLocaleDateString()}</td>
+          <td>${new Date(project.endDate).toLocaleDateString()}</td>
+          <td>${project.budget}</td>
+          <td>
+            <div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden;">
+              <div style="width: ${project.progress}%; background: #667eea; height: 100%;"></div>
+            </div>
+            <small style="color: #666;">${project.progress}%</small>
+          </td>
+          <td><span class="badge ${statusBadgeClass}">${project.status.toUpperCase()}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Update Statistics
+    function updateStats() {
+      const total = sampleProjects.length;
+      const completed = sampleProjects.filter(p => p.status === "completed").length;
+      const inProgress = sampleProjects.filter(p => p.status === "active").length;
+      const atRisk = sampleProjects.filter(p => p.progress < 50 && p.status === "active").length;
+
+      document.getElementById("totalProjects").textContent = total;
+      document.getElementById("completedProjects").textContent = completed;
+      document.getElementById("inProgressProjects").textContent = inProgress;
+      document.getElementById("atRiskProjects").textContent = atRisk;
+    }
+
+    // Render Charts
+    function renderCharts() {
+      // Status Chart
+      const statusCtx = document.getElementById("statusChart").getContext("2d");
+      new Chart(statusCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Active", "Completed", "Pending"],
+          datasets: [{
+            data: [3, 1, 1],
+            backgroundColor: ["#667eea", "#27ae60", "#f39c12"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: "bottom"
+            }
+          }
+        }
+      });
+
+      // Budget Chart
+      const budgetCtx = document.getElementById("budgetChart").getContext("2d");
+      new Chart(budgetCtx, {
+        type: "bar",
+        data: {
+          labels: ["Q1", "Q2", "Q3", "Q4"],
+          datasets: [{
+            label: "Budget Spent ($M)",
+            data: [1.2, 2.1, 1.8, 2.5],
+            backgroundColor: "#667eea",
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Load User Info
+    function loadUserInfo() {
+      const currentUser = localStorage.getItem('currentUser');
+      document.getElementById("userName").textContent = currentUser ? currentUser.toUpperCase() : "PMP User";
+    }
+
+    // Global Functions
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("hidden");
+    };
+
+    window.logout = function() {
+      localStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    };
+
+    // Initialize on load
+    initDashboard();
+  </script>
+</body>
+</html>
