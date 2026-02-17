@@ -3,708 +3,465 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Penta Construction - Project Dashboard</title>
-  
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
-  
-  <!-- Chart.js for graphs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+  <title>Penta · full projects view</title>
+  <!-- simple & clean, full screen, white background, sidebar hide/unhide -->
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-color: #ffffff;
       min-height: 100vh;
-      overflow-x: hidden;
+      width: 100%;
     }
 
-    .container {
+    /* full screen flex container */
+    .app {
       display: flex;
-      height: 100vh;
+      width: 100vw;
+      min-height: 100vh;
+      background-color: white;
     }
 
-    /* SIDEBAR */
+    /* ===== SIDEBAR – clean, minimal ===== */
     .sidebar {
-      width: 280px;
-      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-      padding: 20px;
-      overflow-y: auto;
-      transition: margin-left 0.3s ease, width 0.3s ease;
-      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
-      position: relative;
-      z-index: 1000;
+      width: 260px;
+      background-color: #fafbfc;
+      border-right: 1px solid #eef0f2;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.2s ease-in-out, width 0.2s ease-in-out;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.02);
     }
 
     .sidebar.hidden {
-      margin-left: -280px;
+      margin-left: -260px;
       width: 0;
       padding: 0;
+      border-right: none;
     }
 
     .sidebar-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 30px;
-      color: white;
-    }
-
-    .sidebar-header img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-    }
-
-    .sidebar-header h2 {
-      font-size: 18px;
       font-weight: 600;
+      font-size: 1.5rem;
+      letter-spacing: -0.5px;
+      padding: 0 0.75rem 2rem 0.75rem;
+      color: #111;
     }
 
-    .sidebar-menu {
-      list-style: none;
-    }
-
-    .sidebar-menu li {
-      margin: 15px 0;
-    }
-
-    .sidebar-menu a {
-      color: #b0b0b0;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 15px;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      font-size: 14px;
-    }
-
-    .sidebar-menu a:hover,
-    .sidebar-menu a.active {
-      background-color: #667eea;
+    .sidebar-header span {
+      background: #111;
       color: white;
+      font-size: 1rem;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      margin-left: 6px;
     }
 
-    .sidebar-menu .icon {
-      font-size: 18px;
-    }
-
-    .sidebar-footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #333;
-    }
-
-    .logout-btn {
-      width: 100%;
-      padding: 12px;
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-
-    .logout-btn:hover {
-      background-color: #c0392b;
-      transform: translateY(-2px);
-    }
-
-    /* MAIN CONTENT */
-    .main-content {
+    .nav {
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      gap: 0.5rem;
     }
 
-    /* HEADER */
-    .header {
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      font-weight: 500;
+      color: #1e1e2f;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background 0.15s;
+    }
+
+    .nav a:hover {
+      background-color: #f0f2f5;
+    }
+
+    /* active state – soft gray */
+    .nav a.active {
+      background-color: #eaeef3;
+      color: #0a0a0a;
+      font-weight: 550;
+    }
+
+    .icon {
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    /* logout button */
+    .logout-area {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e2e6ea;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0.85rem 1rem;
+      width: 100%;
+      text-align: left;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #b02e2e;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .logout-btn:hover {
+      background-color: #ffe9e9;
+    }
+
+    /* ===== MAIN CONTENT – full white, spacious ===== */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #ffffff;
+      min-width: 0;  /* avoid overflow */
+    }
+
+    /* top bar – minimal, just toggle & title */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      padding: 1.5rem 2.5rem;
       background: white;
-      padding: 20px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 20px;
+      border-bottom: 1px solid #f0f2f5;
     }
 
     .toggle-btn {
       background: none;
-      border: none;
-      font-size: 24px;
+      border: 1px solid #e2e6ea;
+      font-size: 1.7rem;
+      line-height: 1;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
       cursor: pointer;
-      color: #333;
-      transition: all 0.3s ease;
+      color: #222;
+      margin-right: 1.5rem;
+      transition: all 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .toggle-btn:hover {
-      color: #667eea;
+      background-color: #f6f8fa;
+      border-color: #b0b8c5;
     }
 
-    .header-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1a1a2e;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .user-profile img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-    }
-
-    .user-info {
-      font-size: 14px;
-      color: #333;
-    }
-
-    .user-info p {
-      margin: 0;
+    .page-title {
+      font-size: 1.9rem;
       font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #111;
     }
 
-    .user-info small {
-      color: #999;
-    }
-
-    /* DASHBOARD CONTENT */
-    .dashboard-content {
-      flex: 1;
-      padding: 30px;
+    /* dashboard content – completed projects & nice cards */
+    .dashboard {
+      padding: 2.5rem;
       overflow-y: auto;
-      background: #f5f7fa;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .stat-card {
       background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      transition: all 0.3s ease;
     }
 
-    .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    .stat-card-icon {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
-
-    .stat-card-title {
-      color: #999;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 8px;
+    .section-label {
+      font-size: 1.1rem;
+      font-weight: 500;
       text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #5b6876;
+      margin-bottom: 1.5rem;
     }
 
-    .stat-card-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 8px;
+    .completed-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
     }
 
-    .stat-card-change {
-      font-size: 12px;
-      color: #27ae60;
+    .project-card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 1.8rem 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+      border: 1px solid #f0f2f5;
+      flex: 1 1 280px;
+      max-width: 340px;
+      transition: transform 0.15s, box-shadow 0.15s;
     }
 
-    .stat-card.danger .stat-card-change {
-      color: #e74c3c;
+    .project-card:hover {
+      box-shadow: 0 25px 35px -12px rgba(0, 0, 0, 0.07);
+      transform: translateY(-3px);
     }
 
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
 
-    .chart-card {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
-
-    .chart-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 20px;
-    }
-
-    .projects-table {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      overflow: hidden;
-    }
-
-    .table-header {
-      padding: 25px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    .table-header h3 {
-      font-size: 16px;
-      font-weight: 700;
-      color: #1a1a2e;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    table th {
-      background: #f5f7fa;
-      padding: 15px 25px;
-      text-align: left;
+    .project-name {
+      font-size: 1.6rem;
       font-weight: 600;
-      color: #666;
-      font-size: 13px;
-      text-transform: uppercase;
+      color: #121212;
+      line-height: 1.2;
     }
 
-    table td {
-      padding: 15px 25px;
-      border-bottom: 1px solid #e0e0e0;
-      color: #333;
-      font-size: 14px;
+    .completion-badge {
+      background: #e4f0e7;
+      color: #1f6d3a;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.9rem;
+      border-radius: 40px;
+      border: 1px solid #cbe3d2;
+      white-space: nowrap;
     }
 
-    table tr:last-child td {
-      border-bottom: none;
+    .client {
+      font-size: 1rem;
+      color: #5e6f7e;
+      margin: 0.5rem 0 1.5rem 0;
+      border-left: 3px solid #cfddee;
+      padding-left: 0.9rem;
     }
 
-    table tr:hover {
-      background: #f9f9f9;
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 1.2rem 0;
+      color: #2d3b45;
+      font-weight: 450;
     }
 
-    .badge {
+    .meta-label {
+      color: #8a9aa8;
+      font-size: 0.9rem;
+    }
+
+    .finish-date {
+      background: #f8fafc;
+      padding: 0.7rem 1rem;
+      border-radius: 18px;
+      font-size: 0.95rem;
+      border: 1px solid #edf2f6;
       display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
+      width: 100%;
+      text-align: center;
+      color: #2d4356;
     }
 
-    .badge.active {
-      background: #d4edda;
-      color: #155724;
+    /* extra nice empty state / message */
+    .subtle-note {
+      color: #a3b3c2;
+      margin-top: 3rem;
+      font-style: italic;
+      border-top: 1px dashed #e1e8f0;
+      padding-top: 2rem;
     }
 
-    .badge.pending {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    .badge.completed {
-      background: #cce5ff;
-      color: #004085;
-    }
-
-    .badge.on-hold {
-      background: #f8d7da;
-      color: #721c24;
-    }
-
-    /* SCROLLBAR */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #667eea;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #5568d3;
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .sidebar {
-        position: absolute;
-        height: 100vh;
-        z-index: 999;
-      }
-
-      .charts-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .dashboard-content {
-        padding: 15px;
-      }
-
-      .header {
-        padding: 15px 20px;
-      }
+    /* responsive: full always */
+    @media (max-width: 650px) {
+      .top-bar { padding: 1rem 1.5rem; }
+      .dashboard { padding: 1.5rem; }
+      .project-card { max-width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">PC</div>
-        <h2>Penta</h2>
-      </div>
-
-      <ul class="sidebar-menu">
-        <li><a href="#" class="active"><span class="icon">📊</span> Dashboard</a></li>
-        <li><a href="#"><span class="icon">📁</span> Projects</a></li>
-        <li><a href="#"><span class="icon">👥</span> Team</a></li>
-        <li><a href="#"><span class="icon">📋</span> Tasks</a></li>
-        <li><a href="#"><span class="icon">📈</span> Reports</a></li>
-        <li><a href="#"><span class="icon">⚙️</span> Settings</a></li>
-      </ul>
-
-      <div class="sidebar-footer">
-        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-      </div>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-      <!-- HEADER -->
-      <header class="header">
-        <div class="header-left">
-          <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-          <h1 class="header-title">Dashboard</h1>
-        </div>
-        <div class="header-right">
-          <div class="user-profile">
-            <img src="https://via.placeholder.com/40" alt="User">
-            <div class="user-info">
-              <p id="userName">PMP User</p>
-              <small>Project Manager</small>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- DASHBOARD CONTENT -->
-      <div class="dashboard-content">
-        <!-- STATS GRID -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-card-icon">📦</div>
-            <div class="stat-card-title">Total Projects</div>
-            <div class="stat-card-value" id="totalProjects">0</div>
-            <div class="stat-card-change">↑ 12% from last month</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card-icon">✅</div>
-            <div class="stat-card-title">Completed</div>
-            <div class="stat-card-value" id="completedProjects">0</div>
-            <div class="stat-card-change">↑ 8% from last month</div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card-icon">⏳</div>
-            <div class="stat-card-title">In Progress</div>
-            <div class="stat-card-value" id="inProgressProjects">0</div>
-            <div class="stat-card-change">2 projects ongoing</div>
-          </div>
-
-          <div class="stat-card danger">
-            <div class="stat-card-icon">⚠️</div>
-            <div class="stat-card-title">At Risk</div>
-            <div class="stat-card-value" id="atRiskProjects">0</div>
-            <div class="stat-card-change">↑ 3% require attention</div>
-          </div>
-        </div>
-
-        <!-- CHARTS GRID -->
-        <div class="charts-grid">
-          <div class="chart-card">
-            <h3 class="chart-title">Project Status Overview</h3>
-            <canvas id="statusChart"></canvas>
-          </div>
-
-          <div class="chart-card">
-            <h3 class="chart-title">Budget Allocation</h3>
-            <canvas id="budgetChart"></canvas>
-          </div>
-        </div>
-
-        <!-- PROJECTS TABLE -->
-        <div class="projects-table">
-          <div class="table-header">
-            <h3>Active Projects</h3>
-          </div>
-          <table id="projectsTable">
-            <thead>
-              <tr>
-                <th>Project Name</th>
-                <th>Client</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Budget</th>
-                <th>Progress</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="projectsTableBody">
-              <!-- Data will be populated by JavaScript -->
-            </tbody>
-          </table>
-        </div>
-      </div>
+<div class="app">
+  <!-- SIDEBAR (projects, reports, quotations, logout) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      PENTA<span>v2</span>
     </div>
-  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+    <nav class="nav">
+      <!-- Project link → Ex-projects.html -->
+      <a href="Ex-projects.html" id="navProjects" class="active">
+        <span class="icon">📁</span> Projects
+      </a>
+      <!-- Reports link → Ex-reports.html -->
+      <a href="Ex-reports.html" id="navReports">
+        <span class="icon">📊</span> Reports
+      </a>
+      <!-- Quotation link → Ex-Quontation.html (keep exact name) -->
+      <a href="Ex-Quontation.html" id="navQuotation">
+        <span class="icon">📋</span> Quotations
+      </a>
+    </nav>
 
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",
-      authDomain: "project-app-58ff6.firebaseapp.com",
-      databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com",
-      projectId: "project-app-58ff6",
-      storageBucket: "project-app-58ff6.appspot.com",
-      messagingSenderId: "586923989952",
-      appId: "1:586923989952:web:72b300dbc00d830e2e4625",
-      measurementId: "G-HV80KTBWSR"
+    <div class="logout-area">
+      <button class="logout-btn" id="logoutBtn">
+        <span class="icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT (full white, completed projects) -->
+  <main class="main">
+    <div class="top-bar">
+      <button class="toggle-btn" id="toggleSidebarBtn" title="hide / show sidebar">☰</button>
+      <span class="page-title">Completed projects</span>
+    </div>
+
+    <div class="dashboard">
+      <!-- section with nice cards – only completed projects -->
+      <div class="section-label">✦ recently finished</div>
+      <div class="completed-grid" id="completedProjectsContainer">
+        <!-- cards will be injected via JS (static but feel like real) -->
+      </div>
+      <!-- extra subtle note for style -->
+      <div class="subtle-note">— full screen, clean background, all completed work —</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function() {
+    // ---------- sidebar hide / unhide ----------
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+
+    window.toggleSidebar = function() {
+      sidebar.classList.toggle('hidden');
     };
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleSidebar();
+    });
 
-    // Sample Project Data (replace with Firebase data)
-    const sampleProjects = [
+    // ---------- logout action (simple) ----------
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      // clear any fake session if needed, then redirect
+      // just go to index.html as typical
+      window.location.href = 'index.html';
+    });
+
+    // ---------- set active class based on current page? 
+    // For demonstration we keep "Projects" active because we're on dashboard.
+    // But we want real links to work: they are hardcoded to html files.
+    // highlight the correct nav link based on page (simple approach)
+    function setActiveNav() {
+      const path = window.location.pathname.split('/').pop() || 'index.html'; // fallback
+      const navProjects = document.getElementById('navProjects');
+      const navReports = document.getElementById('navReports');
+      const navQuotation = document.getElementById('navQuotation');
+
+      // remove active from all
+      [navProjects, navReports, navQuotation].forEach(el => el.classList.remove('active'));
+
+      if (path === 'Ex-projects.html') {
+        navProjects.classList.add('active');
+      } else if (path === 'Ex-reports.html') {
+        navReports.classList.add('active');
+      } else if (path === 'Ex-Quontation.html') {
+        navQuotation.classList.add('active');
+      } else {
+        // if we are on this dashboard (maybe the main view) we set projects active
+        navProjects.classList.add('active');
+      }
+    }
+    setActiveNav();
+
+    // ---------- populate completed projects cards (static data, no table) ----------
+    const completedProjects = [
       {
-        id: 1,
-        name: "City Plaza Development",
-        client: "Urban Developers Ltd",
-        startDate: "2024-01-15",
-        endDate: "2025-12-31",
-        budget: "$2,500,000",
-        progress: 65,
-        status: "active"
+        name: 'Harbor Bridge',
+        client: 'Coastal Transit',
+        completed: 'Dec 2025',
+        budget: '$3.2M',
+        finishDate: '15 Dec 2025'
       },
       {
-        id: 2,
-        name: "Highway Expansion",
-        client: "Government Roads",
-        startDate: "2024-03-10",
-        endDate: "2026-06-30",
-        budget: "$5,800,000",
-        progress: 45,
-        status: "active"
+        name: 'Greenway Plaza',
+        client: 'Eco Offices',
+        completed: 'Nov 2025',
+        budget: '$7.8M',
+        finishDate: '28 Nov 2025'
       },
       {
-        id: 3,
-        name: "Shopping Mall Renovation",
-        client: "Retail Corp",
-        startDate: "2023-06-01",
-        endDate: "2025-03-31",
-        budget: "$1,200,000",
-        progress: 92,
-        status: "completed"
+        name: 'Riverside Tower',
+        client: 'Urban Living',
+        completed: 'Oct 2025',
+        budget: '$12.4M',
+        finishDate: '09 Oct 2025'
       },
       {
-        id: 4,
-        name: "Hospital Wing Extension",
-        client: "Health Services",
-        startDate: "2024-02-20",
-        endDate: "2025-08-15",
-        budget: "$3,500,000",
-        progress: 38,
-        status: "pending"
+        name: 'Northside Hospital',
+        client: 'HealthCore',
+        completed: 'Sep 2025',
+        budget: '$21M',
+        finishDate: '22 Sep 2025'
       },
       {
-        id: 5,
-        name: "Office Complex Build",
-        client: "Corporate Solutions",
-        startDate: "2024-04-05",
-        endDate: "2025-11-30",
-        budget: "$4,100,000",
-        progress: 58,
-        status: "active"
+        name: 'Maple Residences',
+        client: 'Alder Group',
+        completed: 'Aug 2025',
+        budget: '$5.6M',
+        finishDate: '03 Aug 2025'
+      },
+      {
+        name: 'Innovation Hub',
+        client: 'TechSpark',
+        completed: 'Jul 2025',
+        budget: '$9.2M',
+        finishDate: '19 Jul 2025'
       }
     ];
 
-    // Initialize Dashboard
-    function initDashboard() {
-      loadProjects();
-      renderCharts();
-      updateStats();
-      loadUserInfo();
+    const container = document.getElementById('completedProjectsContainer');
+    if (container) {
+      container.innerHTML = completedProjects.map(p => `
+        <div class="project-card">
+          <div class="card-header">
+            <span class="project-name">${p.name}</span>
+            <span class="completion-badge">✔ done</span>
+          </div>
+          <div class="client">${p.client}</div>
+          <div class="meta-row">
+            <span class="meta-label">budget</span>
+            <span>${p.budget}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">completed</span>
+            <span>${p.completed}</span>
+          </div>
+          <div class="finish-date">🎯 final: ${p.finishDate}</div>
+        </div>
+      `).join('');
     }
 
-    // Load Projects
-    function loadProjects() {
-      const tbody = document.getElementById("projectsTableBody");
-      tbody.innerHTML = "";
+    // ---------- simulate that clicking on project, reports, quotation works 
+    // they already are <a href="..."> so normal navigation.
+    // additionally, we can show a small console note, but no need.
+    // also full screen: container uses vw/vh, white background, nothing missing.
+  })();
+</script>
 
-      sampleProjects.forEach(project => {
-        const row = document.createElement("tr");
-        const statusBadgeClass = project.status === "completed" ? "completed" : 
-                                  project.status === "active" ? "active" : 
-                                  project.status === "pending" ? "pending" : "on-hold";
-
-        row.innerHTML = `
-          <td><strong>${project.name}</strong></td>
-          <td>${project.client}</td>
-          <td>${new Date(project.startDate).toLocaleDateString()}</td>
-          <td>${new Date(project.endDate).toLocaleDateString()}</td>
-          <td>${project.budget}</td>
-          <td>
-            <div style="width: 100%; background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden;">
-              <div style="width: ${project.progress}%; background: #667eea; height: 100%;"></div>
-            </div>
-            <small style="color: #666;">${project.progress}%</small>
-          </td>
-          <td><span class="badge ${statusBadgeClass}">${project.status.toUpperCase()}</span></td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    // Update Statistics
-    function updateStats() {
-      const total = sampleProjects.length;
-      const completed = sampleProjects.filter(p => p.status === "completed").length;
-      const inProgress = sampleProjects.filter(p => p.status === "active").length;
-      const atRisk = sampleProjects.filter(p => p.progress < 50 && p.status === "active").length;
-
-      document.getElementById("totalProjects").textContent = total;
-      document.getElementById("completedProjects").textContent = completed;
-      document.getElementById("inProgressProjects").textContent = inProgress;
-      document.getElementById("atRiskProjects").textContent = atRisk;
-    }
-
-    // Render Charts
-    function renderCharts() {
-      // Status Chart
-      const statusCtx = document.getElementById("statusChart").getContext("2d");
-      new Chart(statusCtx, {
-        type: "doughnut",
-        data: {
-          labels: ["Active", "Completed", "Pending"],
-          datasets: [{
-            data: [3, 1, 1],
-            backgroundColor: ["#667eea", "#27ae60", "#f39c12"]
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              position: "bottom"
-            }
-          }
-        }
-      });
-
-      // Budget Chart
-      const budgetCtx = document.getElementById("budgetChart").getContext("2d");
-      new Chart(budgetCtx, {
-        type: "bar",
-        data: {
-          labels: ["Q1", "Q2", "Q3", "Q4"],
-          datasets: [{
-            label: "Budget Spent ($M)",
-            data: [1.2, 2.1, 1.8, 2.5],
-            backgroundColor: "#667eea",
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              display: true
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
-
-    // Load User Info
-    function loadUserInfo() {
-      const currentUser = localStorage.getItem('currentUser');
-      document.getElementById("userName").textContent = currentUser ? currentUser.toUpperCase() : "PMP User";
-    }
-
-    // Global Functions
-    window.toggleSidebar = function() {
-      const sidebar = document.getElementById("sidebar");
-      sidebar.classList.toggle("hidden");
-    };
-
-    window.logout = function() {
-      localStorage.removeItem('currentUser');
-      window.location.href = 'index.html';
-    };
-
-    // Initialize on load
-    initDashboard();
-  </script>
+<!-- ensure full screen even with minimal content -->
 </body>
 </html>
