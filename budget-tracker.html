@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Gantt · Task status · Budget linked</title>
+    <title>Project Gantt · Task status</title>
     
     <!-- Firebase SDK v8 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -149,6 +149,22 @@
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            cursor: col-resize;
+            user-select: none;
+            position: relative;
+        }
+        .gantt-table th::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            cursor: col-resize;
+        }
+        .gantt-table th:hover::after {
+            background: rgba(255,255,255,0.3);
         }
         .gantt-table td {
             padding: 0.5rem 0.2rem;
@@ -164,6 +180,10 @@
             z-index: 15;
             cursor: context-menu;
             font-weight: 400;
+            resize: horizontal;
+            overflow: auto;
+            min-width: 150px;
+            max-width: 500px;
         }
         .task-main {
             font-weight: 600;
@@ -185,7 +205,7 @@
             font-weight: 500;
         }
         .subtask-item {
-            padding-left: 32px;
+            padding-left: 20px;
             font-size: 0.75rem;
             color: #2f4b70;
             display: flex;
@@ -198,37 +218,38 @@
             min-width: 35px;
         }
         .date-col {
-            width: 65px;
+            width: 45px;
             text-align: center;
             font-family: monospace;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #2c3e50;
         }
         .pred-col {
-            width: 65px;
+            width: 45px;
             text-align: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #2c3e50;
             font-family: monospace;
             font-weight: 500;
         }
         .budget-col {
-            width: 75px;
+            width: 55px;
             text-align: right;
-            padding-right: 12px;
-            font-size: 0.7rem;
+            padding-right: 8px;
+            font-size: 0.65rem;
             color: #2c3e50;
             font-weight: 500;
         }
         .status-col {
-            width: 70px;
+            width: 60px;
             text-align: center;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 500;
         }
         .gantt-col {
             padding: 0.2rem 0.3rem !important;
             position: relative;
+            min-width: 400px;
         }
         .timeline-box {
             position: relative;
@@ -318,7 +339,7 @@
         .timeline-header-row {
             display: flex;
             width: 100%;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: #1e3f64;
             font-weight: 500;
         }
@@ -326,6 +347,9 @@
             flex: 1;
             text-align: center;
             border-left: 1px solid #b7ceec;
+            font-size: 0.55rem;
+            white-space: nowrap;
+            padding: 0 2px;
         }
         .context-menu {
             position: absolute;
@@ -376,10 +400,11 @@
         }
         .status-badge {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 30px;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             font-weight: 500;
+            white-space: nowrap;
         }
         .status-not-started { background: #edf2f9; color: #4a6382; }
         .status-in-progress { background: #fff3d8; color: #b85e00; }
@@ -442,6 +467,19 @@
             color: #666;
             font-style: italic;
         }
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 30;
+        }
+        .resize-handle:hover {
+            background: rgba(255,255,255,0.3);
+        }
     </style>
 </head>
 <body>
@@ -454,7 +492,6 @@
         <div style="display: flex; gap: 10px; align-items: center;">
             <div class="nav-buttons">
                 <a href="#" class="nav-btn" onclick="goToProjects()">← Projects</a>
-                <a href="#" class="nav-btn primary" onclick="goToBudget()">💰 Budget</a>
             </div>
             <button class="toggle-form-btn" id="toggleFormBtn">＋ Show form</button>
         </div>
@@ -496,14 +533,14 @@
     <div class="gantt-scroll" id="ganttScroll">
         <table class="gantt-table" id="ganttTable">
             <thead>
-                <tr>
-                    <th class="task-col">Task (right-click)</th>
-                    <th class="date-col">Start</th>
-                    <th class="date-col">End</th>
-                    <th class="pred-col">Pred</th>
-                    <th class="budget-col">Budget</th>
-                    <th class="status-col">Status</th>
-                    <th style="min-width:420px;">Timeline (Feb - Jun 2026)</th>
+                <tr id="headerRow">
+                    <th class="task-col" id="taskHeader">Task (right-click)</th>
+                    <th class="date-col" id="startHeader">Start</th>
+                    <th class="date-col" id="endHeader">End</th>
+                    <th class="pred-col" id="predHeader">Pred</th>
+                    <th class="budget-col" id="budgetHeader">Budget</th>
+                    <th class="status-col" id="statusHeader">Status</th>
+                    <th class="gantt-col" id="ganttHeader" style="min-width:400px;">Timeline (Feb - Jun 2026)</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -580,6 +617,76 @@
     const indexWarning = document.getElementById('indexWarning');
     const createIndexLink = document.getElementById('createIndexLink');
 
+    // Column resize functionality
+    const taskHeader = document.getElementById('taskHeader');
+    const startHeader = document.getElementById('startHeader');
+    const endHeader = document.getElementById('endHeader');
+    const predHeader = document.getElementById('predHeader');
+    const budgetHeader = document.getElementById('budgetHeader');
+    const statusHeader = document.getElementById('statusHeader');
+    const ganttHeader = document.getElementById('ganttHeader');
+
+    let isResizing = false;
+    let currentHeader = null;
+    let startX = 0;
+    let startWidth = 0;
+
+    function initResize(header, columnClass) {
+        header.addEventListener('mousedown', (e) => {
+            if (e.target === header || e.target === header.querySelector('.resize-handle')) {
+                isResizing = true;
+                currentHeader = header;
+                startX = e.pageX;
+                startWidth = header.offsetWidth;
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                
+                e.preventDefault();
+            }
+        });
+
+        // Add resize handle
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle';
+        header.appendChild(handle);
+    }
+
+    function onMouseMove(e) {
+        if (!isResizing || !currentHeader) return;
+        
+        const diff = e.pageX - startX;
+        const newWidth = Math.max(30, startWidth + diff);
+        
+        // Apply width to all cells in this column
+        const columnIndex = currentHeader.cellIndex;
+        const rows = document.querySelectorAll('#ganttTable tr');
+        
+        rows.forEach(row => {
+            if (row.cells[columnIndex]) {
+                row.cells[columnIndex].style.width = newWidth + 'px';
+                row.cells[columnIndex].style.minWidth = newWidth + 'px';
+                row.cells[columnIndex].style.maxWidth = newWidth + 'px';
+            }
+        });
+    }
+
+    function onMouseUp() {
+        isResizing = false;
+        currentHeader = null;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    // Initialize resize for all headers
+    initResize(taskHeader, 'task-col');
+    initResize(startHeader, 'date-col');
+    initResize(endHeader, 'date-col');
+    initResize(predHeader, 'pred-col');
+    initResize(budgetHeader, 'budget-col');
+    initResize(statusHeader, 'status-col');
+    initResize(ganttHeader, 'gantt-col');
+
     // State
     let tasks = [];
     let selectedTaskId = null;
@@ -617,9 +724,9 @@
     function getStatusText(status) {
         switch(status) {
             case 'completed': return 'Completed';
-            case 'in-progress': return 'In Progress';
+            case 'in-progress': return 'In Prog';
             case 'on-hold': return 'On Hold';
-            default: return 'Not Started';
+            default: return 'Not Start';
         }
     }
 
@@ -1010,10 +1117,6 @@
     // Navigation
     window.goToProjects = () => {
         window.location.href = 'projects.html';
-    };
-
-    window.goToBudget = () => {
-        window.location.href = `budget-tracker.html?project=${projectId}`;
     };
 
     // Event Listeners
