@@ -524,30 +524,24 @@
     <button id="datePickerSave">Save</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <script>
-    // Your Firebase configuration - using the exact same config from your working project
+    // Firebase config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
         projectId: "project-task-588c4",
-        storageBucket: "project-task-588c4.firebasestorage.app",
+        storageBucket: "project-task-588c4.appspot.com",
         messagingSenderId: "411882772509",
         appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Enable offline persistence for better performance
-    db.enablePersistence()
-        .catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.log('Persistence failed');
-            } else if (err.code == 'unimplemented') {
-                console.log('Persistence not available');
-            }
-        });
+    db.enablePersistence().catch(err => console.log('Persistence error:', err));
 
     // Get project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -559,7 +553,6 @@
 
     // DOM Elements
     const tbody = document.getElementById('tableBody');
-    const scrollDiv = document.getElementById('ganttScroll');
     const toggleBtn = document.getElementById('toggleFormBtn');
     const form = document.getElementById('addForm');
     const parentSelect = document.getElementById('parentTaskSelect');
@@ -567,10 +560,6 @@
     const submitBtn = document.getElementById('submitTaskBtn');
     const completionBar = document.getElementById('completionBarFill');
     const completionPercentEl = document.getElementById('completionPercent');
-    const contextMenu = document.getElementById('contextMenu');
-    const datePickerPopup = document.getElementById('datePickerPopup');
-    const datePickerInput = document.getElementById('datePickerInput');
-    const datePickerSave = document.getElementById('datePickerSave');
     const projectNameDisplay = document.getElementById('projectNameDisplay');
     const projectInfo = document.getElementById('projectInfo');
     const totalBudgetEl = document.getElementById('totalBudget');
@@ -578,11 +567,9 @@
     const remainingBudgetEl = document.getElementById('remainingBudget');
 
     let tasks = [];
-    let selectedTaskId = null;
-    let currentAction = null;
     let currentProject = null;
 
-    // Show notification messages
+    // Show notification
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
         msg.className = `message ${type}`;
@@ -601,7 +588,7 @@
                 projectInfo.textContent = `Project: ${currentProject.code || currentProject.id}`;
                 console.log('Project loaded:', currentProject);
             } else {
-                console.log('No project found with ID:', projectId);
+                console.log('No project found');
                 showMessage('Project not found', 'error');
             }
         } catch (error) {
@@ -616,42 +603,37 @@
             const budgetDoc = await db.collection('projectSettings').doc(projectId).get();
             if (budgetDoc.exists) {
                 const budget = budgetDoc.data();
-                totalBudgetEl.textContent = budget.initialBudget?.toFixed(2) || '0';
-                spentBudgetEl.textContent = budget.totalSpent?.toFixed(2) || '0';
+                totalBudgetEl.textContent = (budget.initialBudget || 0).toFixed(2);
+                spentBudgetEl.textContent = (budget.totalSpent || 0).toFixed(2);
                 const remaining = (budget.initialBudget || 0) - (budget.totalSpent || 0);
                 remainingBudgetEl.textContent = remaining.toFixed(2);
                 
-                // Color code remaining
                 if (remaining < 0) {
                     remainingBudgetEl.classList.add('warning');
                 } else {
                     remainingBudgetEl.classList.remove('warning');
                 }
-                console.log('Budget loaded:', budget);
             } else {
-                console.log('No budget settings found for project');
-                // Initialize budget settings if not exists
                 await db.collection('projectSettings').doc(projectId).set({
                     projectId: projectId,
                     initialBudget: 0,
                     totalSpent: 0,
                     fundTransactions: []
                 });
-                console.log('Created default budget settings');
             }
         } catch (error) {
             console.error('Error loading budget:', error);
         }
     }
 
-    // Format date for display
+    // Format date
     function formatDisplayDate(dateStr) {
         if (!dateStr) return '—';
         const d = new Date(dateStr + 'T12:00:00');
         return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).replace(/ /, ' ');
     }
 
-    // Get status class for styling
+    // Get status class
     function getStatusClass(status) {
         switch(status) {
             case 'completed': return 'status-completed';
@@ -661,7 +643,7 @@
         }
     }
 
-    // Get status display text
+    // Get status text
     function getStatusText(status) {
         switch(status) {
             case 'completed': return 'Completed';
@@ -671,7 +653,7 @@
         }
     }
 
-    // Get completion percentage from status
+    // Get completion from status
     function getCompletionFromStatus(status) {
         switch(status) {
             case 'completed': return 100;
@@ -681,7 +663,7 @@
         }
     }
 
-    // Calculate left/width from dates
+    // Calculate gantt position
     function getLeftWidthFromDates(task) {
         if (task.start && task.end) {
             try {
@@ -690,7 +672,6 @@
                 const refStart = new Date('2026-02-17T12:00:00');
                 const refEnd = new Date('2026-06-30T12:00:00');
                 
-                // Validate dates
                 if (isNaN(startDate) || isNaN(endDate)) {
                     return { left: 10, width: 20 };
                 }
@@ -704,7 +685,6 @@
                 let left = (startDays / totalDays) * 100;
                 let width = ((endDays - startDays) / totalDays) * 100;
                 
-                // Ensure values are within bounds
                 left = Math.max(0, Math.min(95, left));
                 width = Math.max(2, Math.min(95 - left, width));
                 
@@ -716,7 +696,7 @@
         return { left: 10, width: 20 };
     }
 
-    // Update completion percentage (weighted by budget)
+    // Update completion percentage
     function updateCompletion() {
         let totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
         let completedBudget = tasks.reduce((sum, t) => {
@@ -728,16 +708,18 @@
         completionPercentEl.innerText = percent + '%';
     }
 
-    // Update dropdowns from Firebase data
+    // Update dropdowns
     function updateDropdowns() {
         parentSelect.innerHTML = '<option value="">— main task —</option>';
         predSelect.innerHTML = '<option value="">— none —</option>';
+        
         tasks.filter(t => t.isMain).forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.firebaseId;
             opt.textContent = t.name;
             parentSelect.appendChild(opt);
         });
+        
         tasks.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.firebaseId;
@@ -750,7 +732,7 @@
     function renderTable() {
         tbody.innerHTML = '';
         
-        // timeline row
+        // Timeline header row
         const timelineRow = document.createElement('tr');
         timelineRow.style.background = '#f0f6ff';
         timelineRow.innerHTML = `
@@ -771,7 +753,7 @@
         `;
         tbody.appendChild(timelineRow);
 
-        // Sort tasks by ID
+        // Sort and render tasks
         const sortedTasks = [...tasks].sort((a, b) => a.id.localeCompare(b.id));
         
         sortedTasks.forEach(t => {
@@ -794,7 +776,7 @@
             const holdMarker = t.onHold ? `<div class="hold-marker" style="left:${(pos.left || 10) + (pos.width || 20)/2 - 1}%;"></div>` : '';
             
             row.innerHTML = `
-                <td class="task-col" data-task-id="${t.firebaseId}" data-task-number="${t.id}">${taskDisplay}</td>
+                <td class="task-col">${taskDisplay}</td>
                 <td class="date-col">${startDisplay}</td>
                 <td class="date-col">${endDisplay}</td>
                 <td class="pred-col">${t.pred || '—'}</td>
@@ -802,7 +784,7 @@
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col">
                     <div class="timeline-box">
-                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${t.firebaseId}"></div>
+                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;"></div>
                         <div class="completion-overlay ${!t.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
                         ${holdMarker}
                     </div>
@@ -811,7 +793,7 @@
             tbody.appendChild(row);
         });
 
-        // milestone row
+        // Milestones row
         const mileRow = document.createElement('tr');
         mileRow.style.background = '#eaf1fb';
         mileRow.innerHTML = `
@@ -832,112 +814,32 @@
         `;
         tbody.appendChild(mileRow);
 
-        // Attach right-click listeners to task cells
-        document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
-            cell.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                selectedTaskId = cell.dataset.taskId;
-                contextMenu.style.display = 'flex';
-                contextMenu.style.left = e.pageX + 'px';
-                contextMenu.style.top = e.pageY + 'px';
-            });
-        });
-
-        // Bar click cycles status
-        document.querySelectorAll('.task-bar').forEach(bar => {
-            bar.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const taskId = bar.dataset.taskId;
-                if (!taskId) return;
-                
-                const task = tasks.find(t => t.firebaseId === taskId);
-                if (!task) return;
-                
-                let newStatus = task.status;
-                if (newStatus === 'not-started' || !newStatus) newStatus = 'in-progress';
-                else if (newStatus === 'in-progress') newStatus = 'completed';
-                else if (newStatus === 'completed') newStatus = 'not-started';
-                else if (newStatus === 'on-hold') newStatus = 'in-progress';
-                
-                await updateTaskInFirebase(task.firebaseId, { status: newStatus });
-            });
-        });
-
         updateDropdowns();
         updateCompletion();
     }
 
-    // Load tasks from Firestore for this project
-    function loadTasksFromFirebase() {
+    // Add task to Firebase
+    async function addTaskToFirebase(taskData) {
         try {
-            console.log('Loading tasks for project:', projectId);
-            
-            const q = db.collection('gantt_tasks')
-                .where('projectId', '==', projectId)
-                .orderBy('createdAt', 'asc');
-            
-            db.collection('gantt_tasks')
-                .where('projectId', '==', projectId)
-                .get()
-                .then((snapshot) => {
-                    tasks = [];
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        console.log('Task loaded:', data);
-                        tasks.push({
-                            id: data.id,
-                            name: data.name,
-                            start: data.start || null,
-                            end: data.end || null,
-                            pred: data.pred || '',
-                            budget: data.budget || 0,
-                            isMain: data.isMain || false,
-                            left: data.left || 10,
-                            width: data.width || 20,
-                            status: data.status || 'not-started',
-                            onHold: data.onHold || false,
-                            parentId: data.parentId || null,
-                            projectId: data.projectId,
-                            firebaseId: doc.id
-                        });
-                    });
-                    console.log('Total tasks loaded:', tasks.length);
-                    renderTable();
-                    loadBudgetInfo();
-                })
-                .catch((error) => {
-                    console.error('Error loading tasks:', error);
-                    showMessage('Error loading tasks: ' + error.message, 'error');
-                });
-            
-            // Also set up real-time listener
-            db.collection('gantt_tasks')
-                .where('projectId', '==', projectId)
-                .orderBy('createdAt', 'asc')
-                .onSnapshot((snapshot) => {
-                    console.log('Real-time update received');
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
-                            // Reload all tasks
-                            loadTasksFromFirebase();
-                        }
-                    });
-                }, (error) => {
-                    console.error('Error in real-time listener:', error);
-                });
-                
+            await db.collection('gantt_tasks').add({
+                ...taskData,
+                projectId: projectId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showMessage('Task added successfully ✓', 'success');
+            return true;
         } catch (error) {
-            console.error('Error setting up task loading:', error);
-            showMessage('Error setting up data listener: ' + error.message, 'error');
+            console.error('Error adding task:', error);
+            showMessage('Error adding task: ' + error.message, 'error');
+            return false;
         }
     }
 
-    // Update task in Firestore
+    // Update task in Firebase
     async function updateTaskInFirebase(firebaseId, updates) {
         try {
-            const taskRef = db.collection('gantt_tasks').doc(firebaseId);
-            await taskRef.update({
+            await db.collection('gantt_tasks').doc(firebaseId).update({
                 ...updates,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
@@ -945,25 +847,6 @@
         } catch (error) {
             console.error('Error updating task:', error);
             showMessage('Error updating task: ' + error.message, 'error');
-        }
-    }
-
-    // Add new task to Firestore
-    async function addTaskToFirebase(taskData) {
-        try {
-            const docRef = await db.collection('gantt_tasks').add({
-                ...taskData,
-                projectId: projectId,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            console.log('Task added with ID: ', docRef.id);
-            showMessage('Task added successfully ✓', 'success');
-            return true;
-        } catch (error) {
-            console.error('Error adding task:', error);
-            showMessage('Error adding task: ' + error.message, 'error');
-            return false;
         }
     }
 
@@ -986,8 +869,8 @@
     submitBtn.addEventListener('click', async () => {
         const name = document.getElementById('taskName').value.trim();
         const budget = parseFloat(document.getElementById('budgetAmount').value) || 0;
-        const parentId = document.getElementById('parentTaskSelect').value;
-        const predId = document.getElementById('predSelect').value;
+        const parentId = parentSelect.value;
+        const predId = predSelect.value;
 
         if (!name) {
             showMessage('Task name is required!', 'error');
@@ -1034,8 +917,8 @@
         if (success) {
             document.getElementById('taskName').value = '';
             document.getElementById('budgetAmount').value = '5000';
-            document.getElementById('parentTaskSelect').value = '';
-            document.getElementById('predSelect').value = '';
+            parentSelect.value = '';
+            predSelect.value = '';
             form.classList.remove('visible');
             toggleBtn.innerText = '＋ Show form';
         }
@@ -1044,83 +927,44 @@
         submitBtn.textContent = 'Add task';
     });
 
-    // Context menu actions
-    document.getElementById('menuStart').addEventListener('click', () => {
-        if (!selectedTaskId) return;
-        currentAction = 'start';
-        datePickerPopup.style.display = 'flex';
-        datePickerPopup.style.left = contextMenu.style.left;
-        datePickerPopup.style.top = contextMenu.style.top;
-        contextMenu.style.display = 'none';
-    });
-
-    document.getElementById('menuEnd').addEventListener('click', () => {
-        if (!selectedTaskId) return;
-        currentAction = 'end';
-        datePickerPopup.style.display = 'flex';
-        datePickerPopup.style.left = contextMenu.style.left;
-        datePickerPopup.style.top = contextMenu.style.top;
-        contextMenu.style.display = 'none';
-    });
-
-    document.getElementById('menuHold').addEventListener('click', async () => {
-        if (!selectedTaskId) return;
-        const task = tasks.find(t => t.firebaseId === selectedTaskId);
-        if (task) {
-            const newOnHold = !task.onHold;
-            const newStatus = newOnHold ? 'on-hold' : 'not-started';
-            await updateTaskInFirebase(task.firebaseId, { onHold: newOnHold, status: newStatus });
-        }
-        contextMenu.style.display = 'none';
-    });
-
-    document.getElementById('menuComplete').addEventListener('click', async () => {
-        if (!selectedTaskId) return;
-        const task = tasks.find(t => t.firebaseId === selectedTaskId);
-        if (task) {
-            await updateTaskInFirebase(task.firebaseId, { status: 'completed' });
-        }
-        contextMenu.style.display = 'none';
-    });
-
-    document.getElementById('menuInProgress').addEventListener('click', async () => {
-        if (!selectedTaskId) return;
-        const task = tasks.find(t => t.firebaseId === selectedTaskId);
-        if (task) {
-            await updateTaskInFirebase(task.firebaseId, { status: 'in-progress' });
-        }
-        contextMenu.style.display = 'none';
-    });
-
-    // Date picker save
-    datePickerSave.addEventListener('click', async () => {
-        if (!selectedTaskId || !currentAction) return;
-        const date = datePickerInput.value;
-        if (!date) return;
-        
-        const task = tasks.find(t => t.firebaseId === selectedTaskId);
-        if (task) {
-            const updates = currentAction === 'start' ? { start: date } : { end: date };
-            await updateTaskInFirebase(task.firebaseId, updates);
-        }
-        datePickerPopup.style.display = 'none';
-        selectedTaskId = null;
-        currentAction = null;
-    });
-
-    // Hide menus when clicking elsewhere
-    document.addEventListener('click', (e) => {
-        if (!contextMenu.contains(e.target) && !datePickerPopup.contains(e.target)) {
-            contextMenu.style.display = 'none';
-            datePickerPopup.style.display = 'none';
-        }
-    });
+    // Real-time listener for tasks (SINGLE LISTENER ONLY)
+    db.collection('gantt_tasks')
+        .where('projectId', '==', projectId)
+        .orderBy('createdAt', 'asc')
+        .onSnapshot((snapshot) => {
+            console.log('Snapshot received, updating tasks...');
+            tasks = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                tasks.push({
+                    id: data.id,
+                    name: data.name,
+                    start: data.start || null,
+                    end: data.end || null,
+                    pred: data.pred || '',
+                    budget: data.budget || 0,
+                    isMain: data.isMain || false,
+                    left: data.left || 10,
+                    width: data.width || 20,
+                    status: data.status || 'not-started',
+                    onHold: data.onHold || false,
+                    parentId: data.parentId || null,
+                    projectId: data.projectId,
+                    firebaseId: doc.id
+                });
+            });
+            console.log('Tasks updated:', tasks.length);
+            renderTable();
+        }, (error) => {
+            console.error('Snapshot error:', error);
+            showMessage('Error loading tasks: ' + error.message, 'error');
+        });
 
     // Initialize
     async function init() {
         console.log('Initializing with project ID:', projectId);
         await loadProjectInfo();
-        loadTasksFromFirebase();
+        await loadBudgetInfo();
     }
 
     init();
