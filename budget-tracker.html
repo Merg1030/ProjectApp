@@ -171,7 +171,7 @@
             cursor: pointer;
             margin-top: 14px;
         }
-        /* Gantt scroll */
+        /* Gantt scroll - fills all remaining space */
         .gantt-scroll {
             flex: 1;
             overflow: auto;
@@ -180,39 +180,117 @@
         .gantt-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 900px;  /* enough for daily ticks */
+            min-width: 1200px;
             table-layout: fixed;
             font-size: 0.7rem;
         }
+        
+        /* ALL left columns stay fixed when scrolling */
+        .gantt-table th,
+        .gantt-table td {
+            border-right: 1px solid #dce3ef;
+            border-bottom: 1px solid #e3e9f2;
+        }
+        
         .gantt-table th {
             background: #1d344c;
             color: #ffffff;
             font-weight: 500;
-            padding: 0.7rem 0.2rem;
-            border-right: 1px solid #3f5670;
+            padding: 0.4rem 0.2rem;
             border-bottom: 2px solid #577599;
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 30;
             font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
         }
-        .gantt-table td {
-            padding: 0.5rem 0.2rem;
-            border-bottom: 1px solid #e3e9f2;
-            border-right: 1px solid #dce3ef;
-            vertical-align: middle;
+        
+        /* Make all left columns sticky */
+        .task-col { 
+            width: 240px; 
+            background: white; 
+            position: sticky; 
+            left: 0; 
+            z-index: 20; 
+            cursor: context-menu; 
+            font-weight: 400;
+            border-right: 2px solid #c0d0e5 !important;
         }
-        .task-col {
-            width: 260px;
+        .date-col { 
+            width: 55px; 
+            text-align: center; 
+            font-family: 'JetBrains Mono', monospace;
             background: white;
             position: sticky;
-            left: 0;
-            z-index: 15;
-            cursor: context-menu;
-            font-weight: 400;
+            left: 240px;
+            z-index: 19;
         }
+        .pred-col { 
+            width: 50px; 
+            text-align: center;
+            background: white;
+            position: sticky;
+            left: 295px;
+            z-index: 19;
+        }
+        .budget-col { 
+            width: 65px; 
+            text-align: right; 
+            padding-right: 8px;
+            background: white;
+            position: sticky;
+            left: 345px;
+            z-index: 19;
+        }
+        .status-col { 
+            width: 80px; 
+            text-align: center;
+            background: white;
+            position: sticky;
+            left: 410px;
+            z-index: 19;
+            border-right: 2px solid #c0d0e5 !important;
+        }
+        
+        /* Calendar header styling - exactly as requested */
+        .calendar-month-header {
+            background: #1d344c;
+            color: white;
+            font-weight: 600;
+            padding: 0.4rem 0.2rem;
+            text-align: center;
+            border-right: 1px solid #3f5670;
+        }
+        
+        .calendar-days-header {
+            background: #1d344c;
+            color: #e0eaff;
+            font-weight: 500;
+            padding: 0.3rem 0.1rem;
+            text-align: center;
+            font-size: 0.65rem;
+            border-right: 1px solid #3f5670;
+        }
+        
+        .calendar-days-header th {
+            top: 28px !important; /* Position below month header */
+            background: #1d344c;
+            z-index: 25;
+        }
+        
+        /* Make sure calendar headers stay sticky too */
+        .gantt-table .calendar-sticky {
+            position: sticky;
+            top: 0;
+            background: #1d344c;
+            z-index: 35;
+        }
+        
+        .calendar-sticky-left {
+            left: 0;
+            z-index: 40;
+            background: #1d344c;
+        }
+        
         .task-main {
             font-weight: 600;
             color: #ffffff;
@@ -250,11 +328,12 @@
         .hide-col .status-col {
             display: none;
         }
-        .date-col { width: 55px; text-align: center; font-family: 'JetBrains Mono', monospace; }
-        .pred-col { width: 50px; text-align: center; }
-        .budget-col { width: 65px; text-align: right; padding-right: 8px; }
-        .status-col { width: 70px; text-align: center; }
-        .gantt-col { padding: 0.2rem 0 !important; }
+        
+        .gantt-col { 
+            padding: 0.2rem 0 !important; 
+            min-width: 500px;
+        }
+        
         .timeline-box {
             position: relative;
             width: 100%;
@@ -311,12 +390,11 @@
             top: 14px;
             border: 1px solid white;
         }
-        /* daily ticks container */
+        /* daily ticks container - clean calendar style */
         .daily-tick-container {
             display: flex;
             width: 100%;
             height: 100%;
-            align-items: flex-end;
             background: #ffffff08;
         }
         .day-tick {
@@ -340,9 +418,20 @@
             font-weight: 500;
         }
         .sunday-tick {
-            background: #ffe9e9;  /* subtle highlight for skipped? but we hide them */
             display: none;  /* sundays not shown */
         }
+        
+        /* Calendar day numbers in header */
+        .calendar-day-number {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            padding: 0.2rem 0;
+            border-right: 1px solid #3f5670;
+            background: #1d344c;
+        }
+        
         .bottom-space {
             padding: 0.8rem 2rem 0.9rem 2rem;
             background: #ffffff;
@@ -484,19 +573,11 @@
         </div>
     </div>
 
-    <!-- Gantt area -->
+    <!-- Gantt area - fills all space -->
     <div class="gantt-scroll" id="ganttScroll">
         <table class="gantt-table" id="ganttTable">
-            <thead>
-                <tr>
-                    <th class="task-col">Task (right‑click)</th>
-                    <th class="date-col">Start</th>
-                    <th class="date-col">End</th>
-                    <th class="pred-col">Pred</th>
-                    <th class="budget-col">Budget</th>
-                    <th class="status-col">Status</th>
-                    <th style="min-width:420px;">Daily timeline (Feb 17 – Jun 30, no Sundays)</th>
-                </tr>
+            <thead id="tableHeader">
+                <!-- Header will be dynamically generated -->
             </thead>
             <tbody id="tableBody">
                 <tr><td colspan="7" class="loading">Loading tasks...</td></tr>
@@ -543,6 +624,7 @@
     if (!projectId) window.location.href = 'projects.html';
 
     // DOM
+    const thead = document.getElementById('tableHeader');
     const tbody = document.getElementById('tableBody');
     const toggleBtn = document.getElementById('toggleFormBtn');
     const form = document.getElementById('addForm');
@@ -565,6 +647,7 @@
     let selectedTaskId = null;
     let currentAction = null;
     let currentProject = null;
+    let dailyTicks = [];
 
     // Helper: show message
     function showMessage(text, type = 'success') {
@@ -618,11 +701,86 @@
             if (current.getDay() !== 0) { // skip Sunday (0)
                 const day = current.getDate();
                 const month = current.toLocaleString('en-us', { month:'short' });
-                days.push({ date: new Date(current), label: `${month} ${day}` });
+                const dayAbbr = current.toLocaleString('en-us', { weekday:'short' }).toUpperCase();
+                days.push({ 
+                    date: new Date(current), 
+                    label: `${month} ${day}`,
+                    dayAbbr: dayAbbr.substring(0,3),
+                    dayNum: day,
+                    month: month,
+                    fullDate: current.toISOString().split('T')[0]
+                });
             }
             current.setDate(current.getDate() + 1);
         }
         return days;
+    }
+
+    // Generate calendar header exactly as requested
+    function renderHeader() {
+        dailyTicks = generateDailyTicks();
+        
+        // Get unique months for the month row
+        let months = [];
+        let currentMonth = '';
+        dailyTicks.forEach(tick => {
+            if (tick.month !== currentMonth) {
+                months.push({ month: tick.month, startIndex: dailyTicks.indexOf(tick) });
+                currentMonth = tick.month;
+            }
+        });
+        
+        let monthRow = '<tr>';
+        // Empty cells for sticky columns (5 columns + task col)
+        monthRow += '<th class="calendar-sticky calendar-sticky-left" style="left:0;">Task (right‑click)</th>';
+        monthRow += '<th class="calendar-sticky" style="left:240px;">Start</th>';
+        monthRow += '<th class="calendar-sticky" style="left:295px;">End</th>';
+        monthRow += '<th class="calendar-sticky" style="left:345px;">Pred</th>';
+        monthRow += '<th class="calendar-sticky" style="left:395px;">Budget</th>';
+        monthRow += '<th class="calendar-sticky" style="left:460px;">Status</th>';
+        
+        // Add month spans
+        let remainingCols = dailyTicks.length;
+        months.forEach((m, idx) => {
+            let colspan;
+            if (idx < months.length - 1) {
+                colspan = months[idx+1].startIndex - m.startIndex;
+            } else {
+                colspan = remainingCols;
+            }
+            monthRow += `<th colspan="${colspan}" class="calendar-month-header" style="text-align:center;">${m.month}</th>`;
+        });
+        monthRow += '</tr>';
+        
+        // Day row (MON, TUE, etc)
+        let dayRow = '<tr>';
+        dayRow += '<th class="calendar-sticky calendar-sticky-left" style="left:0;">&nbsp;</th>';
+        dayRow += '<th class="calendar-sticky" style="left:240px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-sticky" style="left:295px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-sticky" style="left:345px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-sticky" style="left:395px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-sticky" style="left:460px;">&nbsp;</th>';
+        
+        dailyTicks.forEach(tick => {
+            dayRow += `<th class="calendar-days-header">${tick.dayAbbr}</th>`;
+        });
+        dayRow += '</tr>';
+        
+        // Number row (1,2,3, etc)
+        let numRow = '<tr>';
+        numRow += '<th class="calendar-sticky calendar-sticky-left" style="left:0;">&nbsp;</th>';
+        numRow += '<th class="calendar-sticky" style="left:240px;">&nbsp;</th>';
+        numRow += '<th class="calendar-sticky" style="left:295px;">&nbsp;</th>';
+        numRow += '<th class="calendar-sticky" style="left:345px;">&nbsp;</th>';
+        numRow += '<th class="calendar-sticky" style="left:395px;">&nbsp;</th>';
+        numRow += '<th class="calendar-sticky" style="left:460px;">&nbsp;</th>';
+        
+        dailyTicks.forEach(tick => {
+            numRow += `<th class="calendar-day-number">${tick.dayNum}</th>`;
+        });
+        numRow += '</tr>';
+        
+        thead.innerHTML = monthRow + dayRow + numRow;
     }
 
     function calculateBarPositionWithDailyTicks(task, dailyTicks) {
@@ -718,7 +876,9 @@
     // render with daily ticks
     function renderTable() {
         if (!tasks) return;
-        const dailyTicks = generateDailyTicks(); // array of {date, label}
+        
+        // Generate header first
+        renderHeader();
 
         if (tasks.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;">No tasks. Click "New task" to add.</td></tr>`;
@@ -726,24 +886,6 @@
             return;
         }
         tbody.innerHTML = '';
-
-        // Timeline row with every day (except Sunday)
-        const timelineRow = document.createElement('tr');
-        timelineRow.style.background = '#f0f6ff';
-        const tickHtml = dailyTicks.map(tick => {
-            return `<div class="day-tick" title="${tick.label}"><span>${tick.label}</span></div>`;
-        }).join('');
-        timelineRow.innerHTML = `
-            <td class="task-col" style="background:#f0f6ff;">📅 Daily</td>
-            <td class="date-col"></td><td class="date-col"></td><td class="pred-col"></td>
-            <td class="budget-col"></td><td class="status-col"></td>
-            <td class="gantt-col" style="padding:0!important;">
-                <div class="timeline-box" style="background: transparent; height: 40px;">
-                    <div class="daily-tick-container" style="height:100%;">${tickHtml}</div>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(timelineRow);
 
         const sortedTasks = [...tasks].sort((a,b) => (a.displayId||'').localeCompare(b.displayId||'', undefined, {numeric:true}));
         sortedTasks.forEach(task => {
@@ -828,7 +970,7 @@
         applyColumnVisibility();
     }
 
-    // Firestore loaders (identical to before but compact)
+    // Firestore loaders
     async function loadProjectInfo() {
         try {
             const doc = await db.collection('projects').doc(projectId).get();
@@ -922,7 +1064,7 @@
 
     window.goToProjects = () => window.location.href = 'projects.html';
 
-    // Event listeners (toggle, submit, context, datepicker identical)
+    // Event listeners
     toggleBtn.addEventListener('click', () => {
         form.classList.toggle('visible');
         toggleBtn.textContent = form.classList.contains('visible') ? '− Hide form' : '＋ New task';
