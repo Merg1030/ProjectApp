@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNZA · Project Gantt</title>
+    <title>UNZA · Project Gantt (Daily, no Sundays)</title>
     
+    <!-- Firebase SDK v8 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
@@ -17,7 +18,6 @@
         }
         html, body {
             height: 100%;
-            width: 100%;
             background: #0b1a2b;
             overflow: hidden;
         }
@@ -29,9 +29,9 @@
             flex-direction: column;
             overflow: hidden;
         }
-        /* Header */
+        /* professional header */
         .top-space {
-            padding: 0.8rem 2rem;
+            padding: 0.8rem 2rem 0.8rem 2rem;
             background: #ffffff;
             border-bottom: 1px solid #dde3ed;
             display: flex;
@@ -43,20 +43,36 @@
         .project-headline {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }
         .project-headline h2 {
             font-weight: 500;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: #0c2b4b;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .project-headline h2 span {
+            background: #e9eff7;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #1b4c7c;
+            margin-left: 0.5rem;
         }
         .project-badge {
             background: #e2eaf3;
             border-radius: 40px;
-            padding: 0.3rem 0.8rem;
+            padding: 0.25rem 1rem;
             font-size: 0.75rem;
-            font-weight: 600;
+            font-weight: 500;
             color: #1c4b77;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
             border: 1px solid #c6d6eb;
         }
         .header-controls {
@@ -77,8 +93,7 @@
         }
         .filter-toggle input {
             accent-color: #2b6c9e;
-            width: 16px;
-            height: 16px;
+            width: 16px; height: 16px;
             margin: 0;
         }
         .toggle-form-btn {
@@ -91,10 +106,15 @@
             color: #1e3a5c;
             cursor: pointer;
             transition: 0.1s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
         .toggle-form-btn:hover {
             background: #ecf3fd;
             border-color: #7f9bc2;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 0.6rem;
         }
         .nav-btn {
             background: #f2f6fc;
@@ -104,13 +124,15 @@
             font-size: 0.7rem;
             font-weight: 500;
             cursor: pointer;
-            color: #1f4172;
             text-decoration: none;
+            color: #1f4172;
+            transition: 0.1s;
         }
         .nav-btn:hover {
             background: #e2ebf7;
+            border-color: #8fa9cc;
         }
-        /* Form */
+        /* form */
         .form-popup {
             background: #f5f9ff;
             border-bottom: 2px solid #b1c8e5;
@@ -131,8 +153,7 @@
             font-size: 0.7rem;
             color: #1e4170;
         }
-        .form-field input, 
-        .form-field select {
+        .form-field input, .form-field select {
             padding: 0.5rem 1rem;
             border: 1px solid #b9ceec;
             border-radius: 30px;
@@ -150,206 +171,244 @@
             cursor: pointer;
             margin-top: 14px;
         }
-        /* Gantt Container */
-        .gantt-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #ffffff;
-        }
-        /* Calendar Header - Fixed */
-        .calendar-header {
-            flex-shrink: 0;
-            display: flex;
-            background: #ffffff;
-            border-bottom: 2px solid #dde3ed;
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
-        .calendar-left {
-            width: 320px;
-            flex-shrink: 0;
-            border-right: 1px solid #dde3ed;
-        }
-        .calendar-right {
-            flex: 1;
-            display: flex;
-            overflow-x: auto;
-        }
-        .month-row {
-            display: flex;
-            width: 100%;
-            border-bottom: 1px solid #dde3ed;
-        }
-        .month-cell {
-            flex: 1;
-            padding: 8px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: #1d344c;
-            background: #e8f0fb;
-            border-right: 1px solid #c2d2e8;
-        }
-        .day-row {
-            display: flex;
-            width: 100%;
-        }
-        .day-cell {
-            flex: 1;
-            padding: 6px 2px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.7rem;
-            color: #1d344c;
-            background: #d4e4f5;
-            border-right: 1px solid #c2d2e8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        /* Task List & Gantt Scroll */
-        .gantt-body {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-        .task-list {
-            width: 320px;
-            flex-shrink: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            background: #ffffff;
-            border-right: 1px solid #dde3ed;
-        }
-        .task-list-header {
-            display: flex;
-            padding: 0.8rem 1rem;
-            background: #f5f9ff;
-            border-bottom: 1px solid #dde3ed;
-            font-weight: 600;
-            font-size: 0.75rem;
-            color: #1d344c;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            flex-shrink: 0;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .task-item {
-            padding: 0.8rem 1rem;
-            border-bottom: 1px solid #e8ecf2;
-            font-size: 0.75rem;
-            color: #2f4b70;
-            cursor: context-menu;
-            transition: 0.1s;
-        }
-        .task-item:hover {
-            background: #f5f9ff;
-        }
-        .task-item-main {
-            font-weight: 600;
-            color: #ffffff;
-            background: #2e7d32;
-            padding: 6px 10px;
-            border-radius: 4px;
-            margin: -2px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-        }
-        .task-item-main .task-num {
-            background: rgba(255,255,255,0.2);
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.65rem;
-        }
-        .task-item-sub {
-            padding-left: 30px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .task-item-sub .task-num {
-            color: #5f7b9c;
-            min-width: 30px;
-            font-size: 0.7rem;
-        }
-        .gantt-chart {
+        /* Gantt scroll - fills all remaining space */
+        .gantt-scroll {
             flex: 1;
             overflow: auto;
             background: #ffffff;
         }
-        .gantt-grid {
-            display: flex;
+        .gantt-table {
             width: 100%;
-            min-height: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+            table-layout: fixed;
+            font-size: 0.7rem;
         }
-        .gantt-row {
-            display: flex;
-            width: 100%;
+        
+        /* ALL left columns stay fixed when scrolling */
+        .gantt-table th {
+            background: #1d344c;
+            color: #ffffff;
+            font-weight: 500;
+            border-right: 1px solid #3f5670;
+            border-bottom: 2px solid #577599;
+            font-size: 0.7rem;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+        
+        .gantt-table td {
+            border-right: 1px solid #dce3ef;
             border-bottom: 1px solid #e3e9f2;
         }
-        .gantt-cell {
-            flex: 1;
-            padding: 0.6rem 0.2rem;
-            position: relative;
-            height: 40px;
+        
+        /* Task column sticky */
+        .task-col { 
+            width: 240px; 
+            background: white; 
+            position: sticky; 
+            left: 0; 
+            z-index: 20; 
+            cursor: context-menu; 
+            font-weight: 400;
+            border-right: 2px solid #c0d0e5 !important;
+        }
+        
+        /* Make all data columns sticky with proper left positions */
+        .date-col { 
+            width: 60px; 
+            text-align: center; 
+            font-family: 'JetBrains Mono', monospace;
+            background: white;
+            position: sticky;
+            left: 240px;
+            z-index: 19;
+        }
+        .pred-col { 
+            width: 55px; 
+            text-align: center;
+            background: white;
+            position: sticky;
+            left: 300px;
+            z-index: 19;
+        }
+        .budget-col { 
+            width: 70px; 
+            text-align: right; 
+            padding-right: 8px;
+            background: white;
+            position: sticky;
+            left: 355px;
+            z-index: 19;
+        }
+        .status-col { 
+            width: 85px; 
+            text-align: center;
+            background: white;
+            position: sticky;
+            left: 425px;
+            z-index: 19;
+            border-right: 2px solid #c0d0e5 !important;
+        }
+        
+        /* Calendar header cells - all sticky at top */
+        .calendar-month-header, .calendar-days-header, .calendar-day-number {
+            background: #1d344c;
+            color: white;
+            border-right: 1px solid #3f5670;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 35;
+        }
+        
+        .calendar-month-header {
+            font-weight: 600;
+            padding: 0.4rem 0.2rem;
+        }
+        
+        .calendar-days-header {
+            font-weight: 500;
+            padding: 0.3rem 0.1rem;
+            font-size: 0.65rem;
+            top: 36px !important;
+            z-index: 34;
+        }
+        
+        .calendar-day-number {
+            font-weight: 600;
+            padding: 0.2rem 0;
+            font-size: 0.7rem;
+            top: 64px !important;
+            z-index: 33;
+        }
+        
+        /* Leftmost header cells for task columns - extra sticky */
+        .header-task-col {
+            left: 0 !important;
+            z-index: 40 !important;
+        }
+        .header-date-col {
+            left: 240px !important;
+            z-index: 40 !important;
+        }
+        .header-pred-col {
+            left: 300px !important;
+            z-index: 40 !important;
+        }
+        .header-budget-col {
+            left: 355px !important;
+            z-index: 40 !important;
+        }
+        .header-status-col {
+            left: 425px !important;
+            z-index: 40 !important;
+        }
+        
+        .task-main {
+            font-weight: 600;
+            color: #ffffff;
             display: flex;
             align-items: center;
-            border-right: 1px solid #dce3ef;
-            background: #ffffff;
+            gap: 8px;
+            font-size: 0.8rem;
+            background: #2e7d32;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin: -2px;
         }
-        .bar-container {
+        .task-main .task-number {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+        .subtask-item {
+            padding-left: 32px;
+            font-size: 0.75rem;
+            color: #2f4b70;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .subtask-item .task-number {
+            color: #5f7b9c;
+            min-width: 35px;
+        }
+        
+        /* hidden columns */
+        .hide-col .date-col,
+        .hide-col .pred-col,
+        .hide-col .budget-col,
+        .hide-col .status-col {
+            display: none;
+        }
+        
+        .gantt-col { 
+            padding: 0.2rem 0 !important; 
+            min-width: 600px;
+        }
+        
+        .timeline-box {
             position: relative;
             width: 100%;
-            height: 24px;
+            height: 36px;
+            background: #f1f7fe;
+            border-radius: 3px;
         }
         .task-bar {
             position: absolute;
             height: 22px;
-            top: 1px;
+            top: 7px;
             background: #2b5f8a;
-            border-radius: 3px;
+            border-radius: 4px;
             border: 1px solid #153a58;
+            min-width: 6px;
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            min-width: 4px;
+        }
+        .subtask-bar {
+            background: #60758b;
+            height: 18px;
+            top: 9px;
+            border-color: #3a4d63;
+        }
+        .completion-overlay {
+            position: absolute;
+            height: 22px;
+            top: 7px;
+            background: #2f8b5e;
+            border-radius: 4px 0 0 4px;
+            opacity: 0.9;
+            pointer-events: none;
             z-index: 5;
         }
-        .task-bar:hover {
-            background: #1e4566;
-        }
-        .task-bar.sub {
-            background: #60758b;
-            border-color: #3a4d63;
+        .subtask-bar + .completion-overlay {
             height: 18px;
-            top: 3px;
+            top: 9px;
         }
-        .task-bar.completed {
-            background: #2f8b5e;
-        }
-        .task-bar.in-progress {
-            background: #d4a537;
-        }
-        .task-bar.on-hold {
-            background: #c24d3d;
-        }
-        .milestone-marker {
+        .hold-marker {
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 30px;
+            background: #e68a2e;
+            top: 3px;
+            border-radius: 2px;
+            z-index: 12;
+            pointer-events: none;
+        }
+        .milestone-dot {
+            position: absolute;
+            width: 8px; height: 8px;
             background: #947c5c;
             transform: rotate(45deg);
-            top: 8px;
-            border: 2px solid white;
-            z-index: 6;
+            top: 14px;
+            border: 1px solid white;
         }
-        /* Bottom */
+        
         .bottom-space {
-            padding: 0.8rem 2rem;
+            padding: 0.8rem 2rem 0.9rem 2rem;
             background: #ffffff;
             border-top: 1px solid #c2d2e8;
             flex-shrink: 0;
@@ -377,8 +436,7 @@
             min-width: 100px;
             font-weight: 500;
         }
-        /* Context Menu */
-        .context-menu {
+        .context-menu, .date-picker-popup {
             position: absolute;
             background: white;
             border: 1px solid #a0b9d9;
@@ -394,21 +452,11 @@
             font-size: 0.75rem;
             cursor: pointer;
             color: #1a3455;
-            white-space: nowrap;
         }
         .context-menu-item:hover {
             background: #e2ecfc;
         }
-        /* Date Picker */
         .date-picker-popup {
-            position: absolute;
-            background: white;
-            border: 1px solid #a0b9d9;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
             padding: 16px;
             gap: 12px;
         }
@@ -424,9 +472,18 @@
             padding: 6px 12px;
             border-radius: 30px;
             cursor: pointer;
-            font-size: 0.75rem;
         }
-        /* Message */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-size: 0.6rem;
+            font-weight: 500;
+        }
+        .status-not-started { background: #edf2f9; color: #4a6382; }
+        .status-in-progress { background: #fff3d8; color: #b85e00; }
+        .status-completed { background: #dff0e4; color: #1e6f3f; }
+        .status-on-hold { background: #fee9e7; color: #b3382c; }
         .message {
             position: fixed;
             top: 20px;
@@ -437,48 +494,42 @@
             font-size: 0.8rem;
             animation: slideIn 0.3s ease;
         }
-        .message.success {
-            background: #dff0e4;
-            color: #1e6f3f;
-        }
-        .message.error {
-            background: #fee9e7;
-            color: #b3382c;
-        }
+        .message.success { background: #dff0e4; color: #1e6f3f; }
+        .message.error { background: #fee9e7; color: #b3382c; }
         @keyframes slideIn {
             from { transform: translateX(400px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .loading {
-            padding: 40px;
-            text-align: center;
-            color: #666;
-        }
+        .loading { text-align: center; padding: 50px; color: #666; }
     </style>
 </head>
 <body>
 <div class="gantt-full">
-    <!-- Header -->
+    <!-- Professional header with clean typography -->
     <div class="top-space">
         <div class="project-headline">
-            <h2>📊 Gantt · <span id="projectNameDisplay">UNZA</span></h2>
-            <span id="projectCodeDisplay" class="project-badge">we3e3</span>
-        </div>
-        <div class="header-controls">
+            <h2>
+                <span style="font-weight: 300;">📊</span> Gantt · <span id="projectNameDisplay">UNZA</span>
+                <span id="projectCodeDisplay" class="project-badge">we3e3</span>
+            </h2>
             <div class="filter-toggle">
                 <input type="checkbox" id="hideColumnsCheckbox"> 
-                <label for="hideColumnsCheckbox" style="margin: 0;">Hide columns</label>
+                <label for="hideColumnsCheckbox">Hide extra columns</label>
             </div>
-            <button class="nav-btn" onclick="goToProjects()">← Projects</button>
+        </div>
+        <div class="header-controls">
+            <div class="nav-buttons">
+                <a href="#" class="nav-btn" onclick="goToProjects()">← Projects</a>
+            </div>
             <button class="toggle-form-btn" id="toggleFormBtn">＋ New task</button>
         </div>
     </div>
 
-    <!-- Form -->
+    <!-- Add Task Form -->
     <div class="form-popup" id="addForm">
         <div class="form-field">
             <label>Task name</label>
-            <input type="text" id="taskName" placeholder="e.g. Foundation">
+            <input type="text" id="taskName" placeholder="e.g. Foundation Work">
         </div>
         <div class="form-field">
             <label>Budget ($)</label>
@@ -497,56 +548,39 @@
         </div>
     </div>
 
-    <!-- Gantt -->
-    <div class="gantt-container">
-        <!-- Calendar Header (Fixed) -->
-        <div class="calendar-header" id="calendarHeader">
-            <div class="calendar-left"></div>
-            <div class="calendar-right" id="calendarRight"></div>
-        </div>
-
-        <!-- Body -->
-        <div class="gantt-body">
-            <!-- Task List -->
-            <div class="task-list">
-                <div class="task-list-header">📋 Task</div>
-                <div id="taskListContainer"></div>
-            </div>
-
-            <!-- Gantt Chart -->
-            <div class="gantt-chart">
-                <div class="gantt-grid" id="ganttGrid"></div>
-            </div>
-        </div>
+    <!-- Gantt area - fills all space -->
+    <div class="gantt-scroll" id="ganttScroll">
+        <table class="gantt-table" id="ganttTable">
+            <thead id="tableHeader"></thead>
+            <tbody id="tableBody">
+                <tr><td colspan="7" class="loading">Loading tasks...</td></tr>
+            </tbody>
+        </table>
     </div>
 
-    <!-- Bottom -->
+    <!-- Bottom progress -->
     <div class="bottom-space">
         <div class="completion-label">Overall Progress</div>
-        <div class="completion-bar-container">
-            <div class="completion-bar-fill" id="completionBarFill"></div>
-        </div>
+        <div class="completion-bar-container"><div class="completion-bar-fill" id="completionBarFill"></div></div>
         <div class="completion-label" id="completionPercent">0%</div>
     </div>
 </div>
 
-<!-- Context Menu -->
+<!-- Context menus -->
 <div class="context-menu" id="contextMenu">
-    <div class="context-menu-item" id="menuStart">📅 Set Start</div>
-    <div class="context-menu-item" id="menuEnd">📅 Set End</div>
+    <div class="context-menu-item" id="menuStart">📅 Set Start Date</div>
+    <div class="context-menu-item" id="menuEnd">📅 Set End Date</div>
     <div class="context-menu-item" id="menuHold">⏸️ Toggle Hold</div>
-    <div class="context-menu-item" id="menuComplete">✅ Completed</div>
-    <div class="context-menu-item" id="menuInProgress">🔄 In Progress</div>
+    <div class="context-menu-item" id="menuComplete">✅ Mark Completed</div>
+    <div class="context-menu-item" id="menuInProgress">🔄 Mark In Progress</div>
 </div>
-
-<!-- Date Picker -->
 <div class="date-picker-popup" id="datePickerPopup">
-    <input type="date" id="datePickerInput">
-    <button id="datePickerSave">Save</button>
+    <input type="date" id="datePickerInput" value="2026-03-01">
+    <button id="datePickerSave">Save Date</button>
 </div>
 
 <script>
-    // Firebase
+    // Firebase config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
@@ -562,13 +596,32 @@
     const projectId = urlParams.get('project');
     if (!projectId) window.location.href = 'projects.html';
 
-    // State
+    // DOM
+    const thead = document.getElementById('tableHeader');
+    const tbody = document.getElementById('tableBody');
+    const toggleBtn = document.getElementById('toggleFormBtn');
+    const form = document.getElementById('addForm');
+    const parentSelect = document.getElementById('parentTaskSelect');
+    const predSelect = document.getElementById('predSelect');
+    const submitBtn = document.getElementById('submitTaskBtn');
+    const completionBar = document.getElementById('completionBarFill');
+    const completionPercentEl = document.getElementById('completionPercent');
+    const contextMenu = document.getElementById('contextMenu');
+    const datePickerPopup = document.getElementById('datePickerPopup');
+    const datePickerInput = document.getElementById('datePickerInput');
+    const datePickerSave = document.getElementById('datePickerSave');
+    const projectNameDisplay = document.getElementById('projectNameDisplay');
+    const projectCodeDisplay = document.getElementById('projectCodeDisplay');
+    const hideCheckbox = document.getElementById('hideColumnsCheckbox');
+    const ganttTable = document.getElementById('ganttTable');
+
+    // state
     let tasks = [];
-    let dailyTicks = [];
     let selectedTaskId = null;
     let currentAction = null;
+    let currentProject = null;
+    let dailyTicks = [];
 
-    // Helper Functions
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
         msg.className = `message ${type}`;
@@ -577,163 +630,321 @@
         setTimeout(() => msg.remove(), 3000);
     }
 
-    function generateDailyTicks() {
-        const start = new Date('2026-02-17');
-        const end = new Date('2026-06-30');
-        let ticks = [];
-        let current = new Date(start);
-        
-        while (current <= end) {
-            if (current.getDay() !== 0) { // Skip Sunday
-                ticks.push({
-                    date: new Date(current),
-                    day: current.toLocaleString('en-us', { weekday: 'short' }),
-                    date_num: current.getDate(),
-                    month: current.toLocaleString('en-us', { month: 'short' })
-                });
-            }
-            current.setDate(current.getDate() + 1);
-        }
-        return ticks;
-    }
-
-    function calculatePosition(task, ticks) {
-        if (!task.start || !task.end || ticks.length === 0) {
-            return { left: 0, width: 2 };
-        }
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
         try {
-            const taskStart = new Date(task.start);
-            const taskEnd = new Date(task.end);
-            const firstTick = ticks[0].date;
-            const lastTick = ticks[ticks.length - 1].date;
-
-            if (taskEnd < firstTick || taskStart > lastTick) {
-                return { left: 0, width: 0 };
-            }
-
-            let startIdx = ticks.findIndex(t => t.date >= taskStart);
-            if (startIdx === -1) startIdx = 0;
-            let endIdx = ticks.findIndex(t => t.date > taskEnd);
-            if (endIdx === -1) endIdx = ticks.length - 1;
-            else endIdx--;
-
-            const total = ticks.length;
-            const left = (startIdx / total) * 100;
-            const width = ((endIdx - startIdx + 1) / total) * 100;
-            return { left: Math.max(0, left), width: Math.max(1, width) };
-        } catch (e) {
-            return { left: 0, width: 2 };
-        }
+            const d = new Date(dateStr + 'T12:00:00');
+            return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        } catch { return dateStr; }
     }
 
     function getStatusClass(status) {
         switch(status) {
-            case 'completed': return 'completed';
-            case 'in-progress': return 'in-progress';
-            case 'on-hold': return 'on-hold';
-            default: return '';
+            case 'completed': return 'status-completed';
+            case 'in-progress': return 'status-in-progress';
+            case 'on-hold': return 'status-on-hold';
+            default: return 'status-not-started';
+        }
+    }
+    
+    function getStatusText(status) {
+        switch(status) {
+            case 'completed': return 'Completed';
+            case 'in-progress': return 'In Progress';
+            case 'on-hold': return 'On Hold';
+            default: return 'Not Started';
+        }
+    }
+    
+    function getCompletionFromStatus(status) {
+        switch(status) {
+            case 'completed': return 100;
+            case 'in-progress': return 50;
+            case 'on-hold': return 25;
+            default: return 0;
+        }
+    }
+
+    // Generate daily ticks from Feb 17 to Jun 30, skipping Sundays
+    function generateDailyTicks() {
+        const start = new Date('2026-02-17T12:00:00');
+        const end = new Date('2026-06-30T12:00:00');
+        let days = [];
+        let current = new Date(start);
+        
+        while (current <= end) {
+            if (current.getDay() !== 0) { // skip Sunday (0)
+                const day = current.getDate();
+                const month = current.toLocaleString('en-us', { month:'short' }).toUpperCase();
+                const dayAbbr = current.toLocaleString('en-us', { weekday:'short' }).toUpperCase().substring(0,3);
+                days.push({ 
+                    date: new Date(current), 
+                    label: `${month} ${day}`,
+                    dayAbbr: dayAbbr,
+                    dayNum: day,
+                    month: month,
+                    fullDate: current.toISOString().split('T')[0]
+                });
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        return days;
+    }
+
+    // Generate calendar header exactly as requested
+    function renderHeader() {
+        dailyTicks = generateDailyTicks();
+        
+        // Get unique months for the month row
+        let months = [];
+        let currentMonth = '';
+        dailyTicks.forEach(tick => {
+            if (tick.month !== currentMonth) {
+                months.push({ month: tick.month, startIndex: dailyTicks.indexOf(tick) });
+                currentMonth = tick.month;
+            }
+        });
+        
+        // MONTH ROW (FEB, MAR, etc)
+        let monthRow = '<tr>';
+        monthRow += '<th class="calendar-month-header header-task-col" style="left:0;">Task (right‑click)</th>';
+        monthRow += '<th class="calendar-month-header header-date-col" style="left:240px;">Start</th>';
+        monthRow += '<th class="calendar-month-header header-pred-col" style="left:300px;">End</th>';
+        monthRow += '<th class="calendar-month-header header-budget-col" style="left:355px;">Pred</th>';
+        monthRow += '<th class="calendar-month-header header-status-col" style="left:425px;">Budget</th>';
+        monthRow += '<th class="calendar-month-header" style="left:510px;">Status</th>';
+        
+        // Add month spans for calendar
+        months.forEach((m, idx) => {
+            let colspan;
+            if (idx < months.length - 1) {
+                colspan = months[idx+1].startIndex - m.startIndex;
+            } else {
+                colspan = dailyTicks.length - m.startIndex;
+            }
+            monthRow += `<th colspan="${colspan}" class="calendar-month-header" style="text-align:center;">${m.month}</th>`;
+        });
+        monthRow += '</tr>';
+        
+        // DAY ROW (MON, TUE, WED, etc)
+        let dayRow = '<tr>';
+        dayRow += '<th class="calendar-days-header header-task-col" style="left:0;">&nbsp;</th>';
+        dayRow += '<th class="calendar-days-header header-date-col" style="left:240px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-days-header header-pred-col" style="left:300px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-days-header header-budget-col" style="left:355px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-days-header header-status-col" style="left:425px;">&nbsp;</th>';
+        dayRow += '<th class="calendar-days-header" style="left:510px;">&nbsp;</th>';
+        
+        dailyTicks.forEach(tick => {
+            dayRow += `<th class="calendar-days-header">${tick.dayAbbr}</th>`;
+        });
+        dayRow += '</tr>';
+        
+        // NUMBER ROW (1, 2, 3, 4, etc)
+        let numRow = '<tr>';
+        numRow += '<th class="calendar-day-number header-task-col" style="left:0;">&nbsp;</th>';
+        numRow += '<th class="calendar-day-number header-date-col" style="left:240px;">&nbsp;</th>';
+        numRow += '<th class="calendar-day-number header-pred-col" style="left:300px;">&nbsp;</th>';
+        numRow += '<th class="calendar-day-number header-budget-col" style="left:355px;">&nbsp;</th>';
+        numRow += '<th class="calendar-day-number header-status-col" style="left:425px;">&nbsp;</th>';
+        numRow += '<th class="calendar-day-number" style="left:510px;">&nbsp;</th>';
+        
+        dailyTicks.forEach(tick => {
+            numRow += `<th class="calendar-day-number">${tick.dayNum}</th>`;
+        });
+        numRow += '</tr>';
+        
+        thead.innerHTML = monthRow + dayRow + numRow;
+    }
+
+    function calculateBarPosition(task) {
+        if (!task.start || !task.end || dailyTicks.length === 0) return { left: 2, width: 10 };
+        
+        try {
+            const taskStart = new Date(task.start + 'T12:00:00');
+            const taskEnd = new Date(task.end + 'T12:00:00');
+            
+            // Find start and end indices
+            let startIdx = -1;
+            let endIdx = -1;
+            
+            for (let i = 0; i < dailyTicks.length; i++) {
+                if (dailyTicks[i].date >= taskStart && startIdx === -1) {
+                    startIdx = i;
+                }
+                if (dailyTicks[i].date <= taskEnd) {
+                    endIdx = i;
+                }
+                if (dailyTicks[i].date > taskEnd) break;
+            }
+            
+            if (startIdx === -1 || endIdx === -1) return { left: 2, width: 10 };
+            
+            const totalTicks = dailyTicks.length;
+            const left = (startIdx / totalTicks) * 100;
+            const width = ((endIdx - startIdx + 1) / totalTicks) * 100;
+            
+            return { left: Math.max(0, left), width: Math.max(2, width) };
+        } catch (e) {
+            return { left: 5, width: 10 };
         }
     }
 
     function updateCompletion() {
-        const total = tasks.length;
-        if (total === 0) {
-            document.getElementById('completionBarFill').style.width = '0%';
-            document.getElementById('completionPercent').innerText = '0%';
+        const totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
+        const completedBudget = tasks.reduce((sum, t) => {
+            const completion = getCompletionFromStatus(t.status);
+            return sum + ((t.budget || 0) * completion / 100);
+        }, 0);
+        const percent = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
+        completionBar.style.width = percent + '%';
+        completionPercentEl.innerText = percent + '%';
+    }
+
+    function updateDropdowns() {
+        parentSelect.innerHTML = '<option value="">— Main Task —</option>';
+        predSelect.innerHTML = '<option value="">— None —</option>';
+        
+        tasks.filter(t => t.isMain).forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.firebaseId;
+            opt.textContent = `${t.displayId} - ${t.name}`;
+            parentSelect.appendChild(opt);
+        });
+        
+        tasks.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.firebaseId;
+            opt.textContent = `${t.displayId} - ${t.name}`;
+            predSelect.appendChild(opt);
+        });
+    }
+
+    function generateTaskId(isMain, parentId = null) {
+        if (isMain) {
+            const mainTasks = tasks.filter(t => t.isMain);
+            const maxNum = mainTasks.length > 0 ? Math.max(...mainTasks.map(t => {
+                const num = parseInt(t.displayId);
+                return isNaN(num) ? 0 : num;
+            })) : 0;
+            return (maxNum + 1).toString();
+        } else {
+            if (!parentId) return null;
+            const parentTask = tasks.find(t => t.firebaseId === parentId);
+            if (!parentTask) return null;
+            const parentDisplayId = parentTask.displayId;
+            const subtasks = tasks.filter(t => t.parentFirebaseId === parentId);
+            const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => {
+                const parts = t.displayId.split('.');
+                const num = parseInt(parts[parts.length-1]);
+                return isNaN(num) ? 0 : num;
+            })) : 0;
+            return `${parentDisplayId}.${maxNum + 1}`;
+        }
+    }
+
+    function applyColumnVisibility() {
+        const hide = hideCheckbox.checked;
+        if (hide) ganttTable.classList.add('hide-col');
+        else ganttTable.classList.remove('hide-col');
+        localStorage.setItem('ganttHideColumns', hide ? 'true' : 'false');
+    }
+
+    function loadFilterSetting() {
+        const saved = localStorage.getItem('ganttHideColumns');
+        hideCheckbox.checked = saved === 'true';
+        applyColumnVisibility();
+    }
+
+    // Render table with tasks
+    function renderTable() {
+        if (!tasks) return;
+        
+        // Generate header first
+        renderHeader();
+
+        if (tasks.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;">No tasks. Click "New task" to add.</td></tr>`;
+            updateCompletion();
             return;
         }
-        const completed = tasks.filter(t => t.status === 'completed').length;
-        const percent = Math.round((completed / total) * 100);
-        document.getElementById('completionBarFill').style.width = percent + '%';
-        document.getElementById('completionPercent').innerText = percent + '%';
-    }
+        
+        tbody.innerHTML = '';
 
-    // Render Calendar Header
-    function renderCalendarHeader() {
-        if (dailyTicks.length === 0) return;
-
-        let monthMap = {};
-        dailyTicks.forEach((tick, idx) => {
-            const key = tick.month;
-            if (!monthMap[key]) monthMap[key] = { count: 0, start: idx };
-            monthMap[key].count++;
+        // Sort tasks by display ID
+        const sortedTasks = [...tasks].sort((a,b) => {
+            return (a.displayId || '').localeCompare(b.displayId || '', undefined, {numeric:true});
         });
-
-        let monthHTML = '';
-        Object.entries(monthMap).forEach(([month, data]) => {
-            const width = (data.count / dailyTicks.length) * 100;
-            monthHTML += `<div class="month-cell" style="width:${width}%">${month}</div>`;
-        });
-
-        let dayHTML = '';
-        dailyTicks.forEach((tick) => {
-            const width = (1 / dailyTicks.length) * 100;
-            dayHTML += `<div class="day-cell" style="width:${width}%">${tick.day}</div>`;
-        });
-
-        document.getElementById('calendarRight').innerHTML = `
-            <div class="month-row">${monthHTML}</div>
-            <div class="day-row">${dayHTML}</div>
-        `;
-    }
-
-    // Render Tasks and Chart
-    function render() {
-        if (!dailyTicks || dailyTicks.length === 0) {
-            dailyTicks = generateDailyTicks();
-            renderCalendarHeader();
-        }
-
-        // Task List
-        const taskListHTML = tasks.map(task => {
-            if (task.isMain) {
-                return `<div class="task-item" data-task-id="${task.firebaseId}">
-                    <div class="task-item-main">
-                        <span class="task-num">${task.displayId}</span>
-                        <span>${task.name}</span>
-                    </div>
-                </div>`;
-            } else {
-                return `<div class="task-item" data-task-id="${task.firebaseId}">
-                    <div class="task-item-sub">
-                        <span class="task-num">${task.displayId}</span>
-                        <span>${task.name}</span>
-                    </div>
-                </div>`;
-            }
-        }).join('');
-
-        document.getElementById('taskListContainer').innerHTML = taskListHTML || '<div class="loading">No tasks</div>';
-
-        // Gantt Chart
-        const ganttHTML = tasks.map(task => {
-            const pos = calculatePosition(task, dailyTicks);
-            const cells = dailyTicks.map(() => {
-                return `<div class="gantt-cell"></div>`;
-            }).join('');
-
+        
+        sortedTasks.forEach(task => {
+            const pos = calculateBarPosition(task);
+            const row = document.createElement('tr');
+            
+            const taskDisplay = task.isMain ? 
+                `<span class="task-main"><span class="task-number">${task.displayId}</span> ${task.name}</span>` : 
+                `<span class="subtask-item"><span class="task-number">${task.displayId}</span> ${task.name}</span>`;
+            
+            const barClass = task.isMain ? 'task-bar' : 'task-bar subtask-bar';
             const statusClass = getStatusClass(task.status);
-            const barHTML = pos.width > 0 ? `
-                <div class="task-bar ${task.isMain ? '' : 'sub'} ${statusClass}" 
-                    style="left:${pos.left}%; width:${pos.width}%;" 
-                    data-task-id="${task.firebaseId}">
-                </div>
-            ` : '';
+            const statusText = getStatusText(task.status);
+            const completionPercent = getCompletionFromStatus(task.status);
+            const completionWidth = (completionPercent / 100) * pos.width;
 
-            return `<div class="gantt-row">${cells}${barHTML}</div>`;
+            let predDisplay = '—';
+            if (task.pred) {
+                const predTask = tasks.find(t => t.firebaseId === task.pred);
+                predDisplay = predTask ? predTask.displayId : '—';
+            }
+
+            row.innerHTML = `
+                <td class="task-col" data-task-id="${task.firebaseId}">${taskDisplay}</td>
+                <td class="date-col">${formatDate(task.start)}</td>
+                <td class="date-col">${formatDate(task.end)}</td>
+                <td class="pred-col">${predDisplay}</td>
+                <td class="budget-col">$${task.budget || 0}</td>
+                <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="gantt-col">
+                    <div class="timeline-box">
+                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
+                        <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
+                        ${task.onHold ? `<div class="hold-marker" style="left:${pos.left + pos.width/2}%;"></div>` : ''}
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Add milestone row
+        const mileRow = document.createElement('tr');
+        mileRow.style.background = '#eaf1fb';
+        
+        const mileDots = dailyTicks.filter((_,idx) => idx % Math.floor(dailyTicks.length/6) === 0).map(t => {
+            const leftPos = (dailyTicks.indexOf(t) / dailyTicks.length) * 100;
+            return `<div class="milestone-dot" style="left:${leftPos}%;" title="Milestone"></div>`;
         }).join('');
+        
+        mileRow.innerHTML = `
+            <td class="task-col">🎯 Milestones</td>
+            <td class="date-col">—</td>
+            <td class="date-col">—</td>
+            <td class="pred-col">—</td>
+            <td class="budget-col">—</td>
+            <td class="status-col">—</td>
+            <td class="gantt-col"><div class="timeline-box" style="background:transparent;">${mileDots}</div></td>
+        `;
+        tbody.appendChild(mileRow);
 
-        document.getElementById('ganttGrid').innerHTML = ganttHTML || '<div class="loading">No tasks</div>';
-
-        // Event listeners
-        document.querySelectorAll('[data-task-id]').forEach(el => {
-            el.addEventListener('contextmenu', (e) => {
+        // Add event listeners
+        document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
+            cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-                selectedTaskId = el.dataset.taskId;
-                showContextMenu(e.pageX, e.pageY);
+                selectedTaskId = cell.dataset.taskId;
+                contextMenu.style.display = 'flex';
+                contextMenu.style.left = e.pageX + 'px';
+                contextMenu.style.top = e.pageY + 'px';
             });
         });
-
+        
         document.querySelectorAll('.task-bar').forEach(bar => {
             bar.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -741,212 +952,242 @@
                 const task = tasks.find(t => t.firebaseId === taskId);
                 if (!task) return;
                 
-                const newStatus = task.status === 'completed' ? 'not-started' : 'completed';
-                await updateTask(taskId, { status: newStatus });
+                let newStatus;
+                if (task.status === 'not-started') newStatus = 'in-progress';
+                else if (task.status === 'in-progress') newStatus = 'completed';
+                else if (task.status === 'completed') newStatus = 'not-started';
+                else if (task.status === 'on-hold') newStatus = 'in-progress';
+                else newStatus = 'in-progress';
+                
+                await updateTask(task.firebaseId, { status: newStatus });
             });
         });
 
+        updateDropdowns();
         updateCompletion();
+        applyColumnVisibility();
     }
 
-    // Context Menu
-    function showContextMenu(x, y) {
-        const menu = document.getElementById('contextMenu');
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
-        menu.style.display = 'flex';
-    }
-
-    document.getElementById('menuStart').addEventListener('click', () => {
-        if (!selectedTaskId) return;
-        currentAction = 'start';
-        const menu = document.getElementById('contextMenu');
-        document.getElementById('datePickerPopup').style.left = menu.style.left;
-        document.getElementById('datePickerPopup').style.top = menu.style.top;
-        document.getElementById('datePickerPopup').style.display = 'flex';
-        menu.style.display = 'none';
-    });
-
-    document.getElementById('menuEnd').addEventListener('click', () => {
-        if (!selectedTaskId) return;
-        currentAction = 'end';
-        const menu = document.getElementById('contextMenu');
-        document.getElementById('datePickerPopup').style.left = menu.style.left;
-        document.getElementById('datePickerPopup').style.top = menu.style.top;
-        document.getElementById('datePickerPopup').style.display = 'flex';
-        menu.style.display = 'none';
-    });
-
-    document.getElementById('menuHold').addEventListener('click', async () => {
-        if (!selectedTaskId) return;
-        const task = tasks.find(t => t.firebaseId === selectedTaskId);
-        if (!task) return;
-        await updateTask(selectedTaskId, { onHold: !task.onHold });
-        document.getElementById('contextMenu').style.display = 'none';
-    });
-
-    document.getElementById('menuComplete').addEventListener('click', async () => {
-        if (!selectedTaskId) return;
-        await updateTask(selectedTaskId, { status: 'completed' });
-        document.getElementById('contextMenu').style.display = 'none';
-    });
-
-    document.getElementById('menuInProgress').addEventListener('click', async () => {
-        if (!selectedTaskId) return;
-        await updateTask(selectedTaskId, { status: 'in-progress' });
-        document.getElementById('contextMenu').style.display = 'none';
-    });
-
-    document.getElementById('datePickerSave').addEventListener('click', async () => {
-        if (!selectedTaskId || !currentAction) return;
-        const date = document.getElementById('datePickerInput').value;
-        if (!date) return;
-        const updates = {};
-        updates[currentAction === 'start' ? 'start' : 'end'] = date;
-        await updateTask(selectedTaskId, updates);
-        document.getElementById('datePickerPopup').style.display = 'none';
-        selectedTaskId = null;
-        currentAction = null;
-    });
-
-    document.addEventListener('click', (e) => {
-        const menu = document.getElementById('contextMenu');
-        const picker = document.getElementById('datePickerPopup');
-        if (!menu.contains(e.target) && !picker.contains(e.target)) {
-            menu.style.display = 'none';
-            picker.style.display = 'none';
-        }
-    });
-
-    // Firebase Functions
+    // Firestore operations
     async function loadProjectInfo() {
         try {
             const doc = await db.collection('projects').doc(projectId).get();
             if (doc.exists) {
-                const data = doc.data();
-                document.getElementById('projectNameDisplay').textContent = data.name || 'UNZA';
-                document.getElementById('projectCodeDisplay').textContent = data.code || 'we3e3';
+                currentProject = { id: doc.id, ...doc.data() };
+                projectNameDisplay.textContent = currentProject.name || 'UNZA';
+                projectCodeDisplay.textContent = currentProject.code || 'we3e3';
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error) { 
+            console.error(error); 
         }
     }
 
     function loadTasks() {
-        db.collection('gantt_tasks')
-            .where('projectId', '==', projectId)
-            .orderBy('displayId')
-            .get()
-            .then(snapshot => {
-                tasks = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    tasks.push({
-                        firebaseId: doc.id,
-                        displayId: data.displayId || doc.id,
-                        name: data.name || 'Unnamed',
-                        start: data.start,
-                        end: data.end,
-                        budget: data.budget || 0,
-                        status: data.status || 'not-started',
-                        isMain: data.isMain || false,
-                        onHold: data.onHold || false,
-                        parentId: data.parentId || null
-                    });
+        db.collection('gantt_tasks').where('projectId', '==', projectId).get()
+        .then(snapshot => {
+            tasks = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tasks.push({
+                    firebaseId: doc.id,
+                    parentFirebaseId: data.parentId || null,
+                    displayId: data.displayId || data.id || doc.id,
+                    name: data.name || 'Unnamed',
+                    start: data.start || null,
+                    end: data.end || null,
+                    pred: data.pred || '',
+                    budget: data.budget || 0,
+                    isMain: data.isMain || false,
+                    status: data.status || 'not-started',
+                    onHold: data.onHold || false,
+                    parentId: data.parentId || null
                 });
-                render();
-                setupListener();
-            })
-            .catch(error => console.error(error));
+            });
+            renderTable();
+            setupRealtimeListener();
+        }).catch(error => {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:red;padding:40px;text-align:center;">Error loading tasks: ${error.message}</td></tr>`;
+        });
     }
 
-    function setupListener() {
-        db.collection('gantt_tasks')
-            .where('projectId', '==', projectId)
-            .onSnapshot(snapshot => {
-                tasks = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    tasks.push({
-                        firebaseId: doc.id,
-                        displayId: data.displayId || doc.id,
-                        name: data.name || 'Unnamed',
-                        start: data.start,
-                        end: data.end,
-                        budget: data.budget || 0,
-                        status: data.status || 'not-started',
-                        isMain: data.isMain || false,
-                        onHold: data.onHold || false,
-                        parentId: data.parentId || null
-                    });
+    function setupRealtimeListener() {
+        db.collection('gantt_tasks').where('projectId', '==', projectId).onSnapshot(snapshot => {
+            tasks = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tasks.push({
+                    firebaseId: doc.id,
+                    parentFirebaseId: data.parentId || null,
+                    displayId: data.displayId || data.id || doc.id,
+                    name: data.name || 'Unnamed',
+                    start: data.start || null,
+                    end: data.end || null,
+                    pred: data.pred || '',
+                    budget: data.budget || 0,
+                    isMain: data.isMain || false,
+                    status: data.status || 'not-started',
+                    onHold: data.onHold || false,
+                    parentId: data.parentId || null
                 });
-                render();
             });
+            renderTable();
+        }, error => console.log('listener error', error));
     }
 
     async function updateTask(taskId, updates) {
         try {
-            await db.collection('gantt_tasks').doc(taskId).update(updates);
-            showMessage('Updated');
+            await db.collection('gantt_tasks').doc(taskId).update({
+                ...updates,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showMessage('Task updated');
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage('Error updating task', 'error');
         }
     }
 
-    // Form Functions
-    document.getElementById('toggleFormBtn').addEventListener('click', () => {
-        const form = document.getElementById('addForm');
+    async function addTask(taskData) {
+        try {
+            await db.collection('gantt_tasks').add({
+                ...taskData,
+                projectId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showMessage('Task added successfully');
+            return true;
+        } catch (error) {
+            showMessage('Error: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    window.goToProjects = () => window.location.href = 'projects.html';
+
+    // Event listeners
+    toggleBtn.addEventListener('click', () => {
         form.classList.toggle('visible');
-        document.getElementById('toggleFormBtn').textContent = 
-            form.classList.contains('visible') ? '− Hide' : '＋ New task';
+        toggleBtn.textContent = form.classList.contains('visible') ? '− Hide form' : '＋ New task';
     });
 
-    document.getElementById('submitTaskBtn').addEventListener('click', async () => {
+    submitBtn.addEventListener('click', async () => {
         const name = document.getElementById('taskName').value.trim();
         const budget = parseFloat(document.getElementById('budgetAmount').value) || 0;
         const parentId = document.getElementById('parentTaskSelect').value;
+        const predId = document.getElementById('predSelect').value;
         
-        if (!name) {
-            showMessage('Enter task name', 'error');
-            return;
-        }
-
+        if (!name) return showMessage('Please enter a task name', 'error');
+        
+        submitBtn.disabled = true;
         const isMain = !parentId;
-        const displayId = isMain ? 
-            (Math.max(...tasks.filter(t => t.isMain).map(t => parseInt(t.displayId) || 0), 0) + 1).toString() :
-            'sub';
-
-        try {
-            await db.collection('gantt_tasks').add({
-                projectId,
-                displayId,
-                name,
-                budget,
-                isMain,
-                status: 'not-started',
-                onHold: false,
-                parentId: parentId || null,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
+        const displayId = generateTaskId(isMain, parentId);
+        
+        if (!displayId) { 
+            showMessage('Error generating task ID', 'error'); 
+            submitBtn.disabled = false; 
+            return; 
+        }
+        
+        const success = await addTask({ 
+            displayId, 
+            id: displayId, 
+            name, 
+            budget, 
+            isMain, 
+            status: 'not-started', 
+            onHold: false, 
+            parentId: parentId || null, 
+            pred: predId || '' 
+        });
+        
+        if (success) {
             document.getElementById('taskName').value = '';
             document.getElementById('budgetAmount').value = '5000';
             document.getElementById('parentTaskSelect').value = '';
-            document.getElementById('addForm').classList.remove('visible');
-            document.getElementById('toggleFormBtn').textContent = '＋ New task';
-            showMessage('Task added');
-        } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            document.getElementById('predSelect').value = '';
+            form.classList.remove('visible');
+            toggleBtn.textContent = '＋ New task';
+        }
+        submitBtn.disabled = false;
+    });
+
+    // Context menu listeners
+    document.getElementById('menuStart').addEventListener('click', () => {
+        if (!selectedTaskId) return; 
+        currentAction = 'start';
+        datePickerPopup.style.display = 'flex'; 
+        datePickerPopup.style.left = contextMenu.style.left; 
+        datePickerPopup.style.top = contextMenu.style.top; 
+        contextMenu.style.display = 'none';
+    });
+    
+    document.getElementById('menuEnd').addEventListener('click', () => {
+        if (!selectedTaskId) return; 
+        currentAction = 'end';
+        datePickerPopup.style.display = 'flex'; 
+        datePickerPopup.style.left = contextMenu.style.left; 
+        datePickerPopup.style.top = contextMenu.style.top; 
+        contextMenu.style.display = 'none';
+    });
+    
+    document.getElementById('menuHold').addEventListener('click', async () => {
+        if (selectedTaskId) { 
+            const task = tasks.find(t => t.firebaseId === selectedTaskId);
+            if (task) { 
+                const newOnHold = !task.onHold; 
+                await updateTask(selectedTaskId, { 
+                    onHold: newOnHold, 
+                    status: newOnHold ? 'on-hold' : 'not-started' 
+                }); 
+            }
+            contextMenu.style.display = 'none'; 
+        }
+    });
+    
+    document.getElementById('menuComplete').addEventListener('click', async () => {
+        if (selectedTaskId) { 
+            await updateTask(selectedTaskId, { status: 'completed' }); 
+            contextMenu.style.display = 'none'; 
+        }
+    });
+    
+    document.getElementById('menuInProgress').addEventListener('click', async () => {
+        if (selectedTaskId) { 
+            await updateTask(selectedTaskId, { status: 'in-progress' }); 
+            contextMenu.style.display = 'none'; 
         }
     });
 
-    window.goToProjects = () => {
-        window.location.href = 'projects.html';
-    };
+    datePickerSave.addEventListener('click', async () => {
+        if (selectedTaskId && currentAction) {
+            const date = datePickerInput.value;
+            if (date) {
+                const updates = {};
+                updates[currentAction === 'start' ? 'start' : 'end'] = date;
+                await updateTask(selectedTaskId, updates);
+            }
+            datePickerPopup.style.display = 'none';
+            selectedTaskId = null; 
+            currentAction = null;
+        }
+    });
 
-    // Init
-    loadProjectInfo();
-    loadTasks();
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target) && !datePickerPopup.contains(e.target)) {
+            contextMenu.style.display = 'none'; 
+            datePickerPopup.style.display = 'none';
+        }
+    });
+
+    hideCheckbox.addEventListener('change', applyColumnVisibility);
+
+    // Initialize
+    async function init() {
+        loadFilterSetting();
+        await loadProjectInfo();
+        loadTasks();
+    }
+    init();
 </script>
 </body>
 </html>
