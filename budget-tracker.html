@@ -482,23 +482,7 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- Timeline row -->
-                <tr style="background:#f0f6ff;">
-                    <td class="task-col" style="background:#f0f6ff;">📅 Timeline</td>
-                    <td class="date-col"></td>
-                    <td class="date-col"></td>
-                    <td class="pred-col"></td>
-                    <td class="budget-col"></td>
-                    <td class="status-col"></td>
-                    <td class="gantt-col" style="padding:0!important;">
-                        <div class="timeline-header-row">
-                            <div class="month-tick">17 Feb</div><div class="month-tick">1 Mar</div><div class="month-tick">15 Mar</div>
-                            <div class="month-tick">1 Apr</div><div class="month-tick">15 Apr</div><div class="month-tick">1 May</div>
-                            <div class="month-tick">15 May</div><div class="month-tick">1 Jun</div><div class="month-tick">15 Jun</div>
-                            <div class="month-tick">30 Jun</div>
-                        </div>
-                    </td>
-                </tr>
+                <!-- Timeline row will be added by JavaScript -->
             </tbody>
         </table>
     </div>
@@ -540,39 +524,30 @@
     <button id="datePickerSave">Save</button>
 </div>
 
-<script type="module">
-    // Import Firebase functions
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
-    import { 
-        getFirestore, 
-        collection, 
-        onSnapshot, 
-        addDoc, 
-        updateDoc, 
-        deleteDoc,
-        doc,
-        getDoc,
-        getDocs,
-        query,
-        where,
-        orderBy,
-        serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js";
-
-    // Firebase Configuration - Using your existing database
+<script>
+    // Your Firebase configuration - using the exact same config from your working project
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
         projectId: "project-task-588c4",
         storageBucket: "project-task-588c4.firebasestorage.app",
         messagingSenderId: "411882772509",
-        appId: "1:411882772509:web:08d613186c101a99f38ef4",
-        measurementId: "G-JMFLFYEM0F"
+        appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
 
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Enable offline persistence for better performance
+    db.enablePersistence()
+        .catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.log('Persistence failed');
+            } else if (err.code == 'unimplemented') {
+                console.log('Persistence not available');
+            }
+        });
 
     // Get project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -591,7 +566,7 @@
     const predSelect = document.getElementById('predSelect');
     const submitBtn = document.getElementById('submitTaskBtn');
     const completionBar = document.getElementById('completionBarFill');
-    const completionPercent = document.getElementById('completionPercent');
+    const completionPercentEl = document.getElementById('completionPercent');
     const contextMenu = document.getElementById('contextMenu');
     const datePickerPopup = document.getElementById('datePickerPopup');
     const datePickerInput = document.getElementById('datePickerInput');
@@ -619,22 +594,27 @@
     // Load project info
     async function loadProjectInfo() {
         try {
-            const projectDoc = await getDoc(doc(db, 'projects', projectId));
-            if (projectDoc.exists()) {
+            const projectDoc = await db.collection('projects').doc(projectId).get();
+            if (projectDoc.exists) {
                 currentProject = { id: projectDoc.id, ...projectDoc.data() };
                 projectNameDisplay.textContent = currentProject.name || 'Unnamed Project';
                 projectInfo.textContent = `Project: ${currentProject.code || currentProject.id}`;
+                console.log('Project loaded:', currentProject);
+            } else {
+                console.log('No project found with ID:', projectId);
+                showMessage('Project not found', 'error');
             }
         } catch (error) {
             console.error('Error loading project:', error);
+            showMessage('Error loading project: ' + error.message, 'error');
         }
     }
 
     // Load budget info
     async function loadBudgetInfo() {
         try {
-            const budgetDoc = await getDoc(doc(db, 'projectSettings', projectId));
-            if (budgetDoc.exists()) {
+            const budgetDoc = await db.collection('projectSettings').doc(projectId).get();
+            if (budgetDoc.exists) {
                 const budget = budgetDoc.data();
                 totalBudgetEl.textContent = budget.initialBudget?.toFixed(2) || '0';
                 spentBudgetEl.textContent = budget.totalSpent?.toFixed(2) || '0';
@@ -647,6 +627,17 @@
                 } else {
                     remainingBudgetEl.classList.remove('warning');
                 }
+                console.log('Budget loaded:', budget);
+            } else {
+                console.log('No budget settings found for project');
+                // Initialize budget settings if not exists
+                await db.collection('projectSettings').doc(projectId).set({
+                    projectId: projectId,
+                    initialBudget: 0,
+                    totalSpent: 0,
+                    fundTransactions: []
+                });
+                console.log('Created default budget settings');
             }
         } catch (error) {
             console.error('Error loading budget:', error);
@@ -693,20 +684,36 @@
     // Calculate left/width from dates
     function getLeftWidthFromDates(task) {
         if (task.start && task.end) {
-            const startDate = new Date(task.start + 'T12:00:00');
-            const endDate = new Date(task.end + 'T12:00:00');
-            const refStart = new Date('2026-02-17T12:00:00');
-            const refEnd = new Date('2026-06-30T12:00:00');
-            const totalDays = (refEnd - refStart) / (1000*3600*24);
-            const startDays = (startDate - refStart) / (1000*3600*24);
-            const endDays = (endDate - refStart) / (1000*3600*24);
-            let left = Math.max(0, (startDays / totalDays) * 100);
-            let width = Math.min(100 - left, ((endDays - startDays) / totalDays) * 100);
-            left = Math.min(90, Math.max(0, left));
-            width = Math.min(90, Math.max(2, width));
-            return { left, width };
+            try {
+                const startDate = new Date(task.start + 'T12:00:00');
+                const endDate = new Date(task.end + 'T12:00:00');
+                const refStart = new Date('2026-02-17T12:00:00');
+                const refEnd = new Date('2026-06-30T12:00:00');
+                
+                // Validate dates
+                if (isNaN(startDate) || isNaN(endDate)) {
+                    return { left: 10, width: 20 };
+                }
+                
+                const totalDays = (refEnd - refStart) / (1000 * 3600 * 24);
+                if (totalDays <= 0) return { left: 10, width: 20 };
+                
+                const startDays = Math.max(0, (startDate - refStart) / (1000 * 3600 * 24));
+                const endDays = Math.min(totalDays, (endDate - refStart) / (1000 * 3600 * 24));
+                
+                let left = (startDays / totalDays) * 100;
+                let width = ((endDays - startDays) / totalDays) * 100;
+                
+                // Ensure values are within bounds
+                left = Math.max(0, Math.min(95, left));
+                width = Math.max(2, Math.min(95 - left, width));
+                
+                return { left, width };
+            } catch (error) {
+                console.error('Error calculating position:', error);
+            }
         }
-        return { left: task.left || 10, width: task.width || 20 };
+        return { left: 10, width: 20 };
     }
 
     // Update completion percentage (weighted by budget)
@@ -714,11 +721,11 @@
         let totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
         let completedBudget = tasks.reduce((sum, t) => {
             const completion = getCompletionFromStatus(t.status);
-            return sum + (t.budget * completion / 100);
+            return sum + ((t.budget || 0) * completion / 100);
         }, 0);
         let percent = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
         completionBar.style.width = percent + '%';
-        completionPercent.innerText = percent + '%';
+        completionPercentEl.innerText = percent + '%';
     }
 
     // Update dropdowns from Firebase data
@@ -727,13 +734,13 @@
         predSelect.innerHTML = '<option value="">— none —</option>';
         tasks.filter(t => t.isMain).forEach(t => {
             const opt = document.createElement('option');
-            opt.value = t.id;
+            opt.value = t.firebaseId;
             opt.textContent = t.name;
             parentSelect.appendChild(opt);
         });
         tasks.forEach(t => {
             const opt = document.createElement('option');
-            opt.value = t.id;
+            opt.value = t.firebaseId;
             opt.textContent = t.name;
             predSelect.appendChild(opt);
         });
@@ -764,14 +771,11 @@
         `;
         tbody.appendChild(timelineRow);
 
-        const sortedTasks = tasks.sort((a, b) => a.id.localeCompare(b.id));
+        // Sort tasks by ID
+        const sortedTasks = [...tasks].sort((a, b) => a.id.localeCompare(b.id));
         
         sortedTasks.forEach(t => {
-            if (t.start && t.end) {
-                const pos = getLeftWidthFromDates(t);
-                t.left = pos.left;
-                t.width = pos.width;
-            }
+            const pos = getLeftWidthFromDates(t);
             
             const row = document.createElement('tr');
             if (t.isMain) row.style.background = '#f4f9ff';
@@ -786,20 +790,20 @@
             const statusClass = getStatusClass(t.status);
             const statusText = getStatusText(t.status);
             const completionPercent = getCompletionFromStatus(t.status);
-            const completionWidth = (completionPercent / 100) * (t.width || 20);
-            const holdMarker = t.onHold ? `<div class="hold-marker" style="left:${(t.left || 10) + (t.width || 20)/2 - 1}%;"></div>` : '';
+            const completionWidth = (completionPercent / 100) * (pos.width || 20);
+            const holdMarker = t.onHold ? `<div class="hold-marker" style="left:${(pos.left || 10) + (pos.width || 20)/2 - 1}%;"></div>` : '';
             
             row.innerHTML = `
-                <td class="task-col" data-task-id="${t.id}">${taskDisplay}</td>
+                <td class="task-col" data-task-id="${t.firebaseId}" data-task-number="${t.id}">${taskDisplay}</td>
                 <td class="date-col">${startDisplay}</td>
                 <td class="date-col">${endDisplay}</td>
                 <td class="pred-col">${t.pred || '—'}</td>
-                <td class="budget-col">${t.budget}</td>
+                <td class="budget-col">$${t.budget || 0}</td>
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col">
                     <div class="timeline-box">
-                        <div class="${barClass}" style="left:${t.left || 10}%; width:${t.width || 20}%;" data-task-id="${t.id}"></div>
-                        <div class="completion-overlay ${!t.isMain ? 'subtask-bar' : ''}" style="left:${t.left || 10}%; width:${completionWidth}%;"></div>
+                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${t.firebaseId}"></div>
+                        <div class="completion-overlay ${!t.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
                         ${holdMarker}
                     </div>
                 </td>
@@ -828,7 +832,7 @@
         `;
         tbody.appendChild(mileRow);
 
-        // Attach right-click listeners
+        // Attach right-click listeners to task cells
         document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
             cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
@@ -847,11 +851,11 @@
                 const taskId = bar.dataset.taskId;
                 if (!taskId) return;
                 
-                const task = tasks.find(t => t.id === taskId);
+                const task = tasks.find(t => t.firebaseId === taskId);
                 if (!task) return;
                 
                 let newStatus = task.status;
-                if (newStatus === 'not-started') newStatus = 'in-progress';
+                if (newStatus === 'not-started' || !newStatus) newStatus = 'in-progress';
                 else if (newStatus === 'in-progress') newStatus = 'completed';
                 else if (newStatus === 'completed') newStatus = 'not-started';
                 else if (newStatus === 'on-hold') newStatus = 'in-progress';
@@ -867,41 +871,64 @@
     // Load tasks from Firestore for this project
     function loadTasksFromFirebase() {
         try {
-            const q = query(
-                collection(db, 'gantt_tasks'), 
-                where('projectId', '==', projectId),
-                orderBy('createdAt', 'asc')
-            );
+            console.log('Loading tasks for project:', projectId);
             
-            onSnapshot(q, (snapshot) => {
-                tasks = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    tasks.push({
-                        id: data.id,
-                        name: data.name,
-                        start: data.start || null,
-                        end: data.end || null,
-                        pred: data.pred || '',
-                        budget: data.budget || 0,
-                        isMain: data.isMain || false,
-                        left: data.left || 10,
-                        width: data.width || 20,
-                        status: data.status || 'not-started',
-                        onHold: data.onHold || false,
-                        parentId: data.parentId || null,
-                        projectId: data.projectId,
-                        firebaseId: doc.id
+            const q = db.collection('gantt_tasks')
+                .where('projectId', '==', projectId)
+                .orderBy('createdAt', 'asc');
+            
+            db.collection('gantt_tasks')
+                .where('projectId', '==', projectId)
+                .get()
+                .then((snapshot) => {
+                    tasks = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        console.log('Task loaded:', data);
+                        tasks.push({
+                            id: data.id,
+                            name: data.name,
+                            start: data.start || null,
+                            end: data.end || null,
+                            pred: data.pred || '',
+                            budget: data.budget || 0,
+                            isMain: data.isMain || false,
+                            left: data.left || 10,
+                            width: data.width || 20,
+                            status: data.status || 'not-started',
+                            onHold: data.onHold || false,
+                            parentId: data.parentId || null,
+                            projectId: data.projectId,
+                            firebaseId: doc.id
+                        });
                     });
+                    console.log('Total tasks loaded:', tasks.length);
+                    renderTable();
+                    loadBudgetInfo();
+                })
+                .catch((error) => {
+                    console.error('Error loading tasks:', error);
+                    showMessage('Error loading tasks: ' + error.message, 'error');
                 });
-                renderTable();
-                loadBudgetInfo(); // Refresh budget info
-            }, (error) => {
-                console.error('Error loading tasks:', error);
-                showMessage('Error loading tasks: ' + error.message, 'error');
-            });
+            
+            // Also set up real-time listener
+            db.collection('gantt_tasks')
+                .where('projectId', '==', projectId)
+                .orderBy('createdAt', 'asc')
+                .onSnapshot((snapshot) => {
+                    console.log('Real-time update received');
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added' || change.type === 'modified' || change.type === 'removed') {
+                            // Reload all tasks
+                            loadTasksFromFirebase();
+                        }
+                    });
+                }, (error) => {
+                    console.error('Error in real-time listener:', error);
+                });
+                
         } catch (error) {
-            console.error('Error setting up listener:', error);
+            console.error('Error setting up task loading:', error);
             showMessage('Error setting up data listener: ' + error.message, 'error');
         }
     }
@@ -909,10 +936,10 @@
     // Update task in Firestore
     async function updateTaskInFirebase(firebaseId, updates) {
         try {
-            const taskRef = doc(db, 'gantt_tasks', firebaseId);
-            await updateDoc(taskRef, {
+            const taskRef = db.collection('gantt_tasks').doc(firebaseId);
+            await taskRef.update({
                 ...updates,
-                updatedAt: serverTimestamp()
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             showMessage('Task updated ✓', 'success');
         } catch (error) {
@@ -924,11 +951,11 @@
     // Add new task to Firestore
     async function addTaskToFirebase(taskData) {
         try {
-            const docRef = await addDoc(collection(db, 'gantt_tasks'), {
+            const docRef = await db.collection('gantt_tasks').add({
                 ...taskData,
                 projectId: projectId,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             console.log('Task added with ID: ', docRef.id);
             showMessage('Task added successfully ✓', 'success');
@@ -970,11 +997,17 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Adding...';
 
+        // Generate new task ID
         let newId;
         if (parentId) {
-            const subtasks = tasks.filter(t => t.parentId === parentId);
-            const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => parseInt(t.id.split('.').pop()) || 0)) : 0;
-            newId = parentId + '.' + (maxNum + 1);
+            const parentTask = tasks.find(t => t.firebaseId === parentId);
+            if (parentTask) {
+                const subtasks = tasks.filter(t => t.parentId === parentTask.firebaseId);
+                const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => parseInt(t.id.split('.').pop()) || 0)) : 0;
+                newId = parentTask.id + '.' + (maxNum + 1);
+            } else {
+                newId = '1.1';
+            }
         } else {
             const mainTasks = tasks.filter(t => t.isMain);
             const maxNum = mainTasks.length > 0 ? Math.max(...mainTasks.map(t => parseInt(t.id) || 0)) : 0;
@@ -1032,7 +1065,7 @@
 
     document.getElementById('menuHold').addEventListener('click', async () => {
         if (!selectedTaskId) return;
-        const task = tasks.find(t => t.id === selectedTaskId);
+        const task = tasks.find(t => t.firebaseId === selectedTaskId);
         if (task) {
             const newOnHold = !task.onHold;
             const newStatus = newOnHold ? 'on-hold' : 'not-started';
@@ -1043,7 +1076,7 @@
 
     document.getElementById('menuComplete').addEventListener('click', async () => {
         if (!selectedTaskId) return;
-        const task = tasks.find(t => t.id === selectedTaskId);
+        const task = tasks.find(t => t.firebaseId === selectedTaskId);
         if (task) {
             await updateTaskInFirebase(task.firebaseId, { status: 'completed' });
         }
@@ -1052,7 +1085,7 @@
 
     document.getElementById('menuInProgress').addEventListener('click', async () => {
         if (!selectedTaskId) return;
-        const task = tasks.find(t => t.id === selectedTaskId);
+        const task = tasks.find(t => t.firebaseId === selectedTaskId);
         if (task) {
             await updateTaskInFirebase(task.firebaseId, { status: 'in-progress' });
         }
@@ -1065,7 +1098,7 @@
         const date = datePickerInput.value;
         if (!date) return;
         
-        const task = tasks.find(t => t.id === selectedTaskId);
+        const task = tasks.find(t => t.firebaseId === selectedTaskId);
         if (task) {
             const updates = currentAction === 'start' ? { start: date } : { end: date };
             await updateTaskInFirebase(task.firebaseId, updates);
@@ -1085,6 +1118,7 @@
 
     // Initialize
     async function init() {
+        console.log('Initializing with project ID:', projectId);
         await loadProjectInfo();
         loadTasksFromFirebase();
     }
