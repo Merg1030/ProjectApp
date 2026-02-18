@@ -535,34 +535,30 @@
     <button id="datePickerSave">Save Date</button>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <script>
-    // Firebase Configuration
+    // Firebase config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
         projectId: "project-task-588c4",
-        storageBucket: "project-task-588c4.firebasestorage.app",
+        storageBucket: "project-task-588c4.appspot.com",
         messagingSenderId: "411882772509",
         appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Enable offline persistence
-    db.enablePersistence()
-        .catch((err) => {
-            if (err.code === 'failed-precondition') {
-                console.log('Persistence failed - multiple tabs open');
-            } else if (err.code === 'unimplemented') {
-                console.log('Persistence not supported');
-            }
-        });
+    db.enablePersistence().catch(err => console.log('Persistence error:', err));
 
     // Get project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project');
+    
+    console.log('🔍 DEBUG: Project ID from URL:', projectId);
     
     if (!projectId) {
         window.location.href = 'projects.html';
@@ -577,41 +573,82 @@
     const submitBtn = document.getElementById('submitTaskBtn');
     const completionBar = document.getElementById('completionBarFill');
     const completionPercentEl = document.getElementById('completionPercent');
-    const contextMenu = document.getElementById('contextMenu');
-    const datePickerPopup = document.getElementById('datePickerPopup');
-    const datePickerInput = document.getElementById('datePickerInput');
-    const datePickerSave = document.getElementById('datePickerSave');
     const projectNameDisplay = document.getElementById('projectNameDisplay');
     const projectInfo = document.getElementById('projectInfo');
     const totalBudgetEl = document.getElementById('totalBudget');
     const spentBudgetEl = document.getElementById('spentBudget');
     const remainingBudgetEl = document.getElementById('remainingBudget');
 
-    // State
     let tasks = [];
-    let selectedTaskId = null;
-    let currentAction = null;
     let currentProject = null;
 
-    // Helper Functions
+    // Show notification
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
         msg.className = `message ${type}`;
         msg.textContent = text;
         document.body.appendChild(msg);
+        console.log('📢 Message:', text);
         setTimeout(() => msg.remove(), 3000);
     }
 
-    function formatDate(dateStr) {
-        if (!dateStr) return '—';
+    // Load project info
+    async function loadProjectInfo() {
         try {
-            const d = new Date(dateStr + 'T12:00:00');
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        } catch {
-            return dateStr;
+            console.log('📂 Loading project:', projectId);
+            const projectDoc = await db.collection('projects').doc(projectId).get();
+            if (projectDoc.exists) {
+                currentProject = { id: projectDoc.id, ...projectDoc.data() };
+                projectNameDisplay.textContent = currentProject.name || 'Unnamed Project';
+                projectInfo.textContent = `Project: ${currentProject.code || currentProject.id}`;
+                console.log('✅ Project loaded:', currentProject);
+            } else {
+                console.log('❌ No project found with ID:', projectId);
+                showMessage('Project not found', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading project:', error);
+            showMessage('Error loading project: ' + error.message, 'error');
         }
     }
 
+    // Load budget info
+    async function loadBudgetInfo() {
+        try {
+            const budgetDoc = await db.collection('projectSettings').doc(projectId).get();
+            if (budgetDoc.exists) {
+                const budget = budgetDoc.data();
+                totalBudgetEl.textContent = (budget.initialBudget || 0).toFixed(2);
+                spentBudgetEl.textContent = (budget.totalSpent || 0).toFixed(2);
+                const remaining = (budget.initialBudget || 0) - (budget.totalSpent || 0);
+                remainingBudgetEl.textContent = remaining.toFixed(2);
+                
+                if (remaining < 0) {
+                    remainingBudgetEl.classList.add('warning');
+                } else {
+                    remainingBudgetEl.classList.remove('warning');
+                }
+            } else {
+                await db.collection('projectSettings').doc(projectId).set({
+                    projectId: projectId,
+                    initialBudget: 0,
+                    totalSpent: 0,
+                    fundTransactions: []
+                });
+            }
+        } catch (error) {
+            console.error('Error loading budget:', error);
+        }
+    }
+
+    // Format date
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return '—';
+        const d = new Date(dateStr + 'T12:00:00');
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).replace(/ /, ' ');
+    }
+
+    // Get status class
     function getStatusClass(status) {
         switch(status) {
             case 'completed': return 'status-completed';
@@ -621,6 +658,7 @@
         }
     }
 
+    // Get status text
     function getStatusText(status) {
         switch(status) {
             case 'completed': return 'Completed';
@@ -630,6 +668,7 @@
         }
     }
 
+    // Get completion from status
     function getCompletionFromStatus(status) {
         switch(status) {
             case 'completed': return 100;
@@ -639,7 +678,8 @@
         }
     }
 
-    function calculateBarPosition(task) {
+    // Calculate gantt position
+    function getLeftWidthFromDates(task) {
         if (task.start && task.end) {
             try {
                 const startDate = new Date(task.start + 'T12:00:00');
@@ -651,11 +691,11 @@
                     return { left: 10, width: 20 };
                 }
                 
-                const totalDays = (refEnd - refStart) / (1000 * 60 * 60 * 24);
+                const totalDays = (refEnd - refStart) / (1000 * 3600 * 24);
                 if (totalDays <= 0) return { left: 10, width: 20 };
                 
-                const startDays = Math.max(0, (startDate - refStart) / (1000 * 60 * 60 * 24));
-                const endDays = Math.min(totalDays, Math.max(startDays, (endDate - refStart) / (1000 * 60 * 60 * 24)));
+                const startDays = Math.max(0, (startDate - refStart) / (1000 * 3600 * 24));
+                const endDays = Math.min(totalDays, (endDate - refStart) / (1000 * 3600 * 24));
                 
                 let left = (startDays / totalDays) * 100;
                 let width = ((endDays - startDays) / totalDays) * 100;
@@ -671,20 +711,22 @@
         return { left: 10, width: 20 };
     }
 
+    // Update completion percentage
     function updateCompletion() {
-        const totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
-        const completedBudget = tasks.reduce((sum, t) => {
+        let totalBudget = tasks.reduce((sum, t) => sum + (t.budget || 0), 0);
+        let completedBudget = tasks.reduce((sum, t) => {
             const completion = getCompletionFromStatus(t.status);
             return sum + ((t.budget || 0) * completion / 100);
         }, 0);
-        const percent = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
+        let percent = totalBudget > 0 ? Math.round((completedBudget / totalBudget) * 100) : 0;
         completionBar.style.width = percent + '%';
         completionPercentEl.innerText = percent + '%';
     }
 
+    // Update dropdowns
     function updateDropdowns() {
-        parentSelect.innerHTML = '<option value="">— Main Task —</option>';
-        predSelect.innerHTML = '<option value="">— None —</option>';
+        parentSelect.innerHTML = '<option value="">— main task —</option>';
+        predSelect.innerHTML = '<option value="">— none —</option>';
         
         tasks.filter(t => t.isMain).forEach(t => {
             const opt = document.createElement('option');
@@ -701,19 +743,9 @@
         });
     }
 
-    // Render the Gantt chart
+    // Render table
     function renderTable() {
-        if (!tasks || tasks.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
-                        No tasks yet. Click "Show form" to add your first task.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
+        console.log('🎨 Rendering table with', tasks.length, 'tasks');
         tbody.innerHTML = '';
         
         // Timeline header row
@@ -728,58 +760,50 @@
             <td class="status-col"></td>
             <td class="gantt-col" style="padding:0!important;">
                 <div class="timeline-header-row">
-                    <div class="month-tick">17 Feb</div>
-                    <div class="month-tick">1 Mar</div>
-                    <div class="month-tick">15 Mar</div>
-                    <div class="month-tick">1 Apr</div>
-                    <div class="month-tick">15 Apr</div>
-                    <div class="month-tick">1 May</div>
-                    <div class="month-tick">15 May</div>
-                    <div class="month-tick">1 Jun</div>
-                    <div class="month-tick">15 Jun</div>
+                    <div class="month-tick">17 Feb</div><div class="month-tick">1 Mar</div><div class="month-tick">15 Mar</div>
+                    <div class="month-tick">1 Apr</div><div class="month-tick">15 Apr</div><div class="month-tick">1 May</div>
+                    <div class="month-tick">15 May</div><div class="month-tick">1 Jun</div><div class="month-tick">15 Jun</div>
                     <div class="month-tick">30 Jun</div>
                 </div>
             </td>
         `;
         tbody.appendChild(timelineRow);
 
-        // Sort tasks
-        const sortedTasks = [...tasks].sort((a, b) => {
-            if (a.isMain && !b.isMain) return -1;
-            if (!a.isMain && b.isMain) return 1;
-            return (a.id || '').localeCompare(b.id || '');
-        });
+        // Sort and render tasks
+        const sortedTasks = [...tasks].sort((a, b) => a.id.localeCompare(b.id));
         
-        sortedTasks.forEach(task => {
-            const pos = calculateBarPosition(task);
+        sortedTasks.forEach(t => {
+            console.log('  📝 Rendering task:', t.name, '(ID:', t.id, ')');
+            const pos = getLeftWidthFromDates(t);
+            
             const row = document.createElement('tr');
-            if (task.isMain) row.style.background = '#f4f9ff';
+            if (t.isMain) row.style.background = '#f4f9ff';
             
-            const taskDisplay = task.isMain ? 
-                `<span class="task-main">${task.name}</span>` : 
-                `<span class="subtask-item">${task.name}</span>`;
+            const taskDisplay = t.isMain ? 
+                `<span class="task-main">${t.name}</span>` : 
+                `<span class="subtask-item">${t.name}</span>`;
             
-            const barClass = task.isMain ? 'task-bar' : 'task-bar subtask-bar';
-            const startDisplay = formatDate(task.start);
-            const endDisplay = formatDate(task.end);
-            const statusClass = getStatusClass(task.status);
-            const statusText = getStatusText(task.status);
-            const completionPercent = getCompletionFromStatus(task.status);
-            const completionWidth = (completionPercent / 100) * pos.width;
+            const barClass = t.isMain ? 'task-bar' : 'task-bar subtask-bar';
+            const startDisplay = formatDisplayDate(t.start);
+            const endDisplay = formatDisplayDate(t.end);
+            const statusClass = getStatusClass(t.status);
+            const statusText = getStatusText(t.status);
+            const completionPercent = getCompletionFromStatus(t.status);
+            const completionWidth = (completionPercent / 100) * (pos.width || 20);
+            const holdMarker = t.onHold ? `<div class="hold-marker" style="left:${(pos.left || 10) + (pos.width || 20)/2 - 1}%;"></div>` : '';
             
             row.innerHTML = `
-                <td class="task-col" data-task-id="${task.firebaseId}">${taskDisplay}</td>
+                <td class="task-col">${taskDisplay}</td>
                 <td class="date-col">${startDisplay}</td>
                 <td class="date-col">${endDisplay}</td>
-                <td class="pred-col">${task.pred ? '↳' : '—'}</td>
-                <td class="budget-col">$${task.budget || 0}</td>
+                <td class="pred-col">${t.pred || '—'}</td>
+                <td class="budget-col">$${t.budget || 0}</td>
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col">
                     <div class="timeline-box">
-                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
-                        <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" 
-                             style="left:${pos.left}%; width:${completionWidth}%;"></div>
-                        ${task.onHold ? `<div class="hold-marker" style="left:${pos.left + pos.width/2}%;"></div>` : ''}
+                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;"></div>
+                        <div class="completion-overlay ${!t.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
+                        ${holdMarker}
                     </div>
                 </td>
             `;
@@ -790,7 +814,7 @@
         const mileRow = document.createElement('tr');
         mileRow.style.background = '#eaf1fb';
         mileRow.innerHTML = `
-            <td class="task-col">🎯 Milestones</td>
+            <td class="task-col">Milestones</td>
             <td class="date-col">—</td>
             <td class="date-col">—</td>
             <td class="pred-col">—</td>
@@ -798,146 +822,30 @@
             <td class="status-col">—</td>
             <td class="gantt-col">
                 <div class="timeline-box" style="background:transparent;">
-                    <div class="milestone-dot" style="left:24%;" title="Design Review"></div>
-                    <div class="milestone-dot" style="left:48%;" title="Development Complete"></div>
-                    <div class="milestone-dot" style="left:68%;" title="Testing"></div>
+                    <div class="milestone-dot" style="left:24%;" title="Design done"></div>
+                    <div class="milestone-dot" style="left:48%;" title="Feature freeze"></div>
+                    <div class="milestone-dot" style="left:68%;" title="QA complete"></div>
                     <div class="milestone-dot" style="left:86%;" title="Launch"></div>
                 </div>
             </td>
         `;
         tbody.appendChild(mileRow);
 
-        // Attach event listeners
-        document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
-            cell.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                selectedTaskId = cell.dataset.taskId;
-                contextMenu.style.display = 'flex';
-                contextMenu.style.left = e.pageX + 'px';
-                contextMenu.style.top = e.pageY + 'px';
-            });
-        });
-
-        document.querySelectorAll('.task-bar').forEach(bar => {
-            bar.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const taskId = bar.dataset.taskId;
-                const task = tasks.find(t => t.firebaseId === taskId);
-                if (!task) return;
-                
-                let newStatus;
-                if (task.status === 'not-started') newStatus = 'in-progress';
-                else if (task.status === 'in-progress') newStatus = 'completed';
-                else if (task.status === 'completed') newStatus = 'not-started';
-                else if (task.status === 'on-hold') newStatus = 'in-progress';
-                
-                await updateTask(task.firebaseId, { status: newStatus });
-            });
-        });
-
         updateDropdowns();
         updateCompletion();
     }
 
-    // Load project info
-    async function loadProjectInfo() {
+    // Add task to Firebase
+    async function addTaskToFirebase(taskData) {
         try {
-            const doc = await db.collection('projects').doc(projectId).get();
-            if (doc.exists) {
-                currentProject = { id: doc.id, ...doc.data() };
-                projectNameDisplay.textContent = currentProject.name || 'Unnamed Project';
-                projectInfo.textContent = `Code: ${currentProject.code || '—'}`;
-            }
-        } catch (error) {
-            console.error('Error loading project:', error);
-        }
-    }
-
-    // Load budget info
-    async function loadBudgetInfo() {
-        try {
-            const doc = await db.collection('projectSettings').doc(projectId).get();
-            if (doc.exists) {
-                const budget = doc.data();
-                totalBudgetEl.textContent = `$${budget.initialBudget?.toFixed(2) || '0'}`;
-                spentBudgetEl.textContent = `$${budget.totalSpent?.toFixed(2) || '0'}`;
-                const remaining = (budget.initialBudget || 0) - (budget.totalSpent || 0);
-                remainingBudgetEl.textContent = `$${remaining.toFixed(2)}`;
-                
-                if (remaining < 0) {
-                    remainingBudgetEl.classList.add('warning');
-                } else {
-                    remainingBudgetEl.classList.remove('warning');
-                }
-            } else {
-                // Create default budget settings
-                await db.collection('projectSettings').doc(projectId).set({
-                    projectId: projectId,
-                    initialBudget: 0,
-                    totalSpent: 0,
-                    fundTransactions: []
-                });
-            }
-        } catch (error) {
-            console.error('Error loading budget:', error);
-        }
-    }
-
-    // Load tasks from Firestore with real-time updates
-    function loadTasks() {
-        db.collection('gantt_tasks')
-            .where('projectId', '==', projectId)
-            .orderBy('createdAt')
-            .onSnapshot((snapshot) => {
-                tasks = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    tasks.push({
-                        firebaseId: doc.id,
-                        id: data.id,
-                        name: data.name,
-                        start: data.start || null,
-                        end: data.end || null,
-                        pred: data.pred || '',
-                        budget: data.budget || 0,
-                        isMain: data.isMain || false,
-                        status: data.status || 'not-started',
-                        onHold: data.onHold || false,
-                        parentId: data.parentId || null
-                    });
-                });
-                console.log('Tasks loaded:', tasks.length);
-                renderTable();
-            }, (error) => {
-                console.error('Error loading tasks:', error);
-                showMessage('Error loading tasks: ' + error.message, 'error');
-            });
-    }
-
-    // Update task
-    async function updateTask(taskId, updates) {
-        try {
-            await db.collection('gantt_tasks').doc(taskId).update({
-                ...updates,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            showMessage('Task updated', 'success');
-        } catch (error) {
-            console.error('Error updating task:', error);
-            showMessage('Error updating task', 'error');
-        }
-    }
-
-    // Add task
-    async function addTask(taskData) {
-        try {
+            console.log('➕ Adding task:', taskData);
             await db.collection('gantt_tasks').add({
                 ...taskData,
                 projectId: projectId,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showMessage('Task added successfully', 'success');
+            showMessage('Task added successfully ✓', 'success');
             return true;
         } catch (error) {
             console.error('Error adding task:', error);
@@ -946,152 +854,140 @@
         }
     }
 
-    // Navigation
-    window.goToProjects = () => {
+    // Update task in Firebase
+    async function updateTaskInFirebase(firebaseId, updates) {
+        try {
+            await db.collection('gantt_tasks').doc(firebaseId).update({
+                ...updates,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showMessage('Task updated ✓', 'success');
+        } catch (error) {
+            console.error('Error updating task:', error);
+            showMessage('Error updating task: ' + error.message, 'error');
+        }
+    }
+
+    // Navigation functions
+    window.goToProjects = function() {
         window.location.href = 'projects.html';
     };
 
-    window.goToBudget = () => {
+    window.goToBudget = function() {
         window.location.href = `budget-tracker.html?project=${projectId}`;
     };
 
-    // Event Listeners
+    // Toggle form visibility
     toggleBtn.addEventListener('click', () => {
         form.classList.toggle('visible');
-        toggleBtn.textContent = form.classList.contains('visible') ? '− Hide form' : '＋ Show form';
+        toggleBtn.innerText = form.classList.contains('visible') ? '− Hide form' : '＋ Show form';
     });
 
+    // Submit new task
     submitBtn.addEventListener('click', async () => {
         const name = document.getElementById('taskName').value.trim();
         const budget = parseFloat(document.getElementById('budgetAmount').value) || 0;
-        const parentId = document.getElementById('parentTaskSelect').value;
-        const predId = document.getElementById('predSelect').value;
+        const parentId = parentSelect.value;
+        const predId = predSelect.value;
 
         if (!name) {
-            showMessage('Please enter a task name', 'error');
+            showMessage('Task name is required!', 'error');
             return;
         }
+
+        console.log('📝 Creating task:', { name, budget, parentId, predId });
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Adding...';
 
-        // Generate task ID
+        // Generate new task ID
         let newId;
         if (parentId) {
             const parentTask = tasks.find(t => t.firebaseId === parentId);
             if (parentTask) {
                 const subtasks = tasks.filter(t => t.parentId === parentTask.firebaseId);
-                const maxNum = subtasks.length;
-                newId = `${parentTask.id}.${maxNum + 1}`;
+                const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => parseInt(t.id.split('.').pop()) || 0)) : 0;
+                newId = parentTask.id + '.' + (maxNum + 1);
             } else {
-                newId = `1.${tasks.filter(t => !t.isMain).length + 1}`;
+                newId = '1.1';
             }
         } else {
             const mainTasks = tasks.filter(t => t.isMain);
-            newId = (mainTasks.length + 1).toString();
+            const maxNum = mainTasks.length > 0 ? Math.max(...mainTasks.map(t => parseInt(t.id) || 0)) : 0;
+            newId = (maxNum + 1).toString();
         }
 
-        const success = await addTask({
+        const isMain = !parentId;
+
+        const success = await addTaskToFirebase({
             id: newId,
             name: name,
+            start: null,
+            end: null,
+            pred: predId || '',
             budget: budget,
-            isMain: !parentId,
+            isMain: isMain,
+            left: 10,
+            width: 20,
             status: 'not-started',
             onHold: false,
-            parentId: parentId || null,
-            pred: predId || ''
+            parentId: parentId || null
         });
 
         if (success) {
             document.getElementById('taskName').value = '';
             document.getElementById('budgetAmount').value = '5000';
-            document.getElementById('parentTaskSelect').value = '';
-            document.getElementById('predSelect').value = '';
+            parentSelect.value = '';
+            predSelect.value = '';
             form.classList.remove('visible');
-            toggleBtn.textContent = '＋ Show form';
+            toggleBtn.innerText = '＋ Show form';
         }
 
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Add Task';
+        submitBtn.textContent = 'Add task';
     });
 
-    // Context menu actions
-    document.getElementById('menuStart').addEventListener('click', () => {
-        if (selectedTaskId) {
-            currentAction = 'start';
-            datePickerPopup.style.display = 'flex';
-            datePickerPopup.style.left = contextMenu.style.left;
-            datePickerPopup.style.top = contextMenu.style.top;
-            contextMenu.style.display = 'none';
-        }
-    });
-
-    document.getElementById('menuEnd').addEventListener('click', () => {
-        if (selectedTaskId) {
-            currentAction = 'end';
-            datePickerPopup.style.display = 'flex';
-            datePickerPopup.style.left = contextMenu.style.left;
-            datePickerPopup.style.top = contextMenu.style.top;
-            contextMenu.style.display = 'none';
-        }
-    });
-
-    document.getElementById('menuHold').addEventListener('click', async () => {
-        if (selectedTaskId) {
-            const task = tasks.find(t => t.firebaseId === selectedTaskId);
-            if (task) {
-                const newOnHold = !task.onHold;
-                await updateTask(selectedTaskId, { 
-                    onHold: newOnHold,
-                    status: newOnHold ? 'on-hold' : 'not-started'
+    // Real-time listener for tasks (SINGLE LISTENER ONLY)
+    console.log('🔗 Setting up real-time listener for project:', projectId);
+    
+    db.collection('gantt_tasks')
+        .where('projectId', '==', projectId)
+        .orderBy('createdAt', 'asc')
+        .onSnapshot((snapshot) => {
+            console.log('📥 Snapshot received with', snapshot.docs.length, 'documents');
+            tasks = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                console.log('  ✅ Task doc:', doc.id, data);
+                tasks.push({
+                    id: data.id,
+                    name: data.name,
+                    start: data.start || null,
+                    end: data.end || null,
+                    pred: data.pred || '',
+                    budget: data.budget || 0,
+                    isMain: data.isMain || false,
+                    left: data.left || 10,
+                    width: data.width || 20,
+                    status: data.status || 'not-started',
+                    onHold: data.onHold || false,
+                    parentId: data.parentId || null,
+                    projectId: data.projectId,
+                    firebaseId: doc.id
                 });
-            }
-            contextMenu.style.display = 'none';
-        }
-    });
-
-    document.getElementById('menuComplete').addEventListener('click', async () => {
-        if (selectedTaskId) {
-            await updateTask(selectedTaskId, { status: 'completed' });
-            contextMenu.style.display = 'none';
-        }
-    });
-
-    document.getElementById('menuInProgress').addEventListener('click', async () => {
-        if (selectedTaskId) {
-            await updateTask(selectedTaskId, { status: 'in-progress' });
-            contextMenu.style.display = 'none';
-        }
-    });
-
-    datePickerSave.addEventListener('click', async () => {
-        if (selectedTaskId && currentAction) {
-            const date = datePickerInput.value;
-            if (date) {
-                const updates = {};
-                updates[currentAction === 'start' ? 'start' : 'end'] = date;
-                await updateTask(selectedTaskId, updates);
-            }
-            datePickerPopup.style.display = 'none';
-            selectedTaskId = null;
-            currentAction = null;
-        }
-    });
-
-    // Hide popups when clicking elsewhere
-    document.addEventListener('click', (e) => {
-        if (!contextMenu.contains(e.target) && !datePickerPopup.contains(e.target)) {
-            contextMenu.style.display = 'none';
-            datePickerPopup.style.display = 'none';
-        }
-    });
+            });
+            console.log('✅ Total tasks loaded:', tasks.length);
+            renderTable();
+        }, (error) => {
+            console.error('❌ Snapshot error:', error);
+            showMessage('Error loading tasks: ' + error.message, 'error');
+        });
 
     // Initialize
     async function init() {
-        console.log('Initializing with project:', projectId);
+        console.log('🚀 Initializing with project ID:', projectId);
         await loadProjectInfo();
         await loadBudgetInfo();
-        loadTasks(); // This sets up the real-time listener
     }
 
     init();
