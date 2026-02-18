@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNZA · Project Gantt (Daily, no Sundays)</title>
+    <title>UNZA · Project Gantt (Monthly View)</title>
     
     <!-- Firebase SDK v8 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -79,6 +79,29 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+        }
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1f5fb;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            border: 1px solid #c8d7ec;
+        }
+        .month-nav button {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #1e3e64;
+            padding: 0 0.5rem;
+        }
+        .month-nav span {
+            font-weight: 600;
+            color: #1e3e64;
+            min-width: 100px;
+            text-align: center;
         }
         .filter-toggle {
             display: flex;
@@ -180,7 +203,7 @@
         .gantt-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1400px;
+            min-width: 900px;
             table-layout: fixed;
             font-size: 0.7rem;
         }
@@ -253,33 +276,40 @@
         }
         
         /* Calendar header cells - all sticky at top */
-        .calendar-month-header, .calendar-days-header, .calendar-day-number {
+        .calendar-month-header {
             background: #1d344c;
             color: white;
             border-right: 1px solid #3f5670;
             text-align: center;
+            font-weight: 600;
+            padding: 0.4rem 0.2rem;
             position: sticky;
             top: 0;
             z-index: 35;
         }
         
-        .calendar-month-header {
-            font-weight: 600;
-            padding: 0.4rem 0.2rem;
-        }
-        
         .calendar-days-header {
+            background: #1d344c;
+            color: #e0eaff;
+            border-right: 1px solid #3f5670;
+            text-align: center;
             font-weight: 500;
             padding: 0.3rem 0.1rem;
             font-size: 0.65rem;
+            position: sticky;
             top: 36px !important;
             z-index: 34;
         }
         
         .calendar-day-number {
+            background: #1d344c;
+            color: white;
+            border-right: 1px solid #3f5670;
+            text-align: center;
             font-weight: 600;
             padding: 0.2rem 0;
             font-size: 0.7rem;
+            position: sticky;
             top: 64px !important;
             z-index: 33;
         }
@@ -347,7 +377,7 @@
         
         .gantt-col { 
             padding: 0.2rem 0 !important; 
-            min-width: 600px;
+            min-width: 400px;
         }
         
         .timeline-box {
@@ -505,13 +535,18 @@
 </head>
 <body>
 <div class="gantt-full">
-    <!-- Professional header with clean typography -->
+    <!-- Professional header with month navigation -->
     <div class="top-space">
         <div class="project-headline">
             <h2>
                 <span style="font-weight: 300;">📊</span> Gantt · <span id="projectNameDisplay">UNZA</span>
                 <span id="projectCodeDisplay" class="project-badge">we3e3</span>
             </h2>
+            <div class="month-nav">
+                <button id="prevMonth">←</button>
+                <span id="currentMonthDisplay">FEB 2026</span>
+                <button id="nextMonth">→</button>
+            </div>
             <div class="filter-toggle">
                 <input type="checkbox" id="hideColumnsCheckbox"> 
                 <label for="hideColumnsCheckbox">Hide extra columns</label>
@@ -614,13 +649,18 @@
     const projectCodeDisplay = document.getElementById('projectCodeDisplay');
     const hideCheckbox = document.getElementById('hideColumnsCheckbox');
     const ganttTable = document.getElementById('ganttTable');
+    const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
 
     // state
     let tasks = [];
     let selectedTaskId = null;
     let currentAction = null;
     let currentProject = null;
-    let dailyTicks = [];
+    let currentMonth = 2; // February (0-indexed)
+    let currentYear = 2026;
+    let monthDays = [];
 
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
@@ -665,47 +705,48 @@
         }
     }
 
-    // Generate daily ticks from Feb 17 to Jun 30, skipping Sundays
-    function generateDailyTicks() {
-        const start = new Date('2026-02-17T12:00:00');
-        const end = new Date('2026-06-30T12:00:00');
-        let days = [];
-        let current = new Date(start);
+    // Get days for selected month (skip Sundays)
+    function getMonthDays() {
+        const days = [];
+        const date = new Date(currentYear, currentMonth, 1);
+        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         
-        while (current <= end) {
-            if (current.getDay() !== 0) { // skip Sunday (0)
-                const day = current.getDate();
-                const month = current.toLocaleString('en-us', { month:'short' }).toUpperCase();
-                const dayAbbr = current.toLocaleString('en-us', { weekday:'short' }).toUpperCase().substring(0,3);
-                days.push({ 
-                    date: new Date(current), 
-                    label: `${month} ${day}`,
-                    dayAbbr: dayAbbr,
-                    dayNum: day,
-                    month: month,
-                    fullDate: current.toISOString().split('T')[0]
+        while (date.getMonth() === currentMonth) {
+            if (date.getDay() !== 0) { // skip Sunday
+                days.push({
+                    date: new Date(date),
+                    dayAbbr: date.toLocaleString('en-us', { weekday:'short' }).toUpperCase().substring(0,3),
+                    dayNum: date.getDate(),
+                    fullDate: date.toISOString().split('T')[0]
                 });
             }
-            current.setDate(current.getDate() + 1);
+            date.setDate(date.getDate() + 1);
         }
+        
+        currentMonthDisplay.textContent = `${monthNames[currentMonth]} ${currentYear}`;
         return days;
     }
 
-    // Generate calendar header exactly as requested
+    // Navigate months
+    function changeMonth(delta) {
+        currentMonth += delta;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        } else if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        monthDays = getMonthDays();
+        renderHeader();
+        renderTable();
+    }
+
+    // Generate calendar header for current month
     function renderHeader() {
-        dailyTicks = generateDailyTicks();
+        monthDays = getMonthDays();
         
-        // Get unique months for the month row
-        let months = [];
-        let currentMonth = '';
-        dailyTicks.forEach(tick => {
-            if (tick.month !== currentMonth) {
-                months.push({ month: tick.month, startIndex: dailyTicks.indexOf(tick) });
-                currentMonth = tick.month;
-            }
-        });
-        
-        // MONTH ROW (FEB, MAR, etc)
+        // MONTH ROW
         let monthRow = '<tr>';
         monthRow += '<th class="calendar-month-header header-task-col" style="left:0;">Task (right‑click)</th>';
         monthRow += '<th class="calendar-month-header header-date-col" style="left:240px;">Start</th>';
@@ -714,16 +755,8 @@
         monthRow += '<th class="calendar-month-header header-status-col" style="left:425px;">Budget</th>';
         monthRow += '<th class="calendar-month-header" style="left:510px;">Status</th>';
         
-        // Add month spans for calendar
-        months.forEach((m, idx) => {
-            let colspan;
-            if (idx < months.length - 1) {
-                colspan = months[idx+1].startIndex - m.startIndex;
-            } else {
-                colspan = dailyTicks.length - m.startIndex;
-            }
-            monthRow += `<th colspan="${colspan}" class="calendar-month-header" style="text-align:center;">${m.month}</th>`;
-        });
+        // Add month span for current month
+        monthRow += `<th colspan="${monthDays.length}" class="calendar-month-header" style="text-align:center;">${currentMonthDisplay.textContent}</th>`;
         monthRow += '</tr>';
         
         // DAY ROW (MON, TUE, WED, etc)
@@ -735,8 +768,8 @@
         dayRow += '<th class="calendar-days-header header-status-col" style="left:425px;">&nbsp;</th>';
         dayRow += '<th class="calendar-days-header" style="left:510px;">&nbsp;</th>';
         
-        dailyTicks.forEach(tick => {
-            dayRow += `<th class="calendar-days-header">${tick.dayAbbr}</th>`;
+        monthDays.forEach(day => {
+            dayRow += `<th class="calendar-days-header">${day.dayAbbr}</th>`;
         });
         dayRow += '</tr>';
         
@@ -749,8 +782,8 @@
         numRow += '<th class="calendar-day-number header-status-col" style="left:425px;">&nbsp;</th>';
         numRow += '<th class="calendar-day-number" style="left:510px;">&nbsp;</th>';
         
-        dailyTicks.forEach(tick => {
-            numRow += `<th class="calendar-day-number">${tick.dayNum}</th>`;
+        monthDays.forEach(day => {
+            numRow += `<th class="calendar-day-number">${day.dayNum}</th>`;
         });
         numRow += '</tr>';
         
@@ -758,31 +791,43 @@
     }
 
     function calculateBarPosition(task) {
-        if (!task.start || !task.end || dailyTicks.length === 0) return { left: 2, width: 10 };
+        if (!task.start || !task.end || monthDays.length === 0) return { left: 2, width: 10 };
         
         try {
             const taskStart = new Date(task.start + 'T12:00:00');
             const taskEnd = new Date(task.end + 'T12:00:00');
+            const monthStart = new Date(currentYear, currentMonth, 1);
+            const monthEnd = new Date(currentYear, currentMonth + 1, 0);
             
-            // Find start and end indices
+            // If task is completely outside this month
+            if (taskEnd < monthStart || taskStart > monthEnd) {
+                return { left: 0, width: 0 };
+            }
+            
+            // Find visible portion within month
+            let visibleStart = taskStart < monthStart ? monthStart : taskStart;
+            let visibleEnd = taskEnd > monthEnd ? monthEnd : taskEnd;
+            
+            // Find indices in monthDays
             let startIdx = -1;
             let endIdx = -1;
             
-            for (let i = 0; i < dailyTicks.length; i++) {
-                if (dailyTicks[i].date >= taskStart && startIdx === -1) {
+            for (let i = 0; i < monthDays.length; i++) {
+                const dayDate = monthDays[i].date;
+                if (dayDate >= visibleStart && startIdx === -1) {
                     startIdx = i;
                 }
-                if (dailyTicks[i].date <= taskEnd) {
+                if (dayDate <= visibleEnd) {
                     endIdx = i;
                 }
-                if (dailyTicks[i].date > taskEnd) break;
+                if (dayDate > visibleEnd) break;
             }
             
             if (startIdx === -1 || endIdx === -1) return { left: 2, width: 10 };
             
-            const totalTicks = dailyTicks.length;
-            const left = (startIdx / totalTicks) * 100;
-            const width = ((endIdx - startIdx + 1) / totalTicks) * 100;
+            const totalDays = monthDays.length;
+            const left = (startIdx / totalDays) * 100;
+            const width = ((endIdx - startIdx + 1) / totalDays) * 100;
             
             return { left: Math.max(0, left), width: Math.max(2, width) };
         } catch (e) {
@@ -860,9 +905,6 @@
     function renderTable() {
         if (!tasks) return;
         
-        // Generate header first
-        renderHeader();
-
         if (tasks.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;">No tasks. Click "New task" to add.</td></tr>`;
             updateCompletion();
@@ -905,9 +947,11 @@
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col">
                     <div class="timeline-box">
-                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
-                        <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
-                        ${task.onHold ? `<div class="hold-marker" style="left:${pos.left + pos.width/2}%;"></div>` : ''}
+                        ${pos.width > 0 ? `
+                            <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
+                            <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
+                            ${task.onHold ? `<div class="hold-marker" style="left:${pos.left + pos.width/2}%;"></div>` : ''}
+                        ` : ''}
                     </div>
                 </td>
             `;
@@ -918,8 +962,8 @@
         const mileRow = document.createElement('tr');
         mileRow.style.background = '#eaf1fb';
         
-        const mileDots = dailyTicks.filter((_,idx) => idx % Math.floor(dailyTicks.length/6) === 0).map(t => {
-            const leftPos = (dailyTicks.indexOf(t) / dailyTicks.length) * 100;
+        const mileDots = monthDays.filter((_,idx) => idx % Math.floor(monthDays.length/4) === 0).map(day => {
+            const leftPos = (monthDays.indexOf(day) / monthDays.length) * 100;
             return `<div class="milestone-dot" style="left:${leftPos}%;" title="Milestone"></div>`;
         }).join('');
         
@@ -1003,6 +1047,8 @@
                     parentId: data.parentId || null
                 });
             });
+            monthDays = getMonthDays();
+            renderHeader();
             renderTable();
             setupRealtimeListener();
         }).catch(error => {
@@ -1030,6 +1076,7 @@
                     parentId: data.parentId || null
                 });
             });
+            renderHeader();
             renderTable();
         }, error => console.log('listener error', error));
     }
@@ -1110,6 +1157,10 @@
         }
         submitBtn.disabled = false;
     });
+
+    // Month navigation
+    prevMonthBtn.addEventListener('click', () => changeMonth(-1));
+    nextMonthBtn.addEventListener('click', () => changeMonth(1));
 
     // Context menu listeners
     document.getElementById('menuStart').addEventListener('click', () => {
