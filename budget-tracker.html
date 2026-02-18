@@ -137,74 +137,93 @@
             font-size: 0.7rem;
         }
         .gantt-table th {
-            background: #ffffff;
-            color: #1a3652;
+            background: #1e2b3a;
+            color: #ffffff;
             font-weight: 500;
-            padding: 0.5rem 0.2rem;
-            border-right: 1px solid #b2c6e0;
-            border-bottom: 2px solid #95aecf;
+            padding: 0.75rem 0.2rem;
+            border-right: 1px solid #3a4a5a;
+            border-bottom: 2px solid #4a5a6a;
             position: sticky;
             top: 0;
             z-index: 20;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .gantt-table td {
-            padding: 0.3rem 0.2rem;
-            border-bottom: 1px solid #dae1ed;
-            border-right: 1px solid #d0dbea;
+            padding: 0.5rem 0.2rem;
+            border-bottom: 1px solid #e0e5ec;
+            border-right: 1px solid #e0e5ec;
             vertical-align: middle;
         }
         .task-col {
-            width: 240px;
+            width: 280px;
             background: white;
             position: sticky;
             left: 0;
             z-index: 15;
             cursor: context-menu;
+            font-weight: 400;
         }
         .task-main {
             font-weight: 600;
-            color: #0d2b4a;
+            color: #ffffff;
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
+            gap: 8px;
+            font-size: 0.8rem;
+            background: #2e7d32;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin: -2px;
+        }
+        .task-main .task-number {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
         }
         .subtask-item {
             padding-left: 32px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: #2f4b70;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
-        .subtask-item:before {
-            content: "—";
-            color: #7b93b5;
-            margin-right: 8px;
-            font-weight: 300;
+        .subtask-item .task-number {
+            color: #6c757d;
+            font-weight: 500;
+            min-width: 35px;
         }
         .date-col {
             width: 65px;
             text-align: center;
             font-family: monospace;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
+            color: #2c3e50;
         }
         .pred-col {
             width: 65px;
             text-align: center;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
+            color: #2c3e50;
+            font-family: monospace;
+            font-weight: 500;
         }
         .budget-col {
             width: 75px;
             text-align: right;
             padding-right: 12px;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
+            color: #2c3e50;
+            font-weight: 500;
         }
         .status-col {
             width: 70px;
             text-align: center;
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 500;
         }
         .gantt-col {
@@ -229,7 +248,7 @@
             cursor: pointer;
         }
         .subtask-bar {
-            background: #41648b;
+            background: #5a6c7e;
             height: 16px;
             top: 9px;
         }
@@ -276,28 +295,6 @@
             align-items: center;
             gap: 20px;
         }
-        .budget-summary {
-            display: flex;
-            gap: 30px;
-            margin-right: 20px;
-            font-size: 0.75rem;
-        }
-        .budget-item {
-            display: flex;
-            flex-direction: column;
-        }
-        .budget-label {
-            color: #666;
-            font-size: 0.6rem;
-            text-transform: uppercase;
-        }
-        .budget-value {
-            font-weight: 600;
-            color: #1a3455;
-        }
-        .budget-value.warning {
-            color: #dc3545;
-        }
         .completion-bar-container {
             flex: 1;
             height: 14px;
@@ -321,7 +318,7 @@
         .timeline-header-row {
             display: flex;
             width: 100%;
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             color: #1e3f64;
             font-weight: 500;
         }
@@ -517,23 +514,9 @@
         </table>
     </div>
 
-    <!-- Bottom Bar with Budget Summary -->
+    <!-- Bottom Bar with only Progress Bar -->
     <div class="bottom-space">
-        <div class="budget-summary">
-            <div class="budget-item">
-                <span class="budget-label">Total Budget</span>
-                <span class="budget-value" id="totalBudget">$0</span>
-            </div>
-            <div class="budget-item">
-                <span class="budget-label">Spent</span>
-                <span class="budget-value" id="spentBudget">$0</span>
-            </div>
-            <div class="budget-item">
-                <span class="budget-label">Remaining</span>
-                <span class="budget-value" id="remainingBudget">$0</span>
-            </div>
-        </div>
-        <div class="completion-label">Progress</div>
+        <div class="completion-label">Overall Progress</div>
         <div class="completion-bar-container">
             <div class="completion-bar-fill" id="completionBarFill" style="width: 0%;"></div>
         </div>
@@ -594,9 +577,6 @@
     const datePickerSave = document.getElementById('datePickerSave');
     const projectNameDisplay = document.getElementById('projectNameDisplay');
     const projectInfo = document.getElementById('projectInfo');
-    const totalBudgetEl = document.getElementById('totalBudget');
-    const spentBudgetEl = document.getElementById('spentBudget');
-    const remainingBudgetEl = document.getElementById('remainingBudget');
     const indexWarning = document.getElementById('indexWarning');
     const createIndexLink = document.getElementById('createIndexLink');
 
@@ -702,16 +682,43 @@
         tasks.filter(t => t.isMain).forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.firebaseId;
-            opt.textContent = t.name;
+            opt.textContent = `${t.displayId} - ${t.name}`;
             parentSelect.appendChild(opt);
         });
         
         tasks.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.firebaseId;
-            opt.textContent = t.name;
+            opt.textContent = `${t.displayId} - ${t.name}`;
             predSelect.appendChild(opt);
         });
+    }
+
+    // Generate task ID in format 1, 1.1, 1.2, 2, 2.1, etc.
+    function generateTaskId(isMain, parentId = null) {
+        if (isMain) {
+            const mainTasks = tasks.filter(t => t.isMain);
+            const maxNum = mainTasks.length > 0 ? Math.max(...mainTasks.map(t => {
+                const num = parseInt(t.displayId);
+                return isNaN(num) ? 0 : num;
+            })) : 0;
+            return (maxNum + 1).toString();
+        } else {
+            if (!parentId) return null;
+            
+            const parentTask = tasks.find(t => t.firebaseId === parentId);
+            if (!parentTask) return null;
+            
+            const parentDisplayId = parentTask.displayId;
+            const subtasks = tasks.filter(t => t.parentFirebaseId === parentId);
+            const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => {
+                const parts = t.displayId.split('.');
+                const num = parseInt(parts[parts.length - 1]);
+                return isNaN(num) ? 0 : num;
+            })) : 0;
+            
+            return `${parentDisplayId}.${maxNum + 1}`;
+        }
     }
 
     // Render the Gantt chart
@@ -756,21 +763,18 @@
         `;
         tbody.appendChild(timelineRow);
 
-        // Sort tasks (main tasks first)
+        // Sort tasks (main tasks first by displayId)
         const sortedTasks = [...tasks].sort((a, b) => {
-            if (a.isMain && !b.isMain) return -1;
-            if (!a.isMain && b.isMain) return 1;
-            return (a.id || '').localeCompare(b.id || '');
+            return (a.displayId || '').localeCompare(b.displayId || '', undefined, { numeric: true });
         });
         
         sortedTasks.forEach(task => {
             const pos = calculateBarPosition(task);
             const row = document.createElement('tr');
-            if (task.isMain) row.style.background = '#f4f9ff';
             
             const taskDisplay = task.isMain ? 
-                `<span class="task-main">${task.name}</span>` : 
-                `<span class="subtask-item">${task.name}</span>`;
+                `<span class="task-main"><span class="task-number">${task.displayId}</span> ${task.name}</span>` : 
+                `<span class="subtask-item"><span class="task-number">${task.displayId}</span> ${task.name}</span>`;
             
             const barClass = task.isMain ? 'task-bar' : 'task-bar subtask-bar';
             const startDisplay = formatDate(task.start);
@@ -780,11 +784,18 @@
             const completionPercent = getCompletionFromStatus(task.status);
             const completionWidth = (completionPercent / 100) * pos.width;
             
+            // Get predecessor display ID if exists
+            let predDisplay = '—';
+            if (task.pred) {
+                const predTask = tasks.find(t => t.firebaseId === task.pred);
+                predDisplay = predTask ? predTask.displayId : '—';
+            }
+            
             row.innerHTML = `
                 <td class="task-col" data-task-id="${task.firebaseId}">${taskDisplay}</td>
                 <td class="date-col">${startDisplay}</td>
                 <td class="date-col">${endDisplay}</td>
-                <td class="pred-col">${task.pred ? '↳' : '—'}</td>
+                <td class="pred-col">${predDisplay}</td>
                 <td class="budget-col">$${task.budget || 0}</td>
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col">
@@ -867,33 +878,10 @@
         }
     }
 
-    // Load budget info
-    async function loadBudgetInfo() {
-        try {
-            const doc = await db.collection('projectSettings').doc(projectId).get();
-            if (doc.exists) {
-                const budget = doc.data();
-                totalBudgetEl.textContent = `$${budget.initialBudget?.toFixed(2) || '0'}`;
-                spentBudgetEl.textContent = `$${budget.totalSpent?.toFixed(2) || '0'}`;
-                const remaining = (budget.initialBudget || 0) - (budget.totalSpent || 0);
-                remainingBudgetEl.textContent = `$${remaining.toFixed(2)}`;
-                
-                if (remaining < 0) {
-                    remainingBudgetEl.classList.add('warning');
-                } else {
-                    remainingBudgetEl.classList.remove('warning');
-                }
-            }
-        } catch (error) {
-            console.error('Error loading budget:', error);
-        }
-    }
-
-    // Load tasks from Firestore - WITHOUT orderBy first to avoid index error
+    // Load tasks from Firestore
     function loadTasks() {
         console.log('Loading tasks for project:', projectId);
         
-        // First try without orderBy to avoid index error
         db.collection('gantt_tasks')
             .where('projectId', '==', projectId)
             .get()
@@ -903,7 +891,8 @@
                     const data = doc.data();
                     tasks.push({
                         firebaseId: doc.id,
-                        id: data.id || doc.id,
+                        parentFirebaseId: data.parentId || null,
+                        displayId: data.displayId || data.id || doc.id,
                         name: data.name || 'Unnamed Task',
                         start: data.start || null,
                         end: data.end || null,
@@ -918,17 +907,14 @@
                 console.log('Tasks loaded:', tasks.length);
                 renderTable();
                 
-                // After successful load, try to set up real-time listener
+                // Try to set up real-time listener
                 setupRealtimeListener();
             })
             .catch((error) => {
                 console.error('Error loading tasks:', error);
                 
-                // Check if it's an index error
                 if (error.message && error.message.includes('index')) {
                     indexWarning.style.display = 'block';
-                    
-                    // Extract the index creation URL from the error message
                     const urlMatch = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
                     if (urlMatch) {
                         createIndexLink.href = urlMatch[0];
@@ -951,7 +937,7 @@
             });
     }
 
-    // Set up real-time listener with orderBy (will work after index is created)
+    // Set up real-time listener
     function setupRealtimeListener() {
         try {
             db.collection('gantt_tasks')
@@ -963,7 +949,8 @@
                         const data = doc.data();
                         tasks.push({
                             firebaseId: doc.id,
-                            id: data.id || doc.id,
+                            parentFirebaseId: data.parentId || null,
+                            displayId: data.displayId || data.id || doc.id,
                             name: data.name || 'Unnamed Task',
                             start: data.start || null,
                             end: data.end || null,
@@ -978,8 +965,7 @@
                     console.log('Real-time update:', tasks.length);
                     renderTable();
                 }, (error) => {
-                    console.log('Realtime listener error (index might still be building):', error.message);
-                    // Don't show error, just fall back to manual refresh
+                    console.log('Realtime listener error:', error.message);
                 });
         } catch (error) {
             console.log('Could not set up real-time listener:', error.message);
@@ -1050,27 +1036,22 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Adding...';
 
-        // Generate task ID
-        let newId;
-        if (parentId) {
-            const parentTask = tasks.find(t => t.firebaseId === parentId);
-            if (parentTask) {
-                const subtasks = tasks.filter(t => t.parentId === parentTask.firebaseId);
-                const maxNum = subtasks.length;
-                newId = `${parentTask.id || '1'}.${maxNum + 1}`;
-            } else {
-                newId = `1.${tasks.filter(t => !t.isMain).length + 1}`;
-            }
-        } else {
-            const mainTasks = tasks.filter(t => t.isMain);
-            newId = (mainTasks.length + 1).toString();
+        const isMain = !parentId;
+        const displayId = generateTaskId(isMain, parentId);
+
+        if (!displayId) {
+            showMessage('Error generating task ID', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Add Task';
+            return;
         }
 
         const success = await addTask({
-            id: newId,
+            displayId: displayId,
+            id: displayId,
             name: name,
             budget: budget,
-            isMain: !parentId,
+            isMain: isMain,
             status: 'not-started',
             onHold: false,
             parentId: parentId || null,
@@ -1165,8 +1146,7 @@
     async function init() {
         console.log('Initializing with project:', projectId);
         await loadProjectInfo();
-        await loadBudgetInfo();
-        loadTasks(); // This will show the index link if needed
+        loadTasks();
     }
 
     init();
