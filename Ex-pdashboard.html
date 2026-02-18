@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Penta · full projects view</title>
-  <!-- simple & clean, full screen, white background, sidebar hide/unhide -->
+  <title>PENTA · all projects</title>
+  <!-- clean, full screen, white background, nice sidebar color & shadow, toggle button never hides -->
   <style>
     * {
       margin: 0;
@@ -14,7 +14,7 @@
     }
 
     body {
-      background-color: #ffffff;
+      background-color: #f9fbfd;
       min-height: 100vh;
       width: 100%;
     }
@@ -24,88 +24,90 @@
       display: flex;
       width: 100vw;
       min-height: 100vh;
-      background-color: white;
+      background-color: #ffffff;
     }
 
-    /* ===== SIDEBAR – clean, minimal ===== */
+    /* ===== SIDEBAR – nice color, soft shadow, no icons ===== */
     .sidebar {
       width: 260px;
-      background-color: #fafbfc;
-      border-right: 1px solid #eef0f2;
+      background: linear-gradient(145deg, #f1f5f9 0%, #eef2f6 100%);
+      border-right: 1px solid rgba(0,0,0,0.05);
       padding: 2rem 1rem;
       display: flex;
       flex-direction: column;
-      transition: margin-left 0.2s ease-in-out, width 0.2s ease-in-out;
+      transition: transform 0.25s ease-in-out, margin-left 0.25s ease-in-out;
       overflow: hidden;
       flex-shrink: 0;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+      box-shadow: 4px 0 20px -8px rgba(0, 27, 58, 0.15);
+      position: relative;
+      z-index: 10;
     }
 
     .sidebar.hidden {
-      margin-left: -260px;
-      width: 0;
-      padding: 0;
-      border-right: none;
+      transform: translateX(-100%);
+      margin-left: -260px;  /* keeps layout stable */
     }
 
     .sidebar-header {
-      font-weight: 600;
-      font-size: 1.5rem;
+      font-weight: 700;
+      font-size: 1.7rem;
       letter-spacing: -0.5px;
-      padding: 0 0.75rem 2rem 0.75rem;
-      color: #111;
+      padding: 0 0.75rem 2.2rem 0.75rem;
+      color: #0f2a44;
+      display: flex;
+      align-items: center;
     }
 
     .sidebar-header span {
-      background: #111;
+      background: #1e3a5f;
       color: white;
-      font-size: 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
       padding: 0.2rem 0.8rem;
-      border-radius: 40px;
-      margin-left: 6px;
+      border-radius: 30px;
+      margin-left: 10px;
+      letter-spacing: 0.3px;
     }
 
     .nav {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.3rem;
     }
 
     .nav a {
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 0.85rem 1rem;
+      padding: 0.9rem 1.2rem;
       border-radius: 14px;
       font-weight: 500;
-      color: #1e1e2f;
+      color: #1a3149;
       text-decoration: none;
-      font-size: 1rem;
-      transition: background 0.15s;
+      font-size: 1.05rem;
+      transition: all 0.15s;
+      border: 1px solid transparent;
     }
 
     .nav a:hover {
-      background-color: #f0f2f5;
+      background-color: #ffffffcc;
+      border-color: #cdddee;
+      box-shadow: 0 4px 8px -4px rgba(0,32,64,0.08);
     }
 
-    /* active state – soft gray */
     .nav a.active {
-      background-color: #eaeef3;
-      color: #0a0a0a;
-      font-weight: 550;
-    }
-
-    .icon {
-      font-size: 1.35rem;
-      line-height: 1;
+      background-color: #ffffff;
+      border-color: #b6cfec;
+      color: #0b2c44;
+      font-weight: 600;
+      box-shadow: 0 6px 12px -8px #1e3a5f33;
     }
 
     /* logout button */
     .logout-area {
       margin-top: 2.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #e2e6ea;
+      padding-top: 1.8rem;
+      border-top: 1px solid #cdddec;
     }
 
     .logout-btn {
@@ -113,86 +115,89 @@
       border: none;
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 0.85rem 1rem;
+      padding: 0.9rem 1.2rem;
       width: 100%;
       text-align: left;
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 500;
-      color: #b02e2e;
+      color: #b13e3e;
       border-radius: 14px;
       cursor: pointer;
       transition: background 0.15s;
+      border: 1px solid transparent;
     }
 
     .logout-btn:hover {
-      background-color: #ffe9e9;
+      background-color: #ffebee;
+      border-color: #f3b5b5;
     }
 
-    /* ===== MAIN CONTENT – full white, spacious ===== */
+    /* ===== MAIN CONTENT ===== */
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
       background-color: #ffffff;
-      min-width: 0;  /* avoid overflow */
+      min-width: 0;  /* avoid flex overflow */
     }
 
-    /* top bar – minimal, just toggle & title */
+    /* top bar – toggle button ALWAYS visible, never hidden */
     .top-bar {
       display: flex;
       align-items: center;
       padding: 1.5rem 2.5rem;
       background: white;
-      border-bottom: 1px solid #f0f2f5;
+      border-bottom: 1px solid #e9eef3;
     }
 
     .toggle-btn {
-      background: none;
-      border: 1px solid #e2e6ea;
-      font-size: 1.7rem;
+      background: white;
+      border: 1px solid #d0ddee;
+      font-size: 2rem;
       line-height: 1;
-      width: 48px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       cursor: pointer;
-      color: #222;
-      margin-right: 1.5rem;
-      transition: all 0.1s;
+      color: #1e3a5f;
+      margin-right: 2rem;
+      transition: all 0.15s;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 10px -6px #1e3a5f4d;
     }
 
     .toggle-btn:hover {
-      background-color: #f6f8fa;
-      border-color: #b0b8c5;
+      background-color: #f0f5fd;
+      border-color: #7fa3c9;
+      transform: scale(1.02);
     }
 
     .page-title {
-      font-size: 1.9rem;
+      font-size: 2rem;
       font-weight: 600;
       letter-spacing: -0.02em;
-      color: #111;
+      color: #14273e;
     }
 
-    /* dashboard content – completed projects & nice cards */
+    /* dashboard – cards for ALL projects */
     .dashboard {
       padding: 2.5rem;
       overflow-y: auto;
-      background: white;
+      background: #ffffff;
     }
 
     .section-label {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #5b6876;
-      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+      color: #53718b;
+      margin-bottom: 1.8rem;
     }
 
-    .completed-grid {
+    .projects-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 2rem;
@@ -200,17 +205,17 @@
 
     .project-card {
       background: #ffffff;
-      border-radius: 28px;
+      border-radius: 26px;
       padding: 1.8rem 2rem;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-      border: 1px solid #f0f2f5;
-      flex: 1 1 280px;
+      box-shadow: 0 8px 26px -8px rgba(20, 40, 70, 0.08), 0 0 0 1px #eef3f9 inset;
+      border: 1px solid #e3ebf5;
+      flex: 1 1 290px;
       max-width: 340px;
-      transition: transform 0.15s, box-shadow 0.15s;
+      transition: all 0.2s;
     }
 
     .project-card:hover {
-      box-shadow: 0 25px 35px -12px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 20px 32px -14px rgba(18, 45, 80, 0.12), 0 0 0 1px #cbddf2 inset;
       transform: translateY(-3px);
     }
 
@@ -219,249 +224,320 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
 
     .project-name {
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       font-weight: 600;
-      color: #121212;
+      color: #14273e;
       line-height: 1.2;
     }
 
-    .completion-badge {
-      background: #e4f0e7;
-      color: #1f6d3a;
+    /* status badge – subtle colors, only text */
+    .status-badge {
       font-weight: 600;
-      font-size: 0.85rem;
-      padding: 0.3rem 0.9rem;
+      font-size: 0.75rem;
+      padding: 0.3rem 1rem;
       border-radius: 40px;
-      border: 1px solid #cbe3d2;
-      white-space: nowrap;
+      text-transform: uppercase;
+      background: #eef3f8;
+      color: #2b4b6f;
+      border: 1px solid #cbdae9;
+    }
+
+    .status-badge.active {
+      background: #e2f0fa;
+      color: #146b9e;
+      border-color: #b1d2f0;
+    }
+    .status-badge.completed {
+      background: #e0f2e6;
+      color: #0b6e41;
+      border-color: #b0dec9;
+    }
+    .status-badge.on-hold {
+      background: #fff0db;
+      color: #b65c22;
+      border-color: #f9cfb2;
+    }
+    .status-badge.planning {
+      background: #e9e6ff;
+      color: #504e9a;
+      border-color: #cdc9f0;
     }
 
     .client {
       font-size: 1rem;
-      color: #5e6f7e;
-      margin: 0.5rem 0 1.5rem 0;
-      border-left: 3px solid #cfddee;
-      padding-left: 0.9rem;
+      color: #4d6a85;
+      margin: 0.7rem 0 1.5rem 0;
+      border-left: 3px solid #bacee6;
+      padding-left: 1rem;
+      font-weight: 450;
     }
 
     .meta-row {
       display: flex;
       justify-content: space-between;
-      margin: 1.2rem 0;
-      color: #2d3b45;
-      font-weight: 450;
+      margin: 1rem 0;
+      color: #1e3d5e;
+      font-weight: 460;
+      font-size: 0.95rem;
     }
 
     .meta-label {
-      color: #8a9aa8;
+      color: #71879b;
       font-size: 0.9rem;
+      font-weight: 400;
     }
 
-    .finish-date {
-      background: #f8fafc;
-      padding: 0.7rem 1rem;
-      border-radius: 18px;
-      font-size: 0.95rem;
-      border: 1px solid #edf2f6;
+    .priority-tag {
       display: inline-block;
-      width: 100%;
+      padding: 0.2rem 0.9rem;
+      background: #f2f7ff;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid #c7daf0;
+      text-transform: capitalize;
+    }
+
+    .project-footer {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #ecf2f8;
+      padding-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .budget {
+      font-weight: 600;
+      color: #1d6f4b;
+      background: #e9f4ee;
+      padding: 0.3rem 1rem;
+      border-radius: 30px;
+    }
+
+    .empty-message {
+      color: #8099b3;
+      background: #fafdff;
+      border: 1px dashed #c2d6ea;
+      border-radius: 2.5rem;
+      padding: 3.5rem 4rem;
       text-align: center;
-      color: #2d4356;
+      font-size: 1.1rem;
+      width: 100%;
     }
 
-    /* extra nice empty state / message */
-    .subtle-note {
-      color: #a3b3c2;
-      margin-top: 3rem;
-      font-style: italic;
-      border-top: 1px dashed #e1e8f0;
-      padding-top: 2rem;
-    }
-
-    /* responsive: full always */
     @media (max-width: 650px) {
       .top-bar { padding: 1rem 1.5rem; }
       .dashboard { padding: 1.5rem; }
-      .project-card { max-width: 100%; }
+      .toggle-btn { margin-right: 1rem; width: 48px; height: 48px; font-size: 1.8rem; }
     }
   </style>
 </head>
 <body>
 <div class="app">
-  <!-- SIDEBAR (projects, reports, quotations, logout) -->
+  <!-- SIDEBAR – nice color, shadow, no icons -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       PENTA<span>v2</span>
     </div>
 
     <nav class="nav">
-      <!-- Project link → Ex-projects.html -->
-      <a href="Ex-projects.html" id="navProjects" class="active">
-        <span class="icon">📁</span> Projects
-      </a>
-      <!-- Reports link → Ex-reports.html -->
-      <a href="Ex-reports.html" id="navReports">
-        <span class="icon">📊</span> Reports
-      </a>
-      <!-- Quotation link → Ex-Quontation.html (keep exact name) -->
-      <a href="Ex-Quontation.html" id="navQuotation">
-        <span class="icon">📋</span> Quotations
-      </a>
+      <!-- text only, exactly as before -->
+      <a href="Ex-projects.html" id="navProjects" class="active">Projects</a>
+      <a href="Ex-reports.html" id="navReports">Reports</a>
+      <a href="Ex-Quontation.html" id="navQuotation">Quotations</a>
     </nav>
 
     <div class="logout-area">
-      <button class="logout-btn" id="logoutBtn">
-        <span class="icon">🚪</span> Logout
-      </button>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
     </div>
   </aside>
 
-  <!-- MAIN CONTENT (full white, completed projects) -->
+  <!-- MAIN CONTENT -->
   <main class="main">
     <div class="top-bar">
-      <button class="toggle-btn" id="toggleSidebarBtn" title="hide / show sidebar">☰</button>
-      <span class="page-title">Completed projects</span>
+      <!-- toggle button is always here, never hidden -->
+      <button class="toggle-btn" id="toggleSidebarBtn" title="hide/show sidebar">☰</button>
+      <span class="page-title">All projects</span>
     </div>
 
     <div class="dashboard">
-      <!-- section with nice cards – only completed projects -->
-      <div class="section-label">✦ recently finished</div>
-      <div class="completed-grid" id="completedProjectsContainer">
-        <!-- cards will be injected via JS (static but feel like real) -->
+      <div class="section-label">✦ active & completed & everything</div>
+      <div class="projects-grid" id="projectsContainer">
+        <!-- projects loaded from firebase -->
       </div>
-      <!-- extra subtle note for style -->
-      <div class="subtle-note">— full screen, clean background, all completed work —</div>
     </div>
   </main>
 </div>
 
+<!-- Firebase SDKs (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
 <script>
   (function() {
-    // ---------- sidebar hide / unhide ----------
+    // ---------- Firebase config (from your working project) ----------
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.firebasestorage.app",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ---------- sidebar toggle (button always visible, only sidebar hides) ----------
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
 
-    window.toggleSidebar = function() {
-      sidebar.classList.toggle('hidden');
-    };
-
     toggleBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      toggleSidebar();
+      sidebar.classList.toggle('hidden');
     });
 
-    // ---------- logout action (simple) ----------
-    const logoutBtn = document.getElementById('logoutBtn');
-    logoutBtn.addEventListener('click', () => {
-      // clear any fake session if needed, then redirect
-      // just go to index.html as typical
+    // ---------- logout ----------
+    document.getElementById('logoutBtn').addEventListener('click', () => {
       window.location.href = 'index.html';
     });
 
-    // ---------- set active class based on current page? 
-    // For demonstration we keep "Projects" active because we're on dashboard.
-    // But we want real links to work: they are hardcoded to html files.
-    // highlight the correct nav link based on page (simple approach)
+    // ---------- set active nav based on current page ----------
     function setActiveNav() {
-      const path = window.location.pathname.split('/').pop() || 'index.html'; // fallback
+      const path = window.location.pathname.split('/').pop() || '';
       const navProjects = document.getElementById('navProjects');
       const navReports = document.getElementById('navReports');
       const navQuotation = document.getElementById('navQuotation');
 
-      // remove active from all
       [navProjects, navReports, navQuotation].forEach(el => el.classList.remove('active'));
 
-      if (path === 'Ex-projects.html') {
-        navProjects.classList.add('active');
-      } else if (path === 'Ex-reports.html') {
+      if (path === 'Ex-reports.html') {
         navReports.classList.add('active');
       } else if (path === 'Ex-Quontation.html') {
         navQuotation.classList.add('active');
       } else {
-        // if we are on this dashboard (maybe the main view) we set projects active
-        navProjects.classList.add('active');
+        navProjects.classList.add('active');  // default to Projects
       }
     }
     setActiveNav();
 
-    // ---------- populate completed projects cards (static data, no table) ----------
-    const completedProjects = [
-      {
-        name: 'Harbor Bridge',
-        client: 'Coastal Transit',
-        completed: 'Dec 2025',
-        budget: '$3.2M',
-        finishDate: '15 Dec 2025'
-      },
-      {
-        name: 'Greenway Plaza',
-        client: 'Eco Offices',
-        completed: 'Nov 2025',
-        budget: '$7.8M',
-        finishDate: '28 Nov 2025'
-      },
-      {
-        name: 'Riverside Tower',
-        client: 'Urban Living',
-        completed: 'Oct 2025',
-        budget: '$12.4M',
-        finishDate: '09 Oct 2025'
-      },
-      {
-        name: 'Northside Hospital',
-        client: 'HealthCore',
-        completed: 'Sep 2025',
-        budget: '$21M',
-        finishDate: '22 Sep 2025'
-      },
-      {
-        name: 'Maple Residences',
-        client: 'Alder Group',
-        completed: 'Aug 2025',
-        budget: '$5.6M',
-        finishDate: '03 Aug 2025'
-      },
-      {
-        name: 'Innovation Hub',
-        client: 'TechSpark',
-        completed: 'Jul 2025',
-        budget: '$9.2M',
-        finishDate: '19 Jul 2025'
-      }
-    ];
+    // ---------- FETCH ALL PROJECTS (real data, any status) ----------
+    const container = document.getElementById('projectsContainer');
 
-    const container = document.getElementById('completedProjectsContainer');
-    if (container) {
-      container.innerHTML = completedProjects.map(p => `
-        <div class="project-card">
-          <div class="card-header">
-            <span class="project-name">${p.name}</span>
-            <span class="completion-badge">✔ done</span>
-          </div>
-          <div class="client">${p.client}</div>
-          <div class="meta-row">
-            <span class="meta-label">budget</span>
-            <span>${p.budget}</span>
-          </div>
-          <div class="meta-row">
-            <span class="meta-label">completed</span>
-            <span>${p.completed}</span>
-          </div>
-          <div class="finish-date">🎯 final: ${p.finishDate}</div>
-        </div>
-      `).join('');
+    async function loadAllProjects() {
+      try {
+        // get all projects ordered by creation date (most recent first)
+        const snapshot = await db.collection('projects')
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        const projects = [];
+        snapshot.forEach(doc => {
+          projects.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderProjects(projects);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        container.innerHTML = `<div class="empty-message">⚠️ Failed to load projects. Check console.</div>`;
+      }
     }
 
-    // ---------- simulate that clicking on project, reports, quotation works 
-    // they already are <a href="..."> so normal navigation.
-    // additionally, we can show a small console note, but no need.
-    // also full screen: container uses vw/vh, white background, nothing missing.
+    function renderProjects(projects) {
+      if (!container) return;
+
+      if (projects.length === 0) {
+        container.innerHTML = `<div class="empty-message">📁 No projects yet. Create one to see it here.</div>`;
+        return;
+      }
+
+      let html = '';
+      projects.forEach(p => {
+        // handle fields with fallbacks
+        const name = p.name || 'Unnamed project';
+        const client = p.client || '—';
+        const status = p.status || 'active';
+        const priority = p.priority || 'medium';
+        const budget = p.totalBudget ? p.totalBudget.toFixed(2) : '0.00';
+        const currency = p.currency || 'USD';
+        const projectManager = p.projectManager || 'unassigned';
+        
+        // format dates nicely
+        let startStr = '—';
+        if (p.startDate) {
+          const d = new Date(p.startDate);
+          if (!isNaN(d)) startStr = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+          else startStr = p.startDate;
+        }
+
+        let endStr = '—';
+        if (p.endDate) {
+          const d = new Date(p.endDate);
+          if (!isNaN(d)) endStr = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+          else endStr = p.endDate;
+        }
+
+        // choose badge style based on status
+        let statusClass = 'status-badge';
+        if (status === 'active') statusClass += ' active';
+        else if (status === 'completed') statusClass += ' completed';
+        else if (status === 'on-hold') statusClass += ' on-hold';
+        else if (status === 'planning') statusClass += ' planning';
+
+        html += `
+          <div class="project-card">
+            <div class="card-header">
+              <span class="project-name">${escapeHtml(name)}</span>
+              <span class="${statusClass}">${escapeHtml(status)}</span>
+            </div>
+            <div class="client">${escapeHtml(client)}</div>
+
+            <div class="meta-row">
+              <span class="meta-label">manager</span>
+              <span>${escapeHtml(projectManager)}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">start / end</span>
+              <span>${escapeHtml(startStr)} — ${escapeHtml(endStr)}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">priority</span>
+              <span class="priority-tag">${escapeHtml(priority)}</span>
+            </div>
+
+            <div class="project-footer">
+              <span class="budget">${escapeHtml(currency)} ${escapeHtml(budget)}</span>
+              <span style="color:#567e9c; font-size:0.9rem;">⚡</span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // simple escape
+    function escapeHtml(unsafe) {
+      if (!unsafe) return unsafe;
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // load projects on page load
+    document.addEventListener('DOMContentLoaded', loadAllProjects);
   })();
 </script>
 
-<!-- ensure full screen even with minimal content -->
 </body>
 </html>
