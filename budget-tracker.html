@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Gantt · Task status</title>
+    <title>Project Gantt · Clean timeline</title>
     
     <!-- Firebase SDK v8 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -75,11 +75,7 @@
         .nav-btn:hover {
             background: #e8e8e8;
         }
-        .nav-btn.primary {
-            background: #007bff;
-            border-color: #007bff;
-            color: white;
-        }
+        /* budget button completely removed (no .primary) */
         .form-popup {
             background: #f5f9ff;
             border-bottom: 2px solid #98b3d9;
@@ -120,9 +116,6 @@
             cursor: pointer;
             margin-top: 14px;
         }
-        .form-field button:hover {
-            background: #152b47;
-        }
         .gantt-scroll {
             flex: 1;
             overflow: auto;
@@ -132,7 +125,7 @@
         .gantt-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1400px;
+            min-width: 700px;  /* reduced because we hide columns & date columns are fewer */
             table-layout: fixed;
             font-size: 0.7rem;
         }
@@ -149,22 +142,6 @@
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            cursor: col-resize;
-            user-select: none;
-            position: relative;
-        }
-        .gantt-table th::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 4px;
-            height: 100%;
-            background: transparent;
-            cursor: col-resize;
-        }
-        .gantt-table th:hover::after {
-            background: rgba(255,255,255,0.3);
         }
         .gantt-table td {
             padding: 0.5rem 0.2rem;
@@ -173,17 +150,13 @@
             vertical-align: middle;
         }
         .task-col {
-            width: 280px;
+            width: 260px;
             background: white;
             position: sticky;
             left: 0;
             z-index: 15;
             cursor: context-menu;
             font-weight: 400;
-            resize: horizontal;
-            overflow: auto;
-            min-width: 150px;
-            max-width: 500px;
         }
         .task-main {
             font-weight: 600;
@@ -202,10 +175,9 @@
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 0.7rem;
-            font-weight: 500;
         }
         .subtask-item {
-            padding-left: 20px;
+            padding-left: 32px;
             font-size: 0.75rem;
             color: #2f4b70;
             display: flex;
@@ -214,43 +186,20 @@
         }
         .subtask-item .task-number {
             color: #6c757d;
-            font-weight: 500;
             min-width: 35px;
         }
-        .date-col {
-            width: 45px;
-            text-align: center;
-            font-family: monospace;
-            font-size: 0.65rem;
-            color: #2c3e50;
+        /* optional hidden columns (set by JS) */
+        .hide-col .date-col,
+        .hide-col .pred-col,
+        .hide-col .budget-col,
+        .hide-col .status-col {
+            display: none;
         }
-        .pred-col {
-            width: 45px;
-            text-align: center;
-            font-size: 0.65rem;
-            color: #2c3e50;
-            font-family: monospace;
-            font-weight: 500;
-        }
-        .budget-col {
-            width: 55px;
-            text-align: right;
-            padding-right: 8px;
-            font-size: 0.65rem;
-            color: #2c3e50;
-            font-weight: 500;
-        }
-        .status-col {
-            width: 60px;
-            text-align: center;
-            font-size: 0.6rem;
-            font-weight: 500;
-        }
-        .gantt-col {
-            padding: 0.2rem 0.3rem !important;
-            position: relative;
-            min-width: 400px;
-        }
+        .date-col { width: 58px; text-align: center; font-family: monospace; }
+        .pred-col { width: 50px; text-align: center; }
+        .budget-col { width: 65px; text-align: right; padding-right: 8px; }
+        .status-col { width: 70px; text-align: center; }
+        .gantt-col { padding: 0.2rem 0.3rem !important; }
         .timeline-box {
             position: relative;
             width: 100%;
@@ -286,7 +235,6 @@
         .subtask-bar + .completion-overlay {
             height: 16px;
             top: 9px;
-            background: #2e7d5e;
         }
         .hold-marker {
             position: absolute;
@@ -339,7 +287,7 @@
         .timeline-header-row {
             display: flex;
             width: 100%;
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             color: #1e3f64;
             font-weight: 500;
         }
@@ -347,11 +295,8 @@
             flex: 1;
             text-align: center;
             border-left: 1px solid #b7ceec;
-            font-size: 0.55rem;
-            white-space: nowrap;
-            padding: 0 2px;
         }
-        .context-menu {
+        .context-menu, .date-picker-popup {
             position: absolute;
             background: white;
             border: 1px solid #a0b9d9;
@@ -372,22 +317,13 @@
             background: #e2ecfc;
         }
         .date-picker-popup {
-            position: absolute;
-            background: white;
-            border: 1px solid #a0b9d9;
-            border-radius: 8px;
             padding: 15px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
             gap: 10px;
         }
         .date-picker-popup input {
             padding: 8px;
             border: 1px solid #b0c7e7;
             border-radius: 30px;
-            font-size: 0.8rem;
         }
         .date-picker-popup button {
             background: #1f3f64;
@@ -395,34 +331,36 @@
             border: none;
             padding: 6px 12px;
             border-radius: 30px;
-            font-size: 0.7rem;
             cursor: pointer;
         }
         .status-badge {
             display: inline-block;
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 30px;
-            font-size: 0.55rem;
+            font-size: 0.6rem;
             font-weight: 500;
-            white-space: nowrap;
         }
         .status-not-started { background: #edf2f9; color: #4a6382; }
         .status-in-progress { background: #fff3d8; color: #b85e00; }
         .status-completed { background: #dff0e4; color: #1e6f3f; }
         .status-on-hold { background: #fee9e7; color: #b3382c; }
-        .back-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 0.4rem 1rem;
+
+        /* filter toggle switch */
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 15px;
+            font-size: 0.75rem;
+            background: #eef3fc;
+            padding: 0.2rem 0.8rem;
             border-radius: 30px;
-            font-size: 0.7rem;
+            color: #1a3b5e;
+        }
+        .filter-toggle input {
             cursor: pointer;
-            text-decoration: none;
         }
-        .back-btn:hover {
-            background: #5a6268;
-        }
+
         .message {
             position: fixed;
             top: 20px;
@@ -433,53 +371,13 @@
             font-size: 0.8rem;
             animation: slideIn 0.3s ease;
         }
-        .message.success {
-            background: #dff0e4;
-            color: #1e6f3f;
-        }
-        .message.error {
-            background: #fee9e7;
-            color: #b3382c;
-        }
-        .index-warning {
-            background: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            margin: 10px;
-            border-radius: 8px;
-            border: 1px solid #ffeeba;
-            font-size: 0.8rem;
-        }
-        .index-warning a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .index-warning a:hover {
-            text-decoration: underline;
-        }
+        .message.success { background: #dff0e4; color: #1e6f3f; }
+        .message.error { background: #fee9e7; color: #b3382c; }
         @keyframes slideIn {
             from { transform: translateX(400px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #666;
-            font-style: italic;
-        }
-        .resize-handle {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 4px;
-            height: 100%;
-            cursor: col-resize;
-            background: transparent;
-            z-index: 30;
-        }
-        .resize-handle:hover {
-            background: rgba(255,255,255,0.3);
-        }
+        .loading { text-align: center; padding: 50px; color: #666; }
     </style>
 </head>
 <body>
@@ -488,18 +386,18 @@
         <div style="display: flex; align-items: center; gap: 15px;">
             <h2>📋 Gantt Chart · <span id="projectNameDisplay">Loading...</span></h2>
             <span class="project-info" id="projectInfo">Project ID: —</span>
+            <!-- filter toggle (persist via localStorage) -->
+            <label class="filter-toggle">
+                <input type="checkbox" id="hideColumnsCheckbox"> Hide start/end/pred/status/budget
+            </label>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
             <div class="nav-buttons">
                 <a href="#" class="nav-btn" onclick="goToProjects()">← Projects</a>
+                <!-- budget button removed (no primary) -->
             </div>
             <button class="toggle-form-btn" id="toggleFormBtn">＋ Show form</button>
         </div>
-    </div>
-
-    <!-- Index Warning (will show if needed) -->
-    <div id="indexWarning" class="index-warning" style="display: none;">
-        ⚠️ Firebase index needed. <a href="#" id="createIndexLink" target="_blank">Click here to create the required index</a>
     </div>
 
     <!-- Add Task Form -->
@@ -510,58 +408,51 @@
         </div>
         <div class="form-field">
             <label>Budget ($)</label>
-            <input type="number" id="budgetAmount" placeholder="e.g. 5000" value="5000">
+            <input type="number" id="budgetAmount" value="5000">
         </div>
         <div class="form-field">
             <label>Parent task</label>
-            <select id="parentTaskSelect">
-                <option value="">— Main Task —</option>
-            </select>
+            <select id="parentTaskSelect"><option value="">— Main —</option></select>
         </div>
         <div class="form-field">
             <label>Predecessor</label>
-            <select id="predSelect">
-                <option value="">— None —</option>
-            </select>
+            <select id="predSelect"><option value="">— None —</option></select>
         </div>
         <div class="form-field">
             <button id="submitTaskBtn">Add Task</button>
         </div>
     </div>
 
-    <!-- Gantt Chart Area -->
+    <!-- Gantt Scroll -->
     <div class="gantt-scroll" id="ganttScroll">
         <table class="gantt-table" id="ganttTable">
             <thead>
-                <tr id="headerRow">
-                    <th class="task-col" id="taskHeader">Task (right-click)</th>
-                    <th class="date-col" id="startHeader">Start</th>
-                    <th class="date-col" id="endHeader">End</th>
-                    <th class="pred-col" id="predHeader">Pred</th>
-                    <th class="budget-col" id="budgetHeader">Budget</th>
-                    <th class="status-col" id="statusHeader">Status</th>
-                    <th class="gantt-col" id="ganttHeader" style="min-width:400px;">Timeline (Feb - Jun 2026)</th>
+                <tr>
+                    <th class="task-col">Task (right‑click)</th>
+                    <th class="date-col">Start</th>
+                    <th class="date-col">End</th>
+                    <th class="pred-col">Pred</th>
+                    <th class="budget-col">Budget</th>
+                    <th class="status-col">Status</th>
+                    <!-- timeline header now shows continuous months (Feb→Jun) -->
+                    <th style="min-width:400px;">Timeline (Feb – Jun 2026)</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <tr>
-                    <td colspan="7" class="loading">Loading tasks...</td>
-                </tr>
+                <tr><td colspan="7" class="loading">Loading tasks...</td></tr>
             </tbody>
         </table>
     </div>
 
-    <!-- Bottom Bar with only Progress Bar -->
+    <!-- Bottom Progress -->
     <div class="bottom-space">
         <div class="completion-label">Overall Progress</div>
-        <div class="completion-bar-container">
-            <div class="completion-bar-fill" id="completionBarFill" style="width: 0%;"></div>
-        </div>
+        <div class="completion-bar-container"><div class="completion-bar-fill" id="completionBarFill"></div></div>
         <div class="completion-label" id="completionPercent">0%</div>
     </div>
 </div>
 
-<!-- Context Menu -->
+<!-- Context Menu & Date Picker -->
 <div class="context-menu" id="contextMenu">
     <div class="context-menu-item" id="menuStart">📅 Set Start Date</div>
     <div class="context-menu-item" id="menuEnd">📅 Set End Date</div>
@@ -569,15 +460,13 @@
     <div class="context-menu-item" id="menuComplete">✅ Mark Completed</div>
     <div class="context-menu-item" id="menuInProgress">🔄 Mark In Progress</div>
 </div>
-
-<!-- Date Picker Popup -->
 <div class="date-picker-popup" id="datePickerPopup">
     <input type="date" id="datePickerInput" value="2026-03-01">
     <button id="datePickerSave">Save Date</button>
 </div>
 
 <script>
-    // Firebase Configuration
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
@@ -586,20 +475,14 @@
         messagingSenderId: "411882772509",
         appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Get project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project');
-    
-    if (!projectId) {
-        window.location.href = 'projects.html';
-    }
+    if (!projectId) window.location.href = 'projects.html';
 
-    // DOM Elements
+    // DOM
     const tbody = document.getElementById('tableBody');
     const toggleBtn = document.getElementById('toggleFormBtn');
     const form = document.getElementById('addForm');
@@ -614,78 +497,8 @@
     const datePickerSave = document.getElementById('datePickerSave');
     const projectNameDisplay = document.getElementById('projectNameDisplay');
     const projectInfo = document.getElementById('projectInfo');
-    const indexWarning = document.getElementById('indexWarning');
-    const createIndexLink = document.getElementById('createIndexLink');
-
-    // Column resize functionality
-    const taskHeader = document.getElementById('taskHeader');
-    const startHeader = document.getElementById('startHeader');
-    const endHeader = document.getElementById('endHeader');
-    const predHeader = document.getElementById('predHeader');
-    const budgetHeader = document.getElementById('budgetHeader');
-    const statusHeader = document.getElementById('statusHeader');
-    const ganttHeader = document.getElementById('ganttHeader');
-
-    let isResizing = false;
-    let currentHeader = null;
-    let startX = 0;
-    let startWidth = 0;
-
-    function initResize(header, columnClass) {
-        header.addEventListener('mousedown', (e) => {
-            if (e.target === header || e.target === header.querySelector('.resize-handle')) {
-                isResizing = true;
-                currentHeader = header;
-                startX = e.pageX;
-                startWidth = header.offsetWidth;
-                
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-                
-                e.preventDefault();
-            }
-        });
-
-        // Add resize handle
-        const handle = document.createElement('div');
-        handle.className = 'resize-handle';
-        header.appendChild(handle);
-    }
-
-    function onMouseMove(e) {
-        if (!isResizing || !currentHeader) return;
-        
-        const diff = e.pageX - startX;
-        const newWidth = Math.max(30, startWidth + diff);
-        
-        // Apply width to all cells in this column
-        const columnIndex = currentHeader.cellIndex;
-        const rows = document.querySelectorAll('#ganttTable tr');
-        
-        rows.forEach(row => {
-            if (row.cells[columnIndex]) {
-                row.cells[columnIndex].style.width = newWidth + 'px';
-                row.cells[columnIndex].style.minWidth = newWidth + 'px';
-                row.cells[columnIndex].style.maxWidth = newWidth + 'px';
-            }
-        });
-    }
-
-    function onMouseUp() {
-        isResizing = false;
-        currentHeader = null;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    }
-
-    // Initialize resize for all headers
-    initResize(taskHeader, 'task-col');
-    initResize(startHeader, 'date-col');
-    initResize(endHeader, 'date-col');
-    initResize(predHeader, 'pred-col');
-    initResize(budgetHeader, 'budget-col');
-    initResize(statusHeader, 'status-col');
-    initResize(ganttHeader, 'gantt-col');
+    const hideCheckbox = document.getElementById('hideColumnsCheckbox');
+    const ganttTable = document.getElementById('ganttTable');
 
     // State
     let tasks = [];
@@ -693,7 +506,7 @@
     let currentAction = null;
     let currentProject = null;
 
-    // Helper Functions
+    // Helper: show message
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
         msg.className = `message ${type}`;
@@ -706,10 +519,8 @@
         if (!dateStr) return '—';
         try {
             const d = new Date(dateStr + 'T12:00:00');
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        } catch {
-            return dateStr;
-        }
+            return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        } catch { return dateStr; }
     }
 
     function getStatusClass(status) {
@@ -720,16 +531,14 @@
             default: return 'status-not-started';
         }
     }
-
     function getStatusText(status) {
         switch(status) {
             case 'completed': return 'Completed';
-            case 'in-progress': return 'In Prog';
+            case 'in-progress': return 'In Progress';
             case 'on-hold': return 'On Hold';
-            default: return 'Not Start';
+            default: return 'Not Started';
         }
     }
-
     function getCompletionFromStatus(status) {
         switch(status) {
             case 'completed': return 100;
@@ -746,26 +555,18 @@
                 const endDate = new Date(task.end + 'T12:00:00');
                 const refStart = new Date('2026-02-17T12:00:00');
                 const refEnd = new Date('2026-06-30T12:00:00');
-                
-                if (isNaN(startDate) || isNaN(endDate)) {
-                    return { left: 10, width: 20 };
-                }
-                
-                const totalDays = (refEnd - refStart) / (1000 * 60 * 60 * 24);
-                if (totalDays <= 0) return { left: 10, width: 20 };
-                
-                const startDays = Math.max(0, (startDate - refStart) / (1000 * 60 * 60 * 24));
-                const endDays = Math.min(totalDays, Math.max(startDays, (endDate - refStart) / (1000 * 60 * 60 * 24)));
-                
+                if (isNaN(startDate)||isNaN(endDate)) return { left:10, width:20 };
+                const totalDays = (refEnd - refStart) / (1000*60*60*24);
+                if (totalDays<=0) return { left:10, width:20 };
+                const startDays = Math.max(0, (startDate - refStart) / (1000*60*60*24));
+                const endDays = Math.min(totalDays, Math.max(startDays, (endDate - refStart) / (1000*60*60*24)));
                 let left = (startDays / totalDays) * 100;
                 let width = ((endDays - startDays) / totalDays) * 100;
-                
                 left = Math.max(0, Math.min(95, left));
                 width = Math.max(2, Math.min(95 - left, width));
-                
                 return { left, width };
             } catch (error) {
-                console.error('Error calculating position:', error);
+                console.error(error);
             }
         }
         return { left: 10, width: 20 };
@@ -785,14 +586,12 @@
     function updateDropdowns() {
         parentSelect.innerHTML = '<option value="">— Main Task —</option>';
         predSelect.innerHTML = '<option value="">— None —</option>';
-        
         tasks.filter(t => t.isMain).forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.firebaseId;
             opt.textContent = `${t.displayId} - ${t.name}`;
             parentSelect.appendChild(opt);
         });
-        
         tasks.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.firebaseId;
@@ -801,7 +600,6 @@
         });
     }
 
-    // Generate task ID in format 1, 1.1, 1.2, 2, 2.1, etc.
     function generateTaskId(isMain, parentId = null) {
         if (isMain) {
             const mainTasks = tasks.filter(t => t.isMain);
@@ -812,104 +610,96 @@
             return (maxNum + 1).toString();
         } else {
             if (!parentId) return null;
-            
             const parentTask = tasks.find(t => t.firebaseId === parentId);
             if (!parentTask) return null;
-            
             const parentDisplayId = parentTask.displayId;
             const subtasks = tasks.filter(t => t.parentFirebaseId === parentId);
             const maxNum = subtasks.length > 0 ? Math.max(...subtasks.map(t => {
                 const parts = t.displayId.split('.');
-                const num = parseInt(parts[parts.length - 1]);
+                const num = parseInt(parts[parts.length-1]);
                 return isNaN(num) ? 0 : num;
             })) : 0;
-            
             return `${parentDisplayId}.${maxNum + 1}`;
         }
     }
 
-    // Render the Gantt chart
+    // Apply column visibility based on checkbox + localStorage
+    function applyColumnVisibility() {
+        const hide = hideCheckbox.checked;
+        if (hide) {
+            ganttTable.classList.add('hide-col');
+        } else {
+            ganttTable.classList.remove('hide-col');
+        }
+        localStorage.setItem('ganttHideColumns', hide ? 'true' : 'false');
+    }
+
+    // Load filter from localStorage
+    function loadFilterSetting() {
+        const saved = localStorage.getItem('ganttHideColumns');
+        if (saved === 'true') {
+            hideCheckbox.checked = true;
+        } else {
+            hideCheckbox.checked = false;
+        }
+        applyColumnVisibility();
+    }
+
+    // Render table
     function renderTable() {
         if (!tasks || tasks.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #666;">
-                        No tasks yet. Click "Show form" to add your first task.
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;">No tasks. Click "Show form" to add.</td></tr>`;
+            updateCompletion();
             return;
         }
-
         tbody.innerHTML = '';
-        
-        // Timeline header row
+
+        // timeline header row (continuous nicer calendar)
         const timelineRow = document.createElement('tr');
         timelineRow.style.background = '#f0f6ff';
         timelineRow.innerHTML = `
             <td class="task-col" style="background:#f0f6ff;">📅 Timeline</td>
-            <td class="date-col"></td>
-            <td class="date-col"></td>
-            <td class="pred-col"></td>
-            <td class="budget-col"></td>
-            <td class="status-col"></td>
+            <td class="date-col"></td><td class="date-col"></td><td class="pred-col"></td>
+            <td class="budget-col"></td><td class="status-col"></td>
             <td class="gantt-col" style="padding:0!important;">
                 <div class="timeline-header-row">
-                    <div class="month-tick">17 Feb</div>
-                    <div class="month-tick">1 Mar</div>
-                    <div class="month-tick">15 Mar</div>
-                    <div class="month-tick">1 Apr</div>
-                    <div class="month-tick">15 Apr</div>
-                    <div class="month-tick">1 May</div>
-                    <div class="month-tick">15 May</div>
-                    <div class="month-tick">1 Jun</div>
-                    <div class="month-tick">15 Jun</div>
-                    <div class="month-tick">30 Jun</div>
+                    <div class="month-tick">Feb 17</div><div class="month-tick">Mar 1</div><div class="month-tick">Apr 1</div>
+                    <div class="month-tick">May 1</div><div class="month-tick">Jun 1</div><div class="month-tick">Jun 30</div>
                 </div>
             </td>
         `;
         tbody.appendChild(timelineRow);
 
-        // Sort tasks (main tasks first by displayId)
-        const sortedTasks = [...tasks].sort((a, b) => {
-            return (a.displayId || '').localeCompare(b.displayId || '', undefined, { numeric: true });
-        });
-        
+        const sortedTasks = [...tasks].sort((a,b) => (a.displayId||'').localeCompare(b.displayId||'', undefined, {numeric:true}));
         sortedTasks.forEach(task => {
             const pos = calculateBarPosition(task);
             const row = document.createElement('tr');
-            
             const taskDisplay = task.isMain ? 
                 `<span class="task-main"><span class="task-number">${task.displayId}</span> ${task.name}</span>` : 
                 `<span class="subtask-item"><span class="task-number">${task.displayId}</span> ${task.name}</span>`;
-            
             const barClass = task.isMain ? 'task-bar' : 'task-bar subtask-bar';
-            const startDisplay = formatDate(task.start);
-            const endDisplay = formatDate(task.end);
             const statusClass = getStatusClass(task.status);
             const statusText = getStatusText(task.status);
             const completionPercent = getCompletionFromStatus(task.status);
             const completionWidth = (completionPercent / 100) * pos.width;
-            
-            // Get predecessor display ID if exists
+
             let predDisplay = '—';
             if (task.pred) {
                 const predTask = tasks.find(t => t.firebaseId === task.pred);
                 predDisplay = predTask ? predTask.displayId : '—';
             }
-            
+
             row.innerHTML = `
                 <td class="task-col" data-task-id="${task.firebaseId}">${taskDisplay}</td>
-                <td class="date-col">${startDisplay}</td>
-                <td class="date-col">${endDisplay}</td>
+                <td class="date-col">${formatDate(task.start)}</td>
+                <td class="date-col">${formatDate(task.end)}</td>
                 <td class="pred-col">${predDisplay}</td>
                 <td class="budget-col">$${task.budget || 0}</td>
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col">
                     <div class="timeline-box">
                         <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
-                        <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" 
-                             style="left:${pos.left}%; width:${completionWidth}%;"></div>
+                        <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
                         ${task.onHold ? `<div class="hold-marker" style="left:${pos.left + pos.width/2}%;"></div>` : ''}
                     </div>
                 </td>
@@ -917,28 +707,23 @@
             tbody.appendChild(row);
         });
 
-        // Milestones row
+        // milestone row (decorative)
         const mileRow = document.createElement('tr');
         mileRow.style.background = '#eaf1fb';
         mileRow.innerHTML = `
             <td class="task-col">🎯 Milestones</td>
-            <td class="date-col">—</td>
-            <td class="date-col">—</td>
-            <td class="pred-col">—</td>
-            <td class="budget-col">—</td>
-            <td class="status-col">—</td>
-            <td class="gantt-col">
-                <div class="timeline-box" style="background:transparent;">
-                    <div class="milestone-dot" style="left:24%;" title="Design Review"></div>
-                    <div class="milestone-dot" style="left:48%;" title="Development Complete"></div>
-                    <div class="milestone-dot" style="left:68%;" title="Testing"></div>
-                    <div class="milestone-dot" style="left:86%;" title="Launch"></div>
-                </div>
-            </td>
+            <td class="date-col">—</td><td class="date-col">—</td><td class="pred-col">—</td>
+            <td class="budget-col">—</td><td class="status-col">—</td>
+            <td class="gantt-col"><div class="timeline-box" style="background:transparent;">
+                <div class="milestone-dot" style="left:24%;" title="Design"></div>
+                <div class="milestone-dot" style="left:48%;" title="Dev"></div>
+                <div class="milestone-dot" style="left:68%;" title="Test"></div>
+                <div class="milestone-dot" style="left:86%;" title="Launch"></div>
+            </div></td>
         `;
         tbody.appendChild(mileRow);
 
-        // Attach event listeners
+        // event listeners
         document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
             cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
@@ -948,178 +733,123 @@
                 contextMenu.style.top = e.pageY + 'px';
             });
         });
-
         document.querySelectorAll('.task-bar').forEach(bar => {
             bar.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const taskId = bar.dataset.taskId;
                 const task = tasks.find(t => t.firebaseId === taskId);
                 if (!task) return;
-                
                 let newStatus;
                 if (task.status === 'not-started') newStatus = 'in-progress';
                 else if (task.status === 'in-progress') newStatus = 'completed';
                 else if (task.status === 'completed') newStatus = 'not-started';
                 else if (task.status === 'on-hold') newStatus = 'in-progress';
                 else newStatus = 'in-progress';
-                
                 await updateTask(task.firebaseId, { status: newStatus });
             });
         });
 
         updateDropdowns();
         updateCompletion();
+        applyColumnVisibility(); // ensure hidden state after render
     }
 
-    // Load project info
     async function loadProjectInfo() {
         try {
             const doc = await db.collection('projects').doc(projectId).get();
             if (doc.exists) {
                 currentProject = { id: doc.id, ...doc.data() };
-                projectNameDisplay.textContent = currentProject.name || 'Unnamed Project';
+                projectNameDisplay.textContent = currentProject.name || 'Unnamed';
                 projectInfo.textContent = `Code: ${currentProject.code || '—'}`;
             }
-        } catch (error) {
-            console.error('Error loading project:', error);
-        }
+        } catch (error) { console.error(error); }
     }
 
-    // Load tasks from Firestore
     function loadTasks() {
-        console.log('Loading tasks for project:', projectId);
-        
-        db.collection('gantt_tasks')
-            .where('projectId', '==', projectId)
-            .get()
-            .then((snapshot) => {
-                tasks = [];
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    tasks.push({
-                        firebaseId: doc.id,
-                        parentFirebaseId: data.parentId || null,
-                        displayId: data.displayId || data.id || doc.id,
-                        name: data.name || 'Unnamed Task',
-                        start: data.start || null,
-                        end: data.end || null,
-                        pred: data.pred || '',
-                        budget: data.budget || 0,
-                        isMain: data.isMain || false,
-                        status: data.status || 'not-started',
-                        onHold: data.onHold || false,
-                        parentId: data.parentId || null
-                    });
+        db.collection('gantt_tasks').where('projectId', '==', projectId).get()
+        .then(snapshot => {
+            tasks = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tasks.push({
+                    firebaseId: doc.id,
+                    parentFirebaseId: data.parentId || null,
+                    displayId: data.displayId || data.id || doc.id,
+                    name: data.name || 'Unnamed',
+                    start: data.start || null,
+                    end: data.end || null,
+                    pred: data.pred || '',
+                    budget: data.budget || 0,
+                    isMain: data.isMain || false,
+                    status: data.status || 'not-started',
+                    onHold: data.onHold || false,
+                    parentId: data.parentId || null
                 });
-                console.log('Tasks loaded:', tasks.length);
-                renderTable();
-                
-                // Try to set up real-time listener
-                setupRealtimeListener();
-            })
-            .catch((error) => {
-                console.error('Error loading tasks:', error);
-                
-                if (error.message && error.message.includes('index')) {
-                    indexWarning.style.display = 'block';
-                    const urlMatch = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
-                    if (urlMatch) {
-                        createIndexLink.href = urlMatch[0];
-                    }
-                    
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px;">
-                                <div style="color: #856404; background: #fff3cd; padding: 20px; border-radius: 8px;">
-                                    ⚠️ Firebase index required.<br><br>
-                                    <a href="${createIndexLink.href}" target="_blank" style="color: #007bff;">Click here to create the index</a><br><br>
-                                    After creating the index, refresh the page.
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                } else {
-                    showMessage('Error loading tasks: ' + error.message, 'error');
-                }
             });
+            renderTable();
+            setupRealtimeListener();
+        }).catch(error => {
+            console.error(error);
+            tbody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks</td></tr>`;
+        });
     }
 
-    // Set up real-time listener
     function setupRealtimeListener() {
-        try {
-            db.collection('gantt_tasks')
-                .where('projectId', '==', projectId)
-                .orderBy('createdAt')
-                .onSnapshot((snapshot) => {
-                    tasks = [];
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        tasks.push({
-                            firebaseId: doc.id,
-                            parentFirebaseId: data.parentId || null,
-                            displayId: data.displayId || data.id || doc.id,
-                            name: data.name || 'Unnamed Task',
-                            start: data.start || null,
-                            end: data.end || null,
-                            pred: data.pred || '',
-                            budget: data.budget || 0,
-                            isMain: data.isMain || false,
-                            status: data.status || 'not-started',
-                            onHold: data.onHold || false,
-                            parentId: data.parentId || null
-                        });
-                    });
-                    console.log('Real-time update:', tasks.length);
-                    renderTable();
-                }, (error) => {
-                    console.log('Realtime listener error:', error.message);
+        db.collection('gantt_tasks').where('projectId', '==', projectId).onSnapshot(snapshot => {
+            tasks = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                tasks.push({
+                    firebaseId: doc.id,
+                    parentFirebaseId: data.parentId || null,
+                    displayId: data.displayId || data.id || doc.id,
+                    name: data.name || 'Unnamed',
+                    start: data.start || null,
+                    end: data.end || null,
+                    pred: data.pred || '',
+                    budget: data.budget || 0,
+                    isMain: data.isMain || false,
+                    status: data.status || 'not-started',
+                    onHold: data.onHold || false,
+                    parentId: data.parentId || null
                 });
-        } catch (error) {
-            console.log('Could not set up real-time listener:', error.message);
-        }
+            });
+            renderTable();
+        }, error => console.log('listener error', error));
     }
 
-    // Update task
     async function updateTask(taskId, updates) {
         try {
             await db.collection('gantt_tasks').doc(taskId).update({
                 ...updates,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showMessage('Task updated', 'success');
+            showMessage('Updated');
         } catch (error) {
-            console.error('Error updating task:', error);
-            showMessage('Error updating task', 'error');
+            showMessage('Error updating', 'error');
         }
     }
 
-    // Add task
     async function addTask(taskData) {
         try {
             await db.collection('gantt_tasks').add({
                 ...taskData,
-                projectId: projectId,
+                projectId,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            showMessage('Task added successfully', 'success');
-            
-            // Refresh tasks
-            loadTasks();
+            showMessage('Task added');
             return true;
         } catch (error) {
-            console.error('Error adding task:', error);
-            showMessage('Error adding task: ' + error.message, 'error');
+            showMessage('Error: ' + error.message, 'error');
             return false;
         }
     }
 
-    // Navigation
-    window.goToProjects = () => {
-        window.location.href = 'projects.html';
-    };
+    window.goToProjects = () => window.location.href = 'projects.html';
+    // no budget button
 
-    // Event Listeners
+    // Event listeners
     toggleBtn.addEventListener('click', () => {
         form.classList.toggle('visible');
         toggleBtn.textContent = form.classList.contains('visible') ? '− Hide form' : '＋ Show form';
@@ -1130,37 +860,19 @@
         const budget = parseFloat(document.getElementById('budgetAmount').value) || 0;
         const parentId = document.getElementById('parentTaskSelect').value;
         const predId = document.getElementById('predSelect').value;
-
-        if (!name) {
-            showMessage('Please enter a task name', 'error');
-            return;
-        }
-
+        if (!name) return showMessage('Enter name', 'error');
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Adding...';
-
         const isMain = !parentId;
         const displayId = generateTaskId(isMain, parentId);
-
         if (!displayId) {
-            showMessage('Error generating task ID', 'error');
+            showMessage('ID error', 'error');
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Add Task';
             return;
         }
-
         const success = await addTask({
-            displayId: displayId,
-            id: displayId,
-            name: name,
-            budget: budget,
-            isMain: isMain,
-            status: 'not-started',
-            onHold: false,
-            parentId: parentId || null,
-            pred: predId || ''
+            displayId, id: displayId, name, budget, isMain,
+            status:'not-started', onHold:false, parentId:parentId||null, pred:predId||''
         });
-
         if (success) {
             document.getElementById('taskName').value = '';
             document.getElementById('budgetAmount').value = '5000';
@@ -1169,89 +881,72 @@
             form.classList.remove('visible');
             toggleBtn.textContent = '＋ Show form';
         }
-
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Add Task';
     });
 
     // Context menu actions
-    document.getElementById('menuStart').addEventListener('click', () => {
-        if (selectedTaskId) {
-            currentAction = 'start';
-            datePickerPopup.style.display = 'flex';
-            datePickerPopup.style.left = contextMenu.style.left;
-            datePickerPopup.style.top = contextMenu.style.top;
-            contextMenu.style.display = 'none';
-        }
+    document.getElementById('menuStart').addEventListener('click', ()=>{
+        if(!selectedTaskId) return;
+        currentAction='start';
+        datePickerPopup.style.display='flex';
+        datePickerPopup.style.left = contextMenu.style.left;
+        datePickerPopup.style.top = contextMenu.style.top;
+        contextMenu.style.display='none';
     });
-
-    document.getElementById('menuEnd').addEventListener('click', () => {
-        if (selectedTaskId) {
-            currentAction = 'end';
-            datePickerPopup.style.display = 'flex';
-            datePickerPopup.style.left = contextMenu.style.left;
-            datePickerPopup.style.top = contextMenu.style.top;
-            contextMenu.style.display = 'none';
-        }
+    document.getElementById('menuEnd').addEventListener('click', ()=>{
+        if(!selectedTaskId) return;
+        currentAction='end';
+        datePickerPopup.style.display='flex';
+        datePickerPopup.style.left = contextMenu.style.left;
+        datePickerPopup.style.top = contextMenu.style.top;
+        contextMenu.style.display='none';
     });
-
-    document.getElementById('menuHold').addEventListener('click', async () => {
-        if (selectedTaskId) {
-            const task = tasks.find(t => t.firebaseId === selectedTaskId);
-            if (task) {
+    document.getElementById('menuHold').addEventListener('click', async ()=>{
+        if(selectedTaskId) {
+            const task = tasks.find(t=>t.firebaseId===selectedTaskId);
+            if(task) {
                 const newOnHold = !task.onHold;
-                await updateTask(selectedTaskId, { 
-                    onHold: newOnHold,
-                    status: newOnHold ? 'on-hold' : 'not-started'
-                });
+                await updateTask(selectedTaskId, { onHold: newOnHold, status: newOnHold ? 'on-hold' : 'not-started' });
             }
-            contextMenu.style.display = 'none';
+            contextMenu.style.display='none';
         }
     });
-
-    document.getElementById('menuComplete').addEventListener('click', async () => {
-        if (selectedTaskId) {
-            await updateTask(selectedTaskId, { status: 'completed' });
-            contextMenu.style.display = 'none';
-        }
+    document.getElementById('menuComplete').addEventListener('click', async ()=>{
+        if(selectedTaskId) { await updateTask(selectedTaskId, {status:'completed'}); contextMenu.style.display='none'; }
+    });
+    document.getElementById('menuInProgress').addEventListener('click', async ()=>{
+        if(selectedTaskId) { await updateTask(selectedTaskId, {status:'in-progress'}); contextMenu.style.display='none'; }
     });
 
-    document.getElementById('menuInProgress').addEventListener('click', async () => {
-        if (selectedTaskId) {
-            await updateTask(selectedTaskId, { status: 'in-progress' });
-            contextMenu.style.display = 'none';
-        }
-    });
-
-    datePickerSave.addEventListener('click', async () => {
-        if (selectedTaskId && currentAction) {
+    datePickerSave.addEventListener('click', async ()=>{
+        if(selectedTaskId && currentAction) {
             const date = datePickerInput.value;
-            if (date) {
+            if(date) {
                 const updates = {};
                 updates[currentAction === 'start' ? 'start' : 'end'] = date;
                 await updateTask(selectedTaskId, updates);
             }
-            datePickerPopup.style.display = 'none';
-            selectedTaskId = null;
-            currentAction = null;
+            datePickerPopup.style.display='none';
+            selectedTaskId=null; currentAction=null;
         }
     });
 
-    // Hide popups when clicking elsewhere
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', (e)=>{
         if (!contextMenu.contains(e.target) && !datePickerPopup.contains(e.target)) {
-            contextMenu.style.display = 'none';
-            datePickerPopup.style.display = 'none';
+            contextMenu.style.display='none';
+            datePickerPopup.style.display='none';
         }
     });
+
+    // Column toggle listener
+    hideCheckbox.addEventListener('change', applyColumnVisibility);
 
     // Initialize
     async function init() {
-        console.log('Initializing with project:', projectId);
+        loadFilterSetting(); // load persistent filter
         await loadProjectInfo();
         loadTasks();
     }
-
     init();
 </script>
 </body>
