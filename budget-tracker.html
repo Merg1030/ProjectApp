@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Gantt · 20+ sample tasks</title>
+    <title>Project Gantt · full page scroll · no milestones</title>
     
     <!-- Firebase SDK v8 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -19,7 +19,7 @@
         html, body {
             height: 100%;
             background: #1e3146;
-            overflow: hidden;
+            overflow: hidden;           /* outer no scroll, inner does */
         }
         .gantt-full {
             height: 100vh;
@@ -109,8 +109,9 @@
             cursor: pointer;
             margin-top: 12px;
         }
+        /* GANTT SCROLL takes ALL remaining height */
         .gantt-scroll {
-            flex: 1;
+            flex: 1;                    /* fills everything between top and bottom */
             overflow: auto;
             position: relative;
             background: white;
@@ -171,19 +172,7 @@
             align-items: center;
             gap: 6px;
         }
-        /* Blank row styling */
-        .blank-row td {
-            background-color: #f9fbff;
-            color: #8a9bb5;
-            font-style: italic;
-        }
-        .blank-row .task-col {
-            background-color: #f9fbff;
-        }
-        .blank-row .timeline-box {
-            background: #f0f5fd;
-            opacity: 0.4;
-        }
+        /* hidden columns class */
         .hide-col .date-col,
         .hide-col .pred-col,
         .hide-col .budget-col,
@@ -241,15 +230,7 @@
             z-index: 12;
             pointer-events: none;
         }
-        .milestone-dot {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #6a7f9e;
-            border: 1px solid white;
-            transform: rotate(45deg);
-            top: 11px;
-        }
+        /* milestone dot class removed – no milestone row */
         .bottom-space {
             padding: 0.4rem 1.5rem 0.5rem;
             background: white;
@@ -369,6 +350,13 @@
             to { transform: translateX(0); opacity: 1; }
         }
         .loading { text-align: center; padding: 40px; color: #666; }
+        /* blank row styling (empty but visible) */
+        .blank-row td {
+            background: white;
+            color: transparent;
+            border-bottom: 1px solid #e0e5ec;
+            height: 32px;
+        }
     </style>
 </head>
 <body>
@@ -411,6 +399,7 @@
         </div>
     </div>
 
+    <!-- GANTT SCROLL will contain both real tasks AND blank rows to fill page -->
     <div class="gantt-scroll" id="ganttScroll">
         <table class="gantt-table" id="ganttTable">
             <thead>
@@ -437,6 +426,7 @@
     </div>
 </div>
 
+<!-- Context Menu & Date Picker (same) -->
 <div class="context-menu" id="contextMenu">
     <div class="context-menu-item" id="menuStart">📅 Set Start Date</div>
     <div class="context-menu-item" id="menuEnd">📅 Set End Date</div>
@@ -466,7 +456,7 @@
     const projectId = urlParams.get('project');
     if (!projectId) window.location.href = 'projects.html';
 
-    // DOM
+    // DOM elements
     const tbody = document.getElementById('tableBody');
     const toggleBtn = document.getElementById('toggleFormBtn');
     const form = document.getElementById('addForm');
@@ -483,6 +473,7 @@
     const projectInfo = document.getElementById('projectInfo');
     const hideCheckbox = document.getElementById('hideColumnsCheckbox');
     const ganttTable = document.getElementById('ganttTable');
+    const ganttScroll = document.getElementById('ganttScroll');
 
     // State
     let tasks = [];
@@ -607,7 +598,6 @@
         }
     }
 
-    // Apply column visibility
     function applyColumnVisibility() {
         const hide = hideCheckbox.checked;
         if (hide) {
@@ -624,103 +614,47 @@
         applyColumnVisibility();
     }
 
-    // Generate 20+ sample tasks if none exist (runs once)
-    async function seedSampleTasksIfEmpty() {
-        try {
-            const snapshot = await db.collection('gantt_tasks').where('projectId', '==', projectId).get();
-            if (!snapshot.empty) return; // tasks already exist
+    // Add blank rows to fill the viewport height – no milestone row
+    function addBlankRowsToFillPage() {
+        if (!tbody) return;
+        const scrollDiv = ganttScroll;
+        const viewportHeight = scrollDiv.clientHeight;
+        if (viewportHeight < 50) return;
 
-            const batch = db.batch();
-            const sampleMain = [
-                { name: 'Site preparation', budget: 8000, start: '2026-02-20', end: '2026-03-10', status: 'completed' },
-                { name: 'Foundation', budget: 15000, start: '2026-03-05', end: '2026-04-10', status: 'in-progress' },
-                { name: 'Framing', budget: 22000, start: '2026-04-01', end: '2026-05-15', status: 'not-started' },
-                { name: 'Roofing', budget: 12000, start: '2026-05-10', end: '2026-06-05', status: 'not-started' },
-                { name: 'Electrical', budget: 18000, start: '2026-04-20', end: '2026-06-20', status: 'not-started' },
-                { name: 'Plumbing', budget: 14000, start: '2026-04-25', end: '2026-06-15', status: 'not-started' },
-                { name: 'Interior finishing', budget: 20000, start: '2026-05-20', end: '2026-06-28', status: 'not-started' },
-                { name: 'Landscaping', budget: 6000, start: '2026-06-10', end: '2026-06-30', status: 'not-started' }
-            ];
+        // approximate row height (including border)
+        const rowHeight = 34; // from td padding + border
+        const existingRows = tbody.children.length;
+        // timeline row counts as 1, then each task row, we want to fill so that total height ≈ viewport
+        const totalRowsNeeded = Math.ceil(viewportHeight / rowHeight) + 2; // a bit extra to ensure scroll
+        let blanksToAdd = totalRowsNeeded - existingRows;
+        if (blanksToAdd < 0) blanksToAdd = 0;
 
-            const mainRefs = [];
-            for (let i = 0; i < sampleMain.length; i++) {
-                const m = sampleMain[i];
-                const mainId = (i + 1).toString();
-                const mainDoc = db.collection('gantt_tasks').doc();
-                batch.set(mainDoc, {
-                    displayId: mainId,
-                    name: m.name,
-                    budget: m.budget,
-                    start: m.start,
-                    end: m.end,
-                    status: m.status,
-                    isMain: true,
-                    onHold: false,
-                    parentId: null,
-                    pred: '',
-                    projectId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                mainRefs.push({ id: mainDoc.id, displayId: mainId, name: m.name });
-            }
-
-            // add subtasks for first 3 main tasks (to get more rows)
-            const subTasks = [
-                { parentIdx: 0, name: 'Clear area', budget: 2000, start: '2026-02-20', end: '2026-02-25', status: 'completed' },
-                { parentIdx: 0, name: 'Survey', budget: 1500, start: '2026-02-26', end: '2026-03-02', status: 'completed' },
-                { parentIdx: 1, name: 'Excavation', budget: 5000, start: '2026-03-05', end: '2026-03-18', status: 'completed' },
-                { parentIdx: 1, name: 'Concrete pour', budget: 7000, start: '2026-03-15', end: '2026-04-02', status: 'in-progress' },
-                { parentIdx: 1, name: 'Curing', budget: 1000, start: '2026-04-03', end: '2026-04-10', status: 'not-started' },
-                { parentIdx: 2, name: 'Wall framing', budget: 8000, start: '2026-04-01', end: '2026-04-20', status: 'not-started' },
-                { parentIdx: 2, name: 'Floor joists', budget: 5000, start: '2026-04-15', end: '2026-05-01', status: 'not-started' },
-                { parentIdx: 2, name: 'Roof trusses', budget: 6000, start: '2026-05-01', end: '2026-05-15', status: 'not-started' },
-                { parentIdx: 3, name: 'Underlayment', budget: 3000, start: '2026-05-10', end: '2026-05-20', status: 'not-started' },
-                { parentIdx: 3, name: 'Shingles', budget: 5000, start: '2026-05-20', end: '2026-06-05', status: 'not-started' },
-                { parentIdx: 4, name: 'Wiring rough', budget: 7000, start: '2026-04-20', end: '2026-05-15', status: 'not-started' },
-                { parentIdx: 4, name: 'Fixtures', budget: 6000, start: '2026-05-20', end: '2026-06-20', status: 'not-started' }
-            ];
-
-            for (const s of subTasks) {
-                const parent = mainRefs[s.parentIdx];
-                if (!parent) continue;
-                const parentDisplay = parent.displayId;
-                const existingSubtasks = subTasks.filter(x => x.parentIdx === s.parentIdx);
-                const subIndex = existingSubtasks.findIndex(x => x.name === s.name) + 1;
-                const displayId = `${parentDisplay}.${subIndex}`;
-                const subDoc = db.collection('gantt_tasks').doc();
-                batch.set(subDoc, {
-                    displayId,
-                    name: s.name,
-                    budget: s.budget,
-                    start: s.start,
-                    end: s.end,
-                    status: s.status,
-                    isMain: false,
-                    onHold: false,
-                    parentId: parent.id,
-                    pred: '',
-                    projectId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            await batch.commit();
-            console.log('✅ 20+ sample tasks seeded');
-        } catch (e) {
-            console.warn('Seed skipped or error:', e);
+        for (let i = 0; i < blanksToAdd; i++) {
+            const blankRow = document.createElement('tr');
+            blankRow.className = 'blank-row';
+            blankRow.innerHTML = `
+                <td class="task-col"></td>
+                <td class="date-col"></td>
+                <td class="date-col"></td>
+                <td class="pred-col"></td>
+                <td class="budget-col"></td>
+                <td class="status-col"></td>
+                <td class="gantt-col"><div class="timeline-box" style="background:transparent;"></div></td>
+            `;
+            tbody.appendChild(blankRow);
         }
     }
 
+    // render tasks + timeline header (NO milestone row)
     function renderTable() {
         if (!tasks || tasks.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;">No tasks — sample tasks will appear shortly</td></tr>`;
-            updateCompletion();
-            return;
+            // still show timeline header + blank rows later
+            tbody.innerHTML = ''; 
+        } else {
+            tbody.innerHTML = '';
         }
-        tbody.innerHTML = '';
 
-        // timeline header row
+        // Always add the timeline header row (first row)
         const timelineRow = document.createElement('tr');
         timelineRow.style.background = '#f0f6ff';
         timelineRow.innerHTML = `
@@ -736,6 +670,7 @@
         `;
         tbody.appendChild(timelineRow);
 
+        // Sort and add real tasks
         const sortedTasks = [...tasks].sort((a,b) => (a.displayId||'').localeCompare(b.displayId||'', undefined, {numeric:true}));
         sortedTasks.forEach(task => {
             const pos = calculateBarPosition(task);
@@ -773,41 +708,7 @@
             tbody.appendChild(row);
         });
 
-        // milestone row
-        const mileRow = document.createElement('tr');
-        mileRow.style.background = '#eaf1fb';
-        mileRow.innerHTML = `
-            <td class="task-col">🎯 Milestones</td>
-            <td class="date-col">—</td><td class="date-col">—</td><td class="pred-col">—</td>
-            <td class="budget-col">—</td><td class="status-col">—</td>
-            <td class="gantt-col"><div class="timeline-box" style="background:transparent;">
-                <div class="milestone-dot" style="left:24%;" title="Design"></div>
-                <div class="milestone-dot" style="left:48%;" title="Dev"></div>
-                <div class="milestone-dot" style="left:68%;" title="Test"></div>
-                <div class="milestone-dot" style="left:86%;" title="Launch"></div>
-            </div></td>
-        `;
-        tbody.appendChild(mileRow);
-
-        // === BLANK ROWS ADDED HERE - 5 empty rows for you, bro! ===
-        for (let i = 1; i <= 5; i++) {
-            const blankRow = document.createElement('tr');
-            blankRow.className = 'blank-row';
-            blankRow.innerHTML = `
-                <td class="task-col" style="color: #a0b5d0;">— blank row ${i} —</td>
-                <td class="date-col">—</td>
-                <td class="date-col">—</td>
-                <td class="pred-col">—</td>
-                <td class="budget-col">—</td>
-                <td class="status-col">—</td>
-                <td class="gantt-col">
-                    <div class="timeline-box" style="background: #f0f5fd; opacity: 0.3;"></div>
-                </td>
-            `;
-            tbody.appendChild(blankRow);
-        }
-
-        // event listeners
+        // event listeners for context + bar clicks
         document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
             cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
@@ -836,7 +737,25 @@
         updateDropdowns();
         updateCompletion();
         applyColumnVisibility();
+
+        // After rendering real rows, add blanks to fill the page (NO milestone row ever)
+        setTimeout(() => {
+            addBlankRowsToFillPage();
+        }, 20);
     }
+
+    // Resize observer to keep blanks adjusted
+    const resizeObserver = new ResizeObserver(() => {
+        if (tbody) {
+            // keep blanks fitted – but avoid infinite loop
+            const realRows = Array.from(tbody.children).filter(tr => !tr.classList.contains('blank-row') && tr.cells?.[0]?.innerText !== '📅 Timeline');
+            // remove all blank rows first
+            Array.from(tbody.querySelectorAll('.blank-row')).forEach(br => br.remove());
+            // then re-add blanks
+            addBlankRowsToFillPage();
+        }
+    });
+    if (ganttScroll) resizeObserver.observe(ganttScroll);
 
     async function loadProjectInfo() {
         try {
@@ -846,20 +765,86 @@
                 projectNameDisplay.textContent = currentProject.name || 'Unnamed';
                 projectInfo.textContent = `Code: ${currentProject.code || '—'}`;
             } else {
-                // fallback if project doc missing (for demo)
                 projectNameDisplay.textContent = 'Demo Project';
                 projectInfo.textContent = 'Code: DEMO';
             }
         } catch (error) { console.error(error); }
     }
 
+    // Seed sample tasks if empty (like before)
+    async function seedSampleTasksIfEmpty() {
+        try {
+            const snapshot = await db.collection('gantt_tasks').where('projectId', '==', projectId).get();
+            if (!snapshot.empty) return;
+            const batch = db.batch();
+            const sampleMain = [
+                { name: 'Site preparation', budget: 8000, start: '2026-02-20', end: '2026-03-10', status: 'completed' },
+                { name: 'Foundation', budget: 15000, start: '2026-03-05', end: '2026-04-10', status: 'in-progress' },
+                { name: 'Framing', budget: 22000, start: '2026-04-01', end: '2026-05-15', status: 'not-started' },
+                { name: 'Roofing', budget: 12000, start: '2026-05-10', end: '2026-06-05', status: 'not-started' },
+                { name: 'Electrical', budget: 18000, start: '2026-04-20', end: '2026-06-20', status: 'not-started' }
+            ];
+            const mainRefs = [];
+            for (let i = 0; i < sampleMain.length; i++) {
+                const m = sampleMain[i];
+                const mainId = (i + 1).toString();
+                const mainDoc = db.collection('gantt_tasks').doc();
+                batch.set(mainDoc, {
+                    displayId: mainId,
+                    name: m.name,
+                    budget: m.budget,
+                    start: m.start,
+                    end: m.end,
+                    status: m.status,
+                    isMain: true,
+                    onHold: false,
+                    parentId: null,
+                    pred: '',
+                    projectId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                mainRefs.push({ id: mainDoc.id, displayId: mainId, name: m.name });
+            }
+            // few subtasks for more rows
+            const subTasks = [
+                { parentIdx: 0, name: 'Clear area', budget: 2000, start: '2026-02-20', end: '2026-02-25', status: 'completed' },
+                { parentIdx: 0, name: 'Survey', budget: 1500, start: '2026-02-26', end: '2026-03-02', status: 'completed' },
+                { parentIdx: 1, name: 'Excavation', budget: 5000, start: '2026-03-05', end: '2026-03-18', status: 'completed' },
+                { parentIdx: 1, name: 'Concrete pour', budget: 7000, start: '2026-03-15', end: '2026-04-02', status: 'in-progress' }
+            ];
+            for (const s of subTasks) {
+                const parent = mainRefs[s.parentIdx];
+                if (!parent) continue;
+                const parentDisplay = parent.displayId;
+                const subIndex = subTasks.findIndex(x => x.name === s.name) + 1;
+                const displayId = `${parentDisplay}.${subIndex}`;
+                const subDoc = db.collection('gantt_tasks').doc();
+                batch.set(subDoc, {
+                    displayId,
+                    name: s.name,
+                    budget: s.budget,
+                    start: s.start,
+                    end: s.end,
+                    status: s.status,
+                    isMain: false,
+                    onHold: false,
+                    parentId: parent.id,
+                    pred: '',
+                    projectId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            await batch.commit();
+        } catch (e) { console.warn('seed issue', e); }
+    }
+
     function loadTasks() {
         db.collection('gantt_tasks').where('projectId', '==', projectId).get()
         .then(async snapshot => {
             if (snapshot.empty) {
-                // seed sample tasks first, then load again
                 await seedSampleTasksIfEmpty();
-                // fetch again
                 const newSnap = await db.collection('gantt_tasks').where('projectId', '==', projectId).get();
                 tasks = [];
                 newSnap.forEach(doc => {
@@ -998,7 +983,6 @@
         submitBtn.disabled = false;
     });
 
-    // Context menu actions
     document.getElementById('menuStart').addEventListener('click', ()=>{
         if(!selectedTaskId) return;
         currentAction='start';
@@ -1057,7 +1041,7 @@
     async function init() {
         loadFilterSetting();
         await loadProjectInfo();
-        loadTasks(); // this will seed if empty
+        loadTasks();
     }
     init();
 </script>
