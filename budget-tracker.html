@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Gantt · clean dates · ongoing colors</title>
+    <title>Gantt · months & days on separate rows · continuous</title>
     
-    <!-- Firebase v8 (compat) -->
+    <!-- Firebase v8 (compat) — unchanged -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
@@ -192,40 +192,29 @@
             min-width: 6px;
             cursor: pointer;
         }
-        /* base bar colors: ongoing = orange, completed = green, not-started = blue-gray, on-hold = red tint */
-        .task-bar.status-not-started { background: #5f7d9c; }      /* soft blue-grey */
-        .task-bar.status-in-progress { background: #f9a95d; }      /* warm orange */
-        .task-bar.status-completed { background: #2e7d5e; }        /* green */
-        .task-bar.status-on-hold { background: #d97777; }          /* soft red */
+        /* base bar colors */
+        .task-bar.status-not-started { background: #5f7d9c; }
+        .task-bar.status-in-progress { background: #f9a95d; }
+        .task-bar.status-completed { background: #2e7d5e; }
+        .task-bar.status-on-hold { background: #d97777; }
         .subtask-bar {
             height: 14px;
             top: 8px;
             border: 1px solid #2c3e4e;
         }
-        /* completion overlay never changes – stays darker but we remove it for cleaner ongoing */
         .completion-overlay {
             position: absolute;
             height: 18px;
             top: 6px;
             background: #1e4a3a;
             border-radius: 3px 0 0 3px;
-            opacity: 0.2;            /* subtle, just indicates progress */
+            opacity: 0.2;
             pointer-events: none;
             z-index: 5;
         }
         .subtask-bar + .completion-overlay {
             height: 14px;
             top: 8px;
-        }
-        .hold-marker {
-            position: absolute;
-            width: 4px;
-            height: 24px;
-            background: #e68a2e;
-            top: 3px;
-            border-radius: 2px;
-            z-index: 12;
-            pointer-events: none;
         }
         .bottom-space {
             padding: 0.4rem 1.5rem 0.5rem;
@@ -256,23 +245,47 @@
             min-width: 90px;
             font-weight: 500;
         }
-        .timeline-header-row {
+        /* NEW: two‑row calendar header */
+        .calendar-header-wrapper {
+            width: 100%;
+            background: #eef4fc;
+            border-bottom: 2px solid #9fb7d3;
+            border-top: 1px solid #c0d2e8;
+            margin: 0;
+        }
+        .month-row {
             display: flex;
             width: 100%;
-            height: 30px;
-            align-items: center;
-            font-size: 0.55rem;
-            color: #1e3f64;
-            font-weight: 500;
-            background: #e8f0fe;
-        }
-        .month-tick {
-            flex: 1;
-            text-align: center;
-            border-left: 1px solid #b7ceec;
-            font-size: 0.65rem;
+            background: #dae6f5;
             font-weight: 600;
+            font-size: 0.7rem;
+            color: #113355;
+            border-bottom: 1px solid #aac0dd;
+        }
+        .day-row {
+            display: flex;
+            width: 100%;
+            background: #f7faff;
+            font-size: 0.6rem;
+            color: #1d4063;
+        }
+        .month-cell {
+            flex: 1 1 0px;
+            padding: 5px 0 3px 8px;
+            border-right: 1px solid #bfd2ea;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .day-cell {
+            flex: 1 0 auto;
+            text-align: center;
+            padding: 3px 0 2px 0;
+            border-right: 1px dotted #b3c7e0;
+            font-weight: 500;
+        }
+        .day-cell:last-child {
+            border-right: none;
         }
         .context-menu, .date-picker-popup {
             position: absolute;
@@ -358,12 +371,20 @@
             border-bottom: 1px solid #e0e5ec;
             height: 32px;
         }
-        /* hide extra columns toggle (no border inside) we keep it clean */
         .hide-col .date-col,
         .hide-col .pred-col,
         .hide-col .budget-col,
         .hide-col .status-col {
             display: none;
+        }
+        /* make timeline cell align with header */
+        .timeline-cell {
+            padding: 0 !important;
+            vertical-align: top;
+        }
+        .timeline-outer {
+            width: 100%;
+            position: relative;
         }
     </style>
 </head>
@@ -417,7 +438,7 @@
                     <th class="pred-col">Pred</th>
                     <th class="budget-col">Budget</th>
                     <th class="status-col">Status</th>
-                    <th style="min-width:420px;">Timeline (Feb – Jun 2026)</th>
+                    <th style="min-width:420px;">Timeline</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -447,7 +468,7 @@
 
 <script>
     (function() {
-    // Firebase Config
+    // Firebase Config — exactly as provided
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
@@ -485,6 +506,11 @@
     let selectedTaskId = null;
     let currentAction = null;
     let currentProject = null;
+
+    // ---------- global range (continuous calendar) ----------
+    // We'll use project start/end from Firestore or fallback
+    let globalRangeStart = new Date('2026-02-17T12:00:00');
+    let globalRangeEnd = new Date('2026-06-30T12:00:00');
 
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
@@ -527,25 +553,63 @@
         }
     }
 
-    // timeline reference with clear month dates – March, April, May all visible
-    const REF_START = new Date('2026-02-17T12:00:00');
-    const REF_END = new Date('2026-06-30T12:00:00');
+    // ----- build two‑row calendar header (months row, days row) -----
+    function renderCalendarHeader(start, end) {
+        if (start > end) return '<tr><td colspan="7">Invalid date range</td></tr>';
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        startDate.setHours(12,0,0,0);
+        endDate.setHours(12,0,0,0);
 
+        let current = new Date(startDate);
+        let monthMap = new Map(); // key: year-month, value: { year, month, days: [] }
+
+        while (current <= endDate) {
+            const year = current.getFullYear();
+            const month = current.getMonth();
+            const key = `${year}-${month}`;
+            if (!monthMap.has(key)) {
+                monthMap.set(key, { year, month, days: [], monthName: current.toLocaleString('default', { month:'long' }) + ' ' + year });
+            }
+            monthMap.get(key).days.push(new Date(current));
+            current.setDate(current.getDate() + 1);
+        }
+
+        // Build month row and day row HTML
+        let monthRowHtml = '<div class="month-row">';
+        let dayRowHtml = '<div class="day-row">';
+
+        for (let [key, monthData] of monthMap.entries()) {
+            const dayCount = monthData.days.length;
+            monthRowHtml += `<div class="month-cell" style="flex:${dayCount} 1 0px;" title="${monthData.monthName}">${monthData.monthName}</div>`;
+
+            monthData.days.forEach(dayDate => {
+                const dayNum = dayDate.getDate();
+                const weekday = dayDate.toLocaleString('default', { weekday:'short' }).substring(0,2);
+                dayRowHtml += `<div class="day-cell" title="${dayDate.toDateString()}">${dayNum} ${weekday}</div>`;
+            });
+        }
+        monthRowHtml += '</div>';
+        dayRowHtml += '</div>';
+
+        return { monthRow: monthRowHtml, dayRow: dayRowHtml };
+    }
+
+    // ----- calculate bar position based on globalRangeStart/End -----
     function calculateBarPosition(task) {
         if (task.start && task.end) {
             try {
                 const startDate = new Date(task.start + 'T12:00:00');
                 const endDate = new Date(task.end + 'T12:00:00');
                 if (isNaN(startDate)||isNaN(endDate)) return { left:8, width:15 };
-                const totalDays = (REF_END - REF_START) / (1000*60*60*24);
-                if (totalDays<=0) return { left:8, width:15 };
-                const startDays = Math.max(0, (startDate - REF_START) / (1000*60*60*24));
-                const endDays = Math.min(totalDays, Math.max(startDays, (endDate - REF_START) / (1000*60*60*24)));
-                let left = (startDays / totalDays) * 100;
-                let width = ((endDays - startDays) / totalDays) * 100;
-                left = Math.max(0, Math.min(95, left));
-                width = Math.max(2, Math.min(95 - left, width));
-                return { left, width };
+                const totalMs = globalRangeEnd - globalRangeStart;
+                if (totalMs <= 0) return { left:8, width:15 };
+                let leftMs = Math.max(0, startDate - globalRangeStart);
+                let rightMs = Math.min(totalMs, endDate - globalRangeStart);
+                if (rightMs < leftMs) rightMs = leftMs + 86400000; // min 1 day
+                const left = (leftMs / totalMs) * 100;
+                const width = ((rightMs - leftMs) / totalMs) * 100;
+                return { left: Math.max(0, Math.min(95, left)), width: Math.max(2, Math.min(95-left, width)) };
             } catch (error) {
                 console.error(error);
             }
@@ -617,58 +681,30 @@
         applyColumnVisibility();
     }
 
-    // fill blanks
-    function addBlankRowsToFillPage() {
-        if (!tbody) return;
-        const scrollDiv = ganttScroll;
-        const viewportHeight = scrollDiv.clientHeight;
-        if (viewportHeight < 50) return;
-
-        const rowHeight = 34;
-        const existingRows = tbody.children.length;
-        const totalRowsNeeded = Math.ceil(viewportHeight / rowHeight) + 2;
-        let blanksToAdd = totalRowsNeeded - existingRows;
-        if (blanksToAdd < 0) blanksToAdd = 0;
-
-        for (let i = 0; i < blanksToAdd; i++) {
-            const blankRow = document.createElement('tr');
-            blankRow.className = 'blank-row';
-            blankRow.innerHTML = `
-                <td class="task-col"></td>
-                <td class="date-col"></td>
-                <td class="date-col"></td>
-                <td class="pred-col"></td>
-                <td class="budget-col"></td>
-                <td class="status-col"></td>
-                <td class="gantt-col"><div class="timeline-box" style="background:transparent;"></div></td>
-            `;
-            tbody.appendChild(blankRow);
-        }
-    }
-
+    // main render: includes two‑row calendar inside the timeline cell of a special row
     function renderTable() {
         tbody.innerHTML = '';
 
-        // Timeline header row with proper month ticks – showing March, April, May clearly
-        const timelineRow = document.createElement('tr');
-        timelineRow.style.background = '#f0f6ff';
-        timelineRow.innerHTML = `
-            <td class="task-col" style="background:#f0f6ff;">📅 Timeline</td>
-            <td class="date-col"></td><td class="date-col"></td><td class="pred-col"></td>
-            <td class="budget-col"></td><td class="status-col"></td>
-            <td class="gantt-col" style="padding:0!important;">
-                <div class="timeline-header-row">
-                    <div class="month-tick">17 Feb</div>
-                    <div class="month-tick">1 Mar</div>
-                    <div class="month-tick">1 Apr</div>
-                    <div class="month-tick">1 May</div>
-                    <div class="month-tick">1 Jun</div>
-                    <div class="month-tick">30 Jun</div>
+        // ---- insert two‑row calendar as a separate row (occupies full width) ----
+        const { monthRow, dayRow } = renderCalendarHeader(globalRangeStart, globalRangeEnd);
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <td class="task-col" style="background:#eef4fc; font-weight:600; color:#113355;">📅 Project calendar</td>
+            <td class="date-col" style="background:#eef4fc;"></td>
+            <td class="date-col" style="background:#eef4fc;"></td>
+            <td class="pred-col" style="background:#eef4fc;"></td>
+            <td class="budget-col" style="background:#eef4fc;"></td>
+            <td class="status-col" style="background:#eef4fc;"></td>
+            <td class="timeline-cell" style="padding:0!important; background:#eef4fc;">
+                <div class="calendar-header-wrapper">
+                    ${monthRow}
+                    ${dayRow}
                 </div>
             </td>
         `;
-        tbody.appendChild(timelineRow);
+        tbody.appendChild(headerRow);
 
+        // sort tasks
         const sortedTasks = [...tasks].sort((a,b) => (a.displayId||'').localeCompare(b.displayId||'', undefined, {numeric:true}));
         sortedTasks.forEach(task => {
             const pos = calculateBarPosition(task);
@@ -677,7 +713,6 @@
                 `<span class="task-main"><span class="task-number">${task.displayId}</span> ${task.name}</span>` : 
                 `<span class="subtask-item"><span class="task-number">${task.displayId}</span> ${task.name}</span>`;
             
-            // dynamic bar class based on status
             const barBaseClass = 'task-bar';
             const statusSpecific = `status-${task.status || 'not-started'}`;
             const barClass = `${barBaseClass} ${statusSpecific} ${!task.isMain ? 'subtask-bar' : ''}`;
@@ -700,17 +735,17 @@
                 <td class="pred-col">${predDisplay}</td>
                 <td class="budget-col">$${task.budget || 0}</td>
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
-                <td class="gantt-col">
-                    <div class="timeline-box">
+                <td class="gantt-col" style="padding:0!important;">
+                    <div class="timeline-box" style="background:#f5f9ff; height:32px;">
                         <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
                         <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
-                        ${task.onHold ? `<div class="hold-marker" style="left:${pos.left + pos.width/2}%;"></div>` : ''}
                     </div>
                 </td>
             `;
             tbody.appendChild(row);
         });
 
+        // event listeners
         document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
             cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
@@ -740,7 +775,36 @@
         updateCompletion();
         applyColumnVisibility();
 
+        // blank rows
         setTimeout(() => addBlankRowsToFillPage(), 20);
+    }
+
+    function addBlankRowsToFillPage() {
+        if (!tbody) return;
+        const scrollDiv = ganttScroll;
+        const viewportHeight = scrollDiv.clientHeight;
+        if (viewportHeight < 50) return;
+
+        const rowHeight = 34;
+        const existingRows = tbody.children.length;
+        const totalRowsNeeded = Math.ceil(viewportHeight / rowHeight) + 2;
+        let blanksToAdd = totalRowsNeeded - existingRows;
+        if (blanksToAdd < 0) blanksToAdd = 0;
+
+        for (let i = 0; i < blanksToAdd; i++) {
+            const blankRow = document.createElement('tr');
+            blankRow.className = 'blank-row';
+            blankRow.innerHTML = `
+                <td class="task-col"></td>
+                <td class="date-col"></td>
+                <td class="date-col"></td>
+                <td class="pred-col"></td>
+                <td class="budget-col"></td>
+                <td class="status-col"></td>
+                <td class="gantt-col"><div class="timeline-box" style="background:transparent;"></div></td>
+            `;
+            tbody.appendChild(blankRow);
+        }
     }
 
     const resizeObserver = new ResizeObserver(() => {
@@ -758,6 +822,9 @@
                 currentProject = { id: doc.id, ...doc.data() };
                 projectNameDisplay.textContent = currentProject.name || 'Unnamed';
                 projectInfo.textContent = `Code: ${currentProject.code || '—'}`;
+                // if project has start/end dates, update global range (optional)
+                if (currentProject.startDate) globalRangeStart = new Date(currentProject.startDate + 'T12:00:00');
+                if (currentProject.endDate) globalRangeEnd = new Date(currentProject.endDate + 'T12:00:00');
             } else {
                 projectNameDisplay.textContent = 'Demo Project';
                 projectInfo.textContent = 'Code: DEMO';
