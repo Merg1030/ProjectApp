@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gantt · months & days on separate rows · continuous</title>
+    <title>Gantt · polished header & colors (like above)</title>
     
-    <!-- Firebase v8 (compat) — unchanged -->
+    <!-- Firebase v8 (compat) unchanged -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Font Awesome (same as top reference) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
     <style>
         * {
@@ -114,6 +117,21 @@
             overflow: auto;
             position: relative;
             background: white;
+            scrollbar-width: thin;
+            scrollbar-color: #97adc9 #ecf2fa;
+        }
+        .gantt-scroll::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        .gantt-scroll::-webkit-scrollbar-track {
+            background: #ecf2fa;
+            border-radius: 8px;
+        }
+        .gantt-scroll::-webkit-scrollbar-thumb {
+            background: #97adc9;
+            border-radius: 8px;
+            border: 2px solid #ecf2fa;
         }
         .gantt-table {
             width: 100%;
@@ -151,25 +169,27 @@
             cursor: context-menu;
             font-weight: 400;
         }
+        /* task main/sub styling from reference (left panel) */
         .task-main {
-            font-weight: 600;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            background: #2e7d32;
-            padding: 4px 10px;
-            border-radius: 4px;
-            margin: -2px;
+            font-weight: 700;
+            background-color: #ecf3fc;
+            display: block;
+            padding: 4px 6px;
+            border-radius: 3px;
         }
         .subtask-item {
-            padding-left: 32px;
+            padding-left: 24px !important;
+            position: relative;
+            display: block;
             font-size: 0.75rem;
             color: #2f4b70;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        }
+        .subtask-item::before {
+            content: "↳";
+            position: absolute;
+            left: 8px;
+            color: #1f3d62;
+            font-size: 0.8rem;
         }
         .date-col { width: 58px; text-align: center; font-family: monospace; }
         .pred-col { width: 50px; text-align: center; }
@@ -187,27 +207,34 @@
             position: absolute;
             height: 18px;
             top: 6px;
-            border-radius: 3px;
-            border: 1px solid #122b44;
+            border-radius: 20px;
+            border: 1px solid #16324b;
             min-width: 6px;
             cursor: pointer;
+            box-sizing: border-box;
         }
-        /* base bar colors */
-        .task-bar.status-not-started { background: #5f7d9c; }
-        .task-bar.status-in-progress { background: #f9a95d; }
-        .task-bar.status-completed { background: #2e7d5e; }
-        .task-bar.status-on-hold { background: #d97777; }
+        /* base bar colors — matched to reference completed / ongoing / pending style */
+        .task-bar.status-not-started { background: #edf2fa; border: 1px dashed #a7bad4; }  /* empty style */
+        .task-bar.status-in-progress { background: #f9a95d; border: 1px solid #b45b0a; }  /* ongoing */
+        .task-bar.status-completed { background: #1f3a5e; border: 1px solid #16324b; }    /* completed main bar */
+        .task-bar.status-on-hold { background: #d97777; border: 1px solid #b3382c; }
         .subtask-bar {
             height: 14px;
             top: 8px;
+            background: #3f618c !important; /* subtask distinct */
             border: 1px solid #2c3e4e;
         }
+        /* subtask for completed / ongoing adjust background */
+        .subtask-bar.status-completed { background: #3f618c !important; }
+        .subtask-bar.status-in-progress { background: #f9c58d !important; }
+        .subtask-bar.status-not-started { background: #e5edf9 !important; border: 1px dashed #a7bad4; }
+
         .completion-overlay {
             position: absolute;
             height: 18px;
             top: 6px;
             background: #1e4a3a;
-            border-radius: 3px 0 0 3px;
+            border-radius: 20px 0 0 20px;
             opacity: 0.2;
             pointer-events: none;
             z-index: 5;
@@ -235,7 +262,7 @@
         }
         .completion-bar-fill {
             height: 100%;
-            background: #2e7d5e;
+            background: #1f3a5e;
             width: 0%;
             transition: width 0.2s;
         }
@@ -245,48 +272,57 @@
             min-width: 90px;
             font-weight: 500;
         }
-        /* NEW: two‑row calendar header */
+        /* ===== TWO‑ROW CALENDAR HEADER — exact style from reference ===== */
         .calendar-header-wrapper {
             width: 100%;
-            background: #eef4fc;
-            border-bottom: 2px solid #9fb7d3;
-            border-top: 1px solid #c0d2e8;
+            background: #eef4fd;
+            border-bottom: 1px solid #b3c7e0;
             margin: 0;
         }
         .month-row {
             display: flex;
             width: 100%;
-            background: #dae6f5;
+            background: #d4e2f2;   /* like first gantt month header */
             font-weight: 600;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             color: #113355;
-            border-bottom: 1px solid #aac0dd;
+            border-bottom: 2px solid #1f3d62;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
         .day-row {
             display: flex;
             width: 100%;
-            background: #f7faff;
-            font-size: 0.6rem;
+            background: #eef4fd;    /* lighter */
+            font-size: 0.65rem;
             color: #1d4063;
         }
         .month-cell {
             flex: 1 1 0px;
-            padding: 5px 0 3px 8px;
-            border-right: 1px solid #bfd2ea;
+            padding: 6px 0 4px 8px;
+            border-right: 1px solid #9bb1cc;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-weight: 700;
         }
         .day-cell {
             flex: 1 0 auto;
             text-align: center;
-            padding: 3px 0 2px 0;
-            border-right: 1px dotted #b3c7e0;
+            padding: 4px 0 3px 0;
+            border-right: 1px solid #b3c7e0;
             font-weight: 500;
         }
         .day-cell:last-child {
             border-right: none;
         }
+        /* today highlight (if needed) */
+        .today-highlight {
+            background-color: #fce3cd !important;
+            font-weight: 700;
+        }
+        /* week borders: not needed in two‑row layout but could be added via class; we'll keep it simple */
+
         .context-menu, .date-picker-popup {
             position: absolute;
             background: white;
@@ -326,15 +362,19 @@
         }
         .status-badge {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 4px 8px;
             border-radius: 30px;
             font-size: 0.6rem;
-            font-weight: 500;
+            font-weight: 700;
+            border: 1px solid;
+            background: #f4f7fc;
+            color: #1e3b5a;
+            border-color: #b3c7e0;
         }
-        .status-not-started { background: #edf2f9; color: #4a6382; }
-        .status-in-progress { background: #fff3d8; color: #b85e00; }
-        .status-completed { background: #dff0e4; color: #1e6f3f; }
-        .status-on-hold { background: #fee9e7; color: #b3382c; }
+        .status-badge.status-completed { background: #e3f2e9; color: #1f7042; border-color: #9fd0b5; }
+        .status-badge.status-in-progress { background: #fff2db; color: #b45b0a; border-color: #f7c894; }
+        .status-badge.status-not-started { background: #ecf1f7; color: #2c4a72; border-color: #b6cae2; }
+        .status-badge.status-on-hold { background: #fee9e7; color: #b3382c; border-color: #f3b5af; }
 
         .filter-toggle {
             display: flex;
@@ -347,7 +387,6 @@
             border-radius: 30px;
             color: #1a3b5e;
         }
-
         .message {
             position: fixed;
             top: 20px;
@@ -366,8 +405,7 @@
         }
         .loading { text-align: center; padding: 40px; color: #666; }
         .blank-row td {
-            background: white;
-            color: transparent;
+            background: #f9fcff;
             border-bottom: 1px solid #e0e5ec;
             height: 32px;
         }
@@ -377,7 +415,6 @@
         .hide-col .status-col {
             display: none;
         }
-        /* make timeline cell align with header */
         .timeline-cell {
             padding: 0 !important;
             vertical-align: top;
@@ -507,8 +544,7 @@
     let currentAction = null;
     let currentProject = null;
 
-    // ---------- global range (continuous calendar) ----------
-    // We'll use project start/end from Firestore or fallback
+    // global range
     let globalRangeStart = new Date('2026-02-17T12:00:00');
     let globalRangeEnd = new Date('2026-06-30T12:00:00');
 
@@ -553,7 +589,7 @@
         }
     }
 
-    // ----- build two‑row calendar header (months row, days row) -----
+    // build two‑row calendar header (with colors matching reference)
     function renderCalendarHeader(start, end) {
         if (start > end) return '<tr><td colspan="7">Invalid date range</td></tr>';
         const startDate = new Date(start);
@@ -569,13 +605,13 @@
             const month = current.getMonth();
             const key = `${year}-${month}`;
             if (!monthMap.has(key)) {
-                monthMap.set(key, { year, month, days: [], monthName: current.toLocaleString('default', { month:'long' }) + ' ' + year });
+                monthMap.set(key, { year, month, days: [], monthName: current.toLocaleString('default', { month:'short' }) + ' ' + year });
             }
             monthMap.get(key).days.push(new Date(current));
             current.setDate(current.getDate() + 1);
         }
 
-        // Build month row and day row HTML
+        // Month row
         let monthRowHtml = '<div class="month-row">';
         let dayRowHtml = '<div class="day-row">';
 
@@ -586,7 +622,9 @@
             monthData.days.forEach(dayDate => {
                 const dayNum = dayDate.getDate();
                 const weekday = dayDate.toLocaleString('default', { weekday:'short' }).substring(0,2);
-                dayRowHtml += `<div class="day-cell" title="${dayDate.toDateString()}">${dayNum} ${weekday}</div>`;
+                // optional today highlight
+                const isToday = false; // we could implement if needed
+                dayRowHtml += `<div class="day-cell ${isToday ? 'today-highlight' : ''}" title="${dayDate.toDateString()}">${dayNum} ${weekday}</div>`;
             });
         }
         monthRowHtml += '</div>';
@@ -595,7 +633,7 @@
         return { monthRow: monthRowHtml, dayRow: dayRowHtml };
     }
 
-    // ----- calculate bar position based on globalRangeStart/End -----
+    // calculate bar position based on globalRangeStart/End
     function calculateBarPosition(task) {
         if (task.start && task.end) {
             try {
@@ -681,21 +719,21 @@
         applyColumnVisibility();
     }
 
-    // main render: includes two‑row calendar inside the timeline cell of a special row
+    // main render
     function renderTable() {
         tbody.innerHTML = '';
 
-        // ---- insert two‑row calendar as a separate row (occupies full width) ----
+        // ---- calendar header row ----
         const { monthRow, dayRow } = renderCalendarHeader(globalRangeStart, globalRangeEnd);
         const headerRow = document.createElement('tr');
         headerRow.innerHTML = `
-            <td class="task-col" style="background:#eef4fc; font-weight:600; color:#113355;">📅 Project calendar</td>
-            <td class="date-col" style="background:#eef4fc;"></td>
-            <td class="date-col" style="background:#eef4fc;"></td>
-            <td class="pred-col" style="background:#eef4fc;"></td>
-            <td class="budget-col" style="background:#eef4fc;"></td>
-            <td class="status-col" style="background:#eef4fc;"></td>
-            <td class="timeline-cell" style="padding:0!important; background:#eef4fc;">
+            <td class="task-col" style="background:#eef4fd; font-weight:600; color:#113355;"><i class="fa-solid fa-calendar-days" style="margin-right:6px;"></i>Project calendar</td>
+            <td class="date-col" style="background:#eef4fd;"></td>
+            <td class="date-col" style="background:#eef4fd;"></td>
+            <td class="pred-col" style="background:#eef4fd;"></td>
+            <td class="budget-col" style="background:#eef4fd;"></td>
+            <td class="status-col" style="background:#eef4fd;"></td>
+            <td class="timeline-cell" style="padding:0!important; background:#eef4fd;">
                 <div class="calendar-header-wrapper">
                     ${monthRow}
                     ${dayRow}
@@ -710,12 +748,12 @@
             const pos = calculateBarPosition(task);
             const row = document.createElement('tr');
             const taskDisplay = task.isMain ? 
-                `<span class="task-main"><span class="task-number">${task.displayId}</span> ${task.name}</span>` : 
-                `<span class="subtask-item"><span class="task-number">${task.displayId}</span> ${task.name}</span>`;
+                `<span class="task-main"><i class="fa-solid fa-bars" style="margin-right:6px; color:#1f3d62;"></i> ${task.displayId} · ${task.name}</span>` : 
+                `<span class="subtask-item">${task.displayId} · ${task.name}</span>`;
             
-            const barBaseClass = 'task-bar';
+            let barBaseClass = 'task-bar';
+            if (!task.isMain) barBaseClass += ' subtask-bar';
             const statusSpecific = `status-${task.status || 'not-started'}`;
-            const barClass = `${barBaseClass} ${statusSpecific} ${!task.isMain ? 'subtask-bar' : ''}`;
             
             const statusClass = getStatusClass(task.status);
             const statusText = getStatusText(task.status);
@@ -737,7 +775,7 @@
                 <td class="status-col"><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="gantt-col" style="padding:0!important;">
                     <div class="timeline-box" style="background:#f5f9ff; height:32px;">
-                        <div class="${barClass}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
+                        <div class="${barBaseClass} ${statusSpecific}" style="left:${pos.left}%; width:${pos.width}%;" data-task-id="${task.firebaseId}"></div>
                         <div class="completion-overlay ${!task.isMain ? 'subtask-bar' : ''}" style="left:${pos.left}%; width:${completionWidth}%;"></div>
                     </div>
                 </td>
@@ -822,7 +860,6 @@
                 currentProject = { id: doc.id, ...doc.data() };
                 projectNameDisplay.textContent = currentProject.name || 'Unnamed';
                 projectInfo.textContent = `Code: ${currentProject.code || '—'}`;
-                // if project has start/end dates, update global range (optional)
                 if (currentProject.startDate) globalRangeStart = new Date(currentProject.startDate + 'T12:00:00');
                 if (currentProject.endDate) globalRangeEnd = new Date(currentProject.endDate + 'T12:00:00');
             } else {
@@ -838,11 +875,11 @@
             if (!snapshot.empty) return;
             const batch = db.batch();
             const sampleMain = [
-                { name: 'Site preparation', budget: 8000, start: '2026-02-20', end: '2026-03-10', status: 'completed' },
-                { name: 'Foundation', budget: 15000, start: '2026-03-05', end: '2026-04-10', status: 'in-progress' },
-                { name: 'Framing', budget: 22000, start: '2026-04-01', end: '2026-05-15', status: 'not-started' },
-                { name: 'Roofing', budget: 12000, start: '2026-05-10', end: '2026-06-05', status: 'not-started' },
-                { name: 'Electrical', budget: 18000, start: '2026-04-20', end: '2026-06-20', status: 'on-hold' }
+                { name: '📐 Site prep', budget: 8200, start: '2026-02-20', end: '2026-03-10', status: 'completed' },
+                { name: '🏗️ Foundation', budget: 15000, start: '2026-03-05', end: '2026-04-12', status: 'in-progress' },
+                { name: '🪵 Framing', budget: 22000, start: '2026-04-10', end: '2026-05-18', status: 'not-started' },
+                { name: '⚡ Electrical', budget: 18000, start: '2026-05-05', end: '2026-06-15', status: 'not-started' },
+                { name: '🔧 Plumbing', budget: 12500, start: '2026-05-20', end: '2026-06-22', status: 'in-progress' }
             ];
             const mainRefs = [];
             for (let i = 0; i < sampleMain.length; i++) {
@@ -857,7 +894,7 @@
                     end: m.end,
                     status: m.status,
                     isMain: true,
-                    onHold: m.status === 'on-hold',
+                    onHold: false,
                     parentId: null,
                     pred: '',
                     projectId,
@@ -867,11 +904,13 @@
                 mainRefs.push({ id: mainDoc.id, displayId: mainId, name: m.name });
             }
             const subTasks = [
-                { parentIdx: 0, name: 'Clear area', budget: 2000, start: '2026-02-20', end: '2026-02-25', status: 'completed' },
-                { parentIdx: 0, name: 'Survey', budget: 1500, start: '2026-02-26', end: '2026-03-02', status: 'completed' },
-                { parentIdx: 1, name: 'Excavation', budget: 5000, start: '2026-03-05', end: '2026-03-18', status: 'completed' },
-                { parentIdx: 1, name: 'Concrete pour', budget: 7000, start: '2026-03-15', end: '2026-04-02', status: 'in-progress' },
-                { parentIdx: 4, name: 'Rough wiring', budget: 4000, start: '2026-04-25', end: '2026-05-30', status: 'on-hold' }
+                { parentIdx:0, name:'Clear grade', budget:3200, start:'2026-02-20', end:'2026-02-28', status:'completed' },
+                { parentIdx:0, name:'Survey', budget:5000, start:'2026-03-01', end:'2026-03-10', status:'completed' },
+                { parentIdx:1, name:'Excavation', budget:6000, start:'2026-03-05', end:'2026-03-20', status:'completed' },
+                { parentIdx:1, name:'Footings', budget:9000, start:'2026-03-21', end:'2026-04-12', status:'in-progress' },
+                { parentIdx:2, name:'Walls', budget:12000, start:'2026-04-10', end:'2026-05-01', status:'not-started' },
+                { parentIdx:2, name:'Roof truss', budget:10000, start:'2026-05-02', end:'2026-05-18', status:'not-started' },
+                { parentIdx:3, name:'Rough-in', budget:18000, start:'2026-05-05', end:'2026-06-15', status:'not-started' }
             ];
             for (const s of subTasks) {
                 const parent = mainRefs[s.parentIdx];
@@ -888,7 +927,7 @@
                     end: s.end,
                     status: s.status,
                     isMain: false,
-                    onHold: s.status === 'on-hold',
+                    onHold: false,
                     parentId: parent.id,
                     pred: '',
                     projectId,
