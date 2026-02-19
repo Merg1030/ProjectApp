@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <!-- Bootstrap 5 (light) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+  <!-- jsPDF and autoTable for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
       --primary: #1a365d;
@@ -430,6 +433,22 @@
       background: #38a169;
     }
 
+    .btn-download {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-download:hover {
+      background: #dd6b20;
+    }
+
     .service-bar {
       background: #f7fafc;
       border: 1px solid var(--border-color);
@@ -688,9 +707,10 @@
       <!-- service bar -->
       <div class="service-bar">
         <div class="service-info"><span class="selected-count" id="selectedCount">0 selected</span><span id="serviceInfo">Select extinguishers to service</span></div>
-        <div style="display: flex; gap: 1rem;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
           <button class="btn-success" id="serviceSelectedBtn"><i class="fas fa-tools"></i> Service Selected</button>
           <button class="btn-primary" id="viewServiceHistoryBtn"><i class="fas fa-history"></i> View Service History</button>
+          <button class="btn-download" id="downloadPdfBtn"><i class="fas fa-download"></i> Download PDF Report</button>
         </div>
       </div>
 
@@ -750,6 +770,7 @@
     const historyModal = document.getElementById('historyModal'), closeHistoryModal = document.getElementById('closeHistoryModal'), serviceHistoryList = document.getElementById('serviceHistoryList'), historyModalTitle = document.getElementById('historyModalTitle'), historyTabs = document.querySelectorAll('.history-tab'), individualHistory = document.getElementById('individualHistory'), bulkHistory = document.getElementById('bulkHistory'), bulkServiceContent = document.getElementById('bulkServiceContent');
     const serviceModal = document.getElementById('serviceModal'), closeServiceModal = document.getElementById('closeServiceModal'), cancelService = document.getElementById('cancelService'), confirmService = document.getElementById('confirmService'), serviceSelectedCount = document.getElementById('serviceSelectedCount'), serviceDate = document.getElementById('serviceDate'), nextServiceDate = document.getElementById('nextServiceDate'), newExpirationDate = document.getElementById('newExpirationDate');
     const toggleFormBtn = document.getElementById('toggleFormBtn'), toggleFormIcon = document.getElementById('toggleFormIcon'), addForm = document.getElementById('addForm');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
     // --- FILTER elements ---
     const locationFilter = document.getElementById('locationFilter');
@@ -1196,6 +1217,100 @@
           resetForm();
         }
       }
+    });
+
+    // PDF Download Function - PORTRAIT MODE
+    downloadPdfBtn.addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('portrait'); // Changed from 'landscape' to 'portrait'
+      
+      // Get filtered data
+      let dataToExport = extinguishersData;
+      if (activeLocationFilter !== 'all') {
+        dataToExport = extinguishersData.filter(ext => ext.location === activeLocationFilter);
+      }
+      
+      // Title
+      doc.setFontSize(16);
+      doc.setTextColor(26, 54, 93);
+      doc.text('Fire Extinguisher Report', 14, 15);
+      
+      // Subtitle with filter info
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const filterText = activeLocationFilter === 'all' 
+        ? `All Locations (${dataToExport.length} extinguishers)` 
+        : `Location: ${activeLocationFilter} (${dataToExport.length} extinguishers)`;
+      doc.text(filterText, 14, 22);
+      
+      // Date
+      const todayStr = new Date().toLocaleDateString();
+      doc.text(`Generated: ${todayStr}`, 14, 28);
+      
+      // Stats summary
+      let good = 0, expiring = 0, expired = 0;
+      dataToExport.forEach(ext => {
+        const days = calculateDaysLeft(ext.expiration);
+        if (days < 0) expired++;
+        else if (days <= 30) expiring++;
+        else good++;
+      });
+      
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Summary - Total: ${dataToExport.length} | Good: ${good} | Expiring Soon: ${expiring} | Expired: ${expired}`, 14, 35);
+      
+      // Table data
+      const tableData = dataToExport.map(ext => {
+        const days = calculateDaysLeft(ext.expiration);
+        const status = days < 0 ? 'Expired' : (days <= 30 ? 'Expiring Soon' : 'Good');
+        return [
+          ext.code || 'N/A',
+          ext.location,
+          ext.type || 'DCP',
+          ext.capacity || '4',
+          formatDate(ext.expiration),
+          formatDate(ext.lastService),
+          ext.nextServiceDate ? formatDate(ext.nextServiceDate) : 'Not set',
+          status,
+          ext.serviceCount || 0
+        ];
+      });
+      
+      // Sort by status (expired first, then expiring soon, then good)
+      tableData.sort((a, b) => {
+        const statusOrder = { 'Expired': 0, 'Expiring Soon': 1, 'Good': 2 };
+        return (statusOrder[a[7]] || 3) - (statusOrder[b[7]] || 3);
+      });
+      
+      // Add table - adjusted column widths for portrait mode
+      doc.autoTable({
+        startY: 40,
+        head: [['Code', 'Location', 'Type', 'Cap', 'Expiration', 'Last Svc', 'Next Svc', 'Status', 'Cnt']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [26, 54, 93], textColor: 255, fontSize: 8 },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        columnStyles: {
+          0: { cellWidth: 18 },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 15 },
+          3: { cellWidth: 10 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 18 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 18 },
+          8: { cellWidth: 10 }
+        },
+        margin: { left: 14, right: 14 }
+      });
+      
+      // Save PDF
+      const filename = activeLocationFilter === 'all' 
+        ? `fire-extinguishers-all-${todayStr.replace(/\//g, '-')}.pdf` 
+        : `fire-extinguishers-${activeLocationFilter.toLowerCase().replace(/\s+/g, '-')}-${todayStr.replace(/\//g, '-')}.pdf`;
+      doc.save(filename);
     });
   </script>
 </body>
