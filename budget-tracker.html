@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Gantt · full page scroll · no milestones</title>
+    <title>Project Gantt · clean dates · ongoing colors</title>
     
-    <!-- Firebase SDK v8 (compat) -->
+    <!-- Firebase v8 (compat) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
@@ -19,7 +19,7 @@
         html, body {
             height: 100%;
             background: #1e3146;
-            overflow: hidden;           /* outer no scroll, inner does */
+            overflow: hidden;
         }
         .gantt-full {
             height: 100vh;
@@ -109,9 +109,8 @@
             cursor: pointer;
             margin-top: 12px;
         }
-        /* GANTT SCROLL takes ALL remaining height */
         .gantt-scroll {
-            flex: 1;                    /* fills everything between top and bottom */
+            flex: 1;
             overflow: auto;
             position: relative;
             background: white;
@@ -119,7 +118,7 @@
         .gantt-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 700px;
+            min-width: 750px;
             table-layout: fixed;
             font-size: 0.7rem;
         }
@@ -172,13 +171,6 @@
             align-items: center;
             gap: 6px;
         }
-        /* hidden columns class */
-        .hide-col .date-col,
-        .hide-col .pred-col,
-        .hide-col .budget-col,
-        .hide-col .status-col {
-            display: none;
-        }
         .date-col { width: 58px; text-align: center; font-family: monospace; }
         .pred-col { width: 50px; text-align: center; }
         .budget-col { width: 65px; text-align: right; padding-right: 8px; }
@@ -195,24 +187,29 @@
             position: absolute;
             height: 18px;
             top: 6px;
-            background: #2c4d78;
             border-radius: 3px;
             border: 1px solid #122b44;
             min-width: 6px;
             cursor: pointer;
         }
+        /* base bar colors: ongoing = orange, completed = green, not-started = blue-gray, on-hold = red tint */
+        .task-bar.status-not-started { background: #5f7d9c; }      /* soft blue-grey */
+        .task-bar.status-in-progress { background: #f9a95d; }      /* warm orange */
+        .task-bar.status-completed { background: #2e7d5e; }        /* green */
+        .task-bar.status-on-hold { background: #d97777; }          /* soft red */
         .subtask-bar {
-            background: #5a6c7e;
             height: 14px;
             top: 8px;
+            border: 1px solid #2c3e4e;
         }
+        /* completion overlay never changes – stays darker but we remove it for cleaner ongoing */
         .completion-overlay {
             position: absolute;
             height: 18px;
             top: 6px;
-            background: #2e7d5e;
+            background: #1e4a3a;
             border-radius: 3px 0 0 3px;
-            opacity: 0.9;
+            opacity: 0.2;            /* subtle, just indicates progress */
             pointer-events: none;
             z-index: 5;
         }
@@ -230,7 +227,6 @@
             z-index: 12;
             pointer-events: none;
         }
-        /* milestone dot class removed – no milestone row */
         .bottom-space {
             padding: 0.4rem 1.5rem 0.5rem;
             background: white;
@@ -263,14 +259,20 @@
         .timeline-header-row {
             display: flex;
             width: 100%;
+            height: 30px;
+            align-items: center;
             font-size: 0.55rem;
             color: #1e3f64;
             font-weight: 500;
+            background: #e8f0fe;
         }
         .month-tick {
             flex: 1;
             text-align: center;
             border-left: 1px solid #b7ceec;
+            font-size: 0.65rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
         .context-menu, .date-picker-popup {
             position: absolute;
@@ -350,12 +352,18 @@
             to { transform: translateX(0); opacity: 1; }
         }
         .loading { text-align: center; padding: 40px; color: #666; }
-        /* blank row styling (empty but visible) */
         .blank-row td {
             background: white;
             color: transparent;
             border-bottom: 1px solid #e0e5ec;
             height: 32px;
+        }
+        /* hide extra columns toggle (no border inside) we keep it clean */
+        .hide-col .date-col,
+        .hide-col .pred-col,
+        .hide-col .budget-col,
+        .hide-col .status-col {
+            display: none;
         }
     </style>
 </head>
@@ -399,7 +407,6 @@
         </div>
     </div>
 
-    <!-- GANTT SCROLL will contain both real tasks AND blank rows to fill page -->
     <div class="gantt-scroll" id="ganttScroll">
         <table class="gantt-table" id="ganttTable">
             <thead>
@@ -410,7 +417,7 @@
                     <th class="pred-col">Pred</th>
                     <th class="budget-col">Budget</th>
                     <th class="status-col">Status</th>
-                    <th style="min-width:400px;">Timeline (Feb – Jun 2026)</th>
+                    <th style="min-width:420px;">Timeline (Feb – Jun 2026)</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -426,7 +433,6 @@
     </div>
 </div>
 
-<!-- Context Menu & Date Picker (same) -->
 <div class="context-menu" id="contextMenu">
     <div class="context-menu-item" id="menuStart">📅 Set Start Date</div>
     <div class="context-menu-item" id="menuEnd">📅 Set End Date</div>
@@ -440,6 +446,7 @@
 </div>
 
 <script>
+    (function() {
     // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
@@ -456,7 +463,6 @@
     const projectId = urlParams.get('project');
     if (!projectId) window.location.href = 'projects.html';
 
-    // DOM elements
     const tbody = document.getElementById('tableBody');
     const toggleBtn = document.getElementById('toggleFormBtn');
     const form = document.getElementById('addForm');
@@ -475,13 +481,11 @@
     const ganttTable = document.getElementById('ganttTable');
     const ganttScroll = document.getElementById('ganttScroll');
 
-    // State
     let tasks = [];
     let selectedTaskId = null;
     let currentAction = null;
     let currentProject = null;
 
-    // Helper: show message
     function showMessage(text, type = 'success') {
         const msg = document.createElement('div');
         msg.className = `message ${type}`;
@@ -523,18 +527,20 @@
         }
     }
 
+    // timeline reference with clear month dates – March, April, May all visible
+    const REF_START = new Date('2026-02-17T12:00:00');
+    const REF_END = new Date('2026-06-30T12:00:00');
+
     function calculateBarPosition(task) {
         if (task.start && task.end) {
             try {
                 const startDate = new Date(task.start + 'T12:00:00');
                 const endDate = new Date(task.end + 'T12:00:00');
-                const refStart = new Date('2026-02-17T12:00:00');
-                const refEnd = new Date('2026-06-30T12:00:00');
-                if (isNaN(startDate)||isNaN(endDate)) return { left:10, width:20 };
-                const totalDays = (refEnd - refStart) / (1000*60*60*24);
-                if (totalDays<=0) return { left:10, width:20 };
-                const startDays = Math.max(0, (startDate - refStart) / (1000*60*60*24));
-                const endDays = Math.min(totalDays, Math.max(startDays, (endDate - refStart) / (1000*60*60*24)));
+                if (isNaN(startDate)||isNaN(endDate)) return { left:8, width:15 };
+                const totalDays = (REF_END - REF_START) / (1000*60*60*24);
+                if (totalDays<=0) return { left:8, width:15 };
+                const startDays = Math.max(0, (startDate - REF_START) / (1000*60*60*24));
+                const endDays = Math.min(totalDays, Math.max(startDays, (endDate - REF_START) / (1000*60*60*24)));
                 let left = (startDays / totalDays) * 100;
                 let width = ((endDays - startDays) / totalDays) * 100;
                 left = Math.max(0, Math.min(95, left));
@@ -544,7 +550,7 @@
                 console.error(error);
             }
         }
-        return { left: 10, width: 20 };
+        return { left: 8, width: 15 };
     }
 
     function updateCompletion() {
@@ -600,11 +606,8 @@
 
     function applyColumnVisibility() {
         const hide = hideCheckbox.checked;
-        if (hide) {
-            ganttTable.classList.add('hide-col');
-        } else {
-            ganttTable.classList.remove('hide-col');
-        }
+        if (hide) ganttTable.classList.add('hide-col');
+        else ganttTable.classList.remove('hide-col');
         localStorage.setItem('ganttHideColumns', hide ? 'true' : 'false');
     }
 
@@ -614,18 +617,16 @@
         applyColumnVisibility();
     }
 
-    // Add blank rows to fill the viewport height – no milestone row
+    // fill blanks
     function addBlankRowsToFillPage() {
         if (!tbody) return;
         const scrollDiv = ganttScroll;
         const viewportHeight = scrollDiv.clientHeight;
         if (viewportHeight < 50) return;
 
-        // approximate row height (including border)
-        const rowHeight = 34; // from td padding + border
+        const rowHeight = 34;
         const existingRows = tbody.children.length;
-        // timeline row counts as 1, then each task row, we want to fill so that total height ≈ viewport
-        const totalRowsNeeded = Math.ceil(viewportHeight / rowHeight) + 2; // a bit extra to ensure scroll
+        const totalRowsNeeded = Math.ceil(viewportHeight / rowHeight) + 2;
         let blanksToAdd = totalRowsNeeded - existingRows;
         if (blanksToAdd < 0) blanksToAdd = 0;
 
@@ -645,16 +646,10 @@
         }
     }
 
-    // render tasks + timeline header (NO milestone row)
     function renderTable() {
-        if (!tasks || tasks.length === 0) {
-            // still show timeline header + blank rows later
-            tbody.innerHTML = ''; 
-        } else {
-            tbody.innerHTML = '';
-        }
+        tbody.innerHTML = '';
 
-        // Always add the timeline header row (first row)
+        // Timeline header row with proper month ticks – showing March, April, May clearly
         const timelineRow = document.createElement('tr');
         timelineRow.style.background = '#f0f6ff';
         timelineRow.innerHTML = `
@@ -663,14 +658,17 @@
             <td class="budget-col"></td><td class="status-col"></td>
             <td class="gantt-col" style="padding:0!important;">
                 <div class="timeline-header-row">
-                    <div class="month-tick">Feb 17</div><div class="month-tick">Mar 1</div><div class="month-tick">Apr 1</div>
-                    <div class="month-tick">May 1</div><div class="month-tick">Jun 1</div><div class="month-tick">Jun 30</div>
+                    <div class="month-tick">17 Feb</div>
+                    <div class="month-tick">1 Mar</div>
+                    <div class="month-tick">1 Apr</div>
+                    <div class="month-tick">1 May</div>
+                    <div class="month-tick">1 Jun</div>
+                    <div class="month-tick">30 Jun</div>
                 </div>
             </td>
         `;
         tbody.appendChild(timelineRow);
 
-        // Sort and add real tasks
         const sortedTasks = [...tasks].sort((a,b) => (a.displayId||'').localeCompare(b.displayId||'', undefined, {numeric:true}));
         sortedTasks.forEach(task => {
             const pos = calculateBarPosition(task);
@@ -678,7 +676,12 @@
             const taskDisplay = task.isMain ? 
                 `<span class="task-main"><span class="task-number">${task.displayId}</span> ${task.name}</span>` : 
                 `<span class="subtask-item"><span class="task-number">${task.displayId}</span> ${task.name}</span>`;
-            const barClass = task.isMain ? 'task-bar' : 'task-bar subtask-bar';
+            
+            // dynamic bar class based on status
+            const barBaseClass = 'task-bar';
+            const statusSpecific = `status-${task.status || 'not-started'}`;
+            const barClass = `${barBaseClass} ${statusSpecific} ${!task.isMain ? 'subtask-bar' : ''}`;
+            
             const statusClass = getStatusClass(task.status);
             const statusText = getStatusText(task.status);
             const completionPercent = getCompletionFromStatus(task.status);
@@ -708,7 +711,6 @@
             tbody.appendChild(row);
         });
 
-        // event listeners for context + bar clicks
         document.querySelectorAll('.task-col[data-task-id]').forEach(cell => {
             cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
@@ -738,20 +740,12 @@
         updateCompletion();
         applyColumnVisibility();
 
-        // After rendering real rows, add blanks to fill the page (NO milestone row ever)
-        setTimeout(() => {
-            addBlankRowsToFillPage();
-        }, 20);
+        setTimeout(() => addBlankRowsToFillPage(), 20);
     }
 
-    // Resize observer to keep blanks adjusted
     const resizeObserver = new ResizeObserver(() => {
         if (tbody) {
-            // keep blanks fitted – but avoid infinite loop
-            const realRows = Array.from(tbody.children).filter(tr => !tr.classList.contains('blank-row') && tr.cells?.[0]?.innerText !== '📅 Timeline');
-            // remove all blank rows first
             Array.from(tbody.querySelectorAll('.blank-row')).forEach(br => br.remove());
-            // then re-add blanks
             addBlankRowsToFillPage();
         }
     });
@@ -771,7 +765,6 @@
         } catch (error) { console.error(error); }
     }
 
-    // Seed sample tasks if empty (like before)
     async function seedSampleTasksIfEmpty() {
         try {
             const snapshot = await db.collection('gantt_tasks').where('projectId', '==', projectId).get();
@@ -782,7 +775,7 @@
                 { name: 'Foundation', budget: 15000, start: '2026-03-05', end: '2026-04-10', status: 'in-progress' },
                 { name: 'Framing', budget: 22000, start: '2026-04-01', end: '2026-05-15', status: 'not-started' },
                 { name: 'Roofing', budget: 12000, start: '2026-05-10', end: '2026-06-05', status: 'not-started' },
-                { name: 'Electrical', budget: 18000, start: '2026-04-20', end: '2026-06-20', status: 'not-started' }
+                { name: 'Electrical', budget: 18000, start: '2026-04-20', end: '2026-06-20', status: 'on-hold' }
             ];
             const mainRefs = [];
             for (let i = 0; i < sampleMain.length; i++) {
@@ -797,7 +790,7 @@
                     end: m.end,
                     status: m.status,
                     isMain: true,
-                    onHold: false,
+                    onHold: m.status === 'on-hold',
                     parentId: null,
                     pred: '',
                     projectId,
@@ -806,12 +799,12 @@
                 });
                 mainRefs.push({ id: mainDoc.id, displayId: mainId, name: m.name });
             }
-            // few subtasks for more rows
             const subTasks = [
                 { parentIdx: 0, name: 'Clear area', budget: 2000, start: '2026-02-20', end: '2026-02-25', status: 'completed' },
                 { parentIdx: 0, name: 'Survey', budget: 1500, start: '2026-02-26', end: '2026-03-02', status: 'completed' },
                 { parentIdx: 1, name: 'Excavation', budget: 5000, start: '2026-03-05', end: '2026-03-18', status: 'completed' },
-                { parentIdx: 1, name: 'Concrete pour', budget: 7000, start: '2026-03-15', end: '2026-04-02', status: 'in-progress' }
+                { parentIdx: 1, name: 'Concrete pour', budget: 7000, start: '2026-03-15', end: '2026-04-02', status: 'in-progress' },
+                { parentIdx: 4, name: 'Rough wiring', budget: 4000, start: '2026-04-25', end: '2026-05-30', status: 'on-hold' }
             ];
             for (const s of subTasks) {
                 const parent = mainRefs[s.parentIdx];
@@ -828,7 +821,7 @@
                     end: s.end,
                     status: s.status,
                     isMain: false,
-                    onHold: false,
+                    onHold: s.status === 'on-hold',
                     parentId: parent.id,
                     pred: '',
                     projectId,
@@ -948,7 +941,6 @@
 
     window.goToProjects = () => window.location.href = 'projects.html';
 
-    // Event listeners
     toggleBtn.addEventListener('click', () => {
         form.classList.toggle('visible');
         toggleBtn.textContent = form.classList.contains('visible') ? '− Hide form' : '＋ Show form';
@@ -1044,6 +1036,7 @@
         loadTasks();
     }
     init();
+    })();
 </script>
 </body>
 </html>
