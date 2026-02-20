@@ -3,959 +3,737 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hazida · quotations</title>
+  <title>Hazida Limited · Construction Quotations</title>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    body {
-      background: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .app {
-      display: flex;
-      width: 100%;
-      max-width: 1400px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      min-height: 90vh;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #f2f2f2; padding: 20px; min-height: 100vh; }
+    
+    .app { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+    
     /* Sidebar */
-    .sidebar {
-      width: 280px;
-      background: #fafafa;
-      border-right: 1px solid #e0e0e0;
-      padding: 24px 16px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sidebar-header {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 24px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #ddd;
-    }
-
-    .sidebar-header span {
-      font-size: 14px;
-      background: #1a1a1a;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      margin-left: 8px;
-    }
-
-    .new-quote-btn {
-      background: #1a1a1a;
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 500;
-      cursor: pointer;
-      margin-bottom: 24px;
-      border: 1px solid #333;
-    }
-
-    .new-quote-btn:hover {
-      background: #333;
-    }
-
-    .saved-title {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 16px;
-      font-size: 14px;
-    }
-
-    .saved-list {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .saved-item {
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 12px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .saved-item:hover {
-      background: #f5f5f5;
-    }
-
-    .saved-item .quote-ref {
-      font-weight: 600;
-      color: #1a1a1a;
-      font-size: 14px;
-    }
-
-    .saved-item .quote-customer {
-      font-size: 13px;
-      color: #666;
-      margin: 4px 0;
-    }
-
-    .saved-item .quote-total {
-      font-weight: 600;
-      color: #1a1a1a;
-      font-size: 14px;
-    }
-
-    .saved-item .quote-date {
-      font-size: 11px;
-      color: #999;
-    }
-
-    .saved-item .view-pdf-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #1a1a1a;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-
-    /* Main content */
-    .main {
-      flex: 1;
-      background: white;
-      padding: 32px;
-      overflow-y: auto;
-      max-height: 90vh;
-    }
-
-    .main-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .main-header h2 {
-      font-size: 28px;
-      font-weight: 500;
-      color: #1a1a1a;
-    }
-
-    .quote-number {
-      background: #f0f0f0;
-      padding: 8px 24px;
-      border-radius: 40px;
-      font-weight: 500;
-      color: #333;
-    }
-
-    /* Customer panel */
-    .customer-panel {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
-      display: flex;
-      gap: 24px;
-      border: 1px solid #e0e0e0;
-    }
-
-    .customer-field {
-      display: flex;
-      flex-direction: column;
-      min-width: 250px;
-    }
-
-    .customer-field label {
-      font-weight: 500;
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 4px;
-    }
-
-    .customer-field input {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 14px;
-    }
-
-    .customer-field input:focus {
-      outline: none;
-      border-color: #999;
-    }
-
-    /* Job card */
-    .job-card {
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-
-    .job-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .job-header input {
-      font-size: 16px;
-      font-weight: 500;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 8px 16px;
-      width: 350px;
-    }
-
-    .job-header .remove-job {
-      background: none;
-      border: 1px solid #dc3545;
-      padding: 6px 16px;
-      border-radius: 6px;
-      color: #dc3545;
-      cursor: pointer;
-      margin-left: auto;
-    }
-
-    .job-header .remove-job:hover {
-      background: #dc3545;
-      color: white;
-    }
-
-    /* Table styles - clean and proper */
-    .mat-table-wrapper {
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      overflow: auto;
-      margin: 16px 0;
-    }
-
-    .mat-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 700px;
-    }
-
-    .mat-table th {
-      background: #f5f5f5;
-      color: #333;
-      font-weight: 500;
-      font-size: 12px;
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .mat-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .mat-table input {
-      width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 6px 8px;
-      font-size: 13px;
-    }
-
-    .mat-table input:focus {
-      outline: none;
-      border-color: #999;
-    }
-
-    .remove-mat {
-      background: none;
-      border: none;
-      font-size: 16px;
-      color: #dc3545;
-      cursor: pointer;
-      padding: 4px 8px;
-    }
-
-    .add-material-btn {
-      background: white;
-      border: 1px solid #1a1a1a;
-      border-radius: 6px;
-      padding: 8px 20px;
-      font-size: 13px;
-      color: #1a1a1a;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-
-    .add-material-btn:hover {
-      background: #1a1a1a;
-      color: white;
-    }
-
-    .add-job-btn {
-      background: white;
-      border: 1px solid #1a1a1a;
-      border-radius: 6px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #1a1a1a;
-      cursor: pointer;
-      margin: 16px 0;
-    }
-
-    .add-job-btn:hover {
-      background: #1a1a1a;
-      color: white;
-    }
-
-    /* Indirect section */
-    .indirect-section {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-      border: 1px solid #e0e0e0;
-    }
-
-    .section-title {
-      font-size: 18px;
-      font-weight: 500;
-      color: #1a1a1a;
-      margin-bottom: 16px;
-    }
-
-    .indirect-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 6px;
-      border: 1px solid #e0e0e0;
-    }
-
-    .indirect-table th {
-      background: #f5f5f5;
-      padding: 12px;
-      font-weight: 500;
-      color: #333;
-      font-size: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .indirect-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .indirect-table input {
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 6px 12px;
-      width: 250px;
-    }
-
-    .add-indirect-btn {
-      background: white;
-      border: 1px solid #1a1a1a;
-      border-radius: 6px;
-      padding: 8px 20px;
-      font-size: 13px;
-      color: #1a1a1a;
-      cursor: pointer;
-      margin-top: 16px;
-    }
-
-    .add-indirect-btn:hover {
-      background: #1a1a1a;
-      color: white;
-    }
-
-    /* Labour, markup, grand */
-    .labour-markup-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-      border: 1px solid #e0e0e0;
-    }
-
-    .lm-block {
-      display: flex;
-      gap: 24px;
-    }
-
-    .lm-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .lm-item label {
-      font-weight: 500;
-      color: #333;
-      width: 70px;
-    }
-
-    .lm-item input {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 8px 16px;
-      width: 140px;
-    }
-
-    .grand-total-box {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1a1a1a;
-      background: white;
-      padding: 8px 24px;
-      border-radius: 40px;
-      border: 1px solid #ddd;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 16px;
-      margin: 24px 0;
-    }
-
-    .save-btn, .pdf-btn {
-      background: #1a1a1a;
-      border: none;
-      color: white;
-      font-weight: 500;
-      padding: 12px 32px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .save-btn:hover, .pdf-btn:hover {
-      background: #333;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #666;
-    }
-
-    .no-data {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-      border: 1px solid #eee;
-      border-radius: 8px;
-    }
+    .sidebar { width: 300px; background: white; border-radius: 6px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: fit-content; }
+    .sidebar-header { font-size: 24px; font-weight: bold; color: #1a2b3c; margin-bottom: 5px; }
+    .sidebar-sub { font-size: 12px; color: #666; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1a2b3c; }
+    .new-quote-btn { width: 100%; background: #1a2b3c; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 25px; }
+    .new-quote-btn:hover { background: #2c3e50; }
+    .saved-title { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 15px; }
+    .saved-list { display: flex; flex-direction: column; gap: 10px; max-height: 600px; overflow-y: auto; }
+    .saved-item { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; cursor: pointer; position: relative; }
+    .saved-item:hover { background: #e9ecef; }
+    .quote-ref { font-weight: bold; color: #1a2b3c; font-size: 14px; }
+    .quote-customer { font-size: 12px; color: #666; margin: 4px 0; }
+    .quote-total { font-weight: bold; color: #1a2b3c; font-size: 13px; }
+    .quote-date { font-size: 11px; color: #999; }
+    .view-pdf-btn { position: absolute; top: 8px; right: 8px; background: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; font-size: 10px; cursor: pointer; }
+    
+    /* Main */
+    .main { flex: 1; background: white; border-radius: 6px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+    .main-header h2 { font-size: 24px; color: #1a2b3c; }
+    .main-header h2 span { font-size: 14px; color: #666; font-weight: normal; margin-left: 10px; }
+    .quote-number { background: #f1f3f5; padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: bold; color: #1a2b3c; }
+    
+    /* Company Info */
+    .company-info { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 15px 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+    .company-details h3 { color: #1a2b3c; font-size: 18px; margin-bottom: 5px; }
+    .company-details p { font-size: 12px; color: #666; line-height: 1.5; }
+    .company-reg { font-size: 12px; color: #1a2b3c; background: white; padding: 8px 15px; border-radius: 30px; border: 1px solid #ddd; }
+    
+    /* Customer Panel */
+    .customer-panel { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 20px; margin-bottom: 25px; display: flex; gap: 25px; }
+    .customer-field { flex: 1; }
+    .customer-field label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+    .customer-field input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    .customer-field input:focus { outline: none; border-color: #1a2b3c; }
+    
+    /* Section Headers */
+    .section { margin: 30px 0 15px 0; font-size: 18px; font-weight: bold; color: #1a2b3c; padding-bottom: 8px; border-bottom: 2px solid #1a2b3c; }
+    
+    /* Job Card */
+    .job-card { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 20px; margin-bottom: 25px; }
+    .job-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .job-header input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; font-weight: bold; }
+    .remove-job { background: none; border: 1px solid #dc3545; padding: 6px 20px; border-radius: 4px; color: #dc3545; cursor: pointer; font-size: 12px; }
+    .remove-job:hover { background: #dc3545; color: white; }
+    
+    /* Tables */
+    .table-wrapper { border: 1px solid #e0e0e0; border-radius: 4px; overflow-x: auto; margin: 15px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+    th { background: #f1f3f5; padding: 12px 10px; text-align: left; font-weight: 600; color: #1a2b3c; border-bottom: 2px solid #d0d0d0; }
+    td { padding: 10px; border-bottom: 1px solid #eaeef2; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) { background: #fafbfc; }
+    td input { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; }
+    td input:focus { outline: none; border-color: #1a2b3c; }
+    
+    /* Buttons */
+    .add-btn { background: white; border: 1px solid #1a2b3c; padding: 8px 20px; border-radius: 4px; color: #1a2b3c; cursor: pointer; font-size: 13px; margin: 10px 0; }
+    .add-btn:hover { background: #1a2b3c; color: white; }
+    
+    /* Indirect Section */
+    .indirect-section { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 20px; margin: 25px 0; }
+    
+    /* Labour/Markup/VAT Row */
+    .lm-row { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 20px; margin: 25px 0; }
+    .lm-block { display: flex; gap: 25px; flex-wrap: wrap; }
+    .lm-item { display: flex; align-items: center; gap: 10px; }
+    .lm-item label { font-weight: bold; font-size: 12px; color: #333; width: 70px; }
+    .lm-item input { width: 120px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; }
+    .grand-total { font-size: 22px; font-weight: bold; color: #1a2b3c; background: white; padding: 8px 25px; border-radius: 30px; border: 1px solid #ddd; }
+    
+    /* Terms and Conditions */
+    .terms-section { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 20px; margin: 25px 0; }
+    .terms-section h3 { font-size: 16px; color: #1a2b3c; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
+    .terms-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .term-item { display: flex; gap: 10px; font-size: 12px; color: #333; line-height: 1.5; }
+    .term-item i { font-weight: bold; color: #1a2b3c; min-width: 20px; }
+    .vat-note { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; font-size: 13px; font-weight: bold; color: #1a2b3c; text-align: right; }
+    
+    /* Action Buttons */
+    .action-buttons { display: flex; gap: 15px; margin: 25px 0; }
+    .save-btn, .pdf-btn { padding: 12px 30px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
+    .save-btn { background: #1a2b3c; color: white; }
+    .pdf-btn { background: #dc3545; color: white; }
+    .save-btn:hover { background: #2c3e50; }
+    .pdf-btn:hover { background: #c82333; }
+    
+    /* Remove button for materials */
+    .remove-mat { background: none; border: none; color: #dc3545; font-size: 16px; cursor: pointer; padding: 4px 8px; }
+    .remove-indirect-btn { background: none; border: none; color: #dc3545; cursor: pointer; }
+    
+    /* Empty/Loading states */
+    .loading { text-align: center; padding: 30px; color: #666; }
+    .no-data { text-align: center; padding: 40px; color: #999; border: 1px solid #eee; border-radius: 4px; background: #fafbfc; }
+    
+    /* Amount column */
+    td:nth-child(5) { font-weight: 600; color: #1a2b3c; }
+    th:nth-child(5) { text-align: right; }
+    td:nth-child(5) { text-align: right; padding-right: 20px; }
   </style>
 </head>
 <body>
 <div class="app">
+  <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-header">HAZIDA<span>quote</span></div>
-    <button class="new-quote-btn" id="newQuoteBtn">+ create new</button>
-    <div class="saved-title">Saved quotations</div>
+    <div class="sidebar-header">HAZIDA LIMITED</div>
+    <div class="sidebar-sub">Construction & Civil Engineering</div>
+    <button class="new-quote-btn" id="newQuoteBtn">+ New Quotation</button>
+    <div class="saved-title">Saved Quotations</div>
     <div class="saved-list" id="savedListSidebar">
       <div class="loading">Loading...</div>
     </div>
   </aside>
 
+  <!-- Main Content -->
   <main class="main" id="mainContent">
-    <!-- content will be injected -->
+    <!-- Content injected by JavaScript -->
   </main>
 </div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
-  (function() {
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-      authDomain: "project-task-588c4.firebaseapp.com",
-      projectId: "project-task-588c4",
-      storageBucket: "project-task-588c4.firebasestorage.app",
-      messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+    authDomain: "project-task-588c4.firebaseapp.com",
+    projectId: "project-task-588c4",
+    storageBucket: "project-task-588c4.firebasestorage.app",
+    messagingSenderId: "411882772509",
+    appId: "1:411882772509:web:08d613186c101a99f38ef4"
+  };
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    // State
-    let jobs = [];
-    let indirectItems = [];
-    let labour = 1950;
-    let markup = 13.5;
-    let customer = { name: 'John Mwale', address: 'Plot 17, Lusaka' };
-    let currentQuoteId = null;
-    let quoteNum = Math.floor(Math.random() * 9000 + 1000);
+  // State
+  let jobs = [];
+  let indirectItems = [];
+  let labour = 1950;
+  let markup = 13.5;
+  let vat = 16; // 16% VAT
+  let customer = { name: '', address: '', phone: '', email: '', project: '' };
+  let currentQuoteId = null;
+  let quoteNum = Math.floor(Math.random() * 9000 + 1000);
 
-    function genId() { return 'job_' + Date.now() + Math.random().toString(36).substring(2,6); }
-    function matId() { return 'mat_' + Date.now() + Math.random().toString(36).substring(2,8); }
+  // Hazida Limited company details
+  const company = {
+    name: 'HAZIDA LIMITED',
+    reg: 'REG: 2021/C/123456',
+    pin: 'PIN: 1012345678',
+    address: 'Plot 17A, Lusaka, Zambia',
+    phone: '+260 977 123456',
+    email: 'info@hazida.co.zm',
+    bank: 'Stanbic Bank · Account: 9123456789'
+  };
 
-    // Load from Firestore
-    async function loadSavedQuotes() {
-      try {
-        const snapshot = await db.collection('quotations').orderBy('createdAt', 'desc').get();
-        const quotes = [];
-        snapshot.forEach(doc => {
-          quotes.push({ id: doc.id, ...doc.data() });
-        });
-        return quotes;
-      } catch (error) {
-        console.error('Error:', error);
-        return [];
-      }
+  function genId() { return 'job_' + Date.now() + Math.random().toString(36).substring(2,6); }
+  function matId() { return 'mat_' + Date.now() + Math.random().toString(36).substring(2,8); }
+
+  // Load saved quotes
+  async function loadSavedQuotes() {
+    try {
+      const snapshot = await db.collection('quotations').orderBy('createdAt', 'desc').get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error:', error);
+      return [];
+    }
+  }
+
+  // Render sidebar
+  async function renderSidebarList() {
+    const listDiv = document.getElementById('savedListSidebar');
+    listDiv.innerHTML = '<div class="loading">Loading...</div>';
+    
+    const savedQuotes = await loadSavedQuotes();
+    
+    if (savedQuotes.length === 0) {
+      listDiv.innerHTML = '<div class="no-data">No saved quotations</div>';
+      return;
     }
 
-    // Render sidebar
-    async function renderSidebarList() {
-      const listDiv = document.getElementById('savedListSidebar');
-      listDiv.innerHTML = '<div class="loading">Loading...</div>';
-      
-      const savedQuotes = await loadSavedQuotes();
-      
-      if (savedQuotes.length === 0) {
-        listDiv.innerHTML = '<div class="no-data">No saved quotations</div>';
-        return;
-      }
-
-      let html = '';
-      savedQuotes.forEach((q) => {
-        html += `
-          <div class="saved-item" data-quote-id="${q.id}">
-            <div class="quote-ref">#Q-${q.quoteNum}</div>
-            <div class="quote-customer">${q.customer?.name || 'No name'}</div>
-            <div class="quote-total">${(q.grand || 0).toFixed(2)} ZMW</div>
-            <div class="quote-date">${q.date || new Date().toLocaleDateString()}</div>
-            <button class="view-pdf-btn" onclick="event.stopPropagation(); viewPDF('${q.id}')">PDF</button>
-          </div>
-        `;
-      });
-      listDiv.innerHTML = html;
-
-      document.querySelectorAll('.saved-item').forEach(item => {
-        item.addEventListener('click', async (e) => {
-          if (e.target.classList.contains('view-pdf-btn')) return;
-          let quoteId = item.dataset.quoteId;
-          await loadQuote(quoteId);
-        });
-      });
-    }
-
-    // Save to Firestore
-    async function saveQuote() {
-      try {
-        let materialsTotal = jobs.reduce((acc, job) => acc + job.materials.reduce((s, m) => s + (m.qty * m.price), 0), 0);
-        let indirectSum = indirectItems.reduce((acc, i) => acc + (i.value || 0), 0);
-        let labourVal = parseFloat(document.getElementById('labourInput')?.value) || 0;
-        let markupVal = parseFloat(document.getElementById('markupInput')?.value) || 0;
-        let subtotal = materialsTotal + indirectSum + labourVal;
-        let grand = subtotal + (subtotal * markupVal / 100);
-
-        let quote = {
-          quoteNum: quoteNum,
-          customer: { name: customer.name, address: customer.address },
-          jobs: JSON.parse(JSON.stringify(jobs)),
-          indirect: JSON.parse(JSON.stringify(indirectItems)),
-          labour: labourVal,
-          markup: markupVal,
-          grand: grand,
-          date: new Date().toLocaleDateString(),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        if (currentQuoteId) {
-          await db.collection('quotations').doc(currentQuoteId).update(quote);
-        } else {
-          const docRef = await db.collection('quotations').add(quote);
-          currentQuoteId = docRef.id;
-        }
-
-        await renderSidebarList();
-        alert('Saved to Firestore!');
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error: ' + error.message);
-      }
-    }
-
-    // Load quote
-    async function loadQuote(quoteId) {
-      try {
-        const doc = await db.collection('quotations').doc(quoteId).get();
-        if (doc.exists) {
-          const quote = doc.data();
-          jobs = quote.jobs || [];
-          indirectItems = quote.indirect || [];
-          customer = quote.customer || { name: '', address: '' };
-          labour = quote.labour || 0;
-          markup = quote.markup || 0;
-          quoteNum = quote.quoteNum || Math.floor(Math.random() * 9000 + 1000);
-          currentQuoteId = quoteId;
-          renderMain();
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error loading quote');
-      }
-    }
-
-    // View PDF
-    window.viewPDF = async function(quoteId) {
-      try {
-        const doc = await db.collection('quotations').doc(quoteId).get();
-        if (doc.exists) {
-          const quote = doc.data();
-          generatePDF(quote);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error loading PDF');
-      }
-    };
-
-    // Generate PDF
-    function generatePDF(quote) {
-      let materialsTotal = quote.jobs.reduce((acc, job) => acc + job.materials.reduce((s, m) => s + (m.qty * m.price), 0), 0);
-      let indirectSum = quote.indirect.reduce((acc, i) => acc + (i.value || 0), 0);
-      let labourVal = quote.labour || 0;
-      let markupVal = quote.markup || 0;
-      let subtotal = materialsTotal + indirectSum + labourVal;
-      let markupAmount = subtotal * (markupVal / 100);
-      let grand = subtotal + markupAmount;
-
-      let rows = '';
-      quote.jobs.forEach(job => {
-        job.materials.forEach(mat => {
-          rows += `<tr><td>${job.name} – ${mat.desc}</td><td>${mat.qty}</td><td>${mat.price.toFixed(2)}</td><td>${mat.supplier}</td><td>${(mat.qty*mat.price).toFixed(2)}</td></tr>`;
-        });
-      });
-      if (!rows) rows = '<tr><td colspan="5" style="padding:20px; text-align:center;">No materials</td></tr>';
-
-      let indRows = '';
-      quote.indirect.forEach(i => { 
-        indRows += `<div style="display:flex; justify-content:space-between; padding:4px 0;"><span>${i.name}</span><span>${(i.value || 0).toFixed(2)} ZMW</span></div>`; 
-      });
-
-      let printWin = window.open('', '_blank');
-      printWin.document.write(`
-        <html>
-        <head>
-          <title>Quotation #Q-${quote.quoteNum}</title>
-          <style>
-            body { font-family: Arial; padding: 40px; max-width: 1000px; margin: auto; }
-            h1 { color: #000; font-size: 28px; margin-bottom: 20px; }
-            .customer { margin: 20px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th { background: #f2f2f2; padding: 10px; text-align: left; border: 1px solid #ddd; }
-            td { padding: 10px; border: 1px solid #ddd; }
-            .totals { margin-top: 30px; padding: 20px; background: #f9f9f9; border: 1px solid #ddd; }
-            .grand { font-size: 22px; font-weight: bold; margin-top: 10px; padding-top: 10px; border-top: 2px solid #000; }
-          </style>
-        </head>
-        <body>
-          <h1>HAZIDA QUOTATION #Q-${quote.quoteNum}</h1>
-          <div class="customer">
-            <strong>Customer:</strong> ${quote.customer?.name || 'N/A'}<br>
-            <strong>Address:</strong> ${quote.customer?.address || 'N/A'}
-          </div>
-          
-          <table>
-            <thead>
-              <tr><th>Material</th><th>Qty</th><th>Price</th><th>Supplier</th><th>Total</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-          
-          <div class="totals">
-            <div style="display:flex; justify-content:space-between;"><span>Materials</span><span>${materialsTotal.toFixed(2)} ZMW</span></div>
-            ${indRows}
-            <div style="display:flex; justify-content:space-between;"><span>Labour</span><span>${labourVal.toFixed(2)} ZMW</span></div>
-            <div style="display:flex; justify-content:space-between;"><span>Markup ${markupVal}%</span><span>${markupAmount.toFixed(2)} ZMW</span></div>
-            <div class="grand" style="display:flex; justify-content:space-between;"><span>GRAND TOTAL</span><span>${grand.toFixed(2)} ZMW</span></div>
-          </div>
-          
-          <p style="margin-top: 40px; color: #666;">Valid for 30 days</p>
-          <script>window.onload=()=>window.print();<\/script>
-        </body>
-        </html>
-      `);
-      printWin.document.close();
-    }
-
-    // Render main
-    function renderMain() {
-      const main = document.getElementById('mainContent');
-      let html = `
-        <div class="main-header">
-          <h2>Quotation</h2>
-          <span class="quote-number">#Q-${quoteNum}</span>
-        </div>
-
-        <div class="customer-panel">
-          <div class="customer-field">
-            <label>Customer name</label>
-            <input type="text" id="custName" value="${customer.name}">
-          </div>
-          <div class="customer-field">
-            <label>Address</label>
-            <input type="text" id="custAddress" value="${customer.address}">
-          </div>
-        </div>
-      `;
-
-      if (jobs.length === 0) {
-        html += `<div class="no-data">No jobs added</div>`;
-      } else {
-        jobs.forEach((job, jIdx) => {
-          html += `<div class="job-card" data-job-id="${job.id}">`;
-          html += `<div class="job-header">`;
-          html += `<input type="text" value="${job.name}" placeholder="Job description" class="job-name-input" data-job-idx="${jIdx}">`;
-          html += `<button class="remove-job" data-job-id="${job.id}">Remove</button>`;
-          html += `</div>`;
-
-          html += `<div class="mat-table-wrapper"><table class="mat-table"><thead><tr><th>Material</th><th>Qty</th><th>Unit price</th><th>Supplier</th><th>Amount</th><th></th></tr></thead><tbody>`;
-
-          if (job.materials.length === 0) {
-            html += `<tr><td colspan="6" style="padding:20px; text-align:center;">No materials</td></tr>`;
-          } else {
-            job.materials.forEach((mat, mIdx) => {
-              let amt = (mat.qty * mat.price).toFixed(2);
-              html += `<tr>
-                <td><input type="text" value="${mat.desc.replace(/"/g, '&quot;')}" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-desc"></td>
-                <td><input type="number" value="${mat.qty}" step="0.1" min="0" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-qty"></td>
-                <td><input type="number" value="${mat.price}" step="0.01" min="0" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-price"></td>
-                <td><input type="text" value="${mat.supplier.replace(/"/g, '&quot;')}" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-supplier"></td>
-                <td>${amt} ZMW</td>
-                <td><button class="remove-mat" data-job-id="${job.id}" data-mat-id="${mat.id}">✕</button></td>
-              </tr>`;
-            });
-          }
-          html += `</tbody></table></div>`;
-          html += `<button class="add-material-btn" data-job-id="${job.id}">+ Add material</button>`;
-          html += `</div>`;
-        });
-      }
-      
-      html += `<button class="add-job-btn" id="addJobBtn">+ Add job</button>`;
-
-      html += `<div class="indirect-section">`;
-      html += `<div class="section-title">Indirect costs</div>`;
-      html += `<table class="indirect-table"><thead><tr><th>Description</th><th>Amount</th><th></th></tr></thead><tbody>`;
-      
-      if (indirectItems.length === 0) {
-        html += `<tr><td colspan="3" style="padding:12px; text-align:center;">None</td></tr>`;
-      } else {
-        indirectItems.forEach((item, idx) => {
-          html += `<tr>
-            <td><input type="text" value="${item.name.replace(/"/g, '&quot;')}" data-ind-idx="${idx}" class="indirect-name"></td>
-            <td><input type="number" value="${item.value}" step="1" min="0" data-ind-idx="${idx}" class="indirect-value"></td>
-            <td><button class="remove-indirect-btn" data-ind-idx="${idx}">✕</button></td>
-          </tr>`;
-        });
-      }
-      
-      html += `</tbody></table>`;
-      html += `<button class="add-indirect-btn" id="addIndirectBtn">+ Add indirect cost</button>`;
-      html += `</div>`;
-
+    let html = '';
+    savedQuotes.forEach(q => {
       html += `
-        <div class="labour-markup-row">
-          <div class="lm-block">
-            <div class="lm-item">
-              <label>Labour</label>
-              <input type="number" id="labourInput" value="${labour}">
-            </div>
-            <div class="lm-item">
-              <label>Markup %</label>
-              <input type="number" id="markupInput" value="${markup}" step="0.5">
-            </div>
-          </div>
-          <div class="grand-total-box" id="grandTotalDisplay">0.00 ZMW</div>
+        <div class="saved-item" data-quote-id="${q.id}">
+          <div class="quote-ref">#Q-${q.quoteNum}</div>
+          <div class="quote-customer">${q.customer?.name || 'No name'}</div>
+          <div class="quote-total">ZMW ${(q.grand || 0).toFixed(2)}</div>
+          <div class="quote-date">${q.date || new Date().toLocaleDateString()}</div>
+          <button class="view-pdf-btn" onclick="event.stopPropagation(); viewPDF('${q.id}')">PDF</button>
         </div>
       `;
+    });
+    listDiv.innerHTML = html;
 
-      html += `
-        <div class="action-buttons">
-          <button class="save-btn" id="saveQuoteBtn">Save to Firestore</button>
-          <button class="pdf-btn" id="downloadPdfBtn">PDF</button>
-        </div>
-      `;
-
-      main.innerHTML = html;
-      attachEvents();
-      updateGrandTotal();
-    }
-
-    // Attach events
-    function attachEvents() {
-      document.getElementById('custName')?.addEventListener('input', (e) => customer.name = e.target.value);
-      document.getElementById('custAddress')?.addEventListener('input', (e) => customer.address = e.target.value);
-
-      document.querySelectorAll('.job-name-input').forEach(inp => {
-        inp.addEventListener('input', (e) => {
-          let idx = e.target.dataset.jobIdx;
-          if (idx !== undefined) jobs[idx].name = e.target.value;
-        });
+    document.querySelectorAll('.saved-item').forEach(item => {
+      item.addEventListener('click', async e => {
+        if (e.target.classList.contains('view-pdf-btn')) return;
+        await loadQuote(item.dataset.quoteId);
       });
+    });
+  }
 
-      document.querySelectorAll('.remove-job').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          let jobId = e.target.dataset.jobId;
-          jobs = jobs.filter(j => j.id !== jobId);
-          renderMain();
-        });
-      });
-
-      document.querySelectorAll('.add-material-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          let jobId = e.target.dataset.jobId;
-          let job = jobs.find(j => j.id === jobId);
-          if (job) {
-            job.materials.push({ id: matId(), desc: 'New material', qty: 1, price: 0, supplier: '' });
-            renderMain();
-          }
-        });
-      });
-
-      document.querySelectorAll('.remove-mat').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          let jobId = e.target.dataset.jobId;
-          let matId = e.target.dataset.matId;
-          let job = jobs.find(j => j.id === jobId);
-          if (job) {
-            job.materials = job.materials.filter(m => m.id !== matId);
-            renderMain();
-          }
-        });
-      });
-
-      document.querySelectorAll('.mat-desc, .mat-qty, .mat-price, .mat-supplier').forEach(inp => {
-        inp.addEventListener('input', function(e) {
-          let jIdx = this.dataset.jobIdx;
-          let mIdx = this.dataset.matIdx;
-          if (jIdx === undefined || mIdx === undefined) return;
-          let job = jobs[jIdx];
-          let mat = job.materials[mIdx];
-          if (this.classList.contains('mat-desc')) mat.desc = this.value;
-          else if (this.classList.contains('mat-qty')) mat.qty = parseFloat(this.value) || 0;
-          else if (this.classList.contains('mat-price')) mat.price = parseFloat(this.value) || 0;
-          else if (this.classList.contains('mat-supplier')) mat.supplier = this.value;
-          updateGrandTotal();
-        });
-      });
-
-      document.getElementById('addJobBtn')?.addEventListener('click', () => {
-        jobs.push({ id: genId(), name: 'New job', materials: [] });
+  // Load quote
+  async function loadQuote(quoteId) {
+    try {
+      const doc = await db.collection('quotations').doc(quoteId).get();
+      if (doc.exists) {
+        const quote = doc.data();
+        jobs = quote.jobs || [];
+        indirectItems = quote.indirect || [];
+        customer = quote.customer || { name: '', address: '', phone: '', email: '', project: '' };
+        labour = quote.labour || 0;
+        markup = quote.markup || 0;
+        vat = quote.vat || 16;
+        quoteNum = quote.quoteNum || Math.floor(Math.random() * 9000 + 1000);
+        currentQuoteId = quoteId;
         renderMain();
-      });
-
-      document.querySelectorAll('.indirect-name').forEach(inp => {
-        inp.addEventListener('input', function(e) {
-          let idx = this.dataset.indIdx;
-          if (idx !== undefined) indirectItems[idx].name = this.value;
-          updateGrandTotal();
-        });
-      });
-
-      document.querySelectorAll('.indirect-value').forEach(inp => {
-        inp.addEventListener('input', function(e) {
-          let idx = this.dataset.indIdx;
-          if (idx !== undefined) {
-            let val = parseFloat(this.value);
-            indirectItems[idx].value = isNaN(val) ? 0 : val;
-            updateGrandTotal();
-          }
-        });
-      });
-
-      document.querySelectorAll('.remove-indirect-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          let idx = e.target.dataset.indIdx;
-          if (idx !== undefined) { 
-            indirectItems.splice(idx, 1); 
-            renderMain(); 
-          }
-        });
-      });
-
-      document.getElementById('addIndirectBtn')?.addEventListener('click', () => {
-        indirectItems.push({ name: 'New cost', value: 0 });
-        renderMain();
-      });
-
-      const labourInp = document.getElementById('labourInput');
-      const markupInp = document.getElementById('markupInput');
-      if (labourInp) labourInp.addEventListener('input', function() { labour = parseFloat(this.value) || 0; updateGrandTotal(); });
-      if (markupInp) markupInp.addEventListener('input', function() { markup = parseFloat(this.value) || 0; updateGrandTotal(); });
-
-      document.getElementById('saveQuoteBtn')?.addEventListener('click', saveQuote);
-      document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
-        let quote = { jobs, indirect: indirectItems, customer, labour, markup, quoteNum };
-        generatePDF(quote);
-      });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error loading quote');
     }
+  }
 
-    function updateGrandTotal() {
-      let grandSpan = document.getElementById('grandTotalDisplay');
-      if (!grandSpan) return;
-
+  // Save quote
+  async function saveQuote() {
+    try {
       let materialsTotal = jobs.reduce((acc, job) => acc + job.materials.reduce((s, m) => s + (m.qty * m.price), 0), 0);
       let indirectSum = indirectItems.reduce((acc, i) => acc + (i.value || 0), 0);
       let labourVal = parseFloat(document.getElementById('labourInput')?.value) || 0;
       let markupVal = parseFloat(document.getElementById('markupInput')?.value) || 0;
+      let vatVal = parseFloat(document.getElementById('vatInput')?.value) || 16;
       let subtotal = materialsTotal + indirectSum + labourVal;
-      let grand = subtotal + (subtotal * markupVal / 100);
-      grandSpan.innerText = grand.toFixed(2) + ' ZMW';
-    }
+      let afterMarkup = subtotal + (subtotal * markupVal / 100);
+      let vatAmount = afterMarkup * (vatVal / 100);
+      let grand = afterMarkup + vatAmount;
 
-    function newQuote() {
-      jobs = [];
-      indirectItems = [];
-      labour = 1950;
-      markup = 13.5;
-      customer = { name: '', address: '' };
-      quoteNum = Math.floor(Math.random() * 9000 + 1000);
-      currentQuoteId = null;
+      let quote = {
+        quoteNum: quoteNum,
+        company: company,
+        customer: customer,
+        jobs: JSON.parse(JSON.stringify(jobs)),
+        indirect: JSON.parse(JSON.stringify(indirectItems)),
+        labour: labourVal,
+        markup: markupVal,
+        vat: vatVal,
+        subtotal: subtotal,
+        afterMarkup: afterMarkup,
+        vatAmount: vatAmount,
+        grand: grand,
+        date: new Date().toLocaleDateString(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      if (currentQuoteId) {
+        await db.collection('quotations').doc(currentQuoteId).update(quote);
+      } else {
+        const docRef = await db.collection('quotations').add(quote);
+        currentQuoteId = docRef.id;
+      }
+
+      await renderSidebarList();
+      alert('Saved successfully!');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error: ' + error.message);
+    }
+  }
+
+  // View PDF
+  window.viewPDF = async function(quoteId) {
+    try {
+      const doc = await db.collection('quotations').doc(quoteId).get();
+      if (doc.exists) generatePDF(doc.data());
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error loading PDF');
+    }
+  };
+
+  // Generate PDF with full terms and 16% VAT
+  function generatePDF(quote) {
+    let materialsTotal = quote.jobs.reduce((acc, job) => acc + job.materials.reduce((s, m) => s + (m.qty * m.price), 0), 0);
+    let indirectSum = quote.indirect.reduce((acc, i) => acc + (i.value || 0), 0);
+    let labourVal = quote.labour || 0;
+    let markupVal = quote.markup || 0;
+    let vatVal = quote.vat || 16;
+    let subtotal = materialsTotal + indirectSum + labourVal;
+    let afterMarkup = subtotal + (subtotal * markupVal / 100);
+    let vatAmount = afterMarkup * (vatVal / 100);
+    let grand = afterMarkup + vatAmount;
+
+    let rows = '';
+    quote.jobs.forEach(job => {
+      job.materials.forEach(mat => {
+        rows += `<tr><td>${job.name}</td><td>${mat.desc}</td><td>${mat.qty}</td><td>${mat.supplier}</td><td>${mat.price.toFixed(2)}</td><td>${(mat.qty*mat.price).toFixed(2)}</td></tr>`;
+      });
+    });
+    if (!rows) rows = '<tr><td colspan="6" style="padding:20px; text-align:center;">No materials</td></tr>';
+
+    let indRows = '';
+    quote.indirect.forEach(i => { 
+      indRows += `<tr><td>${i.name}</td><td>${(i.value || 0).toFixed(2)}</td></tr>`; 
+    });
+
+    let printWin = window.open('', '_blank');
+    printWin.document.write(`
+      <html>
+      <head><title>HAZIDA LIMITED · Quotation #Q-${quote.quoteNum}</title>
+      <style>
+        body { font-family: Arial; padding: 40px; max-width: 1200px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1a2b3c; }
+        .company h1 { color: #1a2b3c; font-size: 28px; margin-bottom: 5px; }
+        .company p { color: #666; font-size: 12px; line-height: 1.5; }
+        .reg { background: #f1f3f5; padding: 8px 15px; border-radius: 30px; font-size: 12px; }
+        .quote-num { font-size: 18px; font-weight: bold; color: #1a2b3c; }
+        .customer { background: #f8f9fa; padding: 20px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 30px; }
+        .customer-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #f1f3f5; padding: 12px; text-align: left; border: 1px solid #ddd; font-size: 12px; }
+        td { padding: 10px; border: 1px solid #ddd; font-size: 12px; }
+        .totals { width: 300px; margin-left: auto; background: #f8f9fa; padding: 20px; border: 1px solid #ddd; border-radius: 4px; }
+        .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .grand { font-size: 18px; font-weight: bold; color: #1a2b3c; margin-top: 10px; padding-top: 10px; border-top: 2px solid #1a2b3c; }
+        .terms { margin-top: 40px; padding: 20px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; }
+        .terms h3 { color: #1a2b3c; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
+        .terms-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 15px; font-size: 11px; color: #333; }
+        .vat-highlight { background: #e9ecef; padding: 10px; border-radius: 4px; font-weight: bold; text-align: right; margin-top: 15px; }
+        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #666; }
+      </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company">
+            <h1>HAZIDA LIMITED</h1>
+            <p>${company.address}<br>Tel: ${company.phone} · Email: ${company.email}</p>
+          </div>
+          <div class="reg">${company.reg} · ${company.pin}</div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2>CONSTRUCTION QUOTATION</h2>
+          <span class="quote-num">#Q-${quote.quoteNum}</span>
+        </div>
+        
+        <div class="customer">
+          <strong>QUOTATION FOR:</strong>
+          <div class="customer-grid">
+            <div><strong>Client:</strong> ${quote.customer?.name || 'N/A'}</div>
+            <div><strong>Project:</strong> ${quote.customer?.project || 'N/A'}</div>
+            <div><strong>Address:</strong> ${quote.customer?.address || 'N/A'}</div>
+            <div><strong>Phone:</strong> ${quote.customer?.phone || 'N/A'}</div>
+            <div><strong>Email:</strong> ${quote.customer?.email || 'N/A'}</div>
+          </div>
+        </div>
+        
+        <h3>MATERIALS & WORKS</h3>
+        <table>
+          <thead><tr><th>Job</th><th>Material</th><th>Qty</th><th>Supplier</th><th>Unit Price</th><th>Total</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        
+        ${quote.indirect.length > 0 ? `
+        <h3>INDIRECT COSTS</h3>
+        <table>
+          <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+          <tbody>${indRows}</tbody>
+        </table>
+        ` : ''}
+        
+        <div class="totals">
+          <div class="total-row"><span>Materials Total:</span><span>ZMW ${materialsTotal.toFixed(2)}</span></div>
+          ${quote.indirect.map(i => `<div class="total-row"><span>${i.name}:</span><span>ZMW ${(i.value||0).toFixed(2)}</span></div>`).join('')}
+          <div class="total-row"><span>Labour:</span><span>ZMW ${labourVal.toFixed(2)}</span></div>
+          <div class="total-row"><span>Subtotal:</span><span>ZMW ${subtotal.toFixed(2)}</span></div>
+          <div class="total-row"><span>Markup (${markupVal}%):</span><span>ZMW ${(afterMarkup - subtotal).toFixed(2)}</span></div>
+          <div class="total-row"><span>VAT (${vatVal}%):</span><span>ZMW ${vatAmount.toFixed(2)}</span></div>
+          <div class="grand total-row"><span>GRAND TOTAL:</span><span>ZMW ${grand.toFixed(2)}</span></div>
+        </div>
+        
+        <div class="terms">
+          <h3>TERMS AND CONDITIONS</h3>
+          <div class="terms-grid">
+            <div class="term-item"><strong>1.</strong> This quotation is valid for 30 days from date of issue.</div>
+            <div class="term-item"><strong>2.</strong> 50% mobilization fee required before commencement.</div>
+            <div class="term-item"><strong>3.</strong> Balance payable upon completion and inspection.</div>
+            <div class="term-item"><strong>4.</strong> All materials remain property of Hazida until fully paid.</div>
+            <div class="term-item"><strong>5.</strong> Site must be ready and accessible before work starts.</div>
+            <div class="term-item"><strong>6.</strong> Client to provide water and electricity on site.</div>
+            <div class="term-item"><strong>7.</strong> Variation orders must be in writing and will be charged extra.</div>
+            <div class="term-item"><strong>8.</strong> Defects liability period: 6 months from completion.</div>
+            <div class="term-item"><strong>9.</strong> Payment by bank transfer or certified cheque.</div>
+            <div class="term-item"><strong>10.</strong> Interest of 2% per month on overdue amounts.</div>
+            <div class="term-item"><strong>11.</strong> All work complies with Zambian building standards.</div>
+            <div class="term-item"><strong>12.</strong> Force majeure: delays beyond our control not chargeable.</div>
+            <div class="term-item"><strong>13.</strong> Waste disposal included, excess material removal extra.</div>
+            <div class="term-item"><strong>14.</strong> Safety gear and site signage provided by Hazida.</div>
+            <div class="term-item"><strong>15.</strong> Insurance covered during construction by Hazida.</div>
+            <div class="term-item"><strong>16.</strong> Any disputes resolved through arbitration in Lusaka.</div>
+          </div>
+          <div class="vat-note">VAT 16% INCLUDED AS SHOWN ABOVE · TAX INVOICE TO FOLLOW ON PAYMENT</div>
+        </div>
+        
+        <div class="footer">
+          <p>Bank: ${company.bank} · SWIFT: SBICZMLX</p>
+          <p>This is a computer generated quotation · No signature required</p>
+        </div>
+        
+        <script>window.onload=()=>window.print();<\/script>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  }
+
+  // Render main
+  function renderMain() {
+    const main = document.getElementById('mainContent');
+    
+    let html = `
+      <div class="main-header">
+        <h2>Construction Quotation <span>HAZIDA LIMITED</span></h2>
+        <span class="quote-number">#Q-${quoteNum}</span>
+      </div>
+
+      <div class="company-info">
+        <div class="company-details">
+          <h3>${company.name}</h3>
+          <p>${company.address} · Tel: ${company.phone} · Email: ${company.email}</p>
+        </div>
+        <div class="company-reg">${company.reg} · ${company.pin}</div>
+      </div>
+
+      <div class="customer-panel">
+        <div class="customer-field">
+          <label>Client Name</label>
+          <input type="text" id="custName" value="${customer.name}" placeholder="e.g., John Mwale">
+        </div>
+        <div class="customer-field">
+          <label>Project Name</label>
+          <input type="text" id="custProject" value="${customer.project || ''}" placeholder="e.g., Office Renovation">
+        </div>
+      </div>
+
+      <div class="customer-panel" style="margin-top: -15px;">
+        <div class="customer-field">
+          <label>Address</label>
+          <input type="text" id="custAddress" value="${customer.address}" placeholder="Plot 17, Lusaka">
+        </div>
+        <div class="customer-field">
+          <label>Phone</label>
+          <input type="text" id="custPhone" value="${customer.phone || ''}" placeholder="+260 97X XXX XXX">
+        </div>
+        <div class="customer-field">
+          <label>Email</label>
+          <input type="email" id="custEmail" value="${customer.email || ''}" placeholder="client@example.com">
+        </div>
+      </div>
+    `;
+
+    if (jobs.length === 0) {
+      html += `<div class="no-data">No jobs added · Click "Add Job" to start</div>`;
+    } else {
+      jobs.forEach((job, jIdx) => {
+        html += `<div class="job-card" data-job-id="${job.id}">`;
+        html += `<div class="job-header">`;
+        html += `<input type="text" value="${job.name}" placeholder="Job description (e.g., Excavation, Plumbing, Roofing)" class="job-name-input" data-job-idx="${jIdx}">`;
+        html += `<button class="remove-job" data-job-id="${job.id}">Remove</button>`;
+        html += `</div>`;
+
+        html += `<div class="table-wrapper"><table>`;
+        html += `<thead><tr><th>Material Description</th><th>Qty</th><th>Unit Price</th><th>Supplier</th><th>Amount</th><th></th></tr></thead><tbody>`;
+
+        if (job.materials.length === 0) {
+          html += `<tr><td colspan="6" style="padding:20px; text-align:center;">No materials · Click "Add Material" below</td></tr>`;
+        } else {
+          job.materials.forEach((mat, mIdx) => {
+            let amt = (mat.qty * mat.price).toFixed(2);
+            html += `<tr>
+              <td><input type="text" value="${mat.desc}" placeholder="e.g., Cement, Steel, Sand" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-desc"></td>
+              <td><input type="number" value="${mat.qty}" step="0.1" min="0" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-qty"></td>
+              <td><input type="number" value="${mat.price}" step="0.01" min="0" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-price"></td>
+              <td><input type="text" value="${mat.supplier}" placeholder="Supplier name" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-supplier"></td>
+              <td>${amt}</td>
+              <td><button class="remove-mat" data-job-id="${job.id}" data-mat-id="${mat.id}">✕</button></td>
+            </tr>`;
+          });
+        }
+        html += `</tbody></table></div>`;
+        html += `<button class="add-btn" data-job-id="${job.id}" style="margin-top:10px;">+ Add Material</button>`;
+        html += `</div>`;
+      });
+    }
+    
+    html += `<button class="add-btn" id="addJobBtn" style="width:100%; padding:12px;">+ Add New Job</button>`;
+
+    html += `<div class="indirect-section">`;
+    html += `<div class="section">Indirect / Site Costs</div>`;
+    html += `<div class="table-wrapper"><table><thead><tr><th>Description (e.g., Transport, Permits, Security)</th><th>Amount</th><th></th></tr></thead><tbody>`;
+    
+    if (indirectItems.length === 0) {
+      html += `<tr><td colspan="3" style="padding:12px; text-align:center;">No indirect costs added</td></tr>`;
+    } else {
+      indirectItems.forEach((item, idx) => {
+        html += `<tr>
+          <td><input type="text" value="${item.name}" placeholder="Description" data-ind-idx="${idx}" class="indirect-name"></td>
+          <td><input type="number" value="${item.value}" step="1" min="0" placeholder="Amount" data-ind-idx="${idx}" class="indirect-value"></td>
+          <td><button class="remove-indirect-btn" data-ind-idx="${idx}">✕</button></td>
+        </tr>`;
+      });
+    }
+    html += `</tbody></table></div>`;
+    html += `<button class="add-btn" id="addIndirectBtn">+ Add Indirect Cost</button>`;
+    html += `</div>`;
+
+    html += `
+      <div class="lm-row">
+        <div class="lm-block">
+          <div class="lm-item">
+            <label>Labour</label>
+            <input type="number" id="labourInput" value="${labour}" step="100" placeholder="Labour cost">
+          </div>
+          <div class="lm-item">
+            <label>Markup %</label>
+            <input type="number" id="markupInput" value="${markup}" step="0.5" placeholder="e.g., 15">
+          </div>
+          <div class="lm-item">
+            <label>VAT %</label>
+            <input type="number" id="vatInput" value="${vat}" step="0.5" placeholder="16">
+          </div>
+        </div>
+        <div class="grand-total" id="grandTotalDisplay">0.00</div>
+      </div>
+    `;
+
+    // Terms and Conditions section
+    html += `
+      <div class="terms-section">
+        <h3>STANDARD TERMS AND CONDITIONS · CONSTRUCTION WORKS</h3>
+        <div class="terms-grid">
+          <div class="term-item"><i>1.</i> This quotation is valid for 30 days from the date of issue.</div>
+          <div class="term-item"><i>2.</i> 50% mobilization fee required before commencement of works.</div>
+          <div class="term-item"><i>3.</i> Balance payable upon completion and final inspection.</div>
+          <div class="term-item"><i>4.</i> All materials delivered remain property of Hazida until fully paid.</div>
+          <div class="term-item"><i>5.</i> Site must be ready, accessible, and cleared before work starts.</div>
+          <div class="term-item"><i>6.</i> Client to provide water and electricity on site at no cost.</div>
+          <div class="term-item"><i>7.</i> Any variation orders must be in writing and will be charged extra.</div>
+          <div class="term-item"><i>8.</i> Defects liability period: 6 months from date of completion.</div>
+          <div class="term-item"><i>9.</i> Payment by bank transfer or certified cheque only.</div>
+          <div class="term-item"><i>10.</i> Interest of 2% per month on overdue amounts.</div>
+          <div class="term-item"><i>11.</i> All works comply with Zambian building and construction standards.</div>
+          <div class="term-item"><i>12.</i> Force majeure: delays beyond our control not chargeable.</div>
+          <div class="term-item"><i>13.</i> Waste disposal included, excess material removal extra.</div>
+          <div class="term-item"><i>14.</i> Safety gear and site signage provided by Hazida.</div>
+          <div class="term-item"><i>15.</i> Insurance covered during construction by Hazida Limited.</div>
+          <div class="term-item"><i>16.</i> Any disputes resolved through arbitration in Lusaka, Zambia.</div>
+          <div class="term-item"><i>17.</i> Working hours: Monday-Friday 7am-5pm, Saturday 7am-1pm.</div>
+          <div class="term-item"><i>18.</i> Overtime and Sunday work charged at 1.5x standard rates.</div>
+        </div>
+        <div class="vat-note">VAT 16% IS INCLUDED IN THE GRAND TOTAL ABOVE · TAX INVOICE WILL BE ISSUED UPON PAYMENT</div>
+      </div>
+    `;
+
+    html += `
+      <div class="action-buttons">
+        <button class="save-btn" id="saveQuoteBtn">Save Quotation</button>
+        <button class="pdf-btn" id="downloadPdfBtn">Download PDF</button>
+      </div>
+    `;
+
+    main.innerHTML = html;
+    attachEvents();
+    updateGrandTotal();
+  }
+
+  // Attach events
+  function attachEvents() {
+    document.getElementById('custName')?.addEventListener('input', e => customer.name = e.target.value);
+    document.getElementById('custProject')?.addEventListener('input', e => customer.project = e.target.value);
+    document.getElementById('custAddress')?.addEventListener('input', e => customer.address = e.target.value);
+    document.getElementById('custPhone')?.addEventListener('input', e => customer.phone = e.target.value);
+    document.getElementById('custEmail')?.addEventListener('input', e => customer.email = e.target.value);
+
+    document.querySelectorAll('.job-name-input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        let idx = e.target.dataset.jobIdx;
+        if (idx !== undefined) jobs[idx].name = e.target.value;
+      });
+    });
+
+    document.querySelectorAll('.remove-job').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        jobs = jobs.filter(j => j.id !== e.target.dataset.jobId);
+        renderMain();
+      });
+    });
+
+    document.querySelectorAll('.add-btn[data-job-id]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        let job = jobs.find(j => j.id === e.target.dataset.jobId);
+        if (job) {
+          job.materials.push({ id: matId(), desc: 'New material', qty: 1, price: 0, supplier: '' });
+          renderMain();
+        }
+      });
+    });
+
+    document.querySelectorAll('.remove-mat').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        let job = jobs.find(j => j.id === e.target.dataset.jobId);
+        if (job) {
+          job.materials = job.materials.filter(m => m.id !== e.target.dataset.matId);
+          renderMain();
+        }
+      });
+    });
+
+    document.querySelectorAll('.mat-desc, .mat-qty, .mat-price, .mat-supplier').forEach(inp => {
+      inp.addEventListener('input', function() {
+        let jIdx = this.dataset.jobIdx;
+        let mIdx = this.dataset.matIdx;
+        if (jIdx === undefined || mIdx === undefined) return;
+        let mat = jobs[jIdx].materials[mIdx];
+        if (this.classList.contains('mat-desc')) mat.desc = this.value;
+        else if (this.classList.contains('mat-qty')) mat.qty = parseFloat(this.value) || 0;
+        else if (this.classList.contains('mat-price')) mat.price = parseFloat(this.value) || 0;
+        else if (this.classList.contains('mat-supplier')) mat.supplier = this.value;
+        updateGrandTotal();
+      });
+    });
+
+    document.getElementById('addJobBtn')?.addEventListener('click', () => {
+      jobs.push({ id: genId(), name: 'New construction job', materials: [] });
       renderMain();
-    }
+    });
 
-    document.getElementById('newQuoteBtn')?.addEventListener('click', newQuote);
+    document.querySelectorAll('.indirect-name').forEach(inp => {
+      inp.addEventListener('input', function() {
+        let idx = this.dataset.indIdx;
+        if (idx !== undefined) indirectItems[idx].name = this.value;
+        updateGrandTotal();
+      });
+    });
 
-    renderSidebarList();
-    newQuote();
-  })();
+    document.querySelectorAll('.indirect-value').forEach(inp => {
+      inp.addEventListener('input', function() {
+        let idx = this.dataset.indIdx;
+        if (idx !== undefined) {
+          indirectItems[idx].value = parseFloat(this.value) || 0;
+          updateGrandTotal();
+        }
+      });
+    });
+
+    document.querySelectorAll('.remove-indirect-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        let idx = e.target.dataset.indIdx;
+        if (idx !== undefined) { 
+          indirectItems.splice(idx, 1); 
+          renderMain(); 
+        }
+      });
+    });
+
+    document.getElementById('addIndirectBtn')?.addEventListener('click', () => {
+      indirectItems.push({ name: 'New cost', value: 0 });
+      renderMain();
+    });
+
+    document.getElementById('labourInput')?.addEventListener('input', updateGrandTotal);
+    document.getElementById('markupInput')?.addEventListener('input', updateGrandTotal);
+    document.getElementById('vatInput')?.addEventListener('input', updateGrandTotal);
+    document.getElementById('saveQuoteBtn')?.addEventListener('click', saveQuote);
+    document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
+      let quote = { jobs, indirect: indirectItems, customer, labour, markup, vat, quoteNum };
+      generatePDF(quote);
+    });
+  }
+
+  function updateGrandTotal() {
+    let grandSpan = document.getElementById('grandTotalDisplay');
+    if (!grandSpan) return;
+
+    let materialsTotal = jobs.reduce((acc, job) => acc + job.materials.reduce((s, m) => s + (m.qty * m.price), 0), 0);
+    let indirectSum = indirectItems.reduce((acc, i) => acc + (i.value || 0), 0);
+    let labourVal = parseFloat(document.getElementById('labourInput')?.value) || 0;
+    let markupVal = parseFloat(document.getElementById('markupInput')?.value) || 0;
+    let vatVal = parseFloat(document.getElementById('vatInput')?.value) || 16;
+    
+    let subtotal = materialsTotal + indirectSum + labourVal;
+    let afterMarkup = subtotal + (subtotal * markupVal / 100);
+    let vatAmount = afterMarkup * (vatVal / 100);
+    let grand = afterMarkup + vatAmount;
+    
+    grandSpan.innerText = grand.toFixed(2);
+  }
+
+  function newQuote() {
+    jobs = [];
+    indirectItems = [];
+    labour = 1950;
+    markup = 13.5;
+    vat = 16;
+    customer = { name: '', address: '', phone: '', email: '', project: '' };
+    quoteNum = Math.floor(Math.random() * 9000 + 1000);
+    currentQuoteId = null;
+    renderMain();
+  }
+
+  // Initialize
+  document.getElementById('newQuoteBtn')?.addEventListener('click', newQuote);
+  renderSidebarList();
+  newQuote();
 </script>
 </body>
 </html>
