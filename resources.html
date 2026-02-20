@@ -230,6 +230,146 @@
             font-weight: 600;
         }
 
+        /* HISTORY DRAWER */
+        .history-drawer {
+            position: fixed;
+            right: -450px;
+            top: 0;
+            width: 450px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+            z-index: 999;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-drawer.open {
+            right: 0;
+        }
+
+        .history-drawer-header {
+            background: #0a1c2f;
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .history-drawer-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close-drawer-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .close-drawer-btn:hover {
+            opacity: 0.8;
+        }
+
+        .history-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .history-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: #f2f6fc;
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .history-tab-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            background: transparent;
+            color: #1f3d62;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .history-tab-btn.active {
+            background: white;
+            color: #0a1c2f;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .history-item {
+            background: linear-gradient(135deg, #ecf3fc 0%, #e0e8f2 100%);
+            border-left: 4px solid #2b4a73;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .history-item.material {
+            border-left-color: #059669;
+            background: linear-gradient(135deg, #d1fae5 0%, #c6f6d5 100%);
+        }
+
+        .history-item.labor {
+            border-left-color: #d97706;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .history-item-title {
+            font-weight: 700;
+            color: #0a1c2f;
+            margin: 0 0 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .history-item-detail {
+            font-size: 0.75rem;
+            color: #1f3d62;
+            margin: 0.2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .history-item-detail i {
+            color: #2b4a73;
+            min-width: 14px;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 2rem;
+            color: #7f96b3;
+        }
+
+        .empty-history i {
+            font-size: 2rem;
+            margin-bottom: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .empty-history p {
+            font-size: 0.85rem;
+        }
+
         /* MODAL FORM */
         .form-overlay {
             display: none;
@@ -420,7 +560,7 @@
                             <th>Unit Cost ($)</th>
                             <th>Available Stock</th>
                             <th>Used Qty</th>
-                            <th>Total Price ($)</th>
+                            <th>Total Value ($)</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -445,6 +585,7 @@
                             <th>Experience (years)</th>
                             <th>Contact</th>
                             <th>Status</th>
+                            <th>Total Hours Allocated</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -481,12 +622,9 @@
                 </div>
             </div>
 
-            <label>Receiving Qty</label>
+            <label>Initial Stock</label>
             <input type="number" id="materialReceivingInput" placeholder="0" min="0" step="0.01">
             <p class="info-text">ℹ️ This will be added to Available Stock</p>
-
-            <label id="usedQtyLabel" style="display:none;">Used Qty</label>
-            <input type="number" id="materialUsedInput" placeholder="0" min="0" step="0.01" style="display:none;">
 
             <div class="button-bar">
                 <button id="cancelMaterialBtn">Cancel</button>
@@ -541,7 +679,7 @@
             <label>Contact (Phone/Email)</label>
             <input type="text" id="contactInput" placeholder="e.g., 555-1234 or email@domain.com">
 
-            <label>Status</label>
+            <label>Initial Status</label>
             <select id="statusSelect">
                 <option value="available">🟢 Available</option>
                 <option value="busy">🟡 On Project</option>
@@ -636,43 +774,10 @@
             editingType = null;
             document.getElementById('materialFormTitle').textContent = '➕ Add Material';
             document.getElementById('materialNameInput').value = '';
-            document.getElementById('materialNameInput').disabled = false;
             document.getElementById('materialDescInput').value = '';
-            document.getElementById('materialDescInput').disabled = false;
             document.getElementById('materialUnitInput').value = '';
-            document.getElementById('materialUnitInput').disabled = false;
             document.getElementById('materialCostInput').value = '';
-            document.getElementById('materialCostInput').disabled = false;
             document.getElementById('materialReceivingInput').value = '';
-            document.getElementById('materialReceivingInput').disabled = false;
-            document.getElementById('usedQtyLabel').style.display = 'none';
-            document.getElementById('materialUsedInput').style.display = 'none';
-            document.getElementById('saveMaterialBtn').textContent = 'Save Material';
-            materialFormOverlay.style.display = 'flex';
-        }
-
-        function openEditMaterialForm(materialId) {
-            const material = materials.find(m => m.docId === materialId);
-            if (!material) return;
-
-            editingId = materialId;
-            editingType = 'material';
-            document.getElementById('materialFormTitle').textContent = '✏️ Edit Material';
-            document.getElementById('materialNameInput').value = material.name;
-            document.getElementById('materialNameInput').disabled = true;
-            document.getElementById('materialDescInput').value = material.description || '';
-            document.getElementById('materialDescInput').disabled = true;
-            document.getElementById('materialUnitInput').value = material.unit;
-            document.getElementById('materialUnitInput').disabled = true;
-            document.getElementById('materialCostInput').value = material.unitCost;
-            document.getElementById('materialCostInput').disabled = true;
-            document.getElementById('materialReceivingInput').value = 0;
-            document.getElementById('materialReceivingInput').disabled = true;
-            document.getElementById('usedQtyLabel').style.display = 'block';
-            document.getElementById('materialUsedInput').style.display = 'block';
-            document.getElementById('materialUsedInput').value = material.usedQty || 0;
-            document.getElementById('materialUsedInput').disabled = false;
-            document.getElementById('saveMaterialBtn').textContent = 'Update Material';
             materialFormOverlay.style.display = 'flex';
         }
 
@@ -690,8 +795,7 @@
             const description = document.getElementById('materialDescInput').value.trim();
             const unit = document.getElementById('materialUnitInput').value.trim();
             const unitCost = parseFloat(document.getElementById('materialCostInput').value) || 0;
-            const receivingQty = parseFloat(document.getElementById('materialReceivingInput').value) || 0;
-            const usedQty = parseFloat(document.getElementById('materialUsedInput').value) || 0;
+            const initialStock = parseFloat(document.getElementById('materialReceivingInput').value) || 0;
 
             if (!name || !unit) {
                 alert('Please fill in all required fields');
@@ -703,20 +807,15 @@
                 description,
                 unit,
                 unitCost,
+                availableStock: initialStock,
+                totalUsed: 0,
                 projectId: projectId,
+                createdAt: new Date(),
                 updatedAt: new Date()
             };
 
             try {
-                if (editingId) {
-                    materialData.usedQty = usedQty;
-                    await db.collection('materials').doc(editingId).update(materialData);
-                } else {
-                    materialData.availableStock = receivingQty;
-                    materialData.usedQty = 0;
-                    materialData.createdAt = new Date();
-                    await db.collection('materials').add(materialData);
-                }
+                await db.collection('materials').add(materialData);
                 closeMaterialFormModal();
             } catch (error) {
                 console.error('Error saving material:', error);
@@ -735,11 +834,18 @@
             document.getElementById('restockAddInput').value = '';
             document.getElementById('restockNewInput').value = material.availableStock || 0;
 
-            document.getElementById('restockAddInput').addEventListener('input', (e) => {
+            // Remove old listener and add new one
+            const addInput = document.getElementById('restockAddInput');
+            const newInput = document.getElementById('restockNewInput');
+            
+            addInput.removeEventListener('input', updateNewStock);
+            addInput.addEventListener('input', updateNewStock);
+
+            function updateNewStock(e) {
                 const current = parseFloat(document.getElementById('restockCurrentInput').value) || 0;
                 const add = parseFloat(e.target.value) || 0;
-                document.getElementById('restockNewInput').value = (current + add).toFixed(2);
-            });
+                newInput.value = (current + add).toFixed(2);
+            }
 
             restockFormOverlay.style.display = 'flex';
         }
@@ -783,18 +889,11 @@
             editingType = null;
             document.getElementById('laborFormTitle').textContent = '➕ Add Worker';
             document.getElementById('workerNameInput').value = '';
-            document.getElementById('workerNameInput').disabled = false;
             document.getElementById('careerInput').value = '';
-            document.getElementById('careerInput').disabled = false;
             document.getElementById('hourlyRateInput').value = '';
-            document.getElementById('hourlyRateInput').disabled = false;
             document.getElementById('experienceInput').value = '';
-            document.getElementById('experienceInput').disabled = false;
             document.getElementById('contactInput').value = '';
-            document.getElementById('contactInput').disabled = false;
             document.getElementById('statusSelect').value = 'available';
-            document.getElementById('statusSelect').disabled = false;
-            document.getElementById('saveLaborBtn').textContent = 'Save Worker';
             laborFormOverlay.style.display = 'flex';
         }
 
@@ -825,6 +924,14 @@
             laborFormOverlay.style.display = 'none';
             editingId = null;
             editingType = null;
+            
+            // Reset disabled states
+            document.getElementById('workerNameInput').disabled = false;
+            document.getElementById('careerInput').disabled = false;
+            document.getElementById('hourlyRateInput').disabled = false;
+            document.getElementById('experienceInput').disabled = false;
+            document.getElementById('statusSelect').disabled = false;
+            document.getElementById('saveLaborBtn').textContent = 'Save Worker';
         }
 
         closeLaborForm.addEventListener('click', closeLaborFormModal);
@@ -850,6 +957,7 @@
                 experience,
                 contact,
                 status,
+                totalHoursAllocated: 0,
                 projectId: projectId,
                 updatedAt: new Date()
             };
@@ -868,6 +976,53 @@
             }
         });
 
+        // ========== UPDATE MATERIAL STOCK FROM TASK ALLOCATIONS ==========
+        async function updateMaterialStockFromAllocations(taskId, materialId, qty, isAddition = true) {
+            const material = materials.find(m => m.docId === materialId);
+            if (!material) return;
+
+            const currentStock = material.availableStock || 0;
+            const newStock = isAddition ? currentStock - qty : currentStock + qty;
+
+            if (newStock < 0) {
+                alert(`Insufficient stock for ${material.name}. Available: ${currentStock} ${material.unit}`);
+                return false;
+            }
+
+            try {
+                await db.collection('materials').doc(materialId).update({
+                    availableStock: newStock,
+                    totalUsed: (material.totalUsed || 0) + (isAddition ? qty : -qty),
+                    updatedAt: new Date()
+                });
+                return true;
+            } catch (error) {
+                console.error('Error updating material stock:', error);
+                return false;
+            }
+        }
+
+        // ========== UPDATE LABOR HOURS FROM TASK ALLOCATIONS ==========
+        async function updateLaborHoursFromAllocations(workerId, hours, isAddition = true) {
+            const worker = labor.find(l => l.docId === workerId);
+            if (!worker) return;
+
+            const currentHours = worker.totalHoursAllocated || 0;
+            const newHours = isAddition ? currentHours + hours : currentHours - hours;
+
+            try {
+                await db.collection('labor').doc(workerId).update({
+                    totalHoursAllocated: newHours,
+                    status: newHours > 0 ? 'busy' : worker.status, // Auto-set to busy if hours allocated
+                    updatedAt: new Date()
+                });
+                return true;
+            } catch (error) {
+                console.error('Error updating labor hours:', error);
+                return false;
+            }
+        }
+
         // ========== RENDER MATERIALS ==========
         function renderMaterials() {
             if (materials.length === 0) {
@@ -879,8 +1034,8 @@
             document.getElementById('materialEmpty').style.display = 'none';
             materialBody.innerHTML = materials.map(m => {
                 const availableStock = m.availableStock || 0;
-                const usedQty = m.usedQty || 0;
-                const totalPrice = availableStock * (m.unitCost || 0);
+                const totalUsed = m.totalUsed || 0;
+                const totalValue = availableStock * (m.unitCost || 0);
                 const stockClass = availableStock < 5 ? 'stock-warning' : '';
                 
                 return `
@@ -890,12 +1045,11 @@
                         <td>${m.unit}</td>
                         <td>$${(m.unitCost || 0).toFixed(2)}</td>
                         <td class="${stockClass}"><strong>${availableStock.toFixed(2)}</strong></td>
-                        <td><strong>${usedQty.toFixed(2)}</strong></td>
-                        <td class="highlight-price">$${totalPrice.toFixed(2)}</td>
+                        <td><strong>${totalUsed.toFixed(2)}</strong></td>
+                        <td class="highlight-price">$${totalValue.toFixed(2)}</td>
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-restock" onclick="openRestockForm('${m.docId}')">🔄 Restock</button>
-                                <button class="btn-edit" onclick="openEditMaterialForm('${m.docId}')">Edit</button>
                                 <button class="btn-delete" onclick="deleteMaterial('${m.docId}')">Delete</button>
                             </div>
                         </td>
@@ -937,6 +1091,7 @@
                         <td>${l.experience} yrs</td>
                         <td>${l.contact || '—'}</td>
                         <td>${statusBadges[l.status] || '—'} ${l.status}</td>
+                        <td><strong>${(l.totalHoursAllocated || 0).toFixed(1)} hrs</strong></td>
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-edit" onclick="openEditLaborForm('${l.docId}')">Edit</button>
@@ -958,6 +1113,78 @@
             }
         }
 
+        // ========== LISTEN TO TASK ALLOCATIONS ==========
+        function listenToTaskAllocations() {
+            if (!projectId) return;
+
+            db.collection('tasks')
+                .where('projectId', '==', projectId)
+                .onSnapshot((snapshot) => {
+                    const previousTasks = tasks;
+                    tasks = snapshot.docs.map(doc => ({
+                        docId: doc.id,
+                        ...doc.data()
+                    }));
+
+                    // Check for new material allocations
+                    tasks.forEach(task => {
+                        const prevTask = previousTasks.find(t => t.docId === task.docId);
+                        
+                        if (task.materialAllocations && prevTask?.materialAllocations) {
+                            // Compare allocations to find new entries
+                            Object.keys(task.materialAllocations).forEach(materialId => {
+                                const currentAlloc = task.materialAllocations[materialId];
+                                const prevAlloc = prevTask.materialAllocations?.[materialId];
+                                
+                                if (currentAlloc.entries && prevAlloc?.entries) {
+                                    // Find new entries
+                                    currentAlloc.entries.forEach((entry, index) => {
+                                        const prevEntry = prevAlloc.entries[index];
+                                        if (!prevEntry && entry.qty) {
+                                            // New entry found - deduct from stock
+                                            updateMaterialStockFromAllocations(task.docId, materialId, entry.qty, true);
+                                        }
+                                    });
+                                } else if (currentAlloc.entries && !prevAlloc) {
+                                    // All entries are new
+                                    currentAlloc.entries.forEach(entry => {
+                                        if (entry.qty) {
+                                            updateMaterialStockFromAllocations(task.docId, materialId, entry.qty, true);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        // Check for new labor allocations
+                        if (task.laborAllocations && prevTask?.laborAllocations) {
+                            Object.keys(task.laborAllocations).forEach(workerId => {
+                                const currentAlloc = task.laborAllocations[workerId];
+                                const prevAlloc = prevTask.laborAllocations?.[workerId];
+                                
+                                if (currentAlloc.entries && prevAlloc?.entries) {
+                                    // Find new entries
+                                    currentAlloc.entries.forEach((entry, index) => {
+                                        const prevEntry = prevAlloc.entries[index];
+                                        if (!prevEntry && entry.hours) {
+                                            // New entry found - add to worker hours
+                                            updateLaborHoursFromAllocations(workerId, entry.hours, true);
+                                        }
+                                    });
+                                } else if (currentAlloc.entries && !prevAlloc) {
+                                    // All entries are new
+                                    currentAlloc.entries.forEach(entry => {
+                                        if (entry.hours) {
+                                            updateLaborHoursFromAllocations(workerId, entry.hours, true);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
+        }
+
         // ========== FIRESTORE LISTENERS ==========
         if (projectId) {
             // Materials
@@ -968,7 +1195,6 @@
                         docId: doc.id,
                         ...doc.data()
                     }));
-                    console.log('Materials:', materials);
                     renderMaterials();
                 });
 
@@ -980,9 +1206,11 @@
                         docId: doc.id,
                         ...doc.data()
                     }));
-                    console.log('Labor:', labor);
                     renderLabor();
                 });
+
+            // Listen to task allocations for stock updates
+            listenToTaskAllocations();
         }
 
         // Close modals on overlay click
