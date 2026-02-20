@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Management · Firebase</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #d3dfed;
+        }
+
+        .app-header {
+            background: #0a1c2f;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            min-height: 60px;
+        }
+
+        .app-header h2 {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .back-btn {
+            background: white;
+            color: #0b1f33;
+            border: none;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .back-btn:hover {
+            background: #e6efff;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .add-btn, .history-btn {
+            background: white;
+            color: #0b1f33;
+            border: none;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .add-btn:hover, .history-btn:hover {
+            background: #e6efff;
+        }
+
+        .container {
+            padding: 1.5rem;
+            overflow: auto;
+            height: calc(100vh - 60px);
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0.8rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid #b3c7e0;
+            background: white;
+            color: #1f3d62;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #0a1c2f;
+            color: white;
+            border-color: #0a1c2f;
+        }
+
+        .tab-btn:hover {
+            border-color: #1f3d62;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: #b8cde0;
+            color: #0a1c2f;
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #1f3d62;
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid #e0e8f2;
+            font-size: 0.85rem;
+            color: #1f3d62;
+        }
+
+        tbody tr:hover {
+            background: #f2f6fc;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-restock {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .btn-restock:hover {
+            background: #047857;
+        }
+
+        .btn-edit {
+            background: #2b4a73;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .btn-edit:hover {
+            background: #1f3d62;
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .btn-delete:hover {
+            background: #ee5a52;
+        }
+
+        .highlight-price {
+            background: #fce3cd;
+            font-weight: 600;
+            color: #d97706;
+        }
+
+        .stock-warning {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        /* MODAL FORM */
+        .form-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .form-card {
+            background: white;
+            width: 420px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,20,40,0.5);
+            padding: 2rem;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-card h3 {
+            color: #0a1c2f;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-left: 5px solid #2b4a73;
+            padding-left: 0.8rem;
+        }
+
+        .form-card label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #1f3d62;
+            font-weight: 600;
+            display: block;
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .form-card input,
+        .form-card select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #b3c7e0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            background: #f2f6fc;
+            outline: none;
+            margin-bottom: 0.5rem;
+            box-sizing: border-box;
+        }
+
+        .form-card input:focus,
+        .form-card select:focus {
+            border-color: #1f3d62;
+            background: white;
+        }
+
+        .form-card input:disabled,
+        .form-card select:disabled {
+            background: #e0e8f2;
+            color: #7f96b3;
+            cursor: not-allowed;
+        }
+
+        .row2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        .row2 > div {
+            flex: 1;
+        }
+
+        .row2 input,
+        .row2 select {
+            margin-bottom: 0;
+        }
+
+        .button-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+
+        .button-bar button {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            background: white;
+            border: 1px solid #2b4a73;
+            color: #0a1c2f;
+        }
+
+        .button-bar button.primary {
+            background: #0a1c2f;
+            color: white;
+            border: none;
+        }
+
+        .button-bar button.primary:hover {
+            background: #1f3d62;
+        }
+
+        .button-bar button:hover {
+            background: #e6efff;
+        }
+
+        .close-icon {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 1.4rem;
+            color: #7f96b3;
+            cursor: pointer;
+        }
+
+        .close-icon:hover {
+            color: #0a1c2f;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #1f3d62;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        .info-text {
+            font-size: 0.7rem;
+            color: #7f96b3;
+            margin-top: 0.3rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+        <h2>📦 Resources</h2>
+        <div class="header-buttons">
+            <button class="history-btn" id="historyBtn" onclick="goToHistory()"><i class="fas fa-history"></i> History</button>
+            <button class="add-btn" id="addBtn"><i class="fas fa-plus"></i> Add</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- TABS -->
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('materials')">
+                <i class="fas fa-cube"></i> Materials
+            </button>
+            <button class="tab-btn" onclick="switchTab('labor')">
+                <i class="fas fa-hardhat"></i> Labor
+            </button>
+        </div>
+
+        <!-- MATERIALS TAB -->
+        <div id="materials" class="tab-content active">
+            <div class="table-wrapper">
+                <table id="materialsTable">
+                    <thead>
+                        <tr>
+                            <th>Material Name</th>
+                            <th>Description</th>
+                            <th>Unit</th>
+                            <th>Unit Cost ($)</th>
+                            <th>Available Stock</th>
+                            <th>Used Qty</th>
+                            <th>Total Price ($)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialBody"></tbody>
+                </table>
+                <div id="materialEmpty" class="empty-state" style="display:none;">
+                    <i class="fas fa-box-open"></i>
+                    <p>No materials added yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LABOR TAB -->
+        <div id="labor" class="tab-content">
+            <div class="table-wrapper">
+                <table id="laborTable">
+                    <thead>
+                        <tr>
+                            <th>Worker Name</th>
+                            <th>Career/Position</th>
+                            <th>Hourly Rate ($)</th>
+                            <th>Experience (years)</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="laborBody"></tbody>
+                </table>
+                <div id="laborEmpty" class="empty-state" style="display:none;">
+                    <i class="fas fa-people-group"></i>
+                    <p>No labor resources added yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MATERIAL FORM MODAL -->
+    <div class="form-overlay" id="materialFormOverlay">
+        <div class="form-card">
+            <i class="fas fa-times close-icon" id="closeMaterialForm"></i>
+            <h3 id="materialFormTitle">➕ Add Material</h3>
+
+            <label>Material Name</label>
+            <input type="text" id="materialNameInput" placeholder="e.g., Concrete, Steel, Gravel">
+
+            <label>Description / Grade</label>
+            <input type="text" id="materialDescInput" placeholder="e.g., M20 Grade, 10mm Gravel, Mild Steel">
+
+            <div class="row2">
+                <div>
+                    <label>Unit (e.g., m³, kg)</label>
+                    <input type="text" id="materialUnitInput" placeholder="e.g., m³, kg, units">
+                </div>
+                <div>
+                    <label>Unit Cost ($)</label>
+                    <input type="number" id="materialCostInput" placeholder="0.00" min="0" step="0.01">
+                </div>
+            </div>
+
+            <label>Receiving Qty</label>
+            <input type="number" id="materialReceivingInput" placeholder="0" min="0" step="0.01">
+            <p class="info-text">ℹ️ This will be added to Available Stock</p>
+
+            <label id="usedQtyLabel" style="display:none;">Used Qty</label>
+            <input type="number" id="materialUsedInput" placeholder="0" min="0" step="0.01" style="display:none;">
+
+            <div class="button-bar">
+                <button id="cancelMaterialBtn">Cancel</button>
+                <button class="primary" id="saveMaterialBtn">Save Material</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESTOCK MODAL -->
+    <div class="form-overlay" id="restockFormOverlay">
+        <div class="form-card">
+            <i class="fas fa-times close-icon" id="closeRestockForm"></i>
+            <h3>🔄 Restock Material</h3>
+
+            <label id="restockMaterialName" style="font-weight: bold; color: #0a1c2f;">—</label>
+
+            <label>Current Available Stock</label>
+            <input type="number" id="restockCurrentInput" disabled placeholder="0">
+
+            <label>Add Qty (Receiving)</label>
+            <input type="number" id="restockAddInput" placeholder="0" min="0" step="0.01">
+            <p class="info-text">ℹ️ Enter the quantity you are receiving</p>
+
+            <label>New Available Stock</label>
+            <input type="number" id="restockNewInput" disabled placeholder="0">
+
+            <div class="button-bar">
+                <button id="cancelRestockBtn">Cancel</button>
+                <button class="primary" id="saveRestockBtn">✅ Restock</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LABOR FORM MODAL -->
+    <div class="form-overlay" id="laborFormOverlay">
+        <div class="form-card">
+            <i class="fas fa-times close-icon" id="closeLaborForm"></i>
+            <h3 id="laborFormTitle">➕ Add Worker</h3>
+
+            <label>Worker Name</label>
+            <input type="text" id="workerNameInput" placeholder="e.g., John Smith">
+
+            <label>Career / Position</label>
+            <input type="text" id="careerInput" placeholder="e.g., Electrician, Carpenter, Engineer">
+
+            <label>Hourly Rate ($)</label>
+            <input type="number" id="hourlyRateInput" placeholder="0.00" min="0" step="0.01">
+
+            <label>Experience (Years)</label>
+            <input type="number" id="experienceInput" placeholder="0" min="0">
+
+            <label>Contact (Phone/Email)</label>
+            <input type="text" id="contactInput" placeholder="e.g., 555-1234 or email@domain.com">
+
+            <label>Status</label>
+            <select id="statusSelect">
+                <option value="available">🟢 Available</option>
+                <option value="busy">🟡 On Project</option>
+                <option value="unavailable">🔴 Unavailable</option>
+            </select>
+
+            <div class="button-bar">
+                <button id="cancelLaborBtn">Cancel</button>
+                <button class="primary" id="saveLaborBtn">Save Worker</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('project');
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.firebasestorage.app",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global state
+        let materials = [];
+        let labor = [];
+        let tasks = [];
+        let currentTab = 'materials';
+        let editingId = null;
+        let editingType = null;
+        let restockingMaterialId = null;
+
+        // DOM elements
+        const addBtn = document.getElementById('addBtn');
+        const materialFormOverlay = document.getElementById('materialFormOverlay');
+        const laborFormOverlay = document.getElementById('laborFormOverlay');
+        const restockFormOverlay = document.getElementById('restockFormOverlay');
+        const closeMaterialForm = document.getElementById('closeMaterialForm');
+        const closeLaborForm = document.getElementById('closeLaborForm');
+        const closeRestockForm = document.getElementById('closeRestockForm');
+        const saveMaterialBtn = document.getElementById('saveMaterialBtn');
+        const saveLaborBtn = document.getElementById('saveLaborBtn');
+        const saveRestockBtn = document.getElementById('saveRestockBtn');
+        const cancelMaterialBtn = document.getElementById('cancelMaterialBtn');
+        const cancelLaborBtn = document.getElementById('cancelLaborBtn');
+        const cancelRestockBtn = document.getElementById('cancelRestockBtn');
+        const materialBody = document.getElementById('materialBody');
+        const laborBody = document.getElementById('laborBody');
+
+        // Go to history page
+        function goToHistory() {
+            window.location.href = `history.html?project=${projectId}`;
+        }
+
+        // Back button
+        function goBack() {
+            window.history.back();
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.closest('.tab-btn').classList.add('active');
+        }
+
+        // Add button
+        addBtn.addEventListener('click', () => {
+            if (currentTab === 'materials') {
+                openMaterialForm();
+            } else {
+                openLaborForm();
+            }
+        });
+
+        // ========== MATERIAL FORM ==========
+        function openMaterialForm() {
+            editingId = null;
+            editingType = null;
+            document.getElementById('materialFormTitle').textContent = '➕ Add Material';
+            document.getElementById('materialNameInput').value = '';
+            document.getElementById('materialNameInput').disabled = false;
+            document.getElementById('materialDescInput').value = '';
+            document.getElementById('materialDescInput').disabled = false;
+            document.getElementById('materialUnitInput').value = '';
+            document.getElementById('materialUnitInput').disabled = false;
+            document.getElementById('materialCostInput').value = '';
+            document.getElementById('materialCostInput').disabled = false;
+            document.getElementById('materialReceivingInput').value = '';
+            document.getElementById('materialReceivingInput').disabled = false;
+            document.getElementById('usedQtyLabel').style.display = 'none';
+            document.getElementById('materialUsedInput').style.display = 'none';
+            document.getElementById('saveMaterialBtn').textContent = 'Save Material';
+            materialFormOverlay.style.display = 'flex';
+        }
+
+        function openEditMaterialForm(materialId) {
+            const material = materials.find(m => m.docId === materialId);
+            if (!material) return;
+
+            editingId = materialId;
+            editingType = 'material';
+            document.getElementById('materialFormTitle').textContent = '✏️ Edit Material';
+            document.getElementById('materialNameInput').value = material.name;
+            document.getElementById('materialNameInput').disabled = true;
+            document.getElementById('materialDescInput').value = material.description || '';
+            document.getElementById('materialDescInput').disabled = true;
+            document.getElementById('materialUnitInput').value = material.unit;
+            document.getElementById('materialUnitInput').disabled = true;
+            document.getElementById('materialCostInput').value = material.unitCost;
+            document.getElementById('materialCostInput').disabled = true;
+            document.getElementById('materialReceivingInput').value = 0;
+            document.getElementById('materialReceivingInput').disabled = true;
+            document.getElementById('usedQtyLabel').style.display = 'block';
+            document.getElementById('materialUsedInput').style.display = 'block';
+            document.getElementById('materialUsedInput').value = material.usedQty || 0;
+            document.getElementById('materialUsedInput').disabled = false;
+            document.getElementById('saveMaterialBtn').textContent = 'Update Material';
+            materialFormOverlay.style.display = 'flex';
+        }
+
+        function closeMaterialFormModal() {
+            materialFormOverlay.style.display = 'none';
+            editingId = null;
+            editingType = null;
+        }
+
+        closeMaterialForm.addEventListener('click', closeMaterialFormModal);
+        cancelMaterialBtn.addEventListener('click', closeMaterialFormModal);
+
+        saveMaterialBtn.addEventListener('click', async () => {
+            const name = document.getElementById('materialNameInput').value.trim();
+            const description = document.getElementById('materialDescInput').value.trim();
+            const unit = document.getElementById('materialUnitInput').value.trim();
+            const unitCost = parseFloat(document.getElementById('materialCostInput').value) || 0;
+            const receivingQty = parseFloat(document.getElementById('materialReceivingInput').value) || 0;
+            const usedQty = parseFloat(document.getElementById('materialUsedInput').value) || 0;
+
+            if (!name || !unit) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const materialData = {
+                name,
+                description,
+                unit,
+                unitCost,
+                projectId: projectId,
+                updatedAt: new Date()
+            };
+
+            try {
+                if (editingId) {
+                    materialData.usedQty = usedQty;
+                    await db.collection('materials').doc(editingId).update(materialData);
+                } else {
+                    materialData.availableStock = receivingQty;
+                    materialData.usedQty = 0;
+                    materialData.createdAt = new Date();
+                    await db.collection('materials').add(materialData);
+                }
+                closeMaterialFormModal();
+            } catch (error) {
+                console.error('Error saving material:', error);
+                alert('Error saving material');
+            }
+        });
+
+        // ========== RESTOCK FORM ==========
+        function openRestockForm(materialId) {
+            const material = materials.find(m => m.docId === materialId);
+            if (!material) return;
+
+            restockingMaterialId = materialId;
+            document.getElementById('restockMaterialName').textContent = `📦 ${material.name} (${material.unit})`;
+            document.getElementById('restockCurrentInput').value = material.availableStock || 0;
+            document.getElementById('restockAddInput').value = '';
+            document.getElementById('restockNewInput').value = material.availableStock || 0;
+
+            document.getElementById('restockAddInput').addEventListener('input', (e) => {
+                const current = parseFloat(document.getElementById('restockCurrentInput').value) || 0;
+                const add = parseFloat(e.target.value) || 0;
+                document.getElementById('restockNewInput').value = (current + add).toFixed(2);
+            });
+
+            restockFormOverlay.style.display = 'flex';
+        }
+
+        function closeRestockFormModal() {
+            restockFormOverlay.style.display = 'none';
+            restockingMaterialId = null;
+        }
+
+        closeRestockForm.addEventListener('click', closeRestockFormModal);
+        cancelRestockBtn.addEventListener('click', closeRestockFormModal);
+
+        saveRestockBtn.addEventListener('click', async () => {
+            const addQty = parseFloat(document.getElementById('restockAddInput').value) || 0;
+
+            if (addQty <= 0) {
+                alert('Please enter a valid quantity');
+                return;
+            }
+
+            const material = materials.find(m => m.docId === restockingMaterialId);
+            if (!material) return;
+
+            const newStock = (material.availableStock || 0) + addQty;
+
+            try {
+                await db.collection('materials').doc(restockingMaterialId).update({
+                    availableStock: newStock,
+                    updatedAt: new Date()
+                });
+                closeRestockFormModal();
+            } catch (error) {
+                console.error('Error restocking:', error);
+                alert('Error restocking material');
+            }
+        });
+
+        // ========== LABOR FORM ==========
+        function openLaborForm() {
+            editingId = null;
+            editingType = null;
+            document.getElementById('laborFormTitle').textContent = '➕ Add Worker';
+            document.getElementById('workerNameInput').value = '';
+            document.getElementById('workerNameInput').disabled = false;
+            document.getElementById('careerInput').value = '';
+            document.getElementById('careerInput').disabled = false;
+            document.getElementById('hourlyRateInput').value = '';
+            document.getElementById('hourlyRateInput').disabled = false;
+            document.getElementById('experienceInput').value = '';
+            document.getElementById('experienceInput').disabled = false;
+            document.getElementById('contactInput').value = '';
+            document.getElementById('contactInput').disabled = false;
+            document.getElementById('statusSelect').value = 'available';
+            document.getElementById('statusSelect').disabled = false;
+            document.getElementById('saveLaborBtn').textContent = 'Save Worker';
+            laborFormOverlay.style.display = 'flex';
+        }
+
+        function openEditLaborForm(laborId) {
+            const worker = labor.find(l => l.docId === laborId);
+            if (!worker) return;
+
+            editingId = laborId;
+            editingType = 'labor';
+            document.getElementById('laborFormTitle').textContent = '✏️ Edit Worker';
+            document.getElementById('workerNameInput').value = worker.name;
+            document.getElementById('workerNameInput').disabled = true;
+            document.getElementById('careerInput').value = worker.career;
+            document.getElementById('careerInput').disabled = true;
+            document.getElementById('hourlyRateInput').value = worker.hourlyRate;
+            document.getElementById('hourlyRateInput').disabled = true;
+            document.getElementById('experienceInput').value = worker.experience;
+            document.getElementById('experienceInput').disabled = true;
+            document.getElementById('contactInput').value = worker.contact || '';
+            document.getElementById('contactInput').disabled = false;
+            document.getElementById('statusSelect').value = worker.status;
+            document.getElementById('statusSelect').disabled = false;
+            document.getElementById('saveLaborBtn').textContent = 'Update Worker';
+            laborFormOverlay.style.display = 'flex';
+        }
+
+        function closeLaborFormModal() {
+            laborFormOverlay.style.display = 'none';
+            editingId = null;
+            editingType = null;
+        }
+
+        closeLaborForm.addEventListener('click', closeLaborFormModal);
+        cancelLaborBtn.addEventListener('click', closeLaborFormModal);
+
+        saveLaborBtn.addEventListener('click', async () => {
+            const name = document.getElementById('workerNameInput').value.trim();
+            const career = document.getElementById('careerInput').value.trim();
+            const hourlyRate = parseFloat(document.getElementById('hourlyRateInput').value) || 0;
+            const experience = parseInt(document.getElementById('experienceInput').value) || 0;
+            const contact = document.getElementById('contactInput').value.trim();
+            const status = document.getElementById('statusSelect').value;
+
+            if (!name || !career) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const laborData = {
+                name,
+                career,
+                hourlyRate,
+                experience,
+                contact,
+                status,
+                projectId: projectId,
+                updatedAt: new Date()
+            };
+
+            try {
+                if (editingId) {
+                    await db.collection('labor').doc(editingId).update(laborData);
+                } else {
+                    laborData.createdAt = new Date();
+                    await db.collection('labor').add(laborData);
+                }
+                closeLaborFormModal();
+            } catch (error) {
+                console.error('Error saving worker:', error);
+                alert('Error saving worker');
+            }
+        });
+
+        // ========== RENDER MATERIALS ==========
+        function renderMaterials() {
+            if (materials.length === 0) {
+                materialBody.innerHTML = '';
+                document.getElementById('materialEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('materialEmpty').style.display = 'none';
+            materialBody.innerHTML = materials.map(m => {
+                const availableStock = m.availableStock || 0;
+                const usedQty = m.usedQty || 0;
+                const totalPrice = availableStock * (m.unitCost || 0);
+                const stockClass = availableStock < 5 ? 'stock-warning' : '';
+                
+                return `
+                    <tr>
+                        <td><strong>${m.name}</strong></td>
+                        <td>${m.description || '—'}</td>
+                        <td>${m.unit}</td>
+                        <td>$${(m.unitCost || 0).toFixed(2)}</td>
+                        <td class="${stockClass}"><strong>${availableStock.toFixed(2)}</strong></td>
+                        <td><strong>${usedQty.toFixed(2)}</strong></td>
+                        <td class="highlight-price">$${totalPrice.toFixed(2)}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-restock" onclick="openRestockForm('${m.docId}')">🔄 Restock</button>
+                                <button class="btn-edit" onclick="openEditMaterialForm('${m.docId}')">Edit</button>
+                                <button class="btn-delete" onclick="deleteMaterial('${m.docId}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function deleteMaterial(docId) {
+            if (confirm('Delete this material?')) {
+                try {
+                    await db.collection('materials').doc(docId).delete();
+                } catch (error) {
+                    console.error('Error deleting material:', error);
+                }
+            }
+        }
+
+        // ========== RENDER LABOR ==========
+        function renderLabor() {
+            if (labor.length === 0) {
+                laborBody.innerHTML = '';
+                document.getElementById('laborEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('laborEmpty').style.display = 'none';
+            laborBody.innerHTML = labor.map(l => {
+                const statusBadges = {
+                    'available': '🟢',
+                    'busy': '🟡',
+                    'unavailable': '🔴'
+                };
+                return `
+                    <tr>
+                        <td><strong>${l.name}</strong></td>
+                        <td>${l.career}</td>
+                        <td>$${(l.hourlyRate || 0).toFixed(2)}/hr</td>
+                        <td>${l.experience} yrs</td>
+                        <td>${l.contact || '—'}</td>
+                        <td>${statusBadges[l.status] || '—'} ${l.status}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-edit" onclick="openEditLaborForm('${l.docId}')">Edit</button>
+                                <button class="btn-delete" onclick="deleteLabor('${l.docId}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function deleteLabor(docId) {
+            if (confirm('Delete this worker?')) {
+                try {
+                    await db.collection('labor').doc(docId).delete();
+                } catch (error) {
+                    console.error('Error deleting worker:', error);
+                }
+            }
+        }
+
+        // ========== FIRESTORE LISTENERS ==========
+        if (projectId) {
+            // Materials
+            db.collection('materials')
+                .where('projectId', '==', projectId)
+                .onSnapshot((snapshot) => {
+                    materials = snapshot.docs.map(doc => ({
+                        docId: doc.id,
+                        ...doc.data()
+                    }));
+                    console.log('Materials:', materials);
+                    renderMaterials();
+                });
+
+            // Labor
+            db.collection('labor')
+                .where('projectId', '==', projectId)
+                .onSnapshot((snapshot) => {
+                    labor = snapshot.docs.map(doc => ({
+                        docId: doc.id,
+                        ...doc.data()
+                    }));
+                    console.log('Labor:', labor);
+                    renderLabor();
+                });
+        }
+
+        // Close modals on overlay click
+        materialFormOverlay.addEventListener('click', (e) => {
+            if (e.target === materialFormOverlay) closeMaterialFormModal();
+        });
+
+        laborFormOverlay.addEventListener('click', (e) => {
+            if (e.target === laborFormOverlay) closeLaborFormModal();
+        });
+
+        restockFormOverlay.addEventListener('click', (e) => {
+            if (e.target === restockFormOverlay) closeRestockFormModal();
+        });
+    </script>
+</body>
+</html>
