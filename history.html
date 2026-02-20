@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History · Resource Management</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #d3dfed;
+        }
+
+        .app-header {
+            background: #0a1c2f;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            min-height: 60px;
+        }
+
+        .app-header h2 {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .back-btn {
+            background: white;
+            color: #0b1f33;
+            border: none;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .back-btn:hover {
+            background: #e6efff;
+        }
+
+        .container {
+            padding: 1.5rem;
+            overflow: auto;
+            height: calc(100vh - 60px);
+        }
+
+        .history-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0.8rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .history-tab-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #b3c7e0;
+            background: white;
+            color: #1f3d62;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-tab-btn.active {
+            background: #0a1c2f;
+            color: white;
+            border-color: #0a1c2f;
+        }
+
+        .history-tab-btn:hover {
+            border-color: #1f3d62;
+        }
+
+        .history-content {
+            display: none;
+        }
+
+        .history-content.active {
+            display: block;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: #b8cde0;
+            color: #0a1c2f;
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #1f3d62;
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid #e0e8f2;
+            font-size: 0.85rem;
+            color: #1f3d62;
+        }
+
+        tbody tr:hover {
+            background: #f2f6fc;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .material-row {
+            border-left: 4px solid #059669;
+        }
+
+        .labor-row {
+            border-left: 4px solid #d97706;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge.material {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .badge.labor {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #1f3d62;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        .cost-highlight {
+            background: #fce3cd;
+            font-weight: 600;
+            color: #d97706;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+        <h2>📋 Resource History</h2>
+    </div>
+
+    <div class="container">
+        <div class="history-tabs">
+            <button class="history-tab-btn active" onclick="switchHistoryTab('material')">
+                <i class="fas fa-cube"></i> Materials History
+            </button>
+            <button class="history-tab-btn" onclick="switchHistoryTab('labor')">
+                <i class="fas fa-hardhat"></i> Labor History
+            </button>
+        </div>
+
+        <!-- MATERIAL HISTORY -->
+        <div id="material-history" class="history-content active">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Material</th>
+                            <th>Task</th>
+                            <th>Quantity Used</th>
+                            <th>Unit</th>
+                            <th>Unit Cost</th>
+                            <th>Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialHistoryBody"></tbody>
+                </table>
+                <div id="materialEmpty" class="empty-state" style="display:none;">
+                    <i class="fas fa-box-open"></i>
+                    <p>No material usage history yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LABOR HISTORY -->
+        <div id="labor-history" class="history-content">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Worker</th>
+                            <th>Position</th>
+                            <th>Task</th>
+                            <th>Hours Worked</th>
+                            <th>Hourly Rate</th>
+                            <th>Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody id="laborHistoryBody"></tbody>
+                </table>
+                <div id="laborEmpty" class="empty-state" style="display:none;">
+                    <i class="fas fa-people-group"></i>
+                    <p>No labor usage history yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('project');
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.firebasestorage.app",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Global state
+        let materials = [];
+        let labor = [];
+        let tasks = [];
+        let currentTab = 'material';
+
+        // Back button
+        function goBack() {
+            window.history.back();
+        }
+
+        // Switch history tab
+        function switchHistoryTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.history-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.history-tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + '-history').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Generate history data from tasks
+        function generateHistory() {
+            // Material History
+            const materialHistory = [];
+            
+            tasks.forEach(task => {
+                if (task.materialCost && task.materialCost > 0) {
+                    // Find materials used in this task
+                    materials.forEach(material => {
+                        if (material.usedQty && material.usedQty > 0) {
+                            materialHistory.push({
+                                date: task.updatedAt || task.createdAt || new Date(),
+                                materialName: material.name,
+                                taskName: task.name,
+                                quantity: material.usedQty,
+                                unit: material.unit,
+                                unitCost: material.unitCost || 0,
+                                totalCost: (material.usedQty * (material.unitCost || 0)),
+                                type: 'material'
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Sort by date (newest first)
+            materialHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Render material history
+            const materialBody = document.getElementById('materialHistoryBody');
+            const materialEmpty = document.getElementById('materialEmpty');
+
+            if (materialHistory.length === 0) {
+                materialBody.innerHTML = '';
+                materialEmpty.style.display = 'block';
+            } else {
+                materialEmpty.style.display = 'none';
+                materialBody.innerHTML = materialHistory.map(h => {
+                    const date = h.date ? new Date(h.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : '—';
+                    
+                    return `
+                        <tr class="material-row">
+                            <td><i class="far fa-calendar-alt"></i> ${date}</td>
+                            <td><strong>${h.materialName}</strong></td>
+                            <td>${h.taskName || '—'}</td>
+                            <td><strong>${h.quantity.toFixed(2)}</strong></td>
+                            <td>${h.unit}</td>
+                            <td>$${h.unitCost.toFixed(2)}</td>
+                            <td><span class="cost-highlight">$${h.totalCost.toFixed(2)}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Labor History
+            const laborHistory = [];
+            
+            tasks.forEach(task => {
+                if (task.manCost && task.manCost > 0) {
+                    // Find labor assigned to this task
+                    labor.forEach(worker => {
+                        if (worker.status === 'busy') {
+                            // Estimate hours based on cost and rate
+                            const hoursWorked = task.manCost / (worker.hourlyRate || 1);
+                            laborHistory.push({
+                                date: task.updatedAt || task.createdAt || new Date(),
+                                workerName: worker.name,
+                                position: worker.career,
+                                taskName: task.name,
+                                hoursWorked: hoursWorked,
+                                hourlyRate: worker.hourlyRate || 0,
+                                totalCost: task.manCost,
+                                type: 'labor'
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Sort by date (newest first)
+            laborHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Render labor history
+            const laborBody = document.getElementById('laborHistoryBody');
+            const laborEmpty = document.getElementById('laborEmpty');
+
+            if (laborHistory.length === 0) {
+                laborBody.innerHTML = '';
+                laborEmpty.style.display = 'block';
+            } else {
+                laborEmpty.style.display = 'none';
+                laborBody.innerHTML = laborHistory.map(h => {
+                    const date = h.date ? new Date(h.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : '—';
+                    
+                    return `
+                        <tr class="labor-row">
+                            <td><i class="far fa-calendar-alt"></i> ${date}</td>
+                            <td><strong>${h.workerName}</strong></td>
+                            <td>${h.position}</td>
+                            <td>${h.taskName || '—'}</td>
+                            <td><strong>${h.hoursWorked.toFixed(1)} hrs</strong></td>
+                            <td>$${h.hourlyRate.toFixed(2)}/hr</td>
+                            <td><span class="cost-highlight">$${h.totalCost.toFixed(2)}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Load data from Firestore
+        if (projectId) {
+            // Load materials
+            db.collection('materials')
+                .where('projectId', '==', projectId)
+                .onSnapshot((snapshot) => {
+                    materials = snapshot.docs.map(doc => ({
+                        docId: doc.id,
+                        ...doc.data()
+                    }));
+                    generateHistory();
+                });
+
+            // Load labor
+            db.collection('labor')
+                .where('projectId', '==', projectId)
+                .onSnapshot((snapshot) => {
+                    labor = snapshot.docs.map(doc => ({
+                        docId: doc.id,
+                        ...doc.data()
+                    }));
+                    generateHistory();
+                });
+
+            // Load tasks
+            db.collection('tasks')
+                .where('projectId', '==', projectId)
+                .onSnapshot((snapshot) => {
+                    tasks = snapshot.docs.map(doc => ({
+                        docId: doc.id,
+                        ...doc.data()
+                    }));
+                    generateHistory();
+                });
+        }
+    </script>
+</body>
+</html>
