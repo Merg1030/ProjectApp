@@ -72,7 +72,7 @@
             margin-left: auto;
         }
         
-        .add-btn, .resources-btn {
+        .add-btn, .resources-btn, .history-btn {
             background: white;
             color: #0b1f33;
             border: none;
@@ -87,7 +87,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .add-btn:hover, .resources-btn:hover {
+        .add-btn:hover, .resources-btn:hover, .history-btn:hover {
             background: #e6efff;
         }
 
@@ -512,7 +512,7 @@
 
         .allocation-modal {
             background: white;
-            width: 400px;
+            width: 500px;
             border-radius: 16px;
             box-shadow: 0 20px 40px rgba(0,20,40,0.5);
             padding: 1.8rem;
@@ -565,41 +565,90 @@
             padding: 0.8rem;
             margin-bottom: 0.6rem;
             border-radius: 6px;
+        }
+
+        .allocation-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 0.5rem;
         }
 
-        .allocation-item-info {
-            flex: 1;
-        }
-
-        .allocation-item-info h5 {
+        .allocation-item-header h5 {
             margin: 0;
             color: #0a1c2f;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
         }
 
-        .allocation-item-info p {
-            margin: 0.2rem 0 0;
-            color: #1f3d62;
-            font-size: 0.75rem;
+        .allocation-entries {
+            margin-left: 0.5rem;
         }
 
-        .btn-remove {
+        .allocation-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            border-bottom: 1px dashed #b3c7e0;
+            font-size: 0.8rem;
+        }
+
+        .allocation-entry:last-child {
+            border-bottom: none;
+        }
+
+        .allocation-date {
+            color: #2b4a73;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .allocation-qty {
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .allocation-cost {
+            font-weight: 600;
+            color: #d97706;
+        }
+
+        .btn-remove-entry {
             background: #ff6b6b;
             color: white;
             border: none;
-            padding: 0.3rem 0.6rem;
+            padding: 0.2rem 0.4rem;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 600;
         }
 
-        .btn-remove:hover {
+        .btn-remove-entry:hover {
             background: #ee5a52;
+        }
+
+        .btn-add-allocation {
+            width: 100%;
+            padding: 0.6rem;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.8rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-add-allocation:hover {
+            background: #047857;
         }
 
         .total-row {
@@ -674,6 +723,20 @@
             color: #7f96b3;
             font-size: 0.8rem;
         }
+
+        .resource-badge {
+            display: inline-block;
+            padding: 0.2rem 0.4rem;
+            background: #e6efff;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 4px;
+        }
+
+        .history-link {
+            text-decoration: none;
+            color: inherit;
+        }
     </style>
 </head>
 <body>
@@ -682,6 +745,7 @@
         <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
         <h2 id="projectTitle">construction project Management</h2>
         <div class="header-buttons">
+            <button class="history-btn" onclick="goToHistory()"><i class="fas fa-history"></i> History</button>
             <button class="resources-btn" id="resourcesBtn" onclick="goToResources()"><i class="fas fa-boxes"></i> Resources</button>
             <button class="add-btn" id="addTaskBtn"><i class="fas fa-plus"></i> Add task</button>
         </div>
@@ -730,15 +794,19 @@
     <!-- MATERIAL ALLOCATION MODAL -->
     <div class="allocation-overlay" id="materialAllocOverlay">
         <div class="allocation-modal">
-            <i class="fas fa-times modal-close" onclick="document.getElementById('materialAllocOverlay').style.display='none'"></i>
-            <h3>📦 Allocate Material to <span id="taskNameMaterial">Task</span></h3>
+            <i class="fas fa-times modal-close" onclick="closeMaterialAllocModal()"></i>
+            <h3>📦 Material Allocation for <span id="taskNameMaterial">Task</span></h3>
 
-            <label>Select Material</label>
-            <select id="materialSelect"></select>
+            <div style="background: #e8f0fe; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+                <label style="margin-top:0;">Add New Material Entry</label>
+                <select id="materialSelect"></select>
+                <input type="number" id="materialQtyInput" placeholder="Quantity" min="0" step="0.01">
+                <button class="btn-add-allocation" onclick="addMaterialAlloc()">
+                    <i class="fas fa-plus"></i> Add to Task
+                </button>
+            </div>
 
-            <label>Quantity</label>
-            <input type="number" id="materialQtyInput" placeholder="0" min="0" step="0.01">
-
+            <h4 style="font-size:0.9rem; color:#0a1c2f; margin-bottom:0.5rem;">Current Allocations</h4>
             <div id="materialAllocList"></div>
 
             <div id="materialTotalRow" style="display:none;" class="total-row">
@@ -746,13 +814,8 @@
                 <h5 id="materialTotalCost">$0.00</h5>
             </div>
 
-            <button style="width:100%; padding:0.6rem; background:#059669; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin-bottom:0.8rem;" onclick="addMaterialAlloc()">
-                ➕ Add Material
-            </button>
-
             <div class="modal-buttons">
-                <button class="cancel" onclick="document.getElementById('materialAllocOverlay').style.display='none'">Cancel</button>
-                <button class="save" id="saveMaterialAlloc">Save & Update</button>
+                <button class="cancel" onclick="closeMaterialAllocModal()">Close</button>
             </div>
         </div>
     </div>
@@ -760,15 +823,19 @@
     <!-- LABOR ALLOCATION MODAL -->
     <div class="allocation-overlay" id="laborAllocOverlay">
         <div class="allocation-modal">
-            <i class="fas fa-times modal-close" onclick="document.getElementById('laborAllocOverlay').style.display='none'"></i>
-            <h3>👷 Allocate Worker to <span id="taskNameLabor">Task</span></h3>
+            <i class="fas fa-times modal-close" onclick="closeLaborAllocModal()"></i>
+            <h3>👷 Labor Allocation for <span id="taskNameLabor">Task</span></h3>
 
-            <label>Select Worker</label>
-            <select id="laborSelect"></select>
+            <div style="background: #e8f0fe; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+                <label style="margin-top:0;">Add New Worker Entry</label>
+                <select id="laborSelect"></select>
+                <input type="number" id="laborHoursInput" placeholder="Hours" min="0" step="0.5">
+                <button class="btn-add-allocation" onclick="addLaborAlloc()">
+                    <i class="fas fa-plus"></i> Add to Task
+                </button>
+            </div>
 
-            <label>Hours</label>
-            <input type="number" id="laborHoursInput" placeholder="0" min="0" step="0.5">
-
+            <h4 style="font-size:0.9rem; color:#0a1c2f; margin-bottom:0.5rem;">Current Allocations</h4>
             <div id="laborAllocList"></div>
 
             <div id="laborTotalRow" style="display:none;" class="total-row">
@@ -776,13 +843,8 @@
                 <h5 id="laborTotalCost">$0.00</h5>
             </div>
 
-            <button style="width:100%; padding:0.6rem; background:#059669; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; margin-bottom:0.8rem;" onclick="addLaborAlloc()">
-                ➕ Add Worker
-            </button>
-
             <div class="modal-buttons">
-                <button class="cancel" onclick="document.getElementById('laborAllocOverlay').style.display='none'">Cancel</button>
-                <button class="save" id="saveLaborAlloc">Save & Update</button>
+                <button class="cancel" onclick="closeLaborAllocModal()">Close</button>
             </div>
         </div>
     </div>
@@ -851,8 +913,8 @@
         let currentProject = null;
         let currentAllocatingTaskId = null;
         let currentAllocationType = null;
-        let materialAllocations = {};
-        let laborAllocations = {};
+        let materialAllocations = {};  // Format: { materialId: { material, entries: [{date, qty, cost}] } }
+        let laborAllocations = {};      // Format: { laborId: { worker, entries: [{date, hours, cost}] } }
 
         // DOM elements
         const headLeft = document.getElementById('ganttHeadLeft');
@@ -882,26 +944,31 @@
         const materialSelect = document.getElementById('materialSelect');
         const materialQtyInput = document.getElementById('materialQtyInput');
         const materialAllocList = document.getElementById('materialAllocList');
-        const saveMaterialAlloc = document.getElementById('saveMaterialAlloc');
 
         // Labor allocation
         const laborSelect = document.getElementById('laborSelect');
         const laborHoursInput = document.getElementById('laborHoursInput');
         const laborAllocList = document.getElementById('laborAllocList');
-        const saveLaborAlloc = document.getElementById('saveLaborAlloc');
 
-        // ========== BACK BUTTON ==========
+        // ========== NAVIGATION FUNCTIONS ==========
         function goBack() {
             window.history.back();
         }
 
-        // ========== GO TO RESOURCES ==========
         function goToResources() {
             if (!projectId) {
                 alert('No project selected');
                 return;
             }
             window.location.href = `resources.html?project=${projectId}`;
+        }
+
+        function goToHistory() {
+            if (!projectId) {
+                alert('No project selected');
+                return;
+            }
+            window.location.href = `history.html?project=${projectId}`;
         }
 
         // ========== LOAD PROJECT NAME ==========
@@ -949,7 +1016,7 @@
 
         function updateMaterialSelect() {
             materialSelect.innerHTML = '<option value="">-- Select Material --</option>' +
-                materials.map(m => `<option value="${m.docId}" data-cost="${m.unitCost || 0}">${m.name}</option>`).join('');
+                materials.map(m => `<option value="${m.docId}" data-cost="${m.unitCost || 0}">${m.name} ($${(m.unitCost || 0).toFixed(2)}/${m.unit})</option>`).join('');
         }
 
         function updateLaborSelect() {
@@ -963,11 +1030,14 @@
             const task = tasks.find(t => t.id === taskId);
             document.getElementById('taskNameMaterial').textContent = task ? task.name : 'Task';
             
+            // Load existing allocations from task
             materialAllocations = {};
-            materialQtyInput.value = '';
-            materialAllocList.innerHTML = '';
-            document.getElementById('materialTotalRow').style.display = 'none';
+            if (task.materialAllocations) {
+                materialAllocations = JSON.parse(JSON.stringify(task.materialAllocations));
+            }
             
+            materialQtyInput.value = '';
+            renderMaterialAllocations();
             document.getElementById('materialAllocOverlay').style.display = 'flex';
         }
 
@@ -976,12 +1046,27 @@
             const task = tasks.find(t => t.id === taskId);
             document.getElementById('taskNameLabor').textContent = task ? task.name : 'Task';
             
+            // Load existing allocations from task
             laborAllocations = {};
-            laborHoursInput.value = '';
-            laborAllocList.innerHTML = '';
-            document.getElementById('laborTotalRow').style.display = 'none';
+            if (task.laborAllocations) {
+                laborAllocations = JSON.parse(JSON.stringify(task.laborAllocations));
+            }
             
+            laborHoursInput.value = '';
+            renderLaborAllocations();
             document.getElementById('laborAllocOverlay').style.display = 'flex';
+        }
+
+        function closeMaterialAllocModal() {
+            document.getElementById('materialAllocOverlay').style.display = 'none';
+            currentAllocatingTaskId = null;
+            materialAllocations = {};
+        }
+
+        function closeLaborAllocModal() {
+            document.getElementById('laborAllocOverlay').style.display = 'none';
+            currentAllocatingTaskId = null;
+            laborAllocations = {};
         }
 
         function addMaterialAlloc() {
@@ -997,15 +1082,35 @@
             if (!material) return;
             
             const cost = qty * (material.unitCost || 0);
+            const now = new Date();
+            const dateStr = now.toISOString();
 
             if (!materialAllocations[materialId]) {
-                materialAllocations[materialId] = { material, qty: 0, cost: 0 };
+                materialAllocations[materialId] = { 
+                    material, 
+                    entries: [],
+                    totalQty: 0,
+                    totalCost: 0
+                };
             }
-            materialAllocations[materialId].qty += qty;
-            materialAllocations[materialId].cost = materialAllocations[materialId].qty * (material.unitCost || 0);
+
+            // Add new entry
+            materialAllocations[materialId].entries.push({
+                date: dateStr,
+                qty: qty,
+                cost: cost,
+                unitCost: material.unitCost || 0
+            });
+
+            // Update totals
+            materialAllocations[materialId].totalQty += qty;
+            materialAllocations[materialId].totalCost += cost;
 
             materialQtyInput.value = '';
             renderMaterialAllocations();
+            
+            // Auto-save to Firestore
+            saveMaterialAllocations();
         }
 
         function addLaborAlloc() {
@@ -1021,31 +1126,75 @@
             if (!worker) return;
             
             const cost = hours * (worker.hourlyRate || 0);
+            const now = new Date();
+            const dateStr = now.toISOString();
 
             if (!laborAllocations[laborId]) {
-                laborAllocations[laborId] = { worker, hours: 0, cost: 0 };
+                laborAllocations[laborId] = { 
+                    worker, 
+                    entries: [],
+                    totalHours: 0,
+                    totalCost: 0
+                };
             }
-            laborAllocations[laborId].hours += hours;
-            laborAllocations[laborId].cost = laborAllocations[laborId].hours * (worker.hourlyRate || 0);
+
+            // Add new entry
+            laborAllocations[laborId].entries.push({
+                date: dateStr,
+                hours: hours,
+                cost: cost,
+                hourlyRate: worker.hourlyRate || 0
+            });
+
+            // Update totals
+            laborAllocations[laborId].totalHours += hours;
+            laborAllocations[laborId].totalCost += cost;
 
             laborHoursInput.value = '';
             renderLaborAllocations();
+            
+            // Auto-save to Firestore
+            saveLaborAllocations();
         }
 
-        function removeMaterialAlloc(materialId) {
-            delete materialAllocations[materialId];
-            renderMaterialAllocations();
+        function removeMaterialEntry(materialId, entryIndex) {
+            if (materialAllocations[materialId]) {
+                const entry = materialAllocations[materialId].entries[entryIndex];
+                materialAllocations[materialId].totalQty -= entry.qty;
+                materialAllocations[materialId].totalCost -= entry.cost;
+                materialAllocations[materialId].entries.splice(entryIndex, 1);
+                
+                // Remove material if no entries left
+                if (materialAllocations[materialId].entries.length === 0) {
+                    delete materialAllocations[materialId];
+                }
+                
+                renderMaterialAllocations();
+                saveMaterialAllocations();
+            }
         }
 
-        function removeLaborAlloc(laborId) {
-            delete laborAllocations[laborId];
-            renderLaborAllocations();
+        function removeLaborEntry(laborId, entryIndex) {
+            if (laborAllocations[laborId]) {
+                const entry = laborAllocations[laborId].entries[entryIndex];
+                laborAllocations[laborId].totalHours -= entry.hours;
+                laborAllocations[laborId].totalCost -= entry.cost;
+                laborAllocations[laborId].entries.splice(entryIndex, 1);
+                
+                // Remove worker if no entries left
+                if (laborAllocations[laborId].entries.length === 0) {
+                    delete laborAllocations[laborId];
+                }
+                
+                renderLaborAllocations();
+                saveLaborAllocations();
+            }
         }
 
         function renderMaterialAllocations() {
             const allocArray = Object.values(materialAllocations);
             if (allocArray.length === 0) {
-                materialAllocList.innerHTML = '<div class="empty-allocations">No materials allocated yet</div>';
+                materialAllocList.innerHTML = '<div class="empty-allocations">No materials allocated yet. Add your first material above.</div>';
                 document.getElementById('materialTotalRow').style.display = 'none';
                 return;
             }
@@ -1054,16 +1203,37 @@
             let html = '';
 
             allocArray.forEach(alloc => {
-                totalCost += alloc.cost;
+                totalCost += alloc.totalCost;
+                
                 html += `
                     <div class="allocation-item">
-                        <div class="allocation-item-info">
+                        <div class="allocation-item-header">
                             <h5>${alloc.material.name}</h5>
-                            <p>${alloc.qty.toFixed(2)} ${alloc.material.unit} × $${(alloc.material.unitCost || 0).toFixed(2)} = $${alloc.cost.toFixed(2)}</p>
+                            <span class="resource-badge">Total: ${alloc.totalQty.toFixed(2)} ${alloc.material.unit} | $${alloc.totalCost.toFixed(2)}</span>
                         </div>
-                        <button class="btn-remove" onclick="removeMaterialAlloc('${alloc.material.docId}')">Remove</button>
-                    </div>
+                        <div class="allocation-entries">
                 `;
+
+                alloc.entries.forEach((entry, index) => {
+                    const date = new Date(entry.date);
+                    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    
+                    html += `
+                        <div class="allocation-entry">
+                            <div>
+                                <span class="allocation-date"><i class="far fa-clock"></i> ${dateStr}</span>
+                                <span class="allocation-qty">${entry.qty.toFixed(2)} ${alloc.material.unit}</span>
+                                × $${entry.unitCost.toFixed(2)} = 
+                                <span class="allocation-cost">$${entry.cost.toFixed(2)}</span>
+                            </div>
+                            <button class="btn-remove-entry" onclick="removeMaterialEntry('${alloc.material.docId}', ${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
             });
 
             materialAllocList.innerHTML = html;
@@ -1074,7 +1244,7 @@
         function renderLaborAllocations() {
             const allocArray = Object.values(laborAllocations);
             if (allocArray.length === 0) {
-                laborAllocList.innerHTML = '<div class="empty-allocations">No workers allocated yet</div>';
+                laborAllocList.innerHTML = '<div class="empty-allocations">No workers allocated yet. Add your first worker above.</div>';
                 document.getElementById('laborTotalRow').style.display = 'none';
                 return;
             }
@@ -1083,16 +1253,37 @@
             let html = '';
 
             allocArray.forEach(alloc => {
-                totalCost += alloc.cost;
+                totalCost += alloc.totalCost;
+                
                 html += `
                     <div class="allocation-item">
-                        <div class="allocation-item-info">
+                        <div class="allocation-item-header">
                             <h5>${alloc.worker.name}</h5>
-                            <p>${alloc.hours.toFixed(1)} hrs × $${(alloc.worker.hourlyRate || 0).toFixed(2)}/hr = $${alloc.cost.toFixed(2)}</p>
+                            <span class="resource-badge">Total: ${alloc.totalHours.toFixed(1)} hrs | $${alloc.totalCost.toFixed(2)}</span>
                         </div>
-                        <button class="btn-remove" onclick="removeLaborAlloc('${alloc.worker.docId}')">Remove</button>
-                    </div>
+                        <div class="allocation-entries">
                 `;
+
+                alloc.entries.forEach((entry, index) => {
+                    const date = new Date(entry.date);
+                    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    
+                    html += `
+                        <div class="allocation-entry">
+                            <div>
+                                <span class="allocation-date"><i class="far fa-clock"></i> ${dateStr}</span>
+                                <span class="allocation-qty">${entry.hours.toFixed(1)} hrs</span>
+                                × $${entry.hourlyRate.toFixed(2)}/hr = 
+                                <span class="allocation-cost">$${entry.cost.toFixed(2)}</span>
+                            </div>
+                            <button class="btn-remove-entry" onclick="removeLaborEntry('${alloc.worker.docId}', ${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
             });
 
             laborAllocList.innerHTML = html;
@@ -1100,30 +1291,29 @@
             document.getElementById('laborTotalCost').textContent = `$${totalCost.toFixed(2)}`;
         }
 
-        // Save allocations
-        saveMaterialAlloc.addEventListener('click', async () => {
-            const totalCost = Object.values(materialAllocations).reduce((sum, a) => sum + a.cost, 0);
+        async function saveMaterialAllocations() {
+            const totalCost = Object.values(materialAllocations).reduce((sum, a) => sum + a.totalCost, 0);
             const task = tasks.find(t => t.id === currentAllocatingTaskId);
             
             if (task) {
                 await db.collection("tasks").doc(task.docId).update({
+                    materialAllocations: materialAllocations,
                     materialCost: totalCost
                 });
-                document.getElementById('materialAllocOverlay').style.display = 'none';
             }
-        });
+        }
 
-        saveLaborAlloc.addEventListener('click', async () => {
-            const totalCost = Object.values(laborAllocations).reduce((sum, a) => sum + a.cost, 0);
+        async function saveLaborAllocations() {
+            const totalCost = Object.values(laborAllocations).reduce((sum, a) => sum + a.totalCost, 0);
             const task = tasks.find(t => t.id === currentAllocatingTaskId);
             
             if (task) {
                 await db.collection("tasks").doc(task.docId).update({
+                    laborAllocations: laborAllocations,
                     manCost: totalCost
                 });
-                document.getElementById('laborAllocOverlay').style.display = 'none';
             }
-        });
+        }
 
         // ========== HELPER FUNCTIONS ==========
         function getNextMainNumber() {
@@ -1484,7 +1674,9 @@
                 status: 'PENDING',
                 duration: duration,
                 pred: predString,
-                projectId: projectId
+                projectId: projectId,
+                materialAllocations: {},
+                laborAllocations: {}
             };
 
             await db.collection("tasks").add(newTask);
