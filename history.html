@@ -192,13 +192,90 @@
             padding: 0.2rem 0.4rem;
             border-radius: 4px;
         }
+
+        .entry-detail {
+            font-size: 0.75rem;
+            color: #7f96b3;
+            margin-left: 0.5rem;
+        }
+
+        .multiple-entries-badge {
+            background: #e6efff;
+            color: #0a1c2f;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+
+        .btn-reverse {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-reverse:hover {
+            background: #ee5a52;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .reverse-confirm {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reverse-confirm button {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-confirm {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .reversal-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            margin-left: 0.5rem;
+        }
     </style>
 </head>
 <body>
 
     <div class="app-header">
         <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
-        <h2>📋 Resource History</h2>
+        <h2>📋 Resource History & Reversals</h2>
     </div>
 
     <div class="container">
@@ -220,10 +297,11 @@
                             <th>Date</th>
                             <th>Material</th>
                             <th>Task</th>
-                            <th>Quantity Used</th>
+                            <th>Quantity</th>
                             <th>Unit</th>
                             <th>Unit Cost</th>
                             <th>Total Cost</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="materialHistoryBody"></tbody>
@@ -245,9 +323,10 @@
                             <th>Worker</th>
                             <th>Position</th>
                             <th>Task</th>
-                            <th>Hours Worked</th>
+                            <th>Hours</th>
                             <th>Hourly Rate</th>
                             <th>Total Cost</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="laborHistoryBody"></tbody>
@@ -256,6 +335,18 @@
                     <i class="fas fa-people-group"></i>
                     <p>No labor usage history yet</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM REVERSAL MODAL -->
+    <div class="form-overlay" id="confirmReverseOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); align-items:center; justify-content:center; z-index:1000;">
+        <div class="form-card" style="width:400px;">
+            <h3>⚠️ Confirm Reversal</h3>
+            <p id="confirmMessage" style="margin:1rem 0; color:#1f3d62;"></p>
+            <div class="button-bar">
+                <button id="cancelReverseBtn">Cancel</button>
+                <button class="primary" id="confirmReverseBtn" style="background:#dc3545;">Yes, Reverse</button>
             </div>
         </div>
     </div>
@@ -286,6 +377,13 @@
         let labor = [];
         let tasks = [];
         let currentTab = 'material';
+        let pendingReverse = null;
+
+        // DOM elements
+        const confirmOverlay = document.getElementById('confirmReverseOverlay');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmBtn = document.getElementById('confirmReverseBtn');
+        const cancelBtn = document.getElementById('cancelReverseBtn');
 
         // Back button
         function goBack() {
@@ -301,25 +399,174 @@
             event.target.classList.add('active');
         }
 
-        // Generate history data from tasks
+        // ========== REVERSAL FUNCTIONS ==========
+        async function reverseMaterialAllocation(taskId, materialId, entryIndex, entry) {
+            try {
+                const task = tasks.find(t => t.docId === taskId);
+                if (!task || !task.materialAllocations || !task.materialAllocations[materialId]) return;
+
+                // Remove the entry
+                const materialAlloc = task.materialAllocations[materialId];
+                materialAlloc.entries.splice(entryIndex, 1);
+                
+                // Update totals
+                materialAlloc.totalQty -= entry.qty;
+                materialAlloc.totalCost -= entry.cost;
+                
+                // Remove material if no entries left
+                if (materialAlloc.entries.length === 0) {
+                    delete task.materialAllocations[materialId];
+                }
+
+                // Recalculate total material cost
+                let totalMaterialCost = 0;
+                Object.values(task.materialAllocations || {}).forEach(alloc => {
+                    totalMaterialCost += alloc.totalCost || 0;
+                });
+
+                // Update task in Firestore
+                await db.collection('tasks').doc(taskId).update({
+                    materialAllocations: task.materialAllocations || {},
+                    materialCost: totalMaterialCost
+                });
+
+                // Return stock to inventory
+                const material = materials.find(m => m.docId === materialId);
+                if (material) {
+                    const currentStock = material.availableStock || 0;
+                    await db.collection('materials').doc(materialId).update({
+                        availableStock: currentStock + entry.qty,
+                        totalUsed: (material.totalUsed || 0) - entry.qty,
+                        updatedAt: new Date()
+                    });
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Error reversing material:', error);
+                return false;
+            }
+        }
+
+        async function reverseLaborAllocation(taskId, workerId, entryIndex, entry) {
+            try {
+                const task = tasks.find(t => t.docId === taskId);
+                if (!task || !task.laborAllocations || !task.laborAllocations[workerId]) return;
+
+                // Remove the entry
+                const laborAlloc = task.laborAllocations[workerId];
+                laborAlloc.entries.splice(entryIndex, 1);
+                
+                // Update totals
+                laborAlloc.totalHours -= entry.hours;
+                laborAlloc.totalCost -= entry.cost;
+                
+                // Remove worker if no entries left
+                if (laborAlloc.entries.length === 0) {
+                    delete task.laborAllocations[workerId];
+                }
+
+                // Recalculate total labor cost
+                let totalLaborCost = 0;
+                Object.values(task.laborAllocations || {}).forEach(alloc => {
+                    totalLaborCost += alloc.totalCost || 0;
+                });
+
+                // Update task in Firestore
+                await db.collection('tasks').doc(taskId).update({
+                    laborAllocations: task.laborAllocations || {},
+                    manCost: totalLaborCost
+                });
+
+                // Update worker hours
+                const worker = labor.find(w => w.docId === workerId);
+                if (worker) {
+                    const currentHours = worker.totalHoursAllocated || 0;
+                    await db.collection('labor').doc(workerId).update({
+                        totalHoursAllocated: Math.max(0, currentHours - entry.hours),
+                        status: (currentHours - entry.hours) > 0 ? 'busy' : 'available',
+                        updatedAt: new Date()
+                    });
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Error reversing labor:', error);
+                return false;
+            }
+        }
+
+        function showReverseConfirm(type, taskId, resourceId, entryIndex, entry, taskName) {
+            let message = '';
+            if (type === 'material') {
+                message = `Reverse ${entry.qty.toFixed(2)} ${entry.unit} of "${entry.materialName}" from task "${taskName}"? This will return the stock to inventory.`;
+            } else {
+                message = `Reverse ${entry.hours.toFixed(1)} hours of "${entry.workerName}" from task "${taskName}"? This will update worker availability.`;
+            }
+            
+            confirmMessage.textContent = message;
+            pendingReverse = { type, taskId, resourceId, entryIndex, entry };
+            confirmOverlay.style.display = 'flex';
+        }
+
+        // Confirm reversal
+        confirmBtn.addEventListener('click', async () => {
+            if (!pendingReverse) return;
+
+            const { type, taskId, resourceId, entryIndex, entry } = pendingReverse;
+            let success = false;
+
+            if (type === 'material') {
+                success = await reverseMaterialAllocation(taskId, resourceId, entryIndex, entry);
+            } else {
+                success = await reverseLaborAllocation(taskId, resourceId, entryIndex, entry);
+            }
+
+            if (success) {
+                alert('Reversal successful!');
+            } else {
+                alert('Reversal failed. Please try again.');
+            }
+
+            confirmOverlay.style.display = 'none';
+            pendingReverse = null;
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            confirmOverlay.style.display = 'none';
+            pendingReverse = null;
+        });
+
+        confirmOverlay.addEventListener('click', (e) => {
+            if (e.target === confirmOverlay) {
+                confirmOverlay.style.display = 'none';
+                pendingReverse = null;
+            }
+        });
+
+        // ========== GENERATE HISTORY ==========
         function generateHistory() {
             // Material History
             const materialHistory = [];
             
             tasks.forEach(task => {
-                if (task.materialCost && task.materialCost > 0) {
-                    // Find materials used in this task
-                    materials.forEach(material => {
-                        if (material.usedQty && material.usedQty > 0) {
-                            materialHistory.push({
-                                date: task.updatedAt || task.createdAt || new Date(),
-                                materialName: material.name,
-                                taskName: task.name,
-                                quantity: material.usedQty,
-                                unit: material.unit,
-                                unitCost: material.unitCost || 0,
-                                totalCost: (material.usedQty * (material.unitCost || 0)),
-                                type: 'material'
+                if (task.materialAllocations) {
+                    Object.entries(task.materialAllocations).forEach(([materialId, alloc]) => {
+                        if (alloc.entries && alloc.entries.length > 0) {
+                            alloc.entries.forEach((entry, index) => {
+                                materialHistory.push({
+                                    taskId: task.docId,
+                                    materialId: materialId,
+                                    entryIndex: index,
+                                    date: entry.date || task.updatedAt || task.createdAt || new Date(),
+                                    materialName: alloc.material?.name || 'Unknown',
+                                    taskName: task.name,
+                                    quantity: entry.qty,
+                                    unit: alloc.material?.unit || 'units',
+                                    unitCost: entry.unitCost,
+                                    totalCost: entry.cost,
+                                    type: 'material'
+                                });
                             });
                         }
                     });
@@ -354,8 +601,13 @@
                             <td>${h.taskName || '—'}</td>
                             <td><strong>${h.quantity.toFixed(2)}</strong></td>
                             <td>${h.unit}</td>
-                            <td>$${h.unitCost.toFixed(2)}</td>
-                            <td><span class="cost-highlight">$${h.totalCost.toFixed(2)}</span></td>
+                            <td>${h.unitCost.toFixed(2)}</td>
+                            <td><span class="cost-highlight">${h.totalCost.toFixed(2)}</span></td>
+                            <td>
+                                <button class="btn-reverse" onclick='reverseMaterialEntry(${JSON.stringify(h)})'>
+                                    <i class="fas fa-undo"></i> Reverse
+                                </button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
@@ -365,21 +617,23 @@
             const laborHistory = [];
             
             tasks.forEach(task => {
-                if (task.manCost && task.manCost > 0) {
-                    // Find labor assigned to this task
-                    labor.forEach(worker => {
-                        if (worker.status === 'busy') {
-                            // Estimate hours based on cost and rate
-                            const hoursWorked = task.manCost / (worker.hourlyRate || 1);
-                            laborHistory.push({
-                                date: task.updatedAt || task.createdAt || new Date(),
-                                workerName: worker.name,
-                                position: worker.career,
-                                taskName: task.name,
-                                hoursWorked: hoursWorked,
-                                hourlyRate: worker.hourlyRate || 0,
-                                totalCost: task.manCost,
-                                type: 'labor'
+                if (task.laborAllocations) {
+                    Object.entries(task.laborAllocations).forEach(([workerId, alloc]) => {
+                        if (alloc.entries && alloc.entries.length > 0) {
+                            alloc.entries.forEach((entry, index) => {
+                                laborHistory.push({
+                                    taskId: task.docId,
+                                    workerId: workerId,
+                                    entryIndex: index,
+                                    date: entry.date || task.updatedAt || task.createdAt || new Date(),
+                                    workerName: alloc.worker?.name || 'Unknown',
+                                    position: alloc.worker?.career || 'Unknown',
+                                    taskName: task.name,
+                                    hoursWorked: entry.hours,
+                                    hourlyRate: entry.hourlyRate,
+                                    totalCost: entry.cost,
+                                    type: 'labor'
+                                });
                             });
                         }
                     });
@@ -414,15 +668,42 @@
                             <td>${h.position}</td>
                             <td>${h.taskName || '—'}</td>
                             <td><strong>${h.hoursWorked.toFixed(1)} hrs</strong></td>
-                            <td>$${h.hourlyRate.toFixed(2)}/hr</td>
-                            <td><span class="cost-highlight">$${h.totalCost.toFixed(2)}</span></td>
+                            <td>${h.hourlyRate.toFixed(2)}/hr</td>
+                            <td><span class="cost-highlight">${h.totalCost.toFixed(2)}</span></td>
+                            <td>
+                                <button class="btn-reverse" onclick='reverseLaborEntry(${JSON.stringify(h)})'>
+                                    <i class="fas fa-undo"></i> Reverse
+                                </button>
+                            </td>
                         </tr>
                     `;
                 }).join('');
             }
         }
 
-        // Load data from Firestore
+        // Helper functions to handle reversal clicks
+        window.reverseMaterialEntry = function(entry) {
+            const entryObj = {
+                qty: entry.quantity,
+                unit: entry.unit,
+                materialName: entry.materialName,
+                unitCost: entry.unitCost,
+                cost: entry.totalCost
+            };
+            showReverseConfirm('material', entry.taskId, entry.materialId, entry.entryIndex, entryObj, entry.taskName);
+        };
+
+        window.reverseLaborEntry = function(entry) {
+            const entryObj = {
+                hours: entry.hoursWorked,
+                workerName: entry.workerName,
+                hourlyRate: entry.hourlyRate,
+                cost: entry.totalCost
+            };
+            showReverseConfirm('labor', entry.taskId, entry.workerId, entry.entryIndex, entryObj, entry.taskName);
+        };
+
+        // ========== LOAD DATA ==========
         if (projectId) {
             // Load materials
             db.collection('materials')
