@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Ledger</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(20,20,20,0.26);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            min-height: 100dvh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-top-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 10px 0 rgba(20,20,20,0.16);
+            width: 100%;
+            margin: 0;
+        }
+
+        .panel-heading {
+            background: linear-gradient(135deg, #1e2f44 0%, #2c405a 100%);
+            color: white;
+            padding: 12px 18px;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #0f1a28;
+            height: 50px;
+            display: flex;
+            align-items: center;
+        }
+
+        .panel-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            flex-wrap: wrap;
+            padding: 10px 18px;
+            background: none;
+        }
+
+        #toggle-form-btn {
+            background: #1e2f44;
+            color: white;
+            border: none;
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        #toggle-form-btn:hover { 
+            background: #2c405a; 
+        }
+
+        /* Three dots dropdown */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-btn {
+            background: #f0f4f8;
+            color: #1e2f44;
+            border: 1px solid #dde3ec;
+            font-size: 13px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dropdown-btn:hover { 
+            background: #e2e8f0; 
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 20;
+            border-radius: 8px;
+            padding: 8px 0;
+            border: 1px solid #e2e8f0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            color: #1e2f44;
+            padding: 8px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f4f8;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 8px 0;
+        }
+
+        /* Form */
+        .form-container {
+            background: #f8fafd;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 0 18px 16px 18px;
+            display: none;
+        }
+
+        .form-container.visible {
+            display: block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 8px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            color: #4a5568;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #1e2f44;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #1e2f44;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2c405a;
+        }
+
+        .btn-secondary {
+            background: #f0f4f8;
+            color: #1e2f44;
+            border: 1px solid #dde3ec;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        #cancel-edit-btn {
+            background: #757575;
+            color: white;
+        }
+
+        #cancel-edit-btn:hover {
+            background: #616161;
+        }
+
+        /* Table */
+        .table-responsive {
+            flex: 1;
+            overflow: auto;
+            width: 100%;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f8fafd;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #edf2f9;
+            color: #2d3748;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .type-income {
+            background: #e3f3ed;
+            color: #1f7044;
+        }
+
+        .type-expense {
+            background: #fee9e9;
+            color: #c52828;
+        }
+
+        .amount {
+            font-weight: 600;
+        }
+
+        .amount.income {
+            color: #1f7044;
+        }
+
+        .amount.expense {
+            color: #c52828;
+        }
+
+        .balance {
+            font-weight: 600;
+        }
+
+        .balance.positive {
+            color: #1f7044;
+        }
+
+        .balance.negative {
+            color: #c52828;
+        }
+
+        /* Action dots in table */
+        .action-cell {
+            position: relative;
+            width: 40px;
+            text-align: center;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #718096;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #f0f4f8;
+            color: #1e2f44;
+        }
+
+        .row-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 25px;
+            top: 0;
+            background-color: white;
+            min-width: 100px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 100;
+            border: 1px solid #e2e8f0;
+            padding: 4px 0;
+        }
+
+        .row-dropdown-content.show {
+            display: block;
+        }
+
+        .row-dropdown-item {
+            color: #1e2f44;
+            padding: 8px 12px;
+            text-decoration: none;
+            display: block;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .row-dropdown-item:hover {
+            background-color: #f7fafc;
+        }
+
+        .row-dropdown-item.edit:hover {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .row-dropdown-item.delete:hover {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: #cbd5e0;
+            margin-bottom: 16px;
+        }
+
+        .empty-state p {
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* Status */
+        .status {
+            margin: 0 18px 16px 18px;
+            padding: 10px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            background: #e3f3ed;
+            color: #1f7044;
+            border: 1px solid #b8e0cd;
+            display: block;
+        }
+
+        .status.error {
+            background: #fee9e9;
+            color: #c52828;
+            border: 1px solid #fbc5c5;
+            display: block;
+        }
+
+        .hide {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <div class="panel-top-sticky">
+            <div class="panel-heading">
+                <i class="fa fa-book" style="margin-right: 10px;"></i> Project Ledger
+            </div>
+            <div class="panel-controls">
+                <button id="toggle-form-btn" type="button">
+                    <i class="fa fa-plus"></i> Add Transaction
+                </button>
+                
+                <!-- Three dots dropdown -->
+                <div class="dropdown">
+                    <button class="dropdown-btn" type="button">
+                        <i class="fa fa-ellipsis-v"></i> Options
+                    </button>
+                    <div class="dropdown-content" id="dropdown-menu">
+                        <button class="dropdown-item" id="add-sample-btn">
+                            <i class="fa fa-database"></i> Add Sample Data
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" id="clear-all-btn">
+                            <i class="fa fa-trash"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status message -->
+        <div id="status" class="status"></div>
+
+        <!-- Transaction Form -->
+        <div class="form-container" id="transactionForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="transactionDate">
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="transactionType">
+                        <option value="">Select</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="transactionDesc" placeholder="e.g., Material sale, Labor cost">
+            </div>
+            
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="transactionAmount" min="0" step="0.01" placeholder="0.00">
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn btn-primary" id="save-btn">
+                    <i class="fa fa-save"></i> Save
+                </button>
+                <button class="btn btn-secondary" id="cancel-form-btn">
+                    Cancel
+                </button>
+                <button class="btn btn-secondary hide" id="cancel-edit-btn">
+                    <i class="fa fa-times"></i> Cancel Edit
+                </button>
+            </div>
+            <div id="form-error" style="color: #c52828; font-size: 12px; margin-top: 8px;"></div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Balance</th>
+                        <th style="width: 40px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsBody">
+                </tbody>
+            </table>
+            
+            <div id="emptyState" class="empty-state">
+                <i class="fa fa-book"></i>
+                <p>No transactions yet</p>
+                <button class="btn btn-primary" id="add-sample-empty-btn">
+                    <i class="fa fa-plus"></i> Add Sample Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get project ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('project') || 'demo';
+        
+        // DOM elements
+        const form = document.getElementById('transactionForm');
+        const toggleFormBtn = document.getElementById('toggle-form-btn');
+        const cancelFormBtn = document.getElementById('cancel-form-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const statusDiv = document.getElementById('status');
+        const formError = document.getElementById('form-error');
+        const transactionsBody = document.getElementById('transactionsBody');
+        const emptyState = document.getElementById('emptyState');
+        
+        // Dropdown elements
+        const dropdownBtn = document.querySelector('.dropdown-btn');
+        const dropdownMenu = document.getElementById('dropdown-menu');
+        const addSampleBtn = document.getElementById('add-sample-btn');
+        const addSampleEmptyBtn = document.getElementById('add-sample-empty-btn');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+
+        // Form inputs
+        const dateInput = document.getElementById('transactionDate');
+        const typeSelect = document.getElementById('transactionType');
+        const descInput = document.getElementById('transactionDesc');
+        const amountInput = document.getElementById('transactionAmount');
+
+        // State
+        let transactions = [];
+        let editingId = null;
+        let activeRowMenu = null;
+
+        // Set today's date
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+
+        // Load transactions from localStorage
+        function loadTransactions() {
+            const key = `transactions_${projectId}`;
+            const saved = localStorage.getItem(key);
+            
+            if (saved) {
+                transactions = JSON.parse(saved);
+            } else {
+                transactions = [];
+            }
+
+            // Sort by date for display (newest first)
+            transactions.sort((a, b) => {
+                if (a.date > b.date) return -1;
+                if (a.date < b.date) return 1;
+                return 0;
+            });
+
+            displayTransactions();
+        }
+
+        // Display transactions with running balance
+        function displayTransactions() {
+            if (transactions.length === 0) {
+                transactionsBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            // Calculate running balance (oldest first)
+            const sortedForBalance = [...transactions].sort((a, b) => {
+                if (a.date < b.date) return -1;
+                if (a.date > b.date) return 1;
+                return 0;
+            });
+
+            let runningBalance = 0;
+            const balanceMap = new Map();
+
+            sortedForBalance.forEach(t => {
+                if (t.type === 'income') {
+                    runningBalance += t.amount;
+                } else {
+                    runningBalance -= t.amount;
+                }
+                balanceMap.set(t.id, runningBalance);
+            });
+
+            // Display (newest first)
+            let rows = '';
+            transactions.forEach(t => {
+                const date = t.date ? new Date(t.date).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                }) : '—';
+
+                const typeLabel = t.type === 'income' ? 'Income' : 'Expense';
+                const typeClass = t.type === 'income' ? 'type-income' : 'type-expense';
+                const amountClass = t.type === 'income' ? 'income' : 'expense';
+                
+                const balance = balanceMap.get(t.id) || 0;
+                const balanceClass = balance >= 0 ? 'positive' : 'negative';
+                
+                const amountSign = t.type === 'income' ? '+' : '-';
+
+                rows += `
+                    <tr>
+                        <td>${date}</td>
+                        <td><strong>${t.description || '—'}</strong></td>
+                        <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+                        <td class="amount ${amountClass}">${amountSign}${t.amount.toFixed(2)}</td>
+                        <td class="balance ${balanceClass}">${balance.toFixed(2)}</td>
+                        <td class="action-cell">
+                            <button class="action-btn" data-id="${t.id}">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                            <div class="row-dropdown-content" id="dropdown-${t.id}">
+                                <button class="row-dropdown-item edit" data-id="${t.id}">
+                                    <i class="fa fa-edit" style="margin-right: 6px;"></i>Edit
+                                </button>
+                                <button class="row-dropdown-item delete" data-id="${t.id}">
+                                    <i class="fa fa-trash" style="margin-right: 6px;"></i>Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            transactionsBody.innerHTML = rows;
+
+            // Add action button listeners
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.getAttribute('data-id');
+                    const dropdown = document.getElementById(`dropdown-${id}`);
+                    
+                    // Close all other dropdowns
+                    document.querySelectorAll('.row-dropdown-content.show').forEach(d => {
+                        if (d !== dropdown) d.classList.remove('show');
+                    });
+                    
+                    dropdown.classList.toggle('show');
+                    activeRowMenu = dropdown.classList.contains('show') ? id : null;
+                });
+            });
+
+            // Add edit button listeners
+            document.querySelectorAll('.row-dropdown-item.edit').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.getAttribute('data-id');
+                    document.getElementById(`dropdown-${id}`).classList.remove('show');
+                    editTransaction(id);
+                });
+            });
+
+            // Add delete button listeners
+            document.querySelectorAll('.row-dropdown-item.delete').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.getAttribute('data-id');
+                    document.getElementById(`dropdown-${id}`).classList.remove('show');
+                    deleteTransaction(id);
+                });
+            });
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.row-dropdown-content.show').forEach(d => {
+                d.classList.remove('show');
+            });
+            activeRowMenu = null;
+        });
+
+        // Toggle form
+        let formVisible = false;
+        
+        toggleFormBtn.onclick = function() {
+            formVisible = !formVisible;
+            form.classList.toggle('visible', formVisible);
+            toggleFormBtn.innerHTML = formVisible ? '<i class="fa fa-times"></i> Hide Form' : '<i class="fa fa-plus"></i> Add Transaction';
+            
+            if (!formVisible) {
+                resetForm();
+            }
+        };
+
+        cancelFormBtn.onclick = function() {
+            formVisible = false;
+            form.classList.remove('visible');
+            toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Add Transaction';
+            resetForm();
+        };
+
+        cancelEditBtn.onclick = function() {
+            resetForm();
+            editingId = null;
+            cancelEditBtn.classList.add('hide');
+            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save';
+        };
+
+        function resetForm() {
+            dateInput.value = today;
+            typeSelect.value = '';
+            descInput.value = '';
+            amountInput.value = '';
+            formError.textContent = '';
+            editingId = null;
+            cancelEditBtn.classList.add('hide');
+            saveBtn.innerHTML = '<i class="fa fa-save"></i> Save';
+        }
+
+        // Save transaction
+        saveBtn.onclick = function() {
+            const date = dateInput.value;
+            const type = typeSelect.value;
+            const desc = descInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            // Validation
+            if (!date || !type || !desc) {
+                formError.textContent = 'Please fill all fields';
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                formError.textContent = 'Please enter a valid amount';
+                return;
+            }
+
+            const transactionData = {
+                id: editingId || Date.now().toString(),
+                date,
+                type,
+                description: desc,
+                amount
+            };
+
+            if (editingId) {
+                // Update existing
+                const index = transactions.findIndex(t => t.id === editingId);
+                if (index !== -1) {
+                    transactions[index] = transactionData;
+                }
+                showStatus('Transaction updated', 'success');
+            } else {
+                // Add new
+                transactions.push(transactionData);
+                showStatus('Transaction added', 'success');
+            }
+
+            // Sort and save
+            transactions.sort((a, b) => {
+                if (a.date > b.date) return -1;
+                if (a.date < b.date) return 1;
+                return 0;
+            });
+
+            localStorage.setItem(`transactions_${projectId}`, JSON.stringify(transactions));
+
+            // Hide form and refresh
+            formVisible = false;
+            form.classList.remove('visible');
+            toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Add Transaction';
+            resetForm();
+            displayTransactions();
+        };
+
+        // Edit transaction
+        function editTransaction(id) {
+            const t = transactions.find(t => t.id === id);
+            if (!t) return;
+
+            dateInput.value = t.date || today;
+            typeSelect.value = t.type || '';
+            descInput.value = t.description || '';
+            amountInput.value = t.amount || '';
+
+            editingId = id;
+            saveBtn.innerHTML = '<i class="fa fa-save"></i> Update';
+            cancelEditBtn.classList.remove('hide');
+            
+            // Show form
+            formVisible = true;
+            form.classList.add('visible');
+            toggleFormBtn.innerHTML = '<i class="fa fa-times"></i> Hide Form';
+            
+            // Scroll to form
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Delete transaction
+        function deleteTransaction(id) {
+            if (!confirm('Delete this transaction?')) return;
+
+            transactions = transactions.filter(t => t.id !== id);
+            localStorage.setItem(`transactions_${projectId}`, JSON.stringify(transactions));
+            
+            showStatus('Transaction deleted', 'success');
+            displayTransactions();
+        }
+
+        // Add sample data
+        function addSampleData() {
+            const samples = [
+                { id: '1', date: '2026-02-18', type: 'income', description: 'Client payment - Project A', amount: 15000 },
+                { id: '2', date: '2026-02-19', type: 'expense', description: 'Material purchase - Cement', amount: 4500 },
+                { id: '3', date: '2026-02-20', type: 'expense', description: 'Labor payment - Week 1', amount: 3500 },
+                { id: '4', date: '2026-02-21', type: 'income', description: 'Additional funding', amount: 8000 },
+                { id: '5', date: '2026-02-22', type: 'expense', description: 'Equipment rental', amount: 2000 }
+            ];
+
+            localStorage.setItem(`transactions_${projectId}`, JSON.stringify(samples));
+            showStatus('Sample data added', 'success');
+            loadTransactions();
+            
+            // Hide form if visible
+            formVisible = false;
+            form.classList.remove('visible');
+            toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Add Transaction';
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (!confirm('Delete all transactions? This cannot be undone.')) return;
+            
+            localStorage.removeItem(`transactions_${projectId}`);
+            transactions = [];
+            showStatus('All transactions cleared', 'success');
+            displayTransactions();
+        }
+
+        // Show status message
+        function showStatus(msg, type) {
+            statusDiv.innerHTML = `<i class="fa fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+            statusDiv.className = `status ${type}`;
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Dropdown toggle
+        dropdownBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+
+        // Dropdown buttons
+        addSampleBtn.addEventListener('click', function() {
+            addSampleData();
+            dropdownMenu.classList.remove('show');
+        });
+
+        addSampleEmptyBtn.addEventListener('click', function() {
+            addSampleData();
+        });
+
+        clearAllBtn.addEventListener('click', function() {
+            clearAllData();
+            dropdownMenu.classList.remove('show');
+        });
+
+        // Initialize
+        loadTransactions();
+    </script>
+</body>
+</html>
