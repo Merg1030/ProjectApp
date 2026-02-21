@@ -3,719 +3,827 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Manager · Create & view</title>
+    <title>Project Hub · PENTA</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
-            background: #f5f7fc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f4f8;
             min-height: 100vh;
             display: flex;
-        }
-
-        /* ===== SIDEBAR – exactly the nice one ===== */
-        .sidebar {
-            width: 260px;
-            background: linear-gradient(145deg, #f1f5f9 0%, #eef2f6 100%);
-            border-right: 1px solid rgba(0,0,0,0.05);
-            padding: 2rem 1rem;
-            display: flex;
             flex-direction: column;
-            transition: transform 0.25s ease-in-out, margin-left 0.25s ease-in-out;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-shadow: 4px 0 20px -8px rgba(0, 27, 58, 0.15);
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            z-index: 20;
         }
 
-        .sidebar.hidden {
-            transform: translateX(-100%);
-            margin-left: -260px;
-        }
-
-        .sidebar-header {
-            font-weight: 700;
-            font-size: 1.7rem;
-            letter-spacing: -0.5px;
-            padding: 0 0.75rem 2.2rem 0.75rem;
-            color: #0f2a44;
+        /* Simple header */
+        .app-header {
+            background: white;
+            padding: 1rem 2rem;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .sidebar-header span {
-            background: #1e3a5f;
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #0a1c2f;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            background: #e9edf2;
+            color: #4a5568;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            background: #f8fafd;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            color: #2d3f5e;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #edf2f9;
+            border-color: #cbd5e0;
+        }
+
+        .icon-btn i {
+            font-size: 1rem;
+            color: #4a6a8a;
+        }
+
+        /* Main container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        /* Welcome section */
+        .welcome-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .welcome-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #0a1c2f;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+            color: #5a6f8c;
+            font-size: 1rem;
+        }
+
+        /* Quick action cards */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.8rem 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 30px rgba(0,20,40,0.08);
+            border-color: #bdd3eb;
+        }
+
+        .action-icon {
+            width: 50px;
+            height: 50px;
+            background: #f0f7ff;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: #0a1c2f;
+            font-size: 1.6rem;
+        }
+
+        .action-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #0a1c2f;
+            margin-bottom: 0.5rem;
+        }
+
+        .action-card p {
+            color: #6b7f9c;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Section header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #0a1c2f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2 i {
+            color: #4a6a8a;
+            font-size: 1.3rem;
+        }
+
+        .create-btn {
+            background: #0a1c2f;
             color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 0.8rem 1.5rem;
             font-size: 0.9rem;
             font-weight: 500;
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border: 1px solid #0a1c2f;
+        }
+
+        .create-btn:hover {
+            background: #1f3d62;
+            border-color: #1f3d62;
+        }
+
+        .create-btn i {
+            font-size: 1rem;
+        }
+
+        .refresh-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            padding: 0.8rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
             margin-left: 10px;
         }
 
-        .nav {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
+        .refresh-btn:hover {
+            background: #f8fafd;
+            border-color: #cbd5e0;
         }
 
-        .nav a {
-            display: flex;
-            align-items: center;
-            padding: 0.9rem 1.2rem;
-            border-radius: 14px;
-            font-weight: 500;
-            color: #1a3149;
-            text-decoration: none;
-            font-size: 1.05rem;
-            transition: all 0.15s;
-            border: 1px solid transparent;
-        }
-
-        .nav a:hover {
-            background-color: #ffffffcc;
-            border-color: #cdddee;
-            box-shadow: 0 4px 8px -4px rgba(0,32,64,0.08);
-        }
-
-        .nav a.active {
-            background-color: #ffffff;
-            border-color: #b6cfec;
-            color: #0b2c44;
-            font-weight: 600;
-            box-shadow: 0 6px 12px -8px #1e3a5f33;
-        }
-
-        .logout-area {
-            margin-top: 2.5rem;
-            padding-top: 1.8rem;
-            border-top: 1px solid #cdddec;
-        }
-
-        .logout-btn {
-            background: none;
-            border: none;
-            display: flex;
-            align-items: center;
-            padding: 0.9rem 1.2rem;
-            width: 100%;
-            text-align: left;
-            font-size: 1.05rem;
-            font-weight: 500;
-            color: #b13e3e;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: background 0.15s;
-            border: 1px solid transparent;
-        }
-
-        .logout-btn:hover {
-            background-color: #ffebee;
-            border-color: #f3b5b5;
-        }
-
-        /* ===== MAIN CONTENT (right side) ===== */
-        .main-content {
-            flex: 1;
-            min-width: 0;
-            background: #f5f7fc;
-            padding: 20px;
-            overflow-y: auto;
-            height: 100vh;
-        }
-
-        /* top bar inside main (with toggle) */
-        .top-bar {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            background: white;
-            border-radius: 60px;
-            padding: 0.5rem 0.5rem 0.5rem 1.2rem;
-            box-shadow: 0 4px 12px rgba(0,20,40,0.04);
-            border: 1px solid #e7ecf3;
-            max-width: 500px;
-        }
-
-        .toggle-btn {
-            background: white;
-            border: 1px solid #d0ddee;
-            font-size: 2rem;
-            line-height: 1;
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            cursor: pointer;
-            color: #1e3a5f;
-            transition: all 0.15s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px -6px #1e3a5f4d;
-            margin-right: 1rem;
-        }
-
-        .toggle-btn:hover {
-            background-color: #f0f5fd;
-            border-color: #7fa3c9;
-            transform: scale(1.02);
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #14273e;
-        }
-
-        /* original container adapted */
-        .container {
-            background: white;
-            border-radius: 28px;
-            padding: 30px;
-            box-shadow: 0 20px 40px -18px rgba(0,32,64,0.2);
-            border: 1px solid #edf2f9;
-        }
-
-        h1 {
-            color: #14273e;
-            margin-bottom: 30px;
-            font-weight: 600;
-            font-size: 1.9rem;
-            border-bottom: 1px solid #eef3f8;
-            padding-bottom: 15px;
-        }
-
-        h2 {
-            color: #1f3b5c;
-            margin-bottom: 20px;
-            font-weight: 500;
-            font-size: 1.2rem;
-        }
-
-        /* inline navigation (projects/create) now in top bar, but we keep original nav-bar hidden? 
-           We'll keep it but it will be inside container. fine */
-        .nav-bar {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid #eef3f8;
-            padding-bottom: 15px;
-        }
-
-        .nav-link {
-            color: #577594;
-            text-decoration: none;
-            padding: 5px 10px;
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        .nav-link:hover {
-            color: #0f2a44;
-        }
-
-        .nav-link.active {
-            color: #0f2a44;
-            border-bottom: 2px solid #1e3a5f;
-        }
-
-        /* rest of your original styles (unchanged) */
-        .toggle-section {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .toggle-btn {
-            background: #f0f0f0;
-            border: 1px solid #ddd;
-            padding: 10px 20px;
-            color: #555;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 4px;
-        }
-
-        .toggle-btn:hover {
-            background: #e8e8e8;
-        }
-
-        .toggle-btn.primary {
-            background: #1e3a5f;
-            border-color: #1e3a5f;
-            color: white;
-        }
-
-        .toggle-btn.primary:hover {
-            background: #14304e;
-        }
-
-        .form-section {
-            background: #fafafa;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            padding: 25px;
-            margin-bottom: 30px;
-            display: none;
-        }
-
-        .form-section.visible {
-            display: block;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #2b4c70;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #dce5f0;
-            border-radius: 12px;
-            font-size: 14px;
-            background: white;
-            transition: 0.15s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #7a9bc2;
-            box-shadow: 0 0 0 3px rgba(30,58,95,0.1);
-        }
-
-        textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 12px 28px;
-            border: 1px solid #d0ddee;
-            background: white;
-            color: #1e3a5f;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 40px;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background: #1e3a5f;
-            border-color: #1e3a5f;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #14304e;
-        }
-
-        .btn-success {
-            background: #28a745;
-            border-color: #28a745;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
+        /* Projects grid */
         .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
         }
 
         .project-card {
-            background: #ffffff;
-            border: 1px solid #eef3f8;
+            background: white;
             border-radius: 20px;
-            padding: 20px;
-            position: relative;
-            box-shadow: 0 6px 14px rgba(0,20,40,0.02);
+            padding: 1.5rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
 
         .project-card:hover {
-            box-shadow: 0 18px 30px -12px rgba(18,45,80,0.12);
-            border-color: #cddef2;
+            border-color: #bdd3eb;
+            box-shadow: 0 12px 24px rgba(0,20,40,0.06);
         }
 
         .project-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 1rem;
         }
 
         .project-name {
-            font-size: 1.4rem;
-            color: #14273e;
+            font-size: 1.2rem;
             font-weight: 600;
+            color: #0a1c2f;
         }
 
-        .project-status {
-            display: inline-block;
-            padding: 4px 12px;
+        .status-badge {
+            padding: 0.3rem 1rem;
             border-radius: 40px;
-            font-size: 11px;
+            font-size: 0.7rem;
             font-weight: 600;
-            text-transform: uppercase;
+            text-transform: capitalize;
+            background: #f0f7ff;
+            color: #0a1c2f;
+            border: 1px solid #d1e0f5;
         }
 
-        .status-active {
+        .status-badge.active {
             background: #e3f2fd;
-            color: #1565c0;
+            color: #0a5b8c;
+            border-color: #a6d0f0;
         }
 
-        .status-completed {
+        .status-badge.completed {
             background: #e8f5e9;
             color: #2e7d32;
+            border-color: #b8e0b8;
         }
 
-        .status-on-hold {
+        .status-badge.on-hold {
             background: #fff3e0;
-            color: #ef6c00;
+            color: #b85c00;
+            border-color: #ffd7a5;
         }
 
-        .project-details {
-            margin-bottom: 15px;
+        .project-code {
+            font-size: 0.8rem;
+            color: #6b7f9c;
+            margin-bottom: 1rem;
+            font-family: monospace;
+            background: #f8fafd;
+            padding: 0.2rem 0.5rem;
+            border-radius: 30px;
+            display: inline-block;
         }
 
-        .project-detail {
-            display: flex;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
-
-        .detail-label {
-            color: #6f8ba5;
-            width: 80px;
-        }
-
-        .detail-value {
-            color: #1a3149;
-            flex: 1;
-        }
-
-        .project-description {
-            font-size: 13px;
-            color: #4b637c;
-            margin-bottom: 15px;
+        .project-desc {
+            color: #4a5f7c;
+            font-size: 0.9rem;
             line-height: 1.5;
-            max-height: 60px;
+            margin-bottom: 1.2rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .project-meta {
+            background: #f8fafd;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+
+        .meta-item i {
+            width: 18px;
+            color: #4a6a8a;
+            font-size: 0.9rem;
+        }
+
+        .meta-item span {
+            color: #1f3349;
+        }
+
+        .meta-item .label {
+            color: #6b7f9c;
+            width: 70px;
         }
 
         .project-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #ecf2f8;
+            padding-top: 1rem;
+            border-top: 1px solid #edf2f9;
         }
 
-        .project-budget {
+        .budget {
             font-size: 1.2rem;
-            font-weight: 600;
-            color: #1e6f4c;
+            font-weight: 700;
+            color: #0f5c3f;
+            background: #e1f3e9;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
         }
 
         .project-actions {
             display: flex;
-            gap: 5px;
+            gap: 6px;
         }
 
-        .project-btn {
-            padding: 5px 12px;
-            font-size: 12px;
-            border: 1px solid #d0ddee;
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #4a5f7c;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .action-btn:hover {
+            background: #f0f7ff;
+            border-color: #bdd3eb;
+            color: #0a1c2f;
+        }
+
+        .action-btn.account {
+            color: #0f5c3f;
+        }
+
+        .action-btn.account:hover {
+            background: #e1f3e9;
+            border-color: #0f5c3f;
+        }
+
+        .action-btn.report:hover {
+            background: #fff3e0;
+            border-color: #b85c00;
+            color: #b85c00;
+        }
+
+        .action-btn.gantt:hover {
+            background: #e3f2fd;
+            border-color: #0a5b8c;
+            color: #0a5b8c;
+        }
+
+        .action-btn.delete:hover {
+            background: #fee9e9;
+            border-color: #b91c1c;
+            color: #b91c1c;
+        }
+
+        /* Form modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #0a1c2f;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #8a9db8;
+        }
+
+        .form-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid #e2e8f0;
             background: white;
             border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #5a6f8c;
             cursor: pointer;
-            color: #1e3a5f;
+            transition: all 0.2s;
         }
 
-        .project-btn.delete:hover {
-            border-color: #dc3545;
-            color: #dc3545;
+        .tab-btn.active {
+            background: #0a1c2f;
+            color: white;
+            border-color: #0a1c2f;
         }
 
-        .project-btn.edit:hover {
-            border-color: #1e6f4c;
-            color: #1e6f4c;
-        }
-
-        .project-btn.view:hover {
-            border-color: #1e3a5f;
-            color: #1e3a5f;
-        }
-
-        .status {
-            padding: 12px 15px;
-            border-radius: 50px;
-            margin-bottom: 20px;
-            font-size: 14px;
+        .form-section {
             display: none;
         }
 
-        .status.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
+        .form-section.active {
             display: block;
         }
 
-        .status.error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
             display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4a5f7c;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background: #fafcff;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0a1c2f;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(10,28,47,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #0a1c2f;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #1f3d62;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #4a5f7c;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafd;
+            border-color: #cbd5e0;
+        }
+
+        /* Status messages */
+        .status-message {
+            padding: 1rem 1.5rem;
+            border-radius: 60px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-message.success {
+            background: #e1f3e9;
+            color: #0f5c3f;
+            border: 1px solid #a6d8bc;
+            display: flex;
+        }
+
+        .status-message.error {
+            background: #fee9e9;
+            color: #b91c1c;
+            border: 1px solid #fbc5c5;
+            display: flex;
+        }
+
+        .status-message i {
+            font-size: 1.1rem;
         }
 
         .empty-state {
             text-align: center;
-            padding: 50px;
-            color: #7b99b5;
-            font-size: 14px;
-            background: #fafdff;
-            border-radius: 40px;
-            border: 1px dashed #c5d6ea;
+            padding: 4rem 2rem;
+            background: #f8fafd;
+            border-radius: 30px;
+            border: 2px dashed #d1e0f5;
+            color: #6b7f9c;
         }
 
-        @media (max-width: 768px) {
-            .sidebar { position: absolute; height: 100%; z-index: 30; }
-            .main-content { width: 100%; }
+        .empty-state i {
+            font-size: 3rem;
+            color: #b3c7e0;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state button {
+            background: #0a1c2f;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- SIDEBAR (nice one, exactly from your previous request) -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            PENTA<span>v2</span>
+    <!-- Simple header -->
+    <div class="app-header">
+        <div class="logo-area">
+            <div class="logo">PENTA <span>project hub</span></div>
         </div>
-        <nav class="nav">
-            <a href="#" id="navProjects" class="active">Projects</a>
-            <a href="#" id="navReports">Reports</a>
-            <a href="#" id="navQuotation">Quotations</a>
-        </nav>
-        <div class="logout-area">
-            <button class="logout-btn" id="logoutBtn">Logout</button>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='index.html'">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
         </div>
-    </aside>
+    </div>
 
-    <!-- MAIN RIGHT SECTION -->
-    <div class="main-content">
-        <!-- top bar with toggle (never hidden) -->
-        <div class="top-bar">
-            <button class="toggle-btn" id="toggleSidebarBtn" title="hide/show sidebar">☰</button>
-            <span class="page-title">Project Manager</span>
+    <!-- Main container -->
+    <div class="main-container">
+        <!-- Welcome section -->
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome back, <span style="color: #0a1c2f;">Project Manager</span></h1>
+            <p class="welcome-subtitle">Manage your projects, track finances, and monitor progress</p>
         </div>
 
-        <!-- original container (everything else) -->
-        <div class="container">
-            <!-- Navigation inside container (projects/create) -->
-            <div class="nav-bar">
-                <a href="#" class="nav-link active" onclick="showSection('projects')">Projects</a>
-                <a href="#" class="nav-link" onclick="showSection('create')">Create Project</a>
-                <a href="#" class="nav-link" onclick="window.location.href='gantt-chart.html'">Gantt Chart</a>
+        <!-- Quick action cards -->
+        <div class="quick-actions">
+            <a href="javascript:void(0)" onclick="openCreateModal()" class="action-card">
+                <div class="action-icon"><i class="fas fa-plus"></i></div>
+                <h3>New Project</h3>
+                <p>Create a new project from scratch</p>
+            </a>
+            <a href="reports.html" class="action-card">
+                <div class="action-icon"><i class="fas fa-chart-bar"></i></div>
+                <h3>Reports</h3>
+                <p>View project analytics and reports</p>
+            </a>
+            <a href="accounting.html" class="action-card">
+                <div class="action-icon"><i class="fas fa-calculator"></i></div>
+                <h3>Accounting</h3>
+                <p>Track finances and transactions</p>
+            </a>
+            <a href="resources.html" class="action-card">
+                <div class="action-icon"><i class="fas fa-boxes"></i></div>
+                <h3>Resources</h3>
+                <p>Manage materials and labor</p>
+            </a>
+        </div>
+
+        <!-- Projects section header -->
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-folder-open"></i>
+                Your Projects
+            </h2>
+            <div style="display: flex; gap: 10px;">
+                <button class="refresh-btn" onclick="loadProjects()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="create-btn" onclick="openCreateModal()">
+                    <i class="fas fa-plus"></i> New Project
+                </button>
+            </div>
+        </div>
+
+        <!-- Status message -->
+        <div id="status" class="status-message"></div>
+
+        <!-- Projects grid -->
+        <div id="projectsContainer" class="projects-grid">
+            <!-- Projects will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Create/Edit Project Modal -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create New Project</h3>
+                <button class="close-modal" onclick="closeModal()"><i class="fas fa-times"></i></button>
             </div>
 
-            <div id="status" class="status"></div>
+            <!-- Form tabs -->
+            <div class="form-tabs">
+                <button class="tab-btn active" onclick="switchTab('basic')">Basic</button>
+                <button class="tab-btn" onclick="switchTab('details')">Details</button>
+                <button class="tab-btn" onclick="switchTab('budget')">Budget</button>
+                <button class="tab-btn" onclick="switchTab('team')">Team</button>
+            </div>
 
-            <!-- Create Project Section -->
-            <div id="createSection" style="display: none;">
-                <div class="toggle-section">
-                    <button class="toggle-btn" onclick="toggleForm('basic')">Basic Info</button>
-                    <button class="toggle-btn" onclick="toggleForm('details')">Project Details</button>
-                    <button class="toggle-btn" onclick="toggleForm('budget')">Budget Setup</button>
-                    <button class="toggle-btn" onclick="toggleForm('team')">Team</button>
+            <!-- Basic Info -->
+            <div class="form-section active" id="basicSection">
+                <div class="form-group">
+                    <label>Project Name *</label>
+                    <input type="text" id="projectName" placeholder="e.g., Office Renovation 2024">
                 </div>
-
-                <!-- Basic Info Form -->
-                <div class="form-section visible" id="basicForm">
-                    <h2>Basic Information</h2>
-                    <form id="basicFormElement">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Project Name *</label>
-                                <input type="text" id="projectName" required placeholder="e.g., Office Renovation 2024">
-                            </div>
-                            <div class="form-group">
-                                <label>Project Code</label>
-                                <input type="text" id="projectCode" placeholder="e.g., PRJ-2024-001">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Client/Owner</label>
-                                <input type="text" id="client" placeholder="Client name">
-                            </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select id="statusSelect">
-                                    <option value="active">Active</option>
-                                    <option value="on-hold">On Hold</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="planning">Planning</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea id="description" placeholder="Project description..."></textarea>
-                        </div>
-                    </form>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Project Code</label>
+                        <input type="text" id="projectCode" placeholder="PRJ-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="statusSelect">
+                            <option value="active">Active</option>
+                            <option value="on-hold">On Hold</option>
+                            <option value="completed">Completed</option>
+                            <option value="planning">Planning</option>
+                        </select>
+                    </div>
                 </div>
-
-                <!-- Project Details Form -->
-                <div class="form-section" id="detailsForm">
-                    <h2>Project Details</h2>
-                    <form id="detailsFormElement">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Start Date</label>
-                                <input type="date" id="startDate">
-                            </div>
-                            <div class="form-group">
-                                <label>End Date</label>
-                                <input type="date" id="endDate">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Location</label>
-                                <input type="text" id="location" placeholder="Project location">
-                            </div>
-                            <div class="form-group">
-                                <label>Category</label>
-                                <select id="category">
-                                    <option value="">Select category</option>
-                                    <option value="construction">Construction</option>
-                                    <option value="renovation">Renovation</option>
-                                    <option value="development">Development</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Priority</label>
-                            <select id="priority">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                                <option value="critical">Critical</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Budget Setup Form -->
-                <div class="form-section" id="budgetForm">
-                    <h2>Budget Setup</h2>
-                    <form id="budgetFormElement">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Total Budget</label>
-                                <input type="number" id="totalBudget" min="0" step="0.01" placeholder="0.00">
-                            </div>
-                            <div class="form-group">
-                                <label>Currency</label>
-                                <select id="currency">
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="JPY">JPY (¥)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Budget Breakdown</label>
-                                <textarea id="budgetBreakdown" placeholder="e.g., Materials: 50000, Labor: 30000, Equipment: 20000"></textarea>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Team Form -->
-                <div class="form-section" id="teamForm">
-                    <h2>Team Members</h2>
-                    <form id="teamFormElement">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Project Manager</label>
-                                <input type="text" id="projectManager" placeholder="Name">
-                            </div>
-                            <div class="form-group">
-                                <label>Contact Email</label>
-                                <input type="email" id="contactEmail" placeholder="email@example.com">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Contact Phone</label>
-                                <input type="tel" id="contactPhone" placeholder="+1 234 567 8900">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Save/Cancel Buttons -->
-                <div class="button-group" style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
-                    <button class="btn" onclick="resetForms()">Clear All</button>
-                    <button class="btn" onclick="showSection('projects')">Cancel</button>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" rows="3" placeholder="Project description..."></textarea>
                 </div>
             </div>
 
-            <!-- Projects List Section -->
-            <div id="projectsSection">
-                <div class="toggle-section">
-                    <button class="toggle-btn primary" onclick="showSection('create')">+ New Project</button>
-                    <button class="toggle-btn" onclick="loadProjects()">Refresh</button>
+            <!-- Details -->
+            <div class="form-section" id="detailsSection">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="endDate">
+                    </div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Client</label>
+                        <input type="text" id="client" placeholder="Client name">
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="location" placeholder="Project location">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="category">
+                            <option value="construction">Construction</option>
+                            <option value="renovation">Renovation</option>
+                            <option value="development">Development</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="priority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-                <h2>Your Projects</h2>
-                <div id="projectsContainer" class="projects-grid">
-                    <!-- Projects will be loaded here -->
+            <!-- Budget -->
+            <div class="form-section" id="budgetSection">
+                <div class="form-group">
+                    <label>Total Budget</label>
+                    <input type="number" id="totalBudget" min="0" step="0.01" placeholder="0.00">
                 </div>
+                <div class="form-group">
+                    <label>Budget Breakdown</label>
+                    <textarea id="budgetBreakdown" rows="3" placeholder="e.g., Materials: 50000, Labor: 30000, Equipment: 20000"></textarea>
+                </div>
+            </div>
+
+            <!-- Team -->
+            <div class="form-section" id="teamSection">
+                <div class="form-group">
+                    <label>Project Manager</label>
+                    <input type="text" id="projectManager" placeholder="Name">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact Email</label>
+                        <input type="email" id="contactEmail" placeholder="email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Phone</label>
+                        <input type="tel" id="contactPhone" placeholder="+1 234 567 8900">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal actions -->
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveProject()">Save Project</button>
             </div>
         </div>
     </div>
@@ -735,81 +843,66 @@
             appId: "1:411882772509:web:08d613186c101a99f38ef4"
         };
 
-        const app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let editingProjectId = null;
 
-        // ---------- sidebar toggle ----------
-        const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('toggleSidebarBtn');
-        toggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            sidebar.classList.toggle('hidden');
-        });
+        // Modal functions
+        const modal = document.getElementById('projectModal');
+        const modalTitle = document.getElementById('modalTitle');
 
-        // logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-
-        // minimal nav link simulation
-        document.getElementById('navProjects').addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection('projects');
-            document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-        });
-        document.getElementById('navReports').addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = 'Ex-reports.html';
-        });
-        document.getElementById('navQuotation').addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = 'Ex-Quontation.html';
-        });
-
-        // ---------- original logic (showSection, toggleForm, etc) ----------
-        window.showSection = (section) => {
-            const projectsSection = document.getElementById('projectsSection');
-            const createSection = document.getElementById('createSection');
-            const navLinks = document.querySelectorAll('.nav-bar .nav-link');
-
-            if (section === 'create') {
-                projectsSection.style.display = 'none';
-                createSection.style.display = 'block';
-                navLinks[0].classList.remove('active');
-                navLinks[1].classList.add('active');
-                resetForms();
-            } else {
-                projectsSection.style.display = 'block';
-                createSection.style.display = 'none';
-                navLinks[0].classList.add('active');
-                navLinks[1].classList.remove('active');
-                loadProjects();
-            }
-        };
-
-        window.toggleForm = (form) => {
-            ['basic','details','budget','team'].forEach(f => {
-                document.getElementById(f + 'Form').classList.remove('visible');
-            });
-            document.getElementById(form + 'Form').classList.add('visible');
-        };
-
-        window.resetForms = () => {
-            document.getElementById('basicFormElement').reset();
-            document.getElementById('detailsFormElement').reset();
-            document.getElementById('budgetFormElement').reset();
-            document.getElementById('teamFormElement').reset();
+        window.openCreateModal = () => {
             editingProjectId = null;
-            document.getElementById('startDate').valueAsDate = new Date();
+            modalTitle.textContent = 'Create New Project';
+            resetForms();
+            modal.style.display = 'flex';
         };
 
+        window.closeModal = () => {
+            modal.style.display = 'none';
+            resetForms();
+        };
+
+        // Tab switching
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Section').classList.add('active');
+        };
+
+        // Reset forms
+        function resetForms() {
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectCode').value = '';
+            document.getElementById('statusSelect').value = 'active';
+            document.getElementById('description').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('client').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('category').value = 'construction';
+            document.getElementById('priority').value = 'medium';
+            document.getElementById('totalBudget').value = '';
+            document.getElementById('budgetBreakdown').value = '';
+            document.getElementById('projectManager').value = '';
+            document.getElementById('contactEmail').value = '';
+            document.getElementById('contactPhone').value = '';
+            
+            // Set default tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
+            document.querySelector('.tab-btn').classList.add('active');
+            document.getElementById('basicSection').classList.add('active');
+        }
+
+        // Save project
         window.saveProject = async () => {
             const projectName = document.getElementById('projectName').value;
             if (!projectName) {
                 showStatus('Project name is required', 'error');
-                toggleForm('basic');
+                switchTab('basic');
                 return;
             }
 
@@ -817,48 +910,38 @@
                 name: projectName,
                 code: document.getElementById('projectCode').value,
                 client: document.getElementById('client').value,
-                status: document.getElementById('statusSelect').value || 'active',
+                status: document.getElementById('statusSelect').value,
                 description: document.getElementById('description').value,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
                 location: document.getElementById('location').value,
                 category: document.getElementById('category').value,
-                priority: document.getElementById('priority').value || 'medium',
+                priority: document.getElementById('priority').value,
                 totalBudget: parseFloat(document.getElementById('totalBudget').value) || 0,
-                currency: document.getElementById('currency').value || 'USD',
                 budgetBreakdown: document.getElementById('budgetBreakdown').value,
                 projectManager: document.getElementById('projectManager').value,
                 contactEmail: document.getElementById('contactEmail').value,
                 contactPhone: document.getElementById('contactPhone').value,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                createdBy: 'web-user'
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
             try {
                 if (editingProjectId) {
-                    delete projectData.createdAt;
                     await db.collection('projects').doc(editingProjectId).update(projectData);
-                    showStatus('Project updated!', 'success');
+                    showStatus('Project updated successfully!', 'success');
                 } else {
                     projectData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    const docRef = await db.collection('projects').add(projectData);
-                    await db.collection('projectSettings').doc(docRef.id).set({
-                        projectId: docRef.id,
-                        projectName,
-                        initialBudget: projectData.totalBudget,
-                        totalSpent: 0,
-                        fundTransactions: []
-                    });
-                    showStatus('Project created!', 'success');
+                    await db.collection('projects').add(projectData);
+                    showStatus('Project created successfully!', 'success');
                 }
-                resetForms();
-                showSection('projects');
+                closeModal();
+                loadProjects();
             } catch (error) {
-                console.error(error);
                 showStatus('Error saving project', 'error');
             }
         };
 
+        // Load projects
         window.loadProjects = async () => {
             try {
                 const snapshot = await db.collection('projects').orderBy('createdAt', 'desc').get();
@@ -866,42 +949,74 @@
                 snapshot.forEach(doc => projects.push({ id: doc.id, ...doc.data() }));
                 displayProjects(projects);
             } catch (error) {
-                showStatus('Error loading projects.', 'error');
+                showStatus('Error loading projects', 'error');
             }
         };
 
+        // Display projects
         function displayProjects(projects) {
             const container = document.getElementById('projectsContainer');
+            
             if (!projects.length) {
-                container.innerHTML = '<div class="empty-state">No projects yet. Click "New Project" to create.</div>';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>No projects yet. Create your first project to get started.</p>
+                        <button onclick="openCreateModal()">Create Project</button>
+                    </div>
+                `;
                 return;
             }
+
             let html = '';
             projects.forEach(p => {
-                const statusClass = getStatusClass(p.status);
-                const startDate = p.startDate || 'Not set';
+                const statusClass = p.status || 'active';
+                const startDate = p.startDate ? new Date(p.startDate).toLocaleDateString() : 'Not set';
                 const budget = p.totalBudget ? p.totalBudget.toFixed(2) : '0.00';
-                const currency = p.currency || 'USD';
+                
                 html += `
                     <div class="project-card">
                         <div class="project-header">
-                            <span class="project-name">${p.name || 'Unnamed'}</span>
-                            <span class="project-status ${statusClass}">${p.status || 'active'}</span>
+                            <span class="project-name">${p.name}</span>
+                            <span class="status-badge ${statusClass}">${p.status || 'active'}</span>
                         </div>
-                        ${p.code ? `<div style="font-size:12px;color:#6f8ba5;margin-bottom:10px;">${p.code}</div>` : ''}
-                        <div class="project-description">${p.description || 'No description.'}</div>
-                        <div class="project-details">
-                            <div class="project-detail"><span class="detail-label">Client:</span><span class="detail-value">${p.client || '—'}</span></div>
-                            <div class="project-detail"><span class="detail-label">Start:</span><span class="detail-value">${startDate}</span></div>
-                            <div class="project-detail"><span class="detail-label">Manager:</span><span class="detail-value">${p.projectManager || '—'}</span></div>
-                            <div class="project-detail"><span class="detail-label">Priority:</span><span class="detail-value">${p.priority || 'medium'}</span></div>
+                        ${p.code ? `<div class="project-code">${p.code}</div>` : ''}
+                        <div class="project-desc">${p.description || 'No description provided.'}</div>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <i class="far fa-user"></i>
+                                <span class="label">Client:</span>
+                                <span>${p.client || '—'}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="far fa-calendar"></i>
+                                <span class="label">Start:</span>
+                                <span>${startDate}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-tasks"></i>
+                                <span class="label">Priority:</span>
+                                <span>${p.priority || 'medium'}</span>
+                            </div>
                         </div>
                         <div class="project-footer">
-                            <div class="project-budget">${currency} ${budget}</div>
+                            <div class="budget">${budget}</div>
                             <div class="project-actions">
-                                <button class="project-btn view" onclick="viewProject('${p.id}')">View</button>
-                                <button class="project-btn edit" onclick="editProject('${p.id}')">Edit</button>
-                                <button class="project-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
+                                <button class="action-btn gantt" onclick="viewGantt('${p.id}')" title="Gantt Chart">
+                                    <i class="fas fa-chart-line"></i>
+                                </button>
+                                <button class="action-btn account" onclick="viewAccounting('${p.id}')" title="Accounting">
+                                    <i class="fas fa-calculator"></i>
+                                </button>
+                                <button class="action-btn" onclick="viewReports('${p.id}')" title="Reports">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                                <button class="action-btn" onclick="editProject('${p.id}')" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete" onclick="deleteProject('${p.id}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -910,69 +1025,83 @@
             container.innerHTML = html;
         }
 
-        function getStatusClass(status) {
-            switch(status) {
-                case 'active': return 'status-active';
-                case 'completed': return 'status-completed';
-                case 'on-hold': return 'status-on-hold';
-                default: return 'status-active';
-            }
-        }
+        // Navigation functions
+        window.viewGantt = (id) => {
+            window.location.href = `gantt-chart.html?project=${id}`;
+        };
 
+        window.viewAccounting = (id) => {
+            window.location.href = `accounting.html?project=${id}`;
+        };
+
+        window.viewReports = (id) => {
+            window.location.href = `reports.html?project=${id}`;
+        };
+
+        // Edit project
         window.editProject = async (id) => {
             try {
                 const doc = await db.collection('projects').doc(id).get();
                 if (!doc.exists) return;
+                
                 const p = doc.data();
+                
                 document.getElementById('projectName').value = p.name || '';
                 document.getElementById('projectCode').value = p.code || '';
-                document.getElementById('client').value = p.client || '';
                 document.getElementById('statusSelect').value = p.status || 'active';
                 document.getElementById('description').value = p.description || '';
                 document.getElementById('startDate').value = p.startDate || '';
                 document.getElementById('endDate').value = p.endDate || '';
+                document.getElementById('client').value = p.client || '';
                 document.getElementById('location').value = p.location || '';
-                document.getElementById('category').value = p.category || '';
+                document.getElementById('category').value = p.category || 'construction';
                 document.getElementById('priority').value = p.priority || 'medium';
                 document.getElementById('totalBudget').value = p.totalBudget || '';
-                document.getElementById('currency').value = p.currency || 'USD';
                 document.getElementById('budgetBreakdown').value = p.budgetBreakdown || '';
                 document.getElementById('projectManager').value = p.projectManager || '';
                 document.getElementById('contactEmail').value = p.contactEmail || '';
                 document.getElementById('contactPhone').value = p.contactPhone || '';
+                
                 editingProjectId = id;
-                showSection('create');
-                toggleForm('basic');
-                showStatus('Edit mode', 'success');
+                modalTitle.textContent = 'Edit Project';
+                modal.style.display = 'flex';
             } catch (error) {
                 showStatus('Error loading project', 'error');
             }
         };
 
-        // UPDATED: View button now links to gantt-chart.html with project ID
-        window.viewProject = (id) => { 
-            window.location.href = `gantt-chart.html?project=${id}`; 
-        };
-
+        // Delete project
         window.deleteProject = async (id) => {
-            if (!confirm('Delete project?')) return;
-            await db.collection('projects').doc(id).delete();
-            await db.collection('projectSettings').doc(id).delete().catch(()=>{});
-            showStatus('Deleted', 'success');
-            loadProjects();
+            if (!confirm('Delete this project? This action cannot be undone.')) return;
+            
+            try {
+                await db.collection('projects').doc(id).delete();
+                showStatus('Project deleted', 'success');
+                loadProjects();
+            } catch (error) {
+                showStatus('Error deleting project', 'error');
+            }
         };
 
+        // Show status message
         function showStatus(msg, type) {
             const status = document.getElementById('status');
             status.textContent = msg;
-            status.className = `status ${type}`;
-            setTimeout(() => status.style.display = 'none', 3000);
+            status.className = `status-message ${type}`;
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
         }
 
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadProjects();
-            resetForms();
-            showSection('projects');
         });
     </script>
 </body>
