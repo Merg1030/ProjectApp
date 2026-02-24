@@ -4,1983 +4,2002 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Tasks | Clean View</title>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #d3dfed;
-            color: #0a1c2f;
-            height: 100vh;
-            overflow: hidden;
+            background: #d3dfed; color: #0a1c2f; height: 100vh; overflow: hidden;
         }
 
-        /* Full screen main container */
-        .main-content {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            background: white;
-            overflow: hidden;
-        }
+        .main-content { height: 100vh; width: 100vw; display: flex; flex-direction: column; background: white; overflow: hidden; }
 
-        /* Compact header - updated with app-header colors */
         .project-header {
-            padding: 4px 10px;
-            background: #0a1c2f;
-            color: white;
-            border-bottom: 2px solid #1f3d62;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-            min-height: 48px;
+            padding: 4px 10px; background: #0a1c2f; color: white;
+            border-bottom: 2px solid #1f3d62; display: flex; align-items: center;
+            justify-content: space-between; flex-shrink: 0; min-height: 48px;
         }
-
-        .title-section {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .title-section h2 {
-            font-size: 14px;
-            font-weight: 500;
-            color: white;
-        }
+        .title-section { display: flex; align-items: center; gap: 6px; }
+        .title-section h2 { font-size: 14px; font-weight: 500; color: white; }
 
         .back-link {
-            color: #0b1f33;
-            text-decoration: none;
-            padding: 0.2rem 1rem;
-            border: none;
-            background: white;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            color: #0b1f33; text-decoration: none; padding: 0.2rem 1rem;
+            border: none; background: white; border-radius: 30px; font-size: 0.7rem;
+            font-weight: 600; display: flex; align-items: center; gap: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .back-link:hover { background: #e6efff; }
 
-        .back-link:hover {
-            background: #e6efff;
-        }
+        .project-info { padding: 4px 10px; background: #f2f6fc; border-bottom: 1px solid #b3c7e0; flex-shrink: 0; }
+        .manager-info { display: flex; align-items: center; gap: 16px; font-size: 11px; }
+        .label { font-weight: 600; color: #1f3d62; }
+        .value { color: #0a1c2f; margin-left: 4px; }
 
-        /* Project info - updated with softer colors */
-        .project-info {
-            padding: 4px 10px;
-            background: #f2f6fc;
-            border-bottom: 1px solid #b3c7e0;
-            flex-shrink: 0;
-        }
-
-        .manager-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            font-size: 11px;
-        }
-
-        .label {
-            font-weight: 600;
-            color: #1f3d62;
-        }
-
-        .value {
-            color: #0a1c2f;
-            margin-left: 4px;
-        }
-
-        /* Actions bar - updated with softer colors */
-        .actions-container {
-            padding: 4px 10px;
-            background: #f2f6fc;
-            border-bottom: 1px solid #b3c7e0;
-            flex-shrink: 0;
-        }
-
-        .actions-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            padding: 2px 0;
-        }
-
-        .actions-header h3 {
-            font-size: 12px;
-            font-weight: 600;
-            color: #0a1c2f;
-        }
-
-        .actions-header i {
-            font-size: 12px;
-            transition: transform 0.2s;
-            color: #1f3d62;
-        }
-
-        .actions-header.collapsed i {
-            transform: rotate(-90deg);
-        }
+        .actions-container { padding: 4px 10px; background: #f2f6fc; border-bottom: 1px solid #b3c7e0; flex-shrink: 0; }
+        .actions-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 2px 0; }
+        .actions-header h3 { font-size: 12px; font-weight: 600; color: #0a1c2f; }
+        .actions-header i { font-size: 12px; transition: transform 0.2s; color: #1f3d62; }
 
         .actions-panel {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 6px;
-            padding: 6px 0;
-            transition: all 0.2s;
-            max-height: 180px;
-            overflow: hidden;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 6px; padding: 6px 0; transition: all 0.2s; max-height: 180px; overflow: hidden;
         }
-
-        .actions-panel.collapsed {
-            max-height: 0;
-            padding: 0;
-            opacity: 0;
-            pointer-events: none;
-        }
+        .actions-panel.collapsed { max-height: 0; padding: 0; opacity: 0; pointer-events: none; }
 
         .btn {
-            padding: 0.2rem 1rem;
-            border: 1px solid #2b4a73;
-            background: white;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            transition: 0.2s;
-            color: #0b1f33;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0.2rem 1rem; border: 1px solid #2b4a73; background: white;
+            border-radius: 30px; font-size: 0.7rem; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 4px; transition: 0.2s; color: #0b1f33; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .btn-primary {
-            background: #0a1c2f;
-            color: white;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: #1f3d62;
-        }
-
-        .btn:hover {
-            background: #e6efff;
-        }
+        .btn-primary { background: #0a1c2f; color: white; border: none; }
+        .btn-primary:hover { background: #1f3d62; }
+        .btn:hover { background: #e6efff; }
 
         .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            background: white;
-            border: 1px solid #b3c7e0;
-            border-radius: 30px;
-            padding: 0.2rem 0.8rem;
+            display: flex; align-items: center; gap: 4px; background: white;
+            border: 1px solid #b3c7e0; border-radius: 30px; padding: 0.2rem 0.8rem;
         }
-
-        .filter-group label {
-            font-size: 10px;
-            font-weight: 600;
-            color: #1f3d62;
-        }
-
-        .filter-group select {
-            border: none;
-            outline: none;
-            font-size: 11px;
-            background: transparent;
-            cursor: pointer;
-            color: #0a1c2f;
-        }
+        .filter-group label { font-size: 10px; font-weight: 600; color: #1f3d62; }
+        .filter-group select { border: none; outline: none; font-size: 11px; background: transparent; cursor: pointer; color: #0a1c2f; }
 
         .search-box {
-            display: flex;
-            align-items: center;
-            background: white;
-            border: 1px solid #b3c7e0;
-            border-radius: 30px;
-            padding: 0.2rem 0.8rem;
+            display: flex; align-items: center; background: white;
+            border: 1px solid #b3c7e0; border-radius: 30px; padding: 0.2rem 0.8rem;
         }
+        .search-box input { border: none; padding: 2px 4px; width: 100%; outline: none; font-size: 11px; background: transparent; color: #0a1c2f; }
+        .search-box input::placeholder { color: #7f96b3; }
 
-        .search-box input {
-            border: none;
-            padding: 2px 4px;
-            width: 100%;
-            outline: none;
-            font-size: 11px;
-            background: transparent;
-            color: #0a1c2f;
-        }
+        .split-container { flex: 1; display: flex; min-height: 0; overflow: hidden; border-top: 2px solid #1f3d62; }
 
-        .search-box input::placeholder {
-            color: #7f96b3;
-        }
+        .left-panel { flex: 1; width: 50%; display: flex; flex-direction: column; overflow: hidden; background: white; border-right: 2px solid #1f3d62; }
 
-        /* Split container - 50/50 */
-        .split-container {
-            flex: 1;
-            display: flex;
-            min-height: 0;
-            overflow: hidden;
-            border-top: 2px solid #1f3d62;
-        }
+        .panel-header { padding: 4px 8px; background: #b8cde0; border-bottom: 2px solid #1f3d62; font-weight: 700; font-size: 12px; color: #0a1c2f; }
 
-        /* Left panel - Tasks */
-        .left-panel {
-            flex: 1;
-            width: 50%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: white;
-            border-right: 2px solid #1f3d62;
-        }
+        .table-container { flex: 1; overflow: auto !important; position: relative; background: white; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
+        .table-container::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
+        .table-container::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; border: 2px solid #ecf2fa; }
 
-        .panel-header {
-            padding: 4px 8px;
-            background: #b8cde0;
-            border-bottom: 2px solid #1f3d62;
-            font-weight: 700;
-            font-size: 12px;
-            color: #0a1c2f;
-        }
-
-        .table-container {
-            flex: 1;
-            overflow: auto !important;
-            position: relative;
-            background: white;
-            scrollbar-width: thin;
-            scrollbar-color: #97adc9 #ecf2fa;
-        }
-
-        .table-container::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-            background: #ecf2fa;
-        }
-        
-        .table-container::-webkit-scrollbar-thumb {
-            background: #97adc9;
-            border-radius: 8px;
-            border: 2px solid #ecf2fa;
-        }
-
-        /* Table with borders - updated colors */
-        .task-table {
-            border-collapse: collapse;
-            font-size: 11px;
-            min-width: 1000px;
-            width: 100%;
-        }
+        .task-table { border-collapse: collapse; font-size: 11px; min-width: 1000px; width: 100%; }
 
         .task-table th {
-            background: #d4e2f2;
-            font-weight: 700;
-            font-size: 0.65rem;
-            padding: 6px 4px;
-            border: 1px solid #9bb1cc;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            white-space: nowrap;
-            text-align: center;
-            color: #0a1c2f;
-            border-bottom: 2px solid #1f3d62;
+            background: #d4e2f2; font-weight: 700; font-size: 0.65rem; padding: 6px 4px;
+            border: 1px solid #9bb1cc; position: sticky; top: 0; z-index: 20;
+            white-space: nowrap; text-align: center; color: #0a1c2f; border-bottom: 2px solid #1f3d62;
         }
+        .task-table td { padding: 4px 4px; border: 1px solid #c7d6ec; white-space: nowrap; vertical-align: middle; color: #0a1c2f; font-size: 0.68rem; }
+        .task-table tbody tr:hover td { background: #e3ecf7; }
 
-        .task-table td {
-            padding: 4px 4px;
-            border: 1px solid #c7d6ec;
-            white-space: nowrap;
-            vertical-align: middle;
-            color: #0a1c2f;
-            font-size: 0.68rem;
-        }
+        .main-task-row td { font-weight: 700; background: #ecf3fc; }
+        .main-task-row td:first-child { font-weight: 700; padding-left: 6px; }
 
-        .task-table tbody tr:hover td {
-            background: #e3ecf7;
-        }
+        .task-table th:nth-child(1) { min-width: 70px; }
+        .task-table th:nth-child(2) { min-width: 35px; }
+        .task-table th:nth-child(3) { min-width: 160px; }
+        .task-table th:nth-child(4) { min-width: 80px; }
+        .task-table th:nth-child(5) { min-width: 65px; }
+        .task-table th:nth-child(6) { min-width: 60px; }
+        .task-table th:nth-child(7) { min-width: 60px; }
+        .task-table th:nth-child(8) { min-width: 35px; }
+        .task-table th:nth-child(9) { min-width: 65px; }
+        .task-table th:nth-child(10) { min-width: 65px; }
+        .task-table th:nth-child(11) { min-width: 65px; }
+        .task-table th:nth-child(12) { min-width: 75px; }
+        .task-table th:nth-child(13) { min-width: 45px; }
 
-        /* Bold main tasks */
-        .main-task-row td {
-            font-weight: 700;
-            background: #ecf3fc;
-        }
-        
-        .main-task-row td:first-child {
-            font-weight: 700;
-            padding-left: 6px;
-        }
-
-        /* Column specific widths */
-        .task-table th:nth-child(1) { min-width: 70px; }  /* TASK ID */
-        .task-table th:nth-child(2) { min-width: 35px; }  /* LINE */
-        .task-table th:nth-child(3) { min-width: 160px; } /* DESCRIPTION */
-        .task-table th:nth-child(4) { min-width: 80px; }  /* ASSIGNED */
-        .task-table th:nth-child(5) { min-width: 65px; }  /* STATUS */
-        .task-table th:nth-child(6) { min-width: 60px; }  /* START */
-        .task-table th:nth-child(7) { min-width: 60px; }  /* END */
-        .task-table th:nth-child(8) { min-width: 35px; }  /* HRS */
-        .task-table th:nth-child(9) { min-width: 65px; }  /* MAT COST */
-        .task-table th:nth-child(10) { min-width: 65px; } /* MAN COST */
-        .task-table th:nth-child(11) { min-width: 65px; } /* TOTAL */
-        .task-table th:nth-child(12) { min-width: 75px; } /* LOCATION */
-        .task-table th:nth-child(13) { min-width: 45px; } /* ACTIONS (3 dots) */
-
-        /* Status badges - updated colors */
         .status-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 30px;
-            font-size: 0.55rem;
-            font-weight: 700;
-            border: 1px solid #9bb7da;
-            background: #e1ecfe;
-            color: #1d3a5c;
-            text-align: center;
-            width: 100%;
+            display: inline-block; padding: 2px 6px; border-radius: 30px;
+            font-size: 0.55rem; font-weight: 700; border: 1px solid #9bb7da;
+            background: #e1ecfe; color: #1d3a5c; text-align: center; width: 100%;
         }
+        .status-COMPLETED { background: #d4e2f2; border-color: #2b4a73; }
+        .status-ONGOING { background: #b8cde0; border-color: #1f3d62; }
+        .status-PENDING { background: #ecf3fc; border-color: #97adc9; }
 
-        .status-COMPLETED { 
-            background: #d4e2f2;
-            border-color: #2b4a73;
-        }
-        .status-ONGOING { 
-            background: #b8cde0;
-            border-color: #1f3d62;
-        }
-        .status-PENDING { 
-            background: #ecf3fc;
-            border-color: #97adc9;
-        }
+        .total-cost { font-size: 0.68rem; font-weight: 600; color: #0a1c2f; text-align: right; width: 100%; }
 
-        /* Plain text for material and man cost - no boxes */
-        .cost-plain {
-            font-size: 0.68rem;
-            font-weight: 500;
-            color: #2b4a73;
-            text-align: right;
-            width: 100%;
-        }
+        .subtask-row td { background: #f8f8f8; font-weight: 400; }
+        .subtask-desc { padding-left: 24px !important; position: relative; }
+        .subtask-desc::before { content: "↳"; position: absolute; left: 12px; color: #1f3d62; font-size: 0.7rem; }
+        .subsubtask-row td { background: #f0f0f0; font-weight: 400; }
+        .task-prefix { color: #4a6a8a; font-size: 10px; margin-right: 3px; display: inline-block; font-weight: 500; }
 
-        .total-cost {
-            font-size: 0.68rem;
-            font-weight: 600;
-            color: #0a1c2f;
-            text-align: right;
-            width: 100%;
-        }
+        .empty-row td { background: #f9fcff; padding: 4px 4px; border: 1px solid #c7d6ec; }
+        .empty-row:hover td { background: #e3ecf7; }
+        .empty-row .empty-text { display: block; min-width: 80px; outline: none; color: #4a6a8a; font-size: 0.68rem; }
 
-        /* Subtask styling */
-        .subtask-row td {
-            background: #f8f8f8;
-            font-weight: 400;
-        }
-        
-        .subtask-desc {
-            padding-left: 24px !important;
-            position: relative;
-        }
-        
-        .subtask-desc::before {
-            content: "↳";
-            position: absolute;
-            left: 12px;
-            color: #1f3d62;
-            font-size: 0.7rem;
-        }
-        
-        .subsubtask-row td {
-            background: #f0f0f0;
-            font-weight: 400;
-        }
-        
-        .task-prefix {
-            color: #4a6a8a;
-            font-size: 10px;
-            margin-right: 3px;
-            display: inline-block;
-            font-weight: 500;
-        }
+        .menu-container { position: relative; display: inline-block; }
+        .menu-trigger { cursor: pointer; padding: 2px 6px; border: none; background: transparent; font-size: 14px; font-weight: bold; color: #2b4a73; }
+        .menu-trigger:hover { background: #e6efff; border-radius: 30px; }
+        .menu-dropdown { position: absolute; right: 0; top: 100%; background: white; border: 2px solid #1f3d62; border-radius: 6px; min-width: 110px; z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,20,40,0.2); }
+        .menu-dropdown.show { display: block; }
+        .menu-item { padding: 6px 10px; cursor: pointer; font-size: 11px; border-bottom: 1px solid #b3c7e0; display: flex; align-items: center; gap: 6px; color: #0a1c2f; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover { background: #e6efff; }
 
-        /* Empty row styling - clean gray row */
-        .empty-row td {
-            background: #f9fcff;
-            padding: 4px 4px;
-            border: 1px solid #c7d6ec;
-        }
-        
-        .empty-row:hover td {
-            background: #e3ecf7;
-        }
-        
-        .empty-row .empty-text {
-            display: block;
-            min-width: 80px;
-            outline: none;
-            color: #4a6a8a;
-            font-size: 0.68rem;
-        }
+        .empty-state { text-align: center; padding: 40px; color: #7f96b3; font-size: 0.8rem; }
 
-        /* 3-dots menu */
-        .menu-container {
-            position: relative;
-            display: inline-block;
-        }
+        .right-panel { flex: 1; width: 50%; display: flex; flex-direction: column; overflow: hidden; background: white; }
+        .gantt-header { padding: 4px 8px; background: #b8cde0; border-bottom: 2px solid #1f3d62; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 12px; color: #0a1c2f; }
+        .gantt-container { flex: 1; overflow: auto !important; padding: 6px; background: white; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
+        .gantt-container::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
+        .gantt-container::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; border: 2px solid #ecf2fa; }
+        .gantt-table { border-collapse: collapse; font-size: 10px; min-width: 800px; }
+        .gantt-table th { background: #d4e2f2; padding: 4px 2px; border: 1px solid #9bb1cc; border-bottom: 2px solid #1f3d62; position: sticky; top: 0; z-index: 10; font-size: 0.6rem; font-weight: 700; color: #0a1c2f; }
+        .gantt-table td { border: 1px solid #c7d6ec; padding: 4px 1px; text-align: center; color: #0a1c2f; cursor: pointer; font-size: 0.6rem; }
+        .gantt-table td:hover { background: rgba(30,60,100,0.15); }
+        .gantt-bar { background: #66c2ff; height: 10px; width: 90%; margin: 0 auto; border-radius: 2px; }
+        .gantt-bar-empty { background: #ecf3fc; border: 1px dashed #2b4a73; height: 10px; width: 90%; margin: 0 auto; }
+        .gantt-bar-main { background: #2b4a73; height: 10px; }
+        .gantt-bar-sub { background: #4a6a8a; opacity: 0.8; height: 8px; }
+        .gantt-bar-subsub { background: #7f96b3; opacity: 0.7; height: 6px; }
+        .today-highlight { background: #fce3cd !important; font-weight: bold; }
+        .current-month-btn { padding: 0.2rem 1.2rem; border: 1px solid #2b4a73; background: white; border-radius: 30px; cursor: pointer; font-size: 0.65rem; font-weight: 600; color: #0b1f33; }
+        .current-month-btn:hover { background: #0a1c2f; color: white; }
 
-        .menu-trigger {
-            cursor: pointer;
-            padding: 2px 6px;
-            border: none;
-            background: transparent;
-            font-size: 14px;
-            font-weight: bold;
-            color: #2b4a73;
-        }
-
-        .menu-trigger:hover {
-            background: #e6efff;
-            border-radius: 30px;
-        }
-
-        .menu-dropdown {
-            position: absolute;
-            right: 0;
-            top: 100%;
-            background: white;
-            border: 2px solid #1f3d62;
-            border-radius: 6px;
-            min-width: 110px;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 4px 12px rgba(0,20,40,0.2);
-        }
-
-        .menu-dropdown.show {
-            display: block;
-        }
-
-        .menu-item {
-            padding: 6px 10px;
-            cursor: pointer;
-            font-size: 11px;
-            border-bottom: 1px solid #b3c7e0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #0a1c2f;
-        }
-
-        .menu-item:last-child {
-            border-bottom: none;
-        }
-
-        .menu-item:hover {
-            background: #e6efff;
-        }
-
-        .action-btn {
-            padding: 0.2rem 0.8rem;
-            font-size: 0.65rem;
-            border: 1px solid #2b4a73;
-            background: white;
-            border-radius: 30px;
-            cursor: pointer;
-            color: #0b1f33;
-            font-weight: 600;
-        }
-
-        .action-btn:hover {
-            background: #0a1c2f;
-            color: white;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #7f96b3;
-            font-size: 0.8rem;
-        }
-
-        /* Right panel - Gantt */
-        .right-panel {
-            flex: 1;
-            width: 50%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: white;
-        }
-
-        .gantt-header {
-            padding: 4px 8px;
-            background: #b8cde0;
-            border-bottom: 2px solid #1f3d62;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-            font-size: 12px;
-            color: #0a1c2f;
-        }
-
-        .gantt-container {
-            flex: 1;
-            overflow: auto !important;
-            padding: 6px;
-            background: white;
-            scrollbar-width: thin;
-            scrollbar-color: #97adc9 #ecf2fa;
-        }
-
-        .gantt-container::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-            background: #ecf2fa;
-        }
-        
-        .gantt-container::-webkit-scrollbar-thumb {
-            background: #97adc9;
-            border-radius: 8px;
-            border: 2px solid #ecf2fa;
-        }
-
-        .gantt-table {
-            border-collapse: collapse;
-            font-size: 10px;
-            min-width: 800px;
-        }
-
-        .gantt-table th {
-            background: #d4e2f2;
-            padding: 4px 2px;
-            border: 1px solid #9bb1cc;
-            border-bottom: 2px solid #1f3d62;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            font-size: 0.6rem;
-            font-weight: 700;
-            color: #0a1c2f;
-        }
-
-        .gantt-table td {
-            border: 1px solid #c7d6ec;
-            padding: 4px 1px;
-            text-align: center;
-            color: #0a1c2f;
-            cursor: pointer;
-            font-size: 0.6rem;
-        }
-
-        .gantt-table td:hover {
-            background: rgba(30, 60, 100, 0.15);
-        }
-
-        .gantt-bar {
-            background: #66c2ff;
-            height: 10px;
-            width: 90%;
-            margin: 0 auto;
-            border-radius: 2px;
-        }
-
-        .gantt-bar-empty {
-            background: #ecf3fc;
-            border: 1px dashed #2b4a73;
-            height: 10px;
-            width: 90%;
-            margin: 0 auto;
-        }
-
-        .gantt-bar-main { 
-            background: #2b4a73;
-            opacity: 1; 
-            height: 10px;
-        }
-        .gantt-bar-sub { 
-            background: #4a6a8a;
-            opacity: 0.8; 
-            height: 8px;
-        }
-        .gantt-bar-subsub { 
-            background: #7f96b3;
-            opacity: 0.7; 
-            height: 6px;
-        }
-
-        .today-highlight {
-            background: #fce3cd !important;
-            font-weight: bold;
-        }
-
-        .current-month-btn {
-            padding: 0.2rem 1.2rem;
-            border: 1px solid #2b4a73;
-            background: white;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: #0b1f33;
-        }
-
-        .current-month-btn:hover {
-            background: #0a1c2f;
-            color: white;
-        }
-
-        /* Budget exceeded styling - entire row turns red */
-        tr.budget-exceeded {
-            background-color: #ff6b6b !important;
-        }
-        
-        tr.budget-exceeded td {
-            background-color: #f22626 !important;
-            color: rgb(0, 0, 0) !important;
-            border-color: #f22626;
-            font-size: 0.68rem;
-        }
-        
-        tr.budget-exceeded .cost-plain {
-            color: white !important;
-            font-weight: 700;
-        }
-        
-        tr.budget-exceeded .total-cost {
-            color: white !important;
-            font-weight: 700;
-        }
-        
-        tr.budget-exceeded .status-badge {
-            background: white !important;
-            color: #ff6b6b !important;
-            border-color: white !important;
-        }
-
-        /* Editable cells styling */
-        .editable-cell {
-            cursor: text;
-            position: relative;
-            min-width: 50px;
-        }
-        
-        .editable-cell:hover {
-            background: #e3ecf7 !important;
-            outline: 2px solid #2b4a73;
-            outline-offset: -2px;
-        }
-        
-        .editable-cell input {
-            width: 100%;
-            padding: 2px 4px;
-            border: 2px solid #2b4a73;
-            border-radius: 4px;
-            font-size: 0.68rem;
-            background: white;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 100;
-        }
-
-        /* Week line indicators for Gantt */
-        .gantt-table td.week-start::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -1px;
-            height: 200px;
-            background-color: #6b6b6b;
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        .gantt-table td.week-end::after {
-            content: '';
-            position: absolute;
-            top: -40px;
-            right: -1px;
-            width: 0.1px;
-            height: 200px;
-            background-color: #6b6b6b;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        /* Task number styling */
-        .task-num {
-            display: inline-block;
-            min-width: 28px;
-            color: #4a6a8a;
-            font-weight: 500;
-            margin-right: 4px;
-            font-size: 0.65rem;
-        }
-
-        /* NEW: Assignment Modal Styles */
-        .allocation-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.3);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .allocation-modal {
-            background: white;
-            width: 400px;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,20,40,0.5);
-            padding: 1.8rem;
-            position: relative;
-        }
-
-        .allocation-modal h3 {
-            color: #0a1c2f;
-            margin-bottom: 1rem;
-            font-weight: 600;
-            font-size: 1.1rem;
-            border-left: 5px solid #2b4a73;
-            padding-left: 0.8rem;
-        }
-
-        .allocation-modal label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: #1f3d62;
-            font-weight: 600;
-            display: block;
-            margin: 0.8rem 0 0.3rem;
-        }
-
-        .allocation-modal select,
-        .allocation-modal input {
-            width: 100%;
-            padding: 0.6rem 0.8rem;
-            border: 1px solid #b3c7e0;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            background: #f2f6fc;
-            outline: none;
-            margin-bottom: 0.8rem;
-            box-sizing: border-box;
-        }
-
-        .allocation-modal select:focus,
-        .allocation-modal input:focus {
-            border-color: #1f3d62;
-            background: white;
-        }
-
-        .stock-warning {
-            color: #ff6b6b;
-            font-size: 0.7rem;
-            margin: 0.5rem 0;
-            padding: 0.5rem;
-            background: #ffe5e5;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .modal-buttons button {
-            flex: 1;
-            padding: 0.6rem;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-
-        .modal-buttons button.cancel {
-            background: white;
-            border: 1px solid #2b4a73;
-            color: #0a1c2f;
-        }
-
-        .modal-buttons button.cancel:hover {
-            background: #e6efff;
-        }
-
-        .modal-buttons button.primary {
-            background: #059669;
-            color: white;
-        }
-
-        .modal-buttons button.primary:hover {
-            background: #047857;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 20px;
-            font-size: 1.4rem;
-            color: #7f96b3;
-            cursor: pointer;
-        }
-
-        .modal-close:hover {
-            color: #0a1c2f;
-        }
+        tr.budget-exceeded td { background-color: #f22626 !important; color: #000 !important; border-color: #f22626; }
+        tr.budget-exceeded .status-badge { background: white !important; color: #ff6b6b !important; border-color: white !important; }
 
         .cost-clickable {
-            cursor: pointer;
-            color: #2b4a73;
-            font-weight: 600;
-            text-decoration: underline;
+            cursor: pointer; color: #2b4a73; font-weight: 600;
+            text-decoration: none; display: block; width: 100%;
+            min-height: 18px; text-align: right; padding: 1px 3px; border-radius: 3px;
+        }
+        .cost-clickable:hover { background: #fbcba5 !important; text-decoration: none; }
+        .cost-clickable.cost-zero::before { content: '+'; color: #97adc9; font-size: 0.7rem; font-weight: 700; }
+
+        /* =============================================
+           FULL FORM MODAL — Material Assignment
+           Wide table-style form matching history columns
+           ============================================= */
+        .allocation-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55); align-items: center; justify-content: center; z-index: 2000;
+        }
+        .allocation-overlay.active { display: flex; }
+
+        /* MATERIAL modal — very wide to accommodate all columns */
+        .allocation-modal {
+            background: white; width: 96vw; max-width: 1200px; max-height: 92vh;
+            border-radius: 14px; box-shadow: 0 24px 60px rgba(0,20,40,0.45);
+            display: flex; flex-direction: column; overflow: hidden;
         }
 
-        .cost-clickable:hover {
-            background: #fbcba5 !important;
+        /* LABOR MODAL — wide table format with all 9 columns */
+        .allocation-modal.labor-modal {
+            max-width: 1100px;
         }
-    </style>
-    </style>
+
+        .modal-head {
+            padding: 0.9rem 1.4rem; background: #0a1c2f; color: white;
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        .modal-head h3 { font-size: 0.95rem; font-weight: 600; }
+        .modal-head-right { display: flex; align-items: center; gap: 12px; }
+        .modal-head .modal-close { cursor: pointer; font-size: 1.1rem; color: #97adc9; transition: color 0.15s; }
+        .modal-head .modal-close:hover { color: white; }
+
+        /* History link in header */
+        .history-link {
+            font-size: 0.68rem; color: #97adc9; text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+            padding: 3px 10px; display: flex; align-items: center; gap: 5px;
+            transition: 0.15s;
+        }
+        .history-link:hover { background: rgba(255,255,255,0.1); color: white; border-color: white; }
+
+        /* Task context bar — shows pre-filled read-only info */
+        .task-context-bar {
+            background: #f2f6fc; border-bottom: 2px solid #d0dff0;
+            padding: 8px 16px; display: flex; gap: 20px; flex-shrink: 0; flex-wrap: wrap;
+        }
+        .ctx-item { display: flex; align-items: center; gap: 5px; }
+        .ctx-label { font-size: 0.62rem; font-weight: 700; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.4px; }
+        .ctx-value { font-size: 0.75rem; font-weight: 700; color: #0a1c2f; }
+        .ctx-badge {
+            background: #e6efff; color: #0a1c2f; padding: 2px 8px;
+            border-radius: 20px; font-size: 0.68rem; font-weight: 700;
+        }
+
+        /* Full-form table inside modal */
+        .modal-body { flex: 1; overflow-y: auto; padding: 0; }
+        .modal-body::-webkit-scrollbar { width: 6px; }
+        .modal-body::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 4px; }
+
+        /* The actual entry table for LABOR with all 9 columns */
+        .entry-table-wrap { overflow-x: auto; padding: 12px 16px 0; }
+        .labor-entry-table {
+            width: 100%; border-collapse: collapse; font-size: 0.72rem;
+            min-width: 1100px;
+        }
+        .labor-entry-table th {
+            background: #d4e2f2; color: #0a1c2f; font-weight: 700;
+            font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.4px;
+            padding: 8px 10px; border: 1px solid #b3c7e0; border-bottom: 2px solid #1f3d62;
+            white-space: nowrap; text-align: left; position: sticky; top: 0; z-index: 5;
+        }
+        .labor-entry-table td {
+            padding: 6px 6px; border: 1px solid #d0dff0; vertical-align: middle;
+            background: white;
+        }
+        .labor-entry-table tr:hover td { background: #f4f8fd; }
+
+        /* Read-only pre-filled cells */
+        .cell-readonly {
+            font-size: 0.72rem; color: #0a1c2f; font-weight: 600; padding: 4px 6px;
+            background: #f4f8fd; border-radius: 4px; display: block; white-space: nowrap;
+        }
+
+        /* Editable input cells */
+        .cell-input {
+            width: 100%; padding: 5px 7px; border: 1px solid #b3c7e0; border-radius: 6px;
+            font-size: 0.75rem; background: white; outline: none; color: #0a1c2f;
+            transition: border-color 0.15s;
+        }
+        .cell-input:focus { border-color: #2b4a73; box-shadow: 0 0 0 2px rgba(43,74,115,0.12); }
+        .cell-input.is-invalid { border-color: #cc0000; background: #fff5f5; }
+
+        /* Select dropdown in table */
+        .cell-select {
+            width: 100%; padding: 5px 7px; border: 1px solid #b3c7e0; border-radius: 6px;
+            font-size: 0.72rem; background: white; outline: none; color: #0a1c2f;
+        }
+        .cell-select:focus { border-color: #2b4a73; }
+
+        /* Amount cell — auto-calculated, shown prominently */
+        .amount-cell {
+            font-weight: 700; color: #059669; font-size: 0.82rem;
+            white-space: nowrap; text-align: right; padding-right: 4px;
+        }
+        .amount-cell.zero { color: #b3c7e0; }
+
+        /* Remove row button */
+        .remove-entry-btn {
+            width: 26px; height: 26px; border: none; background: #ffe5e5; color: #cc0000;
+            border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; margin: auto;
+            transition: background 0.15s; flex-shrink: 0;
+        }
+        .remove-entry-btn:hover { background: #ffc0c0; }
+
+        /* Add row button — sits below the table */
+        .add-entry-row {
+            padding: 0 16px 10px; margin-top: 6px;
+        }
+        .add-entry-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px; background: #eaf2ff; border: 1px dashed #2b4a73;
+            border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: #1f3d62;
+            cursor: pointer; transition: background 0.15s; width: 100%; justify-content: center;
+        }
+        .add-entry-btn:hover { background: #d4e4ff; }
+
+        /* Stock warning */
+        .stock-warning {
+            color: #cc0000; font-size: 0.72rem; margin: 6px 16px 0;
+            padding: 7px 10px; background: #ffe5e5; border-radius: 6px;
+            border-left: 3px solid #cc0000; display: none;
+        }
+
+        /* Grand total bar */
+        .grand-total-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #0a1c2f; color: white; padding: 10px 20px;
+            margin: 10px 16px 12px; border-radius: 8px; flex-shrink: 0;
+        }
+        .grand-total-bar .gt-label { font-size: 0.75rem; opacity: 0.75; }
+        .grand-total-bar .gt-value { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.5px; }
+
+        .modal-foot {
+            padding: 0.75rem 1.4rem; border-top: 1px solid #e0e8f5;
+            display: flex; gap: 8px; flex-shrink: 0; background: #fafcff;
+            align-items: center;
+        }
+        .modal-foot button {
+            padding: 0.6rem 1.4rem; border-radius: 8px; border: none;
+            font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-cancel { background: white; border: 1px solid #b3c7e0 !important; color: #0a1c2f; }
+        .btn-cancel:hover { background: #e6efff; }
+        .btn-save { background: #059669; color: white; margin-left: auto; }
+        .btn-save:hover { background: #047857; }
+        .modal-foot .enter-hint {
+            font-size: 0.62rem; color: #97adc9; display: flex; align-items: center; gap: 5px;
+        }
+        .enter-hint kbd {
+            background: #e6efff; color: #2b4a73; border: 1px solid #b3c7e0;
+            border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; font-family: monospace;
+        }
+</style>
 </head>
 <body>
-    <main class="main-content">
-        <!-- Compact header -->
-        <div class="project-header">
-            <div class="title-section">
-                <i class="fas fa-tasks" style="font-size: 16px;"></i>
-                <h2 id="projectTitle">Project Tasks</h2>
-            </div>
-            <a href="dashboard.html" class="back-link">
-                <i class="fas fa-arrow-left"></i> Dashboard
+<main class="main-content">
+    <div class="project-header">
+        <div class="title-section">
+            <i class="fas fa-tasks" style="font-size:16px;"></i>
+            <h2 id="projectTitle">Project Tasks</h2>
+        </div>
+        <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </div>
+
+    <div class="project-info">
+        <div class="manager-info">
+            <div><span class="label">PM:</span> <span class="value">Christopher Chishela</span></div>
+        </div>
+    </div>
+
+    <div class="actions-container">
+        <div class="actions-header" id="actionsHeader">
+            <h3><i class="fas fa-sliders-h"></i> Filters & Actions</h3>
+            <i class="fas fa-chevron-down" id="toggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+            <button class="btn btn-primary" id="addTaskBtn"><i class="fas fa-plus"></i> Add Task</button>
+            <button class="btn" id="toggleCompletedBtn"><i class="fas fa-eye-slash"></i> Hide Completed</button>
+            <a href="#" class="btn" id="completedtasksBtn"><i class="fas fa-check-circle"></i> Completed</a>
+            <button class="btn" id="addEmptyRowBtn"><i class="fas fa-plus-circle"></i> Add Empty Row</button>
+            <a href="#" class="btn" id="matHistoryNavBtn" style="background:#0a1c2f;color:white;border:none">
+                <i class="fas fa-history"></i> Material History
             </a>
+            <a href="#" class="btn" id="labHistoryNavBtn" style="background:#0a1c2f;color:white;border:none">
+                <i class="fas fa-history"></i> Labor History
+            </a>
+            <div class="search-box">
+                <i class="fas fa-search" style="color:#000;"></i>
+                <input type="text" id="searchInput" placeholder="Search...">
+            </div>
+            <div class="filter-group">
+                <label>Status:</label>
+                <select id="statusFilter">
+                    <option value="">All</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="ONGOING">Ongoing</option>
+                    <option value="PENDING">Pending</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Month:</label>
+                <select id="monthFilter">
+                    <option value="">All</option>
+                    <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+                    <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+                    <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+                    <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Year:</label>
+                <select id="yearFilter">
+                    <option value="">All</option>
+                    <option value="2023">2023</option><option value="2024">2024</option>
+                    <option value="2025">2025</option><option value="2026">2026</option>
+                </select>
+            </div>
         </div>
+    </div>
 
-        <!-- Project info -->
-        <div class="project-info">
-            <div class="manager-info">
-                <div><span class="label">PM:</span> <span class="value">Christopher Chishela</span></div>
+    <div class="split-container">
+        <div class="left-panel">
+            <div class="panel-header"><i class="fas fa-tasks"></i> Task List</div>
+            <div class="table-container" id="tableContainer">
+                <table class="task-table" id="taskTable">
+                    <thead>
+                        <tr>
+                            <th>TASK ID</th><th>LINE</th><th>DESCRIPTION</th><th>ASSIGNED</th>
+                            <th>STATUS</th><th>START</th><th>END</th><th>HRS</th>
+                            <th>MAT COST</th><th>MAN COST</th><th>TOTAL</th><th>LOCATION</th><th>⚡</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskList"></tbody>
+                </table>
+                <div class="empty-state" id="emptyState" style="display:none;">
+                    <i class="fas fa-tasks fa-3x"></i><p>No tasks found</p>
+                </div>
             </div>
         </div>
 
-        <!-- Collapsible actions panel -->
-        <div class="actions-container">
-            <div class="actions-header" id="actionsHeader">
-                <h3><i class="fas fa-sliders-h"></i> Filters & Actions</h3>
-                <i class="fas fa-chevron-down" id="toggleIcon"></i>
+        <div class="right-panel">
+            <div class="gantt-header">
+                <span><i class="fas fa-calendar-alt"></i> Gantt Calendar</span>
+                <button class="current-month-btn" id="currentMonthBtn">Current Month</button>
             </div>
-            <div class="actions-panel" id="actionsPanel">
-                <button class="btn btn-primary" id="addTaskBtn">
-                    <i class="fas fa-plus"></i> Add Task
-                </button>
-                <button class="btn" id="toggleCompletedBtn">
-                    <i class="fas fa-eye-slash"></i> Hide Completed
-                </button>
-                <a href="#" class="btn" id="completedtasksBtn">
-                    <i class="fas fa-check-circle"></i> Completed
+            <div class="gantt-container" id="ganttContainer">
+                <table class="gantt-table">
+                    <thead id="ganttHead"></thead>
+                    <tbody id="ganttBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- =============================================
+     MATERIAL ASSIGNMENT MODAL
+     Wide table-form for materials
+     ============================================= -->
+<div class="allocation-overlay" id="materialAllocOverlay">
+    <div class="allocation-modal">
+        <div class="modal-head">
+            <h3>📦 Assign Materials — <span id="taskNameMaterial">Task</span></h3>
+            <div class="modal-head-right">
+                <a href="#" class="history-link" id="matHistoryLink" target="_blank">
+                    <i class="fas fa-history"></i> View History
                 </a>
-                <button class="btn" id="addEmptyRowBtn">
-                    <i class="fas fa-plus-circle"></i> Add Empty Row
+                <i class="fas fa-times modal-close" onclick="closeMaterialAllocModal()"></i>
+            </div>
+        </div>
+
+        <!-- Read-only task context bar -->
+        <div class="task-context-bar">
+            <div class="ctx-item">
+                <span class="ctx-label">Task ID</span>
+                <span class="ctx-badge" id="ctxTaskId">—</span>
+            </div>
+            <div class="ctx-item">
+                <span class="ctx-label">Line</span>
+                <span class="ctx-value" id="ctxLine">—</span>
+            </div>
+            <div class="ctx-item">
+                <span class="ctx-label">Description</span>
+                <span class="ctx-value" id="ctxDescription">—</span>
+            </div>
+            <div class="ctx-item">
+                <span class="ctx-label">Location</span>
+                <span class="ctx-value" id="ctxLocation">—</span>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Full entry table -->
+            <div class="entry-table-wrap">
+                <table class="entry-table">
+                    <thead>
+                        <tr>
+                            <th style="min-width:70px">#</th>
+                            <th style="min-width:70px">Task ID</th>
+                            <th style="min-width:40px">Line</th>
+                            <th style="min-width:140px">Description</th>
+                            <th style="min-width:220px">Material</th>
+                            <th style="min-width:85px">Quantity</th>
+                            <th style="min-width:100px">Unit Price</th>
+                            <th style="min-width:100px">Amount</th>
+                            <th style="min-width:130px">Location</th>
+                            <th style="min-width:160px">Assigned At</th>
+                            <th style="min-width:40px; text-align:center">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matEntryBody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="add-entry-row">
+                <button class="add-entry-btn" onclick="addMaterialEntryRow()">
+                    <i class="fas fa-plus"></i> Add Another Material Row
                 </button>
-                <div class="search-box">
-                    <i class="fas fa-search" style="color: #000;"></i>
-                    <input type="text" id="searchInput" placeholder="Search...">
-                </div>
-                <div class="filter-group">
-                    <label>Status:</label>
-                    <select id="statusFilter">
-                        <option value="">All</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="ONGOING">Ongoing</option>
-                        <option value="PENDING">Pending</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Month:</label>
-                    <select id="monthFilter">
-                        <option value="">All</option>
-                        <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
-                        <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
-                        <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
-                        <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Year:</label>
-                    <select id="yearFilter">
-                        <option value="">All</option>
-                        <option value="2023">2023</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                    </select>
-                </div>
+            </div>
+
+            <div id="matStockWarning" class="stock-warning"></div>
+
+            <div class="grand-total-bar">
+                <span class="gt-label">Total Material Cost</span>
+                <span class="gt-value" id="matGrandTotal">0.00</span>
             </div>
         </div>
 
-        <!-- Split container - 50/50 -->
-        <div class="split-container">
-            <!-- Left panel - Tasks -->
-            <div class="left-panel">
-                <div class="panel-header">
-                    <i class="fas fa-tasks"></i> Task List
-                </div>
-                <div class="table-container" id="tableContainer">
-                    <table class="task-table" id="taskTable">
-                        <thead>
-                            <tr>
-                                <th>TASK ID</th>
-                                <th>LINE</th>
-                                <th>DESCRIPTION</th>
-                                <th>ASSIGNED</th>
-                                <th>STATUS</th>
-                                <th>START</th>
-                                <th>END</th>
-                                <th>HRS</th>
-                                <th>MAT COST</th>
-                                <th>MAN COST</th>
-                                <th>TOTAL</th>
-                                <th>LOCATION</th>
-                                <th>⚡</th>
-                            </tr>
-                        </thead>
-                        <tbody id="taskList"></tbody>
-                    </table>
-                    <div class="empty-state" id="emptyState" style="display:none;">
-                        <i class="fas fa-tasks fa-3x"></i>
-                        <p>No tasks found</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right panel - Gantt -->
-            <div class="right-panel">
-                <div class="gantt-header">
-                    <span><i class="fas fa-calendar-alt"></i> Gantt Calendar</span>
-                    <button class="current-month-btn" id="currentMonthBtn">Current Month</button>
-                </div>
-                <div class="gantt-container" id="ganttContainer">
-                    <table class="gantt-table">
-                        <thead id="ganttHead"></thead>
-                        <tbody id="ganttBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- NEW: Material Assignment Modal -->
-    <div class="allocation-overlay" id="materialAllocOverlay">
-        <div class="allocation-modal">
-            <i class="fas fa-times modal-close" onclick="closeMaterialAllocModal()"></i>
-            <h3>📦 Assign Material to <span id="taskNameMaterial">Task</span></h3>
-
-            <label>Select Material</label>
-            <select id="materialSelect"></select>
-
-            <label>Quantity</label>
-            <input type="number" id="materialQtyInput" placeholder="Enter quantity" min="0" step="0.01">
-
-            <div id="stockWarning" class="stock-warning"></div>
-
-            <div class="modal-buttons">
-                <button class="cancel" onclick="closeMaterialAllocModal()">Cancel</button>
-                <button class="primary" onclick="assignMaterial()">Assign Material</button>
-            </div>
+        <div class="modal-foot">
+            <span class="enter-hint">
+                <kbd>Enter</kbd> to save last row &nbsp;|&nbsp;
+                <kbd>Tab</kbd> to move between fields
+            </span>
+            <button class="btn-cancel" onclick="closeMaterialAllocModal()">Cancel</button>
+            <button class="btn-save" onclick="assignMaterials()">
+                <i class="fas fa-check"></i> Save All
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- NEW: Labor Assignment Modal -->
-    <div class="allocation-overlay" id="laborAllocOverlay">
-        <div class="allocation-modal">
-            <i class="fas fa-times modal-close" onclick="closeLaborAllocModal()"></i>
-            <h3>👷 Assign Worker to <span id="taskNameLabor">Task</span></h3>
-
-            <label>Select Worker</label>
-            <select id="laborSelect"></select>
-
-            <label>Hours</label>
-            <input type="number" id="laborHoursInput" placeholder="Enter hours" min="0" step="0.5">
-
-            <div class="modal-buttons">
-                <button class="cancel" onclick="closeLaborAllocModal()">Cancel</button>
-                <button class="primary" onclick="assignLabor()">Assign Worker</button>
+<!-- =============================================
+     LABOR MODAL — FULL 9-COLUMN TABLE
+     EMPLOYEE ID | NAME | PROJECT NAME | LOCATION | TASK ID | DESCRIPTION | STATUS | TRANSFER DATE | MH
+     ============================================= -->
+<div class="allocation-overlay" id="laborAllocOverlay">
+    <div class="allocation-modal labor-modal">
+        <div class="modal-head">
+            <h3>👷 Assign Labor — <span id="taskNameLabor">Task</span></h3>
+            <div class="modal-head-right">
+                <a href="#" class="history-link" id="labHistoryLink" target="_blank">
+                    <i class="fas fa-history"></i> View History
+                </a>
+                <i class="fas fa-times modal-close" onclick="closeLaborAllocModal()"></i>
             </div>
         </div>
+
+        <!-- Task context bar (pre-filled) -->
+        <div class="task-context-bar">
+            <div class="ctx-item">
+                <span class="ctx-label">TASK ID</span>
+                <span class="ctx-badge" id="labCtxTaskId">—</span>
+            </div>
+            <div class="ctx-item">
+                <span class="ctx-label">DESCRIPTION</span>
+                <span class="ctx-value" id="labCtxDesc">—</span>
+            </div>
+            <div class="ctx-item">
+                <span class="ctx-label">LOCATION</span>
+                <span class="ctx-value" id="labCtxLoc">—</span>
+            </div>
+            <div class="ctx-item">
+                <span class="ctx-label">PROJECT</span>
+                <span class="ctx-value" id="labCtxProject">—</span>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Full 9-column labor table -->
+            <div class="entry-table-wrap">
+                <table class="labor-entry-table" id="laborEntryTable">
+                    <thead>
+                        <tr>
+                            <th style="min-width:80px">#</th>
+                            <th style="min-width:100px">EMPLOYEE ID</th>
+                            <th style="min-width:140px">NAME</th>
+                            <th style="min-width:120px">PROJECT NAME</th>
+                            <th style="min-width:120px">LOCATION</th>
+                            <th style="min-width:80px">TASK ID</th>
+                            <th style="min-width:200px">DESCRIPTION</th>
+                            <th style="min-width:100px">STATUS</th>
+                            <th style="min-width:140px">TRANSFER DATE</th>
+                            <th style="min-width:70px">MH</th>
+                            <th style="min-width:100px">COST</th>
+                            <th style="min-width:40px">✕</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labEntryBody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="add-entry-row">
+                <button class="add-entry-btn" onclick="addLaborEntryRow()">
+                    <i class="fas fa-plus"></i> Add Another Worker
+                </button>
+            </div>
+
+            <div class="grand-total-bar">
+                <span class="gt-label">Total Labor Cost</span>
+                <span class="gt-value" id="labGrandTotal">0.00</span>
+            </div>
+        </div>
+
+        <div class="modal-foot">
+            <span class="enter-hint">
+                <kbd>Enter</kbd> to save last row &nbsp;|&nbsp;
+                <kbd>Tab</kbd> to move between fields
+            </span>
+            <button class="btn-cancel" onclick="closeLaborAllocModal()">Cancel</button>
+            <button class="btn-save" onclick="assignLabors()">
+                <i class="fas fa-check"></i> Save All
+            </button>
+        </div>
     </div>
+</div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getFirestore, doc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import {
+    getFirestore, doc, collection, query, where,
+    onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, getDoc, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-    // Wait for DOM to be fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-            authDomain: "project-task-588c4.firebaseapp.com",
-            projectId: "project-task-588c4",
-            storageBucket: "project-task-588c4.appspot.com",
-            messagingSenderId: "411882772509",
-            appId: "1:411882772509:web:08d613186c101a99f38ef4"
-        };
+document.addEventListener('DOMContentLoaded', function() {
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const firebaseConfig = {
+        apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+        authDomain: "project-task-588c4.firebaseapp.com",
+        projectId: "project-task-588c4",
+        storageBucket: "project-task-588c4.appspot.com",
+        messagingSenderId: "411882772509",
+        appId: "1:411882772509:web:08d613186c101a99f38ef4"
+    };
 
-        // Get project ID
-        const urlParams = new URLSearchParams(window.location.search);
-        const projectId = urlParams.get('id');
-        if (!projectId) alert("Project ID missing!");
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('id');
+    if (!projectId) alert("Project ID missing!");
+
+    // Set history links
+    document.getElementById('completedtasksBtn').href = `completedtask.html?id=${projectId}`;
+    document.getElementById('matHistoryNavBtn').href = `material-usage-history.html?id=${projectId}`;
+    document.getElementById('matHistoryLink').href = `material-usage-history.html?id=${projectId}`;
+    document.getElementById('labHistoryNavBtn').href = `employee-assignment-history.html?id=${projectId}`;
+    document.getElementById('labHistoryLink').href = `employee-assignment-history.html?id=${projectId}`;
+    document.getElementById('projectTitle').textContent = `Project ${projectId.slice(0,6)}...`;
+
+    // DOM refs
+    const actionsHeader      = document.getElementById('actionsHeader');
+    const actionsPanel       = document.getElementById('actionsPanel');
+    const toggleIcon         = document.getElementById('toggleIcon');
+    const currentMonthBtn    = document.getElementById('currentMonthBtn');
+    const statusFilter       = document.getElementById('statusFilter');
+    const monthFilter        = document.getElementById('monthFilter');
+    const yearFilter         = document.getElementById('yearFilter');
+    const searchInput        = document.getElementById('searchInput');
+    const taskListEl         = document.getElementById('taskList');
+    const emptyStateEl       = document.getElementById('emptyState');
+    const ganttBodyEl        = document.getElementById('ganttBody');
+    const ganttHeadEl        = document.getElementById('ganttHead');
+    const addTaskBtn         = document.getElementById('addTaskBtn');
+    const addEmptyRowBtn     = document.getElementById('addEmptyRowBtn');
+    const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
+    const materialModal      = document.getElementById('materialAllocOverlay');
+    const laborModal         = document.getElementById('laborAllocOverlay');
+    const matEntryBody       = document.getElementById('matEntryBody');
+    const labEntryBody       = document.getElementById('labEntryBody');
+    const matGrandTotalEl    = document.getElementById('matGrandTotal');
+    const labGrandTotalEl    = document.getElementById('labGrandTotal');
+    const matStockWarning    = document.getElementById('matStockWarning');
+
+    const LABOR_RATE = 18;
+
+    let materials    = [];
+    let laborWorkers = [];
+
+    // Current assigning context
+    let currentAssigningTaskId      = null;
+    let currentAssigningDocId       = null;
+    let currentAssigningTaskLevel   = null;
+    let currentAssigningParentDocId = null;
+    let currentAssigningSubDocId    = null;
+    let currentTaskContext          = {};
+
+    let matRowCounter = 0;
+    let labRowCounter = 0;
+    let allTasks      = [];
+    let emptyRows     = JSON.parse(localStorage.getItem(`emptyRows_${projectId}`)) || [];
+    let hideCompleted = false;
+    let showCurrentMonthOnly = false;
+    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
+    let unsubMain = null;
+    let subUnsubs = {};
+    let openMenuId = null;
+
+    // Real-time listeners for history collections
+    let unsubMaterials = null;
+    let unsubLabor = null;
+
+    function saveEmptyRows() { localStorage.setItem(`emptyRows_${projectId}`, JSON.stringify(emptyRows)); }
+
+    if (actionsCollapsed) { actionsPanel.classList.add('collapsed'); toggleIcon.style.transform = 'rotate(-90deg)'; }
+
+    actionsHeader.addEventListener('click', () => {
+        actionsPanel.classList.toggle('collapsed');
+        toggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+        localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.menu-container')) {
+            openMenuId = null;
+            document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
+        }
+    });
+    window.onclick = (e) => {
+        if (e.target === materialModal) closeMaterialAllocModal();
+        if (e.target === laborModal)    closeLaborAllocModal();
+    };
+
+    const fmt        = (n) => (+(n||0)).toFixed(2);
+    const formatDate = (d) => d ? new Date(d.toDate ? d.toDate() : d).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+
+    // Make cost cell
+    const makeCostCell = (value, taskId, type) => {
+        const hasVal  = value && value > 0;
+        const zeroClass = hasVal ? '' : ' cost-zero';
+        const fn = type === 'material' ? 'openMaterialAssign' : 'openLaborAssign';
+        return `<span class="cost-clickable${zeroClass}" id="${type==='material'?'matCell':'labCell'}_${taskId}" onclick="${fn}('${taskId}')">${hasVal ? fmt(value) : ''}</span>`;
+    };
+
+    function updateCostCellInDom(taskId, type, newValue) {
+        const id  = `${type === 'material' ? 'matCell' : 'labCell'}_${taskId}`;
+        const el  = document.getElementById(id);
+        if (!el) return;
+        el.textContent = newValue > 0 ? fmt(newValue) : '';
+        el.classList.toggle('cost-zero', !(newValue > 0));
         
-        document.getElementById('completedtasksBtn').href = `completedtask.html?id=${projectId}`;
-        document.getElementById('projectTitle').textContent = `Project ${projectId.slice(0,6)}...`;
-
-        // DOM elements
-        const actionsHeader = document.getElementById('actionsHeader');
-        const actionsPanel = document.getElementById('actionsPanel');
-        const toggleIcon = document.getElementById('toggleIcon');
-        const currentMonthBtn = document.getElementById('currentMonthBtn');
-        const statusFilter = document.getElementById('statusFilter');
-        const monthFilter = document.getElementById('monthFilter');
-        const yearFilter = document.getElementById('yearFilter');
-        const searchInput = document.getElementById('searchInput');
-        const taskList = document.getElementById('taskList');
-        const emptyState = document.getElementById('emptyState');
-        const ganttBody = document.getElementById('ganttBody');
-        const ganttHead = document.getElementById('ganttHead');
-        const addTaskBtn = document.getElementById('addTaskBtn');
-        const addEmptyRowBtn = document.getElementById('addEmptyRowBtn');
-        const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
-
-        // MODAL ELEMENTS - Check if they exist before using
-        const materialModal = document.getElementById('materialAllocOverlay');
-        const laborModal = document.getElementById('laborAllocOverlay');
-        const materialSelect = document.getElementById('materialSelect');
-        const laborSelect = document.getElementById('laborSelect');
-        const materialQtyInput = document.getElementById('materialQtyInput');
-        const laborHoursInput = document.getElementById('laborHoursInput');
-        const stockWarning = document.getElementById('stockWarning');
-        const taskNameMaterial = document.getElementById('taskNameMaterial');
-        const taskNameLabor = document.getElementById('taskNameLabor');
-
-        // Debug: Check if modals are found
-        console.log('Material Modal:', materialModal);
-        console.log('Labor Modal:', laborModal);
-
-        // State for modals
-        let materials = [];
-        let labor = [];
-        let currentAssigningTaskId = null;
-
-        // State
-        let allTasks = [];
-        let emptyRows = JSON.parse(localStorage.getItem(`emptyRows_${projectId}`)) || [];
-        let hideCompleted = false;
-        let showCurrentMonthOnly = false;
-        let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
-        let unsubMain = null;
-        let subUnsubs = {};
-        let openMenuId = null;
-
-        // Save empty rows to localStorage
-        function saveEmptyRows() {
-            localStorage.setItem(`emptyRows_${projectId}`, JSON.stringify(emptyRows));
+        // Update total in the same row
+        const tr = el.closest('tr');
+        if (tr) {
+            const matSpan = tr.querySelector('[id^="matCell_"]');
+            const labSpan = tr.querySelector('[id^="labCell_"]');
+            const totTd   = tr.querySelector('.total-cost');
+            if (totTd) {
+                const matVal = matSpan ? (parseFloat(matSpan.textContent) || 0) : 0;
+                const labVal = labSpan ? (parseFloat(labSpan.textContent) || 0) : 0;
+                const tot = matVal + labVal;
+                totTd.textContent = tot > 0 ? fmt(tot) : '';
+            }
         }
+    }
 
-        // Actions panel toggle
-        if (actionsCollapsed) {
-            actionsPanel.classList.add('collapsed');
-            toggleIcon.style.transform = 'rotate(-90deg)';
+    function updateHoursCellInDom(taskId, newHours) {
+        // Find the row with this task ID and update the HRS column (8th column, index 7)
+        const allRows = document.querySelectorAll('#taskList tr');
+        for (const row of allRows) {
+            // Check if this row has a menu with the task ID or check data attribute
+            const menuBtn = row.querySelector('.menu-trigger');
+            if (menuBtn && menuBtn.getAttribute('onclick')?.includes(taskId)) {
+                const hrsCell = row.cells[7]; // HRS column
+                if (hrsCell) {
+                    hrsCell.textContent = newHours > 0 ? newHours : '';
+                }
+                break;
+            }
+            
+            // Alternative: check if the row contains a cost cell with this task ID
+            if (row.querySelector(`[id^="matCell_${taskId}"]`) || row.querySelector(`[id^="labCell_${taskId}"]`)) {
+                const hrsCell = row.cells[7];
+                if (hrsCell) {
+                    hrsCell.textContent = newHours > 0 ? newHours : '';
+                }
+                break;
+            }
         }
+    }
 
-        actionsHeader.addEventListener('click', () => {
-            actionsPanel.classList.toggle('collapsed');
-            toggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
-            localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
-        });
+    async function loadResources() {
+        try {
+            const mSnap = await getDocs(collection(db, "materials"));
+            materials = []; mSnap.forEach(d => materials.push({ docId: d.id, ...d.data() }));
+            const lSnap = await getDocs(collection(db, "employees"));
+            laborWorkers = []; lSnap.forEach(d => laborWorkers.push({ docId: d.id, ...d.data() }));
+        } catch(e) { console.error('loadResources:', e); }
+    }
 
-        // Close all menus when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.menu-container')) {
-                openMenuId = null;
-                document.querySelectorAll('.menu-dropdown.show').forEach(menu => {
-                    menu.classList.remove('show');
+    // =============================================
+    // REAL-TIME LISTENERS FOR HISTORY CHANGES
+    // =============================================
+    
+    function listenForMaterialChanges() {
+        if (unsubMaterials) unsubMaterials();
+        
+        unsubMaterials = onSnapshot(
+            query(collection(db, "materialsUsage"), where("projectId", "==", projectId)),
+            (snapshot) => {
+                // Group by taskId and calculate total material cost (excluding reversed)
+                const taskMaterialTotals = {};
+                
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    // Skip reversed entries
+                    if (data.reversed) return;
+                    
+                    const taskId = data.taskId || data.taskDocId;
+                    if (!taskId) return;
+                    
+                    const cost = data.cost || (parseFloat(data.quantity) * parseFloat(data.unitPrice)) || 0;
+                    
+                    if (!taskMaterialTotals[taskId]) taskMaterialTotals[taskId] = 0;
+                    taskMaterialTotals[taskId] += cost;
                 });
-            }
-        });
+                
+                // Update each task's material cost in UI and Firestore if needed
+                allTasks.forEach(task => {
+                    updateTaskMaterialCost(task.id, taskMaterialTotals[task.id] || 0);
+                    
+                    // Check subtasks
+                    task.subTasks?.forEach(sub => {
+                        updateTaskMaterialCost(sub.id, taskMaterialTotals[sub.id] || 0);
+                        
+                        sub.subSubtasks?.forEach(ss => {
+                            updateTaskMaterialCost(ss.id, taskMaterialTotals[ss.id] || 0);
+                        });
+                    });
+                });
+            },
+            (err) => console.error('Material listener error:', err)
+        );
+    }
 
-        // Close modals when clicking outside
-        window.onclick = function(e) {
-            if (e.target === materialModal) {
-                closeMaterialAllocModal();
-            }
-            if (e.target === laborModal) {
-                closeLaborAllocModal();
-            }
-        };
+    function listenForLaborChanges() {
+        if (unsubLabor) unsubLabor();
+        
+        unsubLabor = onSnapshot(
+            query(collection(db, "locationHistory"), where("projectId", "==", projectId)),
+            (snapshot) => {
+                // Group by taskId and calculate total labor cost and hours (excluding reversed)
+                const taskLaborTotals = {};
+                const taskHoursTotals = {};
+                
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    // Skip if reversed (if you add reversal later)
+                    if (data.reversed) return;
+                    
+                    const taskId = data.taskId || data.taskDocId;
+                    if (!taskId) return;
+                    
+                    const cost = data.cost || (parseFloat(data.mh) * parseFloat(data.rate || LABOR_RATE)) || 0;
+                    const hours = parseFloat(data.mh) || 0;
+                    
+                    if (!taskLaborTotals[taskId]) taskLaborTotals[taskId] = 0;
+                    if (!taskHoursTotals[taskId]) taskHoursTotals[taskId] = 0;
+                    
+                    taskLaborTotals[taskId] += cost;
+                    taskHoursTotals[taskId] += hours;
+                });
+                
+                // Update each task's labor cost and hours
+                allTasks.forEach(task => {
+                    updateTaskLaborCost(task.id, taskLaborTotals[task.id] || 0);
+                    updateTaskHours(task.id, taskHoursTotals[task.id] || 0);
+                    
+                    // Check subtasks
+                    task.subTasks?.forEach(sub => {
+                        updateTaskLaborCost(sub.id, taskLaborTotals[sub.id] || 0);
+                        updateTaskHours(sub.id, taskHoursTotals[sub.id] || 0);
+                        
+                        sub.subSubtasks?.forEach(ss => {
+                            updateTaskLaborCost(ss.id, taskLaborTotals[ss.id] || 0);
+                            updateTaskHours(ss.id, taskHoursTotals[ss.id] || 0);
+                        });
+                    });
+                });
+            },
+            (err) => console.error('Labor listener error:', err)
+        );
+    }
 
-        // Helper functions
-        const formatDate = (date) => date ? new Date(date.toDate ? date.toDate() : date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : '';
-        const formatCurrency = (amt) => amt ? `ZMW ${amt.toFixed(2)}` : '';
-
-        async function getNextTaskNumber(projectId, prefix = '') {
-            const snap = await getDocs(query(collection(db, "projectTasks"), where("projectId", "==", projectId)));
-            let max = 0;
-            snap.forEach(d => {
-                const id = d.data().taskId || '';
-                const m = id.match(new RegExp(prefix + '-(\\d+)$'));
-                if (m) max = Math.max(max, parseInt(m[1]));
-            });
-            return max + 1;
+    async function updateTaskMaterialCost(taskId, newCost) {
+        // Update in allTasks array
+        const taskObj = findTaskObj(taskId);
+        if (taskObj) {
+            taskObj._matCost = newCost;
         }
-
-        async function getWorkedHours(taskId) {
-            if (!taskId) return 0;
-            const snap = await getDocs(query(collection(db, "locationHistory"), where("taskId", "==", taskId)));
-            return snap.docs.reduce((sum, d) => sum + (d.data().mh || 0), 0);
+        
+        // Update UI
+        updateCostCellInDom(taskId, 'material', newCost);
+        
+        // Update Firestore if this is the main document for the task
+        // Find the task to get its level and parent info
+        let found = null, level = null, parentDocId = null, subDocId = null;
+        for (const t of allTasks) {
+            if (t.id === taskId) { found = t; level = 'main'; break; }
+            for (const sub of (t.subTasks||[])) {
+                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
+                for (const ss of (sub.subSubtasks||[])) {
+                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
+                }
+                if (found) break;
+            }
+            if (found) break;
         }
+        
+        if (found) {
+            const docRef = getTaskDocRef(taskId, level, parentDocId, subDocId);
+            if (docRef) {
+                try {
+                    await updateDoc(docRef, { matCost: newCost });
+                } catch (e) {
+                    console.warn('Could not update material cost in Firestore:', e);
+                }
+            }
+        }
+    }
 
-        async function getMaterialCost(taskId) {
-            if (!taskId) return 0;
-            const snap = await getDocs(query(collection(db, "materialsUsage"), where("taskId", "==", taskId)));
-            let sum = 0;
-            const materialIds = [...new Set(snap.docs.map(d => d.data().materialId).filter(Boolean))];
-            const prices = {};
-            await Promise.all(materialIds.map(async id => {
-                const mat = await getDoc(doc(db, "materials", id));
-                if (mat.exists()) prices[id] = mat.data().unitPrice || 0;
-            }));
-            snap.docs.forEach(d => {
-                const data = d.data();
-                if (!data.reversed) {
-                    if (data.quantity && data.materialId) sum += data.quantity * (prices[data.materialId] || 0);
-                    else if (data.amount) sum += data.amount;
-                    else if (data.quantity && data.unitPrice) sum += data.quantity * data.unitPrice;
+    async function updateTaskLaborCost(taskId, newCost) {
+        // Update in allTasks array
+        const taskObj = findTaskObj(taskId);
+        if (taskObj) {
+            taskObj._labCost = newCost;
+        }
+        
+        // Update UI
+        updateCostCellInDom(taskId, 'labor', newCost);
+        
+        // Update Firestore if this is the main document for the task
+        let found = null, level = null, parentDocId = null, subDocId = null;
+        for (const t of allTasks) {
+            if (t.id === taskId) { found = t; level = 'main'; break; }
+            for (const sub of (t.subTasks||[])) {
+                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
+                for (const ss of (sub.subSubtasks||[])) {
+                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
+                }
+                if (found) break;
+            }
+            if (found) break;
+        }
+        
+        if (found) {
+            const docRef = getTaskDocRef(taskId, level, parentDocId, subDocId);
+            if (docRef) {
+                try {
+                    await updateDoc(docRef, { labCost: newCost });
+                } catch (e) {
+                    console.warn('Could not update labor cost in Firestore:', e);
+                }
+            }
+        }
+    }
+
+    async function updateTaskHours(taskId, newHours) {
+        // Update in allTasks array
+        const taskObj = findTaskObj(taskId);
+        if (taskObj) {
+            taskObj._hours = newHours;
+        }
+        
+        // Update UI
+        updateHoursCellInDom(taskId, newHours);
+        
+        // Update Firestore if this is the main document for the task
+        let found = null, level = null, parentDocId = null, subDocId = null;
+        for (const t of allTasks) {
+            if (t.id === taskId) { found = t; level = 'main'; break; }
+            for (const sub of (t.subTasks||[])) {
+                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
+                for (const ss of (sub.subSubtasks||[])) {
+                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
+                }
+                if (found) break;
+            }
+            if (found) break;
+        }
+        
+        if (found) {
+            const docRef = getTaskDocRef(taskId, level, parentDocId, subDocId);
+            if (docRef) {
+                try {
+                    await updateDoc(docRef, { totalHours: newHours });
+                } catch (e) {
+                    console.warn('Could not update hours in Firestore:', e);
+                }
+            }
+        }
+    }
+
+    // =============================================
+    // MATERIAL MODAL (unchanged from original)
+    // =============================================
+    function matOptions(selectedId) {
+        return '<option value="">— Select Material —</option>' +
+            materials.map(m => {
+                const name  = m.materialName || m.name || 'Unnamed';
+                const price = +(m.price || m.unitPrice || 0);
+                const stock = +(m.quantity || 0);
+                const sel   = m.docId === selectedId ? 'selected' : '';
+                return `<option value="${m.docId}" data-price="${price}" data-stock="${stock}" ${sel}>${name} (Stock: ${stock})</option>`;
+            }).join('');
+    }
+
+    function nowInputVal() {
+        return new Date().toISOString().slice(0,16);
+    }
+
+    window.addMaterialEntryRow = function(prefill = {}) {
+        matRowCounter++;
+        const rid = matRowCounter;
+        const ctx = currentTaskContext;
+
+        const tr = document.createElement('tr');
+        tr.dataset.rid = rid;
+
+        tr.innerHTML = `
+            <td><span class="cell-readonly">${rid}</span></td>
+            <td><span class="cell-readonly" id="mat_taskId_${rid}">${ctx.taskId || '—'}</span></td>
+            <td><span class="cell-readonly" id="mat_line_${rid}">${ctx.taskLine || '—'}</span></td>
+            <td>
+                <input class="cell-input mat-desc" data-rid="${rid}" type="text"
+                    value="${prefill.description || ctx.taskDescription || ''}"
+                    placeholder="Description" style="min-width:120px">
+            </td>
+            <td>
+                <select class="cell-select mat-material" data-rid="${rid}"
+                    onchange="onMatEntrySelect(${rid})">
+                    ${matOptions(prefill.materialId || '')}
+                </select>
+            </td>
+            <td>
+                <input class="cell-input mat-qty" data-rid="${rid}" type="number"
+                    min="0" step="0.01" placeholder="0"
+                    value="${prefill.qty || ''}"
+                    oninput="recalcMatEntry(${rid})"
+                    style="min-width:70px; text-align:right">
+            </td>
+            <td>
+                <input class="cell-input mat-uprice" data-rid="${rid}" type="number"
+                    min="0" step="0.01" placeholder="0.00"
+                    value="${prefill.price || ''}"
+                    oninput="recalcMatEntry(${rid})"
+                    style="min-width:80px; text-align:right">
+            </td>
+            <td>
+                <span class="amount-cell zero" id="matAmount_${rid}">—</span>
+            </td>
+            <td>
+                <input class="cell-input mat-location" data-rid="${rid}" type="text"
+                    value="${prefill.location || ctx.location || ''}"
+                    placeholder="Location" style="min-width:110px">
+            </td>
+            <td>
+                <input class="cell-input mat-assignedAt" data-rid="${rid}" type="datetime-local"
+                    value="${prefill.assignedAt || nowInputVal()}"
+                    style="min-width:150px; font-size:0.68rem">
+            </td>
+            <td style="text-align:center">
+                <button class="remove-entry-btn" onclick="removeMatEntryRow(${rid})" title="Remove row">×</button>
+            </td>
+        `;
+
+        matEntryBody.appendChild(tr);
+        if (prefill.qty && prefill.price) recalcMatEntry(rid);
+
+        const inputs = tr.querySelectorAll('input, select');
+        inputs.forEach((inp, idx) => {
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (idx === inputs.length - 1) {
+                        window.addMaterialEntryRow();
+                        setTimeout(() => {
+                            const allRows = matEntryBody.querySelectorAll('tr');
+                            const lastRow = allRows[allRows.length - 1];
+                            lastRow?.querySelector('select')?.focus();
+                        }, 30);
+                    } else {
+                        inputs[idx + 1]?.focus();
+                    }
                 }
             });
-            return sum;
+        });
+
+        return tr;
+    };
+
+    window.onMatEntrySelect = function(rid) {
+        const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`);
+        if (!row) return;
+        const sel   = row.querySelector('.mat-material');
+        const opt   = sel.options[sel.selectedIndex];
+        const price = parseFloat(opt?.dataset?.price || 0);
+        if (price) row.querySelector('.mat-uprice').value = price.toFixed(2);
+        recalcMatEntry(rid);
+    };
+
+    window.recalcMatEntry = function(rid) {
+        const row   = matEntryBody.querySelector(`tr[data-rid="${rid}"]`);
+        if (!row) return;
+        const qty   = parseFloat(row.querySelector('.mat-qty').value)    || 0;
+        const price = parseFloat(row.querySelector('.mat-uprice').value) || 0;
+        const amt   = qty * price;
+        const el    = row.querySelector(`#matAmount_${rid}`);
+        if (amt > 0) {
+            el.textContent = amt.toFixed(2);
+            el.classList.remove('zero');
+        } else {
+            el.textContent = '—';
+            el.classList.add('zero');
+        }
+        updateMatGrandTotal();
+    };
+
+    window.removeMatEntryRow = function(rid) {
+        const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`);
+        if (row) row.remove();
+        updateMatGrandTotal();
+    };
+
+    function updateMatGrandTotal() {
+        let t = 0;
+        matEntryBody.querySelectorAll('.amount-cell').forEach(el => {
+            const v = parseFloat(el.textContent);
+            if (!isNaN(v)) t += v;
+        });
+        matGrandTotalEl.textContent = t.toFixed(2);
+    }
+
+    window.openMaterialAssign = function(taskId) {
+        currentAssigningTaskId = taskId;
+
+        let found = null, level = null, parentDocId = null, subDocId = null;
+        for (const t of allTasks) {
+            if (t.id === taskId) { found = t; level = 'main'; break; }
+            for (const sub of (t.subTasks||[])) {
+                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
+                for (const ss of (sub.subSubtasks||[])) {
+                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
+                }
+                if (found) break;
+            }
+            if (found) break;
         }
 
-        // Load resources for modals
-        async function loadResources() {
-            try {
-                // Load materials
-                const materialsSnap = await getDocs(collection(db, "materials"));
-                materials = [];
-                materialsSnap.forEach(doc => {
-                    materials.push({ docId: doc.id, ...doc.data() });
-                });
-                updateMaterialSelect();
+        currentAssigningDocId        = found?.id || taskId;
+        currentAssigningTaskLevel    = level || 'main';
+        currentAssigningParentDocId  = parentDocId;
+        currentAssigningSubDocId     = subDocId;
 
-                // Load labor
-                const laborSnap = await getDocs(collection(db, "employees"));
-                labor = [];
-                laborSnap.forEach(doc => {
-                    labor.push({ docId: doc.id, ...doc.data() });
-                });
-                updateLaborSelect();
-                
-                console.log('Resources loaded:', materials.length, 'materials,', labor.length, 'workers');
-            } catch (error) {
-                console.error('Error loading resources:', error);
+        currentTaskContext = {
+            taskId:      found?.taskId      || '',
+            taskLine:    found?.taskLine    || '',
+            taskDescription: found?.taskDescription || '',
+            location:    found?.location   || ''
+        };
+
+        document.getElementById('taskNameMaterial').textContent = found?.taskDescription || 'Task';
+        document.getElementById('ctxTaskId').textContent      = currentTaskContext.taskId      || '—';
+        document.getElementById('ctxLine').textContent        = currentTaskContext.taskLine    || '—';
+        document.getElementById('ctxDescription').textContent = currentTaskContext.taskDescription || '—';
+        document.getElementById('ctxLocation').textContent    = currentTaskContext.location    || '—';
+
+        matEntryBody.innerHTML = '';
+        matStockWarning.style.display = 'none';
+        matRowCounter = 0;
+
+        loadResources().then(() => {
+            window.addMaterialEntryRow();
+            materialModal.classList.add('active');
+            setTimeout(() => matEntryBody.querySelector('select')?.focus(), 80);
+        });
+    };
+
+    window.closeMaterialAllocModal = function() {
+        materialModal.classList.remove('active');
+        currentAssigningTaskId = null;
+    };
+
+    window.assignMaterials = async function() {
+        matStockWarning.style.display = 'none';
+        const rows = matEntryBody.querySelectorAll('tr');
+        const entries = [];
+
+        for (const row of rows) {
+            const sel   = row.querySelector('.mat-material');
+            const matId = sel?.value;
+            if (!matId) continue;
+
+            const qty       = parseFloat(row.querySelector('.mat-qty').value);
+            const price     = parseFloat(row.querySelector('.mat-uprice').value);
+            const desc      = row.querySelector('.mat-desc').value.trim();
+            const location  = row.querySelector('.mat-location').value.trim();
+            const assignedAtVal = row.querySelector('.mat-assignedAt').value;
+
+            if (!qty   || qty   <= 0) { alert('Enter a valid quantity for all rows.'); return; }
+            if (!price || price <= 0) { alert('Enter a valid unit price for all rows.'); return; }
+
+            const mat   = materials.find(m => m.docId === matId);
+            if (!mat) continue;
+
+            const stock = +(mat.quantity || 0);
+            if (qty > stock) {
+                matStockWarning.innerHTML = `⚠️ <b>${mat.materialName || mat.name}</b>: only ${stock} in stock, you entered ${qty}.`;
+                matStockWarning.style.display = 'block';
+                return;
             }
+
+            const assignedAt = assignedAtVal ? Timestamp.fromDate(new Date(assignedAtVal)) : Timestamp.now();
+
+            entries.push({ matId, mat, qty, price, cost: qty * price, desc, location, assignedAt });
         }
 
-        function updateMaterialSelect() {
-            if (!materialSelect) return;
-            
-            if (materials.length === 0) {
-                materialSelect.innerHTML = '<option value="">-- No materials available --</option>';
-                return;
-            }
-            
-            materialSelect.innerHTML = '<option value="">-- Select Material --</option>' +
-                materials.map(m => {
-                    const stock = m.quantity || 0;
-                    const name = m.materialName || m.name || 'Unnamed';
-                    const price = m.price || m.unitPrice || 0;
-                    return `<option value="${m.docId}" data-price="${price}" data-stock="${stock}">${name} (${price.toFixed(2)}) - Stock: ${stock}</option>`;
-                }).join('');
-        }
+        if (!entries.length) { alert('Add at least one material row.'); return; }
 
-        function updateLaborSelect() {
-            if (!laborSelect) return;
-            
-            if (labor.length === 0) {
-                laborSelect.innerHTML = '<option value="">-- No workers available --</option>';
-                return;
-            }
-            
-            laborSelect.innerHTML = '<option value="">-- Select Worker --</option>' +
-                labor.map(l => {
-                    const name = `${l.name || ''} ${l.surname || ''}`.trim() || 'Unnamed';
-                    const role = l.role || 'Employee';
-                    return `<option value="${l.docId}" data-rate="20">${name} (${role})</option>`;
-                }).join('');
-        }
+        try {
+            const newMatCostAdded = entries.reduce((s, e) => s + e.cost, 0);
 
-        // Modal functions - Make them global so they can be called from onclick
-        window.openMaterialAssign = function(taskId) {
-            console.log('Opening material modal for task:', taskId);
-            
-            // Make sure modal exists
-            if (!materialModal) {
-                console.error('Material modal not found!');
-                alert('Modal not found. Please refresh the page.');
-                return;
-            }
-            
-            currentAssigningTaskId = taskId;
-            const task = allTasks.find(t => t.id === taskId);
-            taskNameMaterial.textContent = task ? task.taskDescription || 'Task' : 'Task';
-            materialQtyInput.value = '';
-            stockWarning.style.display = 'none';
-            
-            // Update materials list before showing
-            loadResources().then(() => {
-                materialModal.style.display = 'flex';
-            });
-        };
+            for (const { matId, mat, qty, price, cost, desc, location, assignedAt } of entries) {
+                await updateDoc(doc(db, "materials", matId), { quantity: (+(mat.quantity||0)) - qty });
 
-        window.openLaborAssign = function(taskId) {
-            console.log('Opening labor modal for task:', taskId);
-            
-            if (!laborModal) {
-                console.error('Labor modal not found!');
-                alert('Modal not found. Please refresh the page.');
-                return;
-            }
-            
-            currentAssigningTaskId = taskId;
-            const task = allTasks.find(t => t.id === taskId);
-            taskNameLabor.textContent = task ? task.taskDescription || 'Task' : 'Task';
-            laborHoursInput.value = '';
-            
-            // Update labor list before showing
-            loadResources().then(() => {
-                laborModal.style.display = 'flex';
-            });
-        };
-
-        window.closeMaterialAllocModal = function() {
-            if (materialModal) materialModal.style.display = 'none';
-            currentAssigningTaskId = null;
-        };
-
-        window.closeLaborAllocModal = function() {
-            if (laborModal) laborModal.style.display = 'none';
-            currentAssigningTaskId = null;
-        };
-
-        // Assign material
-        window.assignMaterial = async function() {
-            const materialId = materialSelect.value;
-            const qty = parseFloat(materialQtyInput.value);
-
-            if (!materialId || !qty || qty <= 0) {
-                alert('Please select material and enter quantity');
-                return;
-            }
-
-            const material = materials.find(m => m.docId === materialId);
-            if (!material) return;
-            
-            const currentStock = material.quantity || 0;
-            if (qty > currentStock) {
-                stockWarning.textContent = `⚠️ Insufficient stock! Available: ${currentStock}`;
-                stockWarning.style.display = 'block';
-                return;
-            }
-
-            const price = material.price || material.unitPrice || 0;
-            const cost = qty * price;
-            
-            try {
-                // Update material stock
-                await updateDoc(doc(db, "materials", materialId), {
-                    quantity: currentStock - qty
-                });
-
-                // Create task material assignment
                 await addDoc(collection(db, "materialsUsage"), {
-                    taskId: currentAssigningTaskId,
-                    materialId: materialId,
-                    materialName: material.materialName || material.name,
-                    quantity: qty,
-                    unitPrice: price,
-                    cost: cost,
-                    assignedAt: new Date(),
-                    projectId: projectId
+                    taskId:      currentAssigningTaskId,
+                    taskDocId:   currentAssigningDocId,
+                    taskLevel:   currentAssigningTaskLevel,
+                    taskLine:    currentTaskContext.taskLine    || '',
+                    taskDescription: desc || currentTaskContext.taskDescription || '',
+                    materialId:  matId,
+                    materialName: mat.materialName || mat.name,
+                    quantity:    qty,
+                    unitPrice:   price,
+                    cost:        cost,
+                    location:    location || currentTaskContext.location || '',
+                    assignedAt:  assignedAt,
+                    projectId,
+                    savedAt:     Timestamp.now(),
+                    reversed:    false
                 });
-
-                alert('Material assigned successfully!');
-                closeMaterialAllocModal();
-            } catch (error) {
-                console.error('Error assigning material:', error);
-                alert('Error assigning material: ' + error.message);
             }
+
+            // Don't update manually - the listener will handle it
+            closeMaterialAllocModal();
+        } catch(e) { alert('Error saving: ' + e.message); }
+    };
+
+    // =============================================
+    // LABOR MODAL — FULL 9-COLUMN TABLE
+    // =============================================
+
+    function employeeOptions(selectedId) {
+        return '<option value="">— Select Employee —</option>' +
+            laborWorkers.map(e => {
+                const name = `${e.name || ''} ${e.surname || ''}`.trim() || 'Unnamed';
+                const empId = e.employeeId || e.id || e.docId || '';
+                const sel  = e.docId === selectedId ? 'selected' : '';
+                return `<option value="${e.docId}" data-empid="${empId}" data-name="${name}" ${sel}>${empId} - ${name}</option>`;
+            }).join('');
+    }
+
+    window.addLaborEntryRow = function(prefill = {}) {
+        labRowCounter++;
+        const rid = labRowCounter;
+        const ctx = currentTaskContext;
+
+        const tr = document.createElement('tr');
+        tr.dataset.rid = rid;
+
+        const projectName = projectId ? `Project ${projectId.slice(0,6)}...` : 'Current Project';
+
+        tr.innerHTML = `
+            <td><span class="cell-readonly">${rid}</span></td>
+            <td>
+                <select class="cell-select lab-employee" data-rid="${rid}" onchange="onLaborEmployeeSelect(${rid})">
+                    ${employeeOptions(prefill.employeeId || '')}
+                </select>
+            </td>
+            <td>
+                <span class="cell-readonly lab-name" id="lab_name_${rid}">${prefill.employeeName || ''}</span>
+                <input type="hidden" class="lab-name-hidden" value="${prefill.employeeName || ''}">
+            </td>
+            <td>
+                <input class="cell-input lab-project" data-rid="${rid}" type="text" 
+                    value="${prefill.projectName || projectName}" placeholder="Project Name" readonly>
+            </td>
+            <td>
+                <input class="cell-input lab-location" data-rid="${rid}" type="text"
+                    value="${prefill.location || ctx.location || ''}" placeholder="Location">
+            </td>
+            <td>
+                <span class="cell-readonly lab-taskid" id="lab_taskid_${rid}">${ctx.taskId || '—'}</span>
+            </td>
+            <td>
+                <input class="cell-input lab-description" data-rid="${rid}" type="text"
+                    value="${prefill.description || ctx.taskDescription || ''}" placeholder="Description">
+            </td>
+            <td>
+                <select class="cell-select lab-status" data-rid="${rid}">
+                    <option value="PENDING" ${prefill.status === 'PENDING' ? 'selected' : ''}>PENDING</option>
+                    <option value="ONGOING" ${prefill.status === 'ONGOING' ? 'selected' : ''}>ONGOING</option>
+                    <option value="COMPLETED" ${prefill.status === 'COMPLETED' ? 'selected' : ''}>COMPLETED</option>
+                </select>
+            </td>
+            <td>
+                <input class="cell-input lab-transferdate" data-rid="${rid}" type="datetime-local"
+                    value="${prefill.transferDate || nowInputVal()}" style="min-width:140px">
+            </td>
+            <td>
+                <input class="cell-input lab-mh" data-rid="${rid}" type="number" min="0" step="0.5"
+                    value="${prefill.mh || ''}" placeholder="MH" style="min-width:70px; text-align:right"
+                    oninput="recalcLaborEntry(${rid})">
+            </td>
+            <td>
+                <span class="amount-cell lab-cost" id="labCost_${rid}">—</span>
+                <input type="hidden" class="lab-cost-hidden" value="0">
+            </td>
+            <td style="text-align:center">
+                <button class="remove-entry-btn" onclick="removeLaborEntryRow(${rid})" title="Remove row">×</button>
+            </td>
+        `;
+
+        labEntryBody.appendChild(tr);
+        recalcLaborEntry(rid);
+
+        const inputs = tr.querySelectorAll('input, select');
+        inputs.forEach((inp, idx) => {
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (idx === inputs.length - 1) {
+                        window.addLaborEntryRow();
+                        setTimeout(() => {
+                            const allRows = labEntryBody.querySelectorAll('tr');
+                            const lastRow = allRows[allRows.length - 1];
+                            lastRow?.querySelector('select')?.focus();
+                        }, 30);
+                    } else {
+                        let nextIdx = idx + 1;
+                        while (nextIdx < inputs.length && inputs[nextIdx].readOnly) {
+                            nextIdx++;
+                        }
+                        if (nextIdx < inputs.length) {
+                            inputs[nextIdx]?.focus();
+                        }
+                    }
+                }
+            });
+        });
+
+        return tr;
+    };
+
+    window.onLaborEmployeeSelect = function(rid) {
+        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`);
+        if (!row) return;
+        
+        const sel = row.querySelector('.lab-employee');
+        const opt = sel.options[sel.selectedIndex];
+        const empName = opt?.dataset?.name || '';
+        
+        const nameSpan = row.querySelector('.lab-name');
+        if (nameSpan) {
+            nameSpan.textContent = empName;
+        }
+        
+        const nameHidden = row.querySelector('.lab-name-hidden');
+        if (nameHidden) nameHidden.value = empName;
+        
+        recalcLaborEntry(rid);
+    };
+
+    window.recalcLaborEntry = function(rid) {
+        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`);
+        if (!row) return;
+        
+        const mh = parseFloat(row.querySelector('.lab-mh').value) || 0;
+        const rate = LABOR_RATE;
+        const cost = mh * rate;
+        
+        const costSpan = row.querySelector(`#labCost_${rid}`);
+        const costHidden = row.querySelector('.lab-cost-hidden');
+        
+        if (cost > 0) {
+            costSpan.textContent = cost.toFixed(2);
+            costSpan.classList.remove('zero');
+            if (costHidden) costHidden.value = cost;
+        } else {
+            costSpan.textContent = '—';
+            costSpan.classList.add('zero');
+            if (costHidden) costHidden.value = 0;
+        }
+        
+        updateLaborGrandTotal();
+    };
+
+    window.removeLaborEntryRow = function(rid) {
+        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`);
+        if (row) row.remove();
+        updateLaborGrandTotal();
+    };
+
+    function updateLaborGrandTotal() {
+        let total = 0;
+        labEntryBody.querySelectorAll('.lab-cost').forEach(el => {
+            const val = parseFloat(el.textContent);
+            if (!isNaN(val)) total += val;
+        });
+        labGrandTotalEl.textContent = total.toFixed(2);
+    }
+
+    window.openLaborAssign = function(taskId) {
+        currentAssigningTaskId = taskId;
+        
+        let found = null, level = null, parentDocId = null, subDocId = null;
+        for (const t of allTasks) {
+            if (t.id === taskId) { found = t; level = 'main'; break; }
+            for (const sub of (t.subTasks||[])) {
+                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
+                for (const ss of (sub.subSubtasks||[])) {
+                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
+                }
+                if (found) break;
+            }
+            if (found) break;
+        }
+        
+        currentAssigningDocId        = found?.id || taskId;
+        currentAssigningTaskLevel    = level || 'main';
+        currentAssigningParentDocId  = parentDocId;
+        currentAssigningSubDocId     = subDocId;
+        
+        currentTaskContext = {
+            taskId:      found?.taskId      || '',
+            taskLine:    found?.taskLine    || '',
+            taskDescription: found?.taskDescription || '',
+            location:    found?.location   || '',
+            status:      found?.status      || 'PENDING'
         };
 
-        // Assign labor
-        window.assignLabor = async function() {
-            const laborId = laborSelect.value;
-            const hours = parseFloat(laborHoursInput.value);
+        document.getElementById('taskNameLabor').textContent = found?.taskDescription || 'Task';
+        document.getElementById('labCtxTaskId').textContent = currentTaskContext.taskId || '—';
+        document.getElementById('labCtxDesc').textContent = currentTaskContext.taskDescription || '—';
+        document.getElementById('labCtxLoc').textContent = currentTaskContext.location || '—';
+        document.getElementById('labCtxProject').textContent = projectId ? `Project ${projectId.slice(0,6)}...` : '—';
 
-            if (!laborId || !hours || hours <= 0) {
-                alert('Please select worker and enter hours');
+        labEntryBody.innerHTML = '';
+        labRowCounter = 0;
+
+        loadResources().then(() => {
+            window.addLaborEntryRow();
+            laborModal.classList.add('active');
+            setTimeout(() => labEntryBody.querySelector('select')?.focus(), 80);
+        });
+    };
+
+    window.closeLaborAllocModal = function() {
+        laborModal.classList.remove('active');
+        currentAssigningTaskId = null;
+    };
+
+    window.assignLabors = async function() {
+        const rows = labEntryBody.querySelectorAll('tr');
+        const entries = [];
+
+        for (const row of rows) {
+            const sel = row.querySelector('.lab-employee');
+            const employeeId = sel?.value;
+            if (!employeeId) continue;
+
+            const mh = parseFloat(row.querySelector('.lab-mh').value);
+            if (!mh || mh <= 0) {
+                alert('Please enter valid Man Hours (MH) for all rows.');
                 return;
             }
 
-            const worker = labor.find(l => l.docId === laborId);
-            if (!worker) return;
-            
-            const cost = hours * 20; // $20 per hour rate
+            const employee = laborWorkers.find(e => e.docId === employeeId);
+            if (!employee) continue;
 
-            try {
-                // Create task labor assignment
+            const employeeName = `${employee.name || ''} ${employee.surname || ''}`.trim() || 'Unknown';
+            const location = row.querySelector('.lab-location').value.trim() || currentTaskContext.location || '';
+            const description = row.querySelector('.lab-description').value.trim() || currentTaskContext.taskDescription || '';
+            const status = row.querySelector('.lab-status').value;
+            const transferDateVal = row.querySelector('.lab-transferdate').value;
+            const transferDate = transferDateVal ? Timestamp.fromDate(new Date(transferDateVal)) : Timestamp.now();
+            const projectName = row.querySelector('.lab-project').value;
+            const rate = LABOR_RATE;
+            const cost = mh * rate;
+
+            entries.push({
+                employeeId: employee.docId,
+                employeeIdNumber: employee.employeeId || employee.docId,
+                employeeName: employeeName,
+                projectName,
+                location,
+                taskId: currentTaskContext.taskId,
+                taskDescription: description,
+                status,
+                transferDate,
+                mh,
+                rate,
+                cost
+            });
+        }
+
+        if (!entries.length) {
+            alert('Please add at least one employee with MH entered.');
+            return;
+        }
+
+        try {
+            for (const entry of entries) {
                 await addDoc(collection(db, "locationHistory"), {
+                    projectId,
                     taskId: currentAssigningTaskId,
-                    employeeId: laborId,
-                    employeeName: worker.name,
-                    employeeSurname: worker.surname,
-                    mh: hours,
-                    cost: cost,
-                    assignedAt: new Date(),
-                    projectId: projectId
+                    taskDocId: currentAssigningDocId,
+                    taskLevel: currentAssigningTaskLevel,
+                    employeeId: entry.employeeId,
+                    employeeIdNumber: entry.employeeIdNumber,
+                    employeeName: entry.employeeName,
+                    projectName: entry.projectName,
+                    location: entry.location,
+                    taskIdDisplay: entry.taskId,
+                    taskDescription: entry.taskDescription,
+                    status: entry.status,
+                    transferDate: entry.transferDate,
+                    mh: entry.mh,
+                    rate: entry.rate,
+                    cost: entry.cost,
+                    savedAt: Timestamp.now(),
+                    reversed: false
                 });
-
-                alert('Worker assigned successfully!');
-                closeLaborAllocModal();
-            } catch (error) {
-                console.error('Error assigning labor:', error);
-                alert('Error assigning worker: ' + error.message);
             }
-        };
 
-        // Load tasks
-        async function loadTasks() {
-            if (unsubMain) unsubMain();
-            if (subUnsubs) Object.values(subUnsubs).forEach(fn => fn?.());
-            
-            unsubMain = onSnapshot(query(collection(db, "projectTasks"), where("projectId", "==", projectId)), async (snap) => {
+            closeLaborAllocModal();
+        } catch (error) {
+            console.error('Error saving labor:', error);
+            alert('Error saving labor assignments: ' + error.message);
+        }
+    };
+
+    // =============================================
+    // Firestore path helpers
+    // =============================================
+    function getTaskDocRef(docId, level, parentDocId, subDocId) {
+        if (!docId) return null;
+        if (level === 'main') return doc(db, "projectTasks", docId);
+        if (level === 'sub'    && parentDocId)             return doc(db, "projectTasks", parentDocId, "subtasks", docId);
+        if (level === 'subsub' && parentDocId && subDocId) return doc(db, "projectTasks", parentDocId, "subtasks", subDocId, "subsubtasks", docId);
+        return null;
+    }
+
+    function findTaskObj(taskId) {
+        for (const t of allTasks) {
+            if (t.id === taskId) return t;
+            for (const sub of (t.subTasks||[])) {
+                if (sub.id === taskId) return sub;
+                for (const ss of (sub.subSubtasks||[])) { if (ss.id === taskId) return ss; }
+            }
+        }
+        return null;
+    }
+
+    // =============================================
+    // Firebase helpers
+    // =============================================
+    async function getNextTaskNumber(projectId) {
+        const snap = await getDocs(query(collection(db, "projectTasks"), where("projectId","==",projectId)));
+        let max = 0;
+        snap.forEach(d => {
+            const m = (d.data().taskId||'').match(/PRJ-(\d+)$/);
+            if (m) max = Math.max(max, parseInt(m[1]));
+        });
+        return max + 1;
+    }
+
+    // =============================================
+    // Load tasks (real-time)
+    // =============================================
+    async function loadTasks() {
+        if (unsubMain) unsubMain();
+        Object.values(subUnsubs).forEach(fn => fn?.());
+
+        unsubMain = onSnapshot(
+            query(collection(db,"projectTasks"), where("projectId","==",projectId)),
+            async (snap) => {
                 allTasks = [];
                 const promises = [];
-                
+
                 snap.docs.forEach(docSnap => {
                     const task = { id: docSnap.id, ...docSnap.data(), subTasks: [] };
                     allTasks.push(task);
-                    
+
                     promises.push(new Promise(resolve => {
-                        const unsub = onSnapshot(collection(db, "projectTasks", docSnap.id, "subtasks"), async (subSnap) => {
-                            task.subTasks = [];
-                            const subPromises = [];
-                            
-                            subSnap.docs.forEach(subDoc => {
-                                const sub = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
-                                task.subTasks.push(sub);
-                                
-                                subPromises.push(Promise.all([
-                                    getWorkedHours(sub.taskId),
-                                    getMaterialCost(sub.taskId)
-                                ]).then(([h, c]) => { sub._hours = h; sub._matCost = c; }));
-                                
-                                subPromises.push(new Promise(async resSub => {
-                                    const subsubSnap = await getDocs(collection(db, "projectTasks", docSnap.id, "subtasks", subDoc.id, "subsubtasks"));
-                                    sub.subSubtasks = [];
-                                    subsubSnap.docs.forEach(ssDoc => {
-                                        const ss = { id: ssDoc.id, ...ssDoc.data() };
-                                        sub.subSubtasks.push(ss);
-                                        subPromises.push(Promise.all([
-                                            getWorkedHours(ss.taskId),
-                                            getMaterialCost(ss.taskId)
-                                        ]).then(([h, c]) => { ss._hours = h; ss._matCost = c; }));
-                                    });
-                                    resSub();
-                                }));
-                            });
-                            await Promise.all(subPromises);
-                            resolve();
-                        });
+                        const unsub = onSnapshot(
+                            collection(db,"projectTasks",docSnap.id,"subtasks"),
+                            async (subSnap) => {
+                                task.subTasks = [];
+                                const sp = [];
+                                subSnap.docs.forEach(subDoc => {
+                                    const sub = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
+                                    task.subTasks.push(sub);
+                                    sub._matCost = sub.matCost || 0;
+                                    sub._labCost = sub.labCost || 0;
+                                    sub._hours   = sub.totalHours || 0;
+
+                                    sp.push(new Promise(async res2 => {
+                                        const ssSnap = await getDocs(collection(db,"projectTasks",docSnap.id,"subtasks",subDoc.id,"subsubtasks"));
+                                        sub.subSubtasks = [];
+                                        ssSnap.docs.forEach(ssDoc => {
+                                            const ss = { id: ssDoc.id, ...ssDoc.data() };
+                                            sub.subSubtasks.push(ss);
+                                            ss._matCost = ss.matCost || 0;
+                                            ss._labCost = ss.labCost || 0;
+                                            ss._hours   = ss.totalHours || 0;
+                                        });
+                                        res2();
+                                    }));
+                                });
+                                await Promise.all(sp);
+                                resolve();
+                            }
+                        );
                         subUnsubs[docSnap.id] = unsub;
                     }));
                 });
-                
+
                 await Promise.all(promises);
-                
-                // Get main task costs
-                await Promise.all(allTasks.map(async t => {
-                    const [h, c] = await Promise.all([getWorkedHours(t.taskId), getMaterialCost(t.taskId)]);
-                    t._hours = h;
-                    t._matCost = c;
-                    
-                    // Aggregate subtask costs
+
+                allTasks.forEach(t => {
+                    t._matCost = t.matCost || 0;
+                    t._labCost = t.labCost || 0;
+                    t._hours   = t.totalHours || 0;
                     if (t.subTasks.length) {
-                        let totalH = h, totalC = c;
+                        let amc = t._matCost, alc = t._labCost;
                         t.subTasks.forEach(sub => {
-                            totalH += sub._hours || 0;
-                            totalC += sub._matCost || 0;
-                            sub.subSubtasks?.forEach(ss => {
-                                totalH += ss._hours || 0;
-                                totalC += ss._matCost || 0;
-                            });
+                            amc += sub._matCost || 0; alc += sub._labCost || 0;
+                            sub.subSubtasks?.forEach(ss => { amc += ss._matCost||0; alc += ss._labCost||0; });
                         });
-                        t._aggHours = totalH;
-                        t._aggMatCost = totalC;
+                        t._aggMatCost = amc; t._aggLabCost = alc;
                     }
-                }));
-                
+                });
+
                 renderTasks(filterTasks());
                 renderGantt();
-            });
-        }
+                
+                // Start listening to history collections after tasks are loaded
+                listenForMaterialChanges();
+                listenForLaborChanges();
+            }
+        );
+    }
 
-        function filterTasks() {
-            const status = statusFilter.value;
-            const month = monthFilter.value;
-            const year = yearFilter.value;
-            const search = searchInput.value.toLowerCase();
-            
-            return allTasks.filter(task => {
-                if (hideCompleted && task.status === 'COMPLETED') return false;
-                
-                if (status && task.status !== status) return false;
-                
-                if (month || year) {
-                    if (!task.startDate) return false;
-                    const date = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-                    if (month && date.getMonth() + 1 !== parseInt(month)) return false;
-                    if (year && date.getFullYear() !== parseInt(year)) return false;
-                }
-                
-                if (search) {
-                    const searchable = [
-                        task.taskId, task.taskDescription, task.assignedTo, 
-                        task.status, task.location, task.taskLine?.toString()
-                    ].filter(Boolean).join(' ').toLowerCase();
-                    return searchable.includes(search);
-                }
-                return true;
-            });
-        }
-
-        // Add empty row
-        addEmptyRowBtn.addEventListener('click', () => {
-            const emptyId = 'empty-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            emptyRows.push({
-                id: emptyId,
-                type: 'empty',
-                description: '',
-                location: '',
-                createdAt: new Date().toISOString()
-            });
-            saveEmptyRows();
-            renderTasks(filterTasks());
+    function filterTasks() {
+        const status = statusFilter.value, month = monthFilter.value,
+              year   = yearFilter.value,   search = searchInput.value.toLowerCase();
+        return allTasks.filter(task => {
+            if (hideCompleted && task.status==='COMPLETED') return false;
+            if (status && task.status !== status) return false;
+            if (month || year) {
+                if (!task.startDate) return false;
+                const d = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+                if (month && d.getMonth()+1 !== parseInt(month)) return false;
+                if (year  && d.getFullYear()  !== parseInt(year))  return false;
+            }
+            if (search) {
+                const s = [task.taskId,task.taskDescription,task.assignedTo,task.status,task.location,task.taskLine?.toString()].filter(Boolean).join(' ').toLowerCase();
+                return s.includes(search);
+            }
+            return true;
         });
+    }
 
-        // Insert row above/below
-        window.insertRow = (position, targetId) => {
-            const emptyId = 'empty-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            emptyRows.push({
-                id: emptyId,
-                type: 'empty',
-                position: position,
-                targetId: targetId,
-                description: '',
-                location: '',
-                createdAt: new Date().toISOString()
-            });
-            saveEmptyRows();
-            renderTasks(filterTasks());
-        };
+    addEmptyRowBtn.addEventListener('click', () => {
+        const id = 'empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+        emptyRows.push({ id, type:'empty', description:'', location:'', createdAt: new Date().toISOString() });
+        saveEmptyRows(); renderTasks(filterTasks());
+    });
 
-        // Update empty row content
-        window.updateEmptyRow = (emptyId, field, value) => {
-            const empty = emptyRows.find(r => r.id === emptyId);
-            if (empty) {
-                empty[field] = value;
-                saveEmptyRows();
-            }
-        };
+    window.insertRow = (position, targetId) => {
+        const id = 'empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+        emptyRows.push({ id, type:'empty', position, targetId, description:'', location:'', createdAt: new Date().toISOString() });
+        saveEmptyRows(); renderTasks(filterTasks());
+    };
+    window.updateEmptyRow = (id, field, value) => {
+        const r = emptyRows.find(r=>r.id===id); if (r) { r[field]=value; saveEmptyRows(); }
+    };
+    window.removeEmptyRow = (id) => {
+        emptyRows = emptyRows.filter(r=>r.id!==id); saveEmptyRows(); renderTasks(filterTasks());
+    };
 
-        // Remove empty row
-        window.removeEmptyRow = (emptyId) => {
-            emptyRows = emptyRows.filter(r => r.id !== emptyId);
-            saveEmptyRows();
-            renderTasks(filterTasks());
-        };
-
-        // Toggle menu
-        window.toggleMenu = (menuId) => {
-            if (openMenuId === menuId) {
-                openMenuId = null;
-                document.querySelectorAll('.menu-dropdown.show').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-            } else {
-                openMenuId = menuId;
-                document.querySelectorAll('.menu-dropdown.show').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-                const menu = document.getElementById(`menu-${menuId}`);
-                if (menu) menu.classList.add('show');
-            }
-        };
-
-        function renderTasks(tasks) {
-            taskList.innerHTML = '';
-            
-            // Sort tasks by taskLine
-            tasks.sort((a,b) => (a.taskLine||0) - (b.taskLine||0));
-            
-            // Create a map of empty rows by their target
-            const emptyRowsByTarget = {};
-            emptyRows.forEach(empty => {
-                if (empty.targetId) {
-                    if (!emptyRowsByTarget[empty.targetId]) {
-                        emptyRowsByTarget[empty.targetId] = { before: [], after: [] };
-                    }
-                    emptyRowsByTarget[empty.targetId][empty.position].push(empty);
-                }
-            });
-            
-            // Get standalone empty rows (no target)
-            const standaloneEmpties = emptyRows.filter(e => !e.targetId);
-            
-            // Render standalone empties at the top
-            standaloneEmpties.forEach(empty => {
-                renderEmptyRow(empty);
-            });
-            
-            // Render tasks with empty rows
-            tasks.forEach(task => {
-                // Render empty rows before this task
-                if (emptyRowsByTarget[task.id]?.before.length > 0) {
-                    emptyRowsByTarget[task.id].before.forEach(empty => {
-                        renderEmptyRow(empty);
-                    });
-                }
-                
-                // Main task row - with bold class
-                const hours = task._aggHours ?? task._hours ?? 0;
-                const matCost = task._aggMatCost ?? task._matCost ?? 0;
-                const manCost = hours * 20;
-                const taskTotal = manCost + matCost;
-                
-                const tr = document.createElement('tr');
-                tr.className = 'main-task-row';
-                tr.dataset.taskId = task.id;
-                
-                // Create menu dropdown
-                const menuId = `menu-${task.id}`;
-                
-                tr.innerHTML = `
-                    <td>${task.taskId || ''}</td>
-                    <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine || ''}</td>
-                    <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription || ''}</td>
-                    <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo || ''}</td>
-                    <td class="editable" data-type="main" data-field="status" data-id="${task.id}"><span class="status-badge status-${task.status || 'PENDING'}">${task.status || 'PENDING'}</span></td>
-                    <td class="editable" data-type="main" data-field="startDate" data-id="${task.id}">${formatDate(task.startDate)}</td>
-                    <td class="editable" data-type="main" data-field="endDate" data-id="${task.id}">${formatDate(task.endDate)}</td>
-                    <td>${hours}</td>
-                    <td><span class="cost-clickable" onclick="openMaterialAssign('${task.id}')">${formatCurrency(matCost)}</span></td>
-                    <td><span class="cost-clickable" onclick="openLaborAssign('${task.id}')">${formatCurrency(manCost)}</span></td>
-                    <td><span class="cost-badge">${formatCurrency(taskTotal)}</span></td>
-                    <td class="editable" data-type="main" data-field="location" data-id="${task.id}">${task.location || ''}</td>
-                    <td>
-                        <div class="menu-container">
-                            <button class="menu-trigger" onclick="toggleMenu('${task.id}')">⋮</button>
-                            <div class="menu-dropdown" id="menu-${task.id}">
-                                <div class="menu-item" onclick="addSubtask('${task.id}')"><i class="fas fa-plus"></i> Add Subtask</div>
-                                <div class="menu-item" onclick="insertRow('before', '${task.id}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
-                                <div class="menu-item" onclick="insertRow('after', '${task.id}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
-                                <div class="menu-item" onclick="deleteTask('main','${task.id}')"><i class="fas fa-trash"></i> Delete</div>
-                            </div>
-                        </div>
-                    </td>
-                `;
-                taskList.appendChild(tr);
-                
-                // Subtasks always visible
-                task.subTasks.forEach(sub => {
-                    const subHours = sub._hours || 0;
-                    const subMat = sub._matCost || 0;
-                    const subMan = subHours * 20;
-                    const subTotal = subMan + subMat;
-                    
-                    const subTr = document.createElement('tr');
-                    subTr.className = 'subtask-row';
-                    
-                    const subMenuId = `menu-${sub.id}`;
-                    
-                    subTr.innerHTML = `
-                        <td>${sub.taskId || ''}</td>
-                        <td></td>
-                        <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}"><span class="task-prefix">↪</span> ${sub.taskDescription || ''}</td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo || ''}</td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}"><span class="status-badge status-${sub.status || 'PENDING'}">${sub.status || 'PENDING'}</span></td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="startDate" data-id="${sub.id}">${formatDate(sub.startDate)}</td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="endDate" data-id="${sub.id}">${formatDate(sub.endDate)}</td>
-                        <td>${subHours}</td>
-                        <td><span class="cost-clickable" onclick="openMaterialAssign('${sub.id}')">${formatCurrency(subMat)}</span></td>
-                        <td><span class="cost-clickable" onclick="openLaborAssign('${sub.id}')">${formatCurrency(subMan)}</span></td>
-                        <td><span class="cost-badge">${formatCurrency(subTotal)}</span></td>
-                        <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="location" data-id="${sub.id}">${sub.location || ''}</td>
-                        <td>
-                            <div class="menu-container">
-                                <button class="menu-trigger" onclick="toggleMenu('${sub.id}')">⋮</button>
-                                <div class="menu-dropdown" id="menu-${sub.id}">
-                                    <div class="menu-item" onclick="addSubSubtask('${task.id}', '${sub.id}')"><i class="fas fa-plus"></i> Add Sub-subtask</div>
-                                    <div class="menu-item" onclick="insertRow('before', '${task.id}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
-                                    <div class="menu-item" onclick="insertRow('after', '${task.id}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
-                                    <div class="menu-item" onclick="deleteTask('sub','${task.id}','${sub.id}')"><i class="fas fa-trash"></i> Delete</div>
-                                </div>
-                            </div>
-                        </td>
-                    `;
-                    taskList.appendChild(subTr);
-                    
-                    // Sub-subtasks
-                    sub.subSubtasks?.forEach(ss => {
-                        const ssHours = ss._hours || 0;
-                        const ssMat = ss._matCost || 0;
-                        const ssMan = ssHours * 20;
-                        const ssTotal = ssMan + ssMat;
-                        
-                        const ssTr = document.createElement('tr');
-                        ssTr.className = 'subsubtask-row';
-                        
-                        const ssMenuId = `menu-${ss.id}`;
-                        
-                        ssTr.innerHTML = `
-                            <td>${ss.taskId || ''}</td>
-                            <td></td>
-                            <td class="editable" style="padding-left:35px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${ss.id}"><span class="task-prefix">↪↪</span> ${ss.taskDescription || ''}</td>
-                            <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${ss.id}">${ss.assignedTo || ''}</td>
-                            <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${ss.id}"><span class="status-badge status-${ss.status || 'PENDING'}">${ss.status || 'PENDING'}</span></td>
-                            <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="startDate" data-id="${ss.id}">${formatDate(ss.startDate)}</td>
-                            <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="endDate" data-id="${ss.id}">${formatDate(ss.endDate)}</td>
-                            <td>${ssHours}</td>
-                            <td><span class="cost-clickable" onclick="openMaterialAssign('${ss.id}')">${formatCurrency(ssMat)}</span></td>
-                            <td><span class="cost-clickable" onclick="openLaborAssign('${ss.id}')">${formatCurrency(ssMan)}</span></td>
-                            <td><span class="cost-badge">${formatCurrency(ssTotal)}</span></td>
-                            <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="location" data-id="${ss.id}">${ss.location || ''}</td>
-                            <td>
-                                <div class="menu-container">
-                                    <button class="menu-trigger" onclick="toggleMenu('${ss.id}')">⋮</button>
-                                    <div class="menu-dropdown" id="menu-${ss.id}">
-                                        <div class="menu-item" onclick="insertRow('before', '${task.id}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
-                                        <div class="menu-item" onclick="insertRow('after', '${task.id}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
-                                        <div class="menu-item" onclick="deleteTask('subsub','${task.id}','${sub.id}','${ss.id}')"><i class="fas fa-trash"></i> Delete</div>
-                                    </div>
-                                </div>
-                            </td>
-                        `;
-                        taskList.appendChild(ssTr);
-                    });
-                });
-                
-                // Render empty rows after this task
-                if (emptyRowsByTarget[task.id]?.after.length > 0) {
-                    emptyRowsByTarget[task.id].after.forEach(empty => {
-                        renderEmptyRow(empty);
-                    });
-                }
-            });
-            
-            emptyState.style.display = tasks.length === 0 && emptyRows.length === 0 ? 'block' : 'none';
-            
-            // Attach edit events
-            document.querySelectorAll('.editable').forEach(cell => {
-                cell.onclick = (e) => {
-                    e.stopPropagation();
-                    const type = cell.dataset.type;
-                    const field = cell.dataset.field;
-                    const val = cell.textContent.trim().replace(/[↪↪↪]/g, '').trim();
-                    
-                    if (field === 'status') {
-                        const select = document.createElement('select');
-                        select.className = 'editable-input';
-                        ['COMPLETED','ONGOING','PENDING'].forEach(s => {
-                            const opt = document.createElement('option');
-                            opt.value = s;
-                            opt.text = s;
-                            if (val === s) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-                        cell.innerHTML = '';
-                        cell.appendChild(select);
-                        select.focus();
-                        select.onblur = () => saveEdit(cell, type, field, select.value);
-                    } else if (field === 'startDate' || field === 'endDate') {
-                        const input = document.createElement('input');
-                        input.type = 'date';
-                        input.className = 'editable-input';
-                        if (val) input.value = formatDateForInput(val);
-                        cell.innerHTML = '';
-                        cell.appendChild(input);
-                        input.focus();
-                        input.onblur = () => saveEdit(cell, type, field, input.value ? new Date(input.value) : null);
-                    } else {
-                        const input = document.createElement('input');
-                        input.type = field === 'taskLine' ? 'number' : 'text';
-                        input.className = 'editable-input';
-                        input.value = val;
-                        cell.innerHTML = '';
-                        cell.appendChild(input);
-                        input.focus();
-                        input.onblur = () => saveEdit(cell, type, field, input.value);
-                    }
-                };
-            });
+    window.toggleMenu = (menuId) => {
+        if (openMenuId===menuId) {
+            openMenuId=null; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show'));
+        } else {
+            openMenuId=menuId; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show'));
+            document.getElementById(`menu-${menuId}`)?.classList.add('show');
         }
+    };
 
-        function renderEmptyRow(empty) {
+    // =============================================
+    // Render tasks
+    // =============================================
+    function renderTasks(tasks) {
+        taskListEl.innerHTML = '';
+        tasks.sort((a,b) => (a.taskLine||0)-(b.taskLine||0));
+
+        const byTarget = {};
+        emptyRows.forEach(e => {
+            if (e.targetId) {
+                if (!byTarget[e.targetId]) byTarget[e.targetId]={before:[],after:[]};
+                byTarget[e.targetId][e.position].push(e);
+            }
+        });
+        emptyRows.filter(e=>!e.targetId).forEach(e=>renderEmptyRow(e));
+
+        tasks.forEach(task => {
+            byTarget[task.id]?.before.forEach(e=>renderEmptyRow(e));
+            const matCost = task._aggMatCost ?? task._matCost ?? 0;
+            const labCost = task._aggLabCost ?? task._labCost ?? 0;
+            const total   = matCost + labCost;
+            const hours   = task._hours || 0;
+
             const tr = document.createElement('tr');
-            tr.className = 'empty-row';
-            tr.dataset.emptyId = empty.id;
-            
-            // Create menu dropdown
-            const menuId = `menu-${empty.id}`;
-            
+            tr.className = 'main-task-row';
+            tr.dataset.taskId = task.id;
             tr.innerHTML = `
-                <td></td>
-                <td></td>
-                <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}', 'description', this.textContent)">${empty.description || ''}</span></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}', 'location', this.textContent)">${empty.location || ''}</span></td>
+                <td>${task.taskId||''}</td>
+                <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine||''}</td>
+                <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription||''}</td>
+                <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo||''}</td>
+                <td class="editable" data-type="main" data-field="status" data-id="${task.id}"><span class="status-badge status-${task.status||'PENDING'}">${task.status||'PENDING'}</span></td>
+                <td class="editable" data-type="main" data-field="startDate" data-id="${task.id}">${formatDate(task.startDate)}</td>
+                <td class="editable" data-type="main" data-field="endDate" data-id="${task.id}">${formatDate(task.endDate)}</td>
+                <td>${hours}</td>
+                <td>${makeCostCell(matCost, task.id, 'material')}</td>
+                <td>${makeCostCell(labCost, task.id, 'labor')}</td>
+                <td><span class="total-cost">${total>0?fmt(total):''}</span></td>
+                <td class="editable" data-type="main" data-field="location" data-id="${task.id}">${task.location||''}</td>
                 <td>
                     <div class="menu-container">
-                        <button class="menu-trigger" onclick="toggleMenu('${empty.id}')">⋮</button>
-                        <div class="menu-dropdown" id="menu-${empty.id}">
-                            <div class="menu-item" onclick="insertRow('before', '${empty.targetId || ''}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
-                            <div class="menu-item" onclick="insertRow('after', '${empty.targetId || ''}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
-                            <div class="menu-item" onclick="removeEmptyRow('${empty.id}')"><i class="fas fa-trash"></i> Delete Row</div>
+                        <button class="menu-trigger" onclick="toggleMenu('${task.id}')">⋮</button>
+                        <div class="menu-dropdown" id="menu-${task.id}">
+                            <div class="menu-item" onclick="addSubtask('${task.id}')"><i class="fas fa-plus"></i> Add Subtask</div>
+                            <div class="menu-item" onclick="insertRow('before','${task.id}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
+                            <div class="menu-item" onclick="insertRow('after','${task.id}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
+                            <div class="menu-item" onclick="deleteTask('main','${task.id}')"><i class="fas fa-trash"></i> Delete</div>
                         </div>
                     </div>
-                </td>
-            `;
-            
-            taskList.appendChild(tr);
-        }
+                </td>`;
+            taskListEl.appendChild(tr);
 
-        async function saveEdit(cell, type, field, value) {
-            const mainId = cell.dataset.mainid || cell.dataset.id;
-            try {
-                if (type === 'main') {
-                    await updateDoc(doc(db, "projectTasks", mainId), { [field]: value, updatedAt: new Date() });
-                } else if (type === 'sub') {
-                    await updateDoc(doc(db, "projectTasks", mainId, "subtasks", cell.dataset.id), { [field]: value, updatedAt: new Date() });
-                } else if (type === 'subsub') {
-                    await updateDoc(doc(db, "projectTasks", mainId, "subtasks", cell.dataset.subid, "subsubtasks", cell.dataset.id), { [field]: value, updatedAt: new Date() });
-                }
-            } catch (e) {
-                alert("Error saving: " + e.message);
-            }
-        }
+            task.subTasks.forEach(sub => {
+                const sMat=sub._matCost||0, sLab=sub._labCost||0, sTotal=sMat+sLab;
+                const subTr = document.createElement('tr');
+                subTr.className = 'subtask-row';
+                subTr.innerHTML = `
+                    <td>${sub.taskId||''}</td><td></td>
+                    <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}"><span class="task-prefix">↪</span> ${sub.taskDescription||''}</td>
+                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo||''}</td>
+                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}"><span class="status-badge status-${sub.status||'PENDING'}">${sub.status||'PENDING'}</span></td>
+                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="startDate" data-id="${sub.id}">${formatDate(sub.startDate)}</td>
+                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="endDate" data-id="${sub.id}">${formatDate(sub.endDate)}</td>
+                    <td>${sub._hours||0}</td>
+                    <td>${makeCostCell(sMat, sub.id, 'material')}</td>
+                    <td>${makeCostCell(sLab, sub.id, 'labor')}</td>
+                    <td><span class="total-cost">${sTotal>0?fmt(sTotal):''}</span></td>
+                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="location" data-id="${sub.id}">${sub.location||''}</td>
+                    <td>
+                        <div class="menu-container">
+                            <button class="menu-trigger" onclick="toggleMenu('${sub.id}')">⋮</button>
+                            <div class="menu-dropdown" id="menu-${sub.id}">
+                                <div class="menu-item" onclick="addSubSubtask('${task.id}','${sub.id}')"><i class="fas fa-plus"></i> Add Sub-subtask</div>
+                                <div class="menu-item" onclick="insertRow('before','${task.id}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
+                                <div class="menu-item" onclick="insertRow('after','${task.id}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
+                                <div class="menu-item" onclick="deleteTask('sub','${task.id}','${sub.id}')"><i class="fas fa-trash"></i> Delete</div>
+                            </div>
+                        </div>
+                    </td>`;
+                taskListEl.appendChild(subTr);
 
-        window.deleteTask = async (type, mainId, subId, subSubId) => {
-            if (!confirm("Delete task?")) return;
-            try {
-                if (type === 'main') await deleteDoc(doc(db, "projectTasks", mainId));
-                else if (type === 'sub') await deleteDoc(doc(db, "projectTasks", mainId, "subtasks", subId));
-                else await deleteDoc(doc(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks", subSubId));
-            } catch (e) {
-                alert("Delete error: " + e.message);
-            }
-        };
-
-        function formatDateForInput(date) {
-            if (!date) return '';
-            const d = date.toDate ? date.toDate() : new Date(date);
-            return d.toISOString().split('T')[0];
-        }
-
-        // Gantt functions
-        function renderGantt() {
-            const tasks = filterTasks();
-            if (!tasks.length) return;
-            
-            const today = new Date(); today.setHours(0,0,0,0);
-            let minYear = today.getFullYear();
-            
-            tasks.forEach(t => {
-                if (t.startDate) {
-                    const y = new Date(t.startDate.toDate ? t.startDate.toDate() : t.startDate).getFullYear();
-                    if (y < minYear) minYear = y;
-                }
+                sub.subSubtasks?.forEach(ss => {
+                    const ssMat=ss._matCost||0, ssLab=ss._labCost||0, ssTotal=ssMat+ssLab;
+                    const ssTr = document.createElement('tr');
+                    ssTr.className = 'subsubtask-row';
+                    ssTr.innerHTML = `
+                        <td>${ss.taskId||''}</td><td></td>
+                        <td class="editable" style="padding-left:35px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${ss.id}"><span class="task-prefix">↪↪</span> ${ss.taskDescription||''}</td>
+                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${ss.id}">${ss.assignedTo||''}</td>
+                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${ss.id}"><span class="status-badge status-${ss.status||'PENDING'}">${ss.status||'PENDING'}</span></td>
+                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="startDate" data-id="${ss.id}">${formatDate(ss.startDate)}</td>
+                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="endDate" data-id="${ss.id}">${formatDate(ss.endDate)}</td>
+                        <td>${ss._hours||0}</td>
+                        <td>${makeCostCell(ssMat, ss.id, 'material')}</td>
+                        <td>${makeCostCell(ssLab, ss.id, 'labor')}</td>
+                        <td><span class="total-cost">${ssTotal>0?fmt(ssTotal):''}</span></td>
+                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="location" data-id="${ss.id}">${ss.location||''}</td>
+                        <td>
+                            <div class="menu-container">
+                                <button class="menu-trigger" onclick="toggleMenu('${ss.id}')">⋮</button>
+                                <div class="menu-dropdown" id="menu-${ss.id}">
+                                    <div class="menu-item" onclick="insertRow('before','${task.id}')"><i class="fas fa-arrow-up"></i> Insert Above</div>
+                                    <div class="menu-item" onclick="insertRow('after','${task.id}')"><i class="fas fa-arrow-down"></i> Insert Below</div>
+                                    <div class="menu-item" onclick="deleteTask('subsub','${task.id}','${sub.id}','${ss.id}')"><i class="fas fa-trash"></i> Delete</div>
+                                </div>
+                            </div>
+                        </td>`;
+                    taskListEl.appendChild(ssTr);
+                });
             });
-            
-            const months = [
-                {name:'Jan',days:31},{name:'Feb',days:28},{name:'Mar',days:31},{name:'Apr',days:30},
-                {name:'May',days:31},{name:'Jun',days:30},{name:'Jul',days:31},{name:'Aug',days:31},
-                {name:'Sep',days:30},{name:'Oct',days:31},{name:'Nov',days:30},{name:'Dec',days:31}
-            ];
-            if ((minYear % 4 === 0 && minYear % 100 !== 0) || minYear % 400 === 0) months[1].days = 29;
-            
-            let headHtml = '<tr><th rowspan="3" style="min-width:120px;">TASK</th>';
-            let row2 = '<tr>', row3 = '<tr>';
-            
-            for (let m = 0; m < months.length; m++) {
-                if (showCurrentMonthOnly && m !== today.getMonth()) continue;
-                headHtml += `<th colspan="${months[m].days}">${months[m].name}</th>`;
-                for (let d = 1; d <= months[m].days; d++) {
-                    const date = new Date(minYear, m, d);
-                    const isToday = date.toDateString() === today.toDateString();
-                    row2 += `<th class="${isToday ? 'today-highlight' : ''}">${d}</th>`;
-                    row3 += `<th class="${isToday ? 'today-highlight' : ''}">${['S','M','T','W','R','F','S'][date.getDay()]}</th>`;
-                }
-            }
-            ganttHead.innerHTML = headHtml + '</tr>' + row2 + '</tr>' + row3 + '</tr>';
-            
-            let bodyHtml = '';
-            tasks.forEach(t => {
-                if (t.subTasks.length) {
-                    bodyHtml += renderGanttRow(t, 'main', minYear, today);
-                    t.subTasks.forEach(s => {
-                        bodyHtml += renderGanttRow(s, 'sub', minYear, today);
-                        s.subSubtasks?.forEach(ss => {
-                            bodyHtml += renderGanttRow(ss, 'subsub', minYear, today);
-                        });
+
+            byTarget[task.id]?.after.forEach(e=>renderEmptyRow(e));
+        });
+
+        emptyStateEl.style.display = tasks.length===0 && emptyRows.length===0 ? 'block' : 'none';
+
+        document.querySelectorAll('.editable').forEach(cell => {
+            cell.onclick = (e) => {
+                e.stopPropagation();
+                const {type, field} = cell.dataset;
+                const val = cell.textContent.trim().replace(/↪/g,'').trim();
+                if (field==='status') {
+                    const sel = document.createElement('select');
+                    ['COMPLETED','ONGOING','PENDING'].forEach(s => {
+                        const o = document.createElement('option'); o.value=s; o.text=s;
+                        if (val===s) o.selected=true; sel.appendChild(o);
                     });
+                    cell.innerHTML=''; cell.appendChild(sel); sel.focus();
+                    sel.onblur = () => saveEdit(cell,type,field,sel.value);
+                } else if (field==='startDate'||field==='endDate') {
+                    const inp = document.createElement('input'); inp.type='date';
+                    if (val) inp.value = formatDateForInput(val);
+                    cell.innerHTML=''; cell.appendChild(inp); inp.focus();
+                    inp.onblur = () => saveEdit(cell,type,field,inp.value?new Date(inp.value):null);
                 } else {
-                    bodyHtml += renderGanttRow(t, 'main', minYear, today);
+                    const inp = document.createElement('input');
+                    inp.type = field==='taskLine'?'number':'text'; inp.value=val;
+                    cell.innerHTML=''; cell.appendChild(inp); inp.focus();
+                    inp.onblur = () => saveEdit(cell,type,field,inp.value);
                 }
-            });
-            ganttBody.innerHTML = bodyHtml;
-        }
+            };
+        });
+    }
 
-        function renderGanttRow(task, level, minYear, today) {
-            const desc = level === 'main' ? `<b>${task.taskDescription || ''}</b>` :
-                        level === 'sub' ? `<span style="margin-left:15px;">↪ ${task.taskDescription || ''}</span>` :
-                        `<span style="margin-left:30px;">↪↪ ${task.taskDescription || ''}</span>`;
-            
-            const status = task.status?.toUpperCase() || 'PENDING';
-            const pct = status === 'COMPLETED' ? '100' : status === 'ONGOING' ? '60' : '0';
-            
-            let start = null, end = null;
-            if (task.startDate) {
-                start = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-                start.setHours(0,0,0,0);
-                if (task.endDate) {
-                    end = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
-                    end.setHours(0,0,0,0);
-                } else if (status !== 'COMPLETED') {
-                    end = today;
-                }
+    function renderEmptyRow(empty) {
+        const tr = document.createElement('tr');
+        tr.className='empty-row'; tr.dataset.emptyId=empty.id;
+        tr.innerHTML = `
+            <td></td><td></td>
+            <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}','description',this.textContent)">${empty.description||''}</span></td>
+            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}','location',this.textContent)">${empty.location||''}</span></td>
+            <td>
+                <div class="menu-container">
+                    <button class="menu-trigger" onclick="toggleMenu('${empty.id}')">⋮</button>
+                    <div class="menu-dropdown" id="menu-${empty.id}">
+                        <div class="menu-item" onclick="removeEmptyRow('${empty.id}')"><i class="fas fa-trash"></i> Delete Row</div>
+                    </div>
+                </div>
+            </td>`;
+        taskListEl.appendChild(tr);
+    }
+
+    async function saveEdit(cell, type, field, value) {
+        const mainId = cell.dataset.mainid || cell.dataset.id;
+        try {
+            if (type==='main')   await updateDoc(doc(db,"projectTasks",mainId),{[field]:value,updatedAt:new Date()});
+            else if (type==='sub')    await updateDoc(doc(db,"projectTasks",mainId,"subtasks",cell.dataset.id),{[field]:value,updatedAt:new Date()});
+            else if (type==='subsub') await updateDoc(doc(db,"projectTasks",mainId,"subtasks",cell.dataset.subid,"subsubtasks",cell.dataset.id),{[field]:value,updatedAt:new Date()});
+        } catch(e) { alert("Error saving: "+e.message); }
+    }
+
+    window.deleteTask = async (type,mainId,subId,subSubId) => {
+        if (!confirm("Delete task?")) return;
+        try {
+            if (type==='main')   await deleteDoc(doc(db,"projectTasks",mainId));
+            else if (type==='sub')    await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId));
+            else await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks",subSubId));
+        } catch(e) { alert("Delete error: "+e.message); }
+    };
+
+    function formatDateForInput(date) {
+        if (!date) return '';
+        const d = date.toDate ? date.toDate() : new Date(date);
+        return d.toISOString().split('T')[0];
+    }
+
+    // =============================================
+    // Gantt
+    // =============================================
+    function renderGantt() {
+        const tasks = filterTasks();
+        if (!tasks.length) return;
+        const today = new Date(); today.setHours(0,0,0,0);
+        let minYear = today.getFullYear();
+        tasks.forEach(t => {
+            if (t.startDate) {
+                const y = new Date(t.startDate.toDate?t.startDate.toDate():t.startDate).getFullYear();
+                if (y<minYear) minYear=y;
             }
-            
-            let row = `<tr><td style="text-align:left">${desc}</td>`;
-            const currentMonth = today.getMonth();
-            
-            for (let m = 0; m < 12; m++) {
-                if (showCurrentMonthOnly && m !== currentMonth) continue;
-                const month = {days: [31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31][m]};
-                for (let d = 1; d <= month.days; d++) {
-                    const date = new Date(minYear, m, d);
-                    let bar = '';
-                    if (start && date >= start && (!end || date <= end)) {
-                        const barClass = level === 'main' ? 'gantt-bar-main' : level === 'sub' ? 'gantt-bar-sub' : 'gantt-bar-subsub';
-                        bar = pct === '0' ? 
-                            '<div class="gantt-bar-empty"></div>' : 
-                            `<div class="gantt-bar ${barClass}"></div>`;
-                    }
-                    row += `<td>${bar}</td>`;
-                }
+        });
+        const md=[31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
+        const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        let h1='<tr><th rowspan="3" style="min-width:120px">TASK</th>', r2='<tr>', r3='<tr>';
+        for (let m=0;m<12;m++) {
+            if (showCurrentMonthOnly && m!==today.getMonth()) continue;
+            h1+=`<th colspan="${md[m]}">${mn[m]}</th>`;
+            for (let d=1;d<=md[m];d++) {
+                const dt=new Date(minYear,m,d), it=dt.toDateString()===today.toDateString();
+                r2+=`<th class="${it?'today-highlight':''}">${d}</th>`;
+                r3+=`<th class="${it?'today-highlight':''}">${['S','M','T','W','R','F','S'][dt.getDay()]}</th>`;
             }
-            return row + '</tr>';
         }
+        ganttHeadEl.innerHTML=h1+'</tr>'+r2+'</tr>'+r3+'</tr>';
+        let body='';
+        tasks.forEach(t => {
+            body+=ganttRow(t,'main',minYear,today);
+            t.subTasks.forEach(s => { body+=ganttRow(s,'sub',minYear,today); s.subSubtasks?.forEach(ss=>{ body+=ganttRow(ss,'subsub',minYear,today); }); });
+        });
+        ganttBodyEl.innerHTML=body;
+    }
 
-        // Add task functions
-        addTaskBtn.onclick = async () => {
-            const desc = prompt("Task description:"); if (!desc) return;
-            const num = await getNextTaskNumber(projectId);
-            const taskId = `PRJ-${num}`;
-            await addDoc(collection(db, "projectTasks"), {
-                projectId, taskId, taskDescription: desc, status: "PENDING",
-                createdAt: new Date(), updatedAt: new Date()
-            });
-        };
+    function ganttRow(task,level,minYear,today) {
+        const desc=level==='main'?`<b>${task.taskDescription||''}</b>`:level==='sub'?`<span style="margin-left:15px">↪ ${task.taskDescription||''}</span>`:`<span style="margin-left:30px">↪↪ ${task.taskDescription||''}</span>`;
+        const status=(task.status||'PENDING').toUpperCase();
+        const pct=status==='COMPLETED'?'100':status==='ONGOING'?'60':'0';
+        let start=null,end=null;
+        if (task.startDate) {
+            start=task.startDate.toDate?task.startDate.toDate():new Date(task.startDate); start.setHours(0,0,0,0);
+            if (task.endDate) { end=task.endDate.toDate?task.endDate.toDate():new Date(task.endDate); end.setHours(0,0,0,0); }
+            else if (status!=='COMPLETED') end=today;
+        }
+        const md=[31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
+        let row=`<tr><td style="text-align:left">${desc}</td>`;
+        for (let m=0;m<12;m++) {
+            if (showCurrentMonthOnly&&m!==today.getMonth()) continue;
+            for (let d=1;d<=md[m];d++) {
+                const dt=new Date(minYear,m,d);
+                let bar='';
+                if (start&&dt>=start&&(!end||dt<=end)) {
+                    const cls=level==='main'?'gantt-bar-main':level==='sub'?'gantt-bar-sub':'gantt-bar-subsub';
+                    bar=pct==='0'?'<div class="gantt-bar-empty"></div>':`<div class="gantt-bar ${cls}"></div>`;
+                }
+                row+=`<td>${bar}</td>`;
+            }
+        }
+        return row+'</tr>';
+    }
 
-        window.addSubtask = async (mainId) => {
-            const main = await getDoc(doc(db, "projectTasks", mainId));
-            if (!main.exists()) return;
-            const desc = prompt("Subtask description:"); if (!desc) return;
-            const num = await getNextTaskNumber(projectId, main.data().taskId);
-            const taskId = `${main.data().taskId}-${num}`;
-            await addDoc(collection(db, "projectTasks", mainId, "subtasks"), {
-                taskId, taskDescription: desc, status: "PENDING",
-                createdAt: new Date(), updatedAt: new Date()
-            });
-        };
+    // =============================================
+    // Task CRUD
+    // =============================================
+    addTaskBtn.onclick = async () => {
+        const desc=prompt("Task description:"); if(!desc) return;
+        const num=await getNextTaskNumber(projectId);
+        await addDoc(collection(db,"projectTasks"),{
+            projectId, taskId:`PRJ-${num}`, taskDescription:desc, status:"PENDING",
+            matCost:0, labCost:0, totalHours:0,
+            createdAt:new Date(), updatedAt:new Date()
+        });
+    };
 
-        window.addSubSubtask = async (mainId, subId) => {
-            const sub = await getDoc(doc(db, "projectTasks", mainId, "subtasks", subId));
-            if (!sub.exists()) return;
-            const desc = prompt("Sub-subtask description:"); if (!desc) return;
-            const num = await getNextTaskNumber(projectId, sub.data().taskId);
-            const taskId = `${sub.data().taskId}-${num}`;
-            await addDoc(collection(db, "projectTasks", mainId, "subtasks", subId, "subsubtasks"), {
-                taskId, taskDescription: desc, status: "PENDING",
-                createdAt: new Date(), updatedAt: new Date()
-            });
-        };
+    window.addSubtask = async (mainId) => {
+        const main=await getDoc(doc(db,"projectTasks",mainId)); if(!main.exists()) return;
+        const desc=prompt("Subtask description:"); if(!desc) return;
+        await addDoc(collection(db,"projectTasks",mainId,"subtasks"),{
+            taskId:`${main.data().taskId}-${Date.now()}`, taskDescription:desc, status:"PENDING",
+            matCost:0, labCost:0, totalHours:0,
+            createdAt:new Date(), updatedAt:new Date()
+        });
+    };
 
-        // UI toggles
-        currentMonthBtn.onclick = () => {
-            showCurrentMonthOnly = !showCurrentMonthOnly;
-            currentMonthBtn.textContent = showCurrentMonthOnly ? "All Months" : "Current Month";
-            renderGantt();
-        };
-        
-        toggleCompletedBtn.onclick = () => {
-            hideCompleted = !hideCompleted;
-            toggleCompletedBtn.innerHTML = hideCompleted ? 
-                '<i class="fas fa-eye"></i> Show Completed' : 
-                '<i class="fas fa-eye-slash"></i> Hide Completed';
-            renderTasks(filterTasks());
-            renderGantt();
-        };
-        
-        statusFilter.onchange = monthFilter.onchange = yearFilter.onchange = searchInput.oninput = () => {
-            renderTasks(filterTasks());
-            renderGantt();
-        };
+    window.addSubSubtask = async (mainId,subId) => {
+        const sub=await getDoc(doc(db,"projectTasks",mainId,"subtasks",subId)); if(!sub.exists()) return;
+        const desc=prompt("Sub-subtask description:"); if(!desc) return;
+        await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"),{
+            taskId:`${sub.data().taskId}-${Date.now()}`, taskDescription:desc, status:"PENDING",
+            matCost:0, labCost:0, totalHours:0,
+            createdAt:new Date(), updatedAt:new Date()
+        });
+    };
 
-        // Load resources for modals
-        loadResources();
+    currentMonthBtn.onclick = () => {
+        showCurrentMonthOnly=!showCurrentMonthOnly;
+        currentMonthBtn.textContent=showCurrentMonthOnly?"All Months":"Current Month";
+        renderGantt();
+    };
+    toggleCompletedBtn.onclick = () => {
+        hideCompleted=!hideCompleted;
+        toggleCompletedBtn.innerHTML=hideCompleted?'<i class="fas fa-eye"></i> Show Completed':'<i class="fas fa-eye-slash"></i> Hide Completed';
+        renderTasks(filterTasks()); renderGantt();
+    };
+    statusFilter.onchange=monthFilter.onchange=yearFilter.onchange=searchInput.oninput=()=>{ renderTasks(filterTasks()); renderGantt(); };
 
-        // Load
-        loadTasks();
-        setInterval(() => renderGantt(), 60000);
+    loadResources();
+    loadTasks();
+    setInterval(()=>renderGantt(), 60000);
+
+    // Escape closes modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeMaterialAllocModal();
+            closeLaborAllocModal();
+        }
     });
+});
 </script>
 </body>
 </html>
