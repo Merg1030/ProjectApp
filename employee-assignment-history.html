@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>IMS | Employee Assignment History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: white;
+    }
+
+    .panel {
+      height: 100vh; width: 100vw;
+      display: flex; flex-direction: column;
+      overflow: hidden; background: white;
+    }
+
+    .panel-heading {
+      background: #0a1c2f; color: white;
+      padding: 12px 20px; font-size: 1.1rem; font-weight: 600;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0; min-height: 48px;
+    }
+
+    .back-link {
+      color: white; text-decoration: none;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 30px;
+      font-size: 0.8rem; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+    /* ── SUMMARY STRIP ── */
+    .summary-strip {
+      display: flex; gap: 10px; padding: 8px 20px;
+      background: #f2f6fc; border-bottom: 1px solid #b3c7e0;
+      flex-shrink: 0; flex-wrap: wrap; align-items: center;
+    }
+    .stat-pill {
+      background: white; border: 1px solid #b3c7e0; border-radius: 30px;
+      padding: 4px 14px; font-size: 0.72rem; font-weight: 600; color: #0a1c2f;
+      white-space: nowrap;
+    }
+    .stat-pill span { color: #059669; font-weight: 700; }
+    .stat-pill.emp span  { color: #2b6cb0; }
+    .stat-pill.count span { color: #c05621; }
+    .stat-pill.mh span { color: #d97706; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; align-items: center;
+      justify-content: space-between; gap: 10px;
+      background: #f2f6fc; border-bottom: 1px solid #b3c7e0;
+      padding: 10px 20px; flex-shrink: 0;
+    }
+    .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .filter-label {
+      font-weight: 600; color: #1f3d62; font-size: 0.72rem;
+    }
+
+    .filter-select, .filter-input {
+      padding: 0.38rem 0.8rem; font-size: 0.72rem; border-radius: 30px;
+      border: 1px solid #b3c7e0; background: white; color: #0a1c2f; font-weight: 500;
+    }
+    .filter-select:focus, .filter-input:focus {
+      outline: none; border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
+    }
+
+    .search-bar {
+      padding: 0.38rem 0.8rem; font-size: 0.72rem; border-radius: 30px;
+      border: 1px solid #b3c7e0; background: white; color: #0a1c2f; min-width: 200px;
+    }
+    .search-bar::placeholder { color: #7f96b3; }
+
+    /* ── TABLE ── */
+    .table-responsive {
+      flex: 1; overflow: auto; background: white; position: relative;
+      scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa;
+    }
+    .table-responsive::-webkit-scrollbar { width: 10px; height: 10px; }
+    .table-responsive::-webkit-scrollbar-track { background: #ecf2fa; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; }
+
+    table {
+      width: 100%; border-collapse: collapse; background: white;
+      min-width: 1200px; color: #0a1c2f;
+    }
+
+    th, td { padding: 10px 12px; font-size: 0.72rem; text-align: left; border: 1px solid #c7d6ec; }
+
+    th {
+      font-weight: 700; background: #d4e2f2; color: #0a1c2f;
+      position: sticky; top: 0; z-index: 20; border-bottom: 2px solid #1f3d62;
+      white-space: nowrap;
+    }
+
+    tr:hover td { background: #e3ecf7; }
+
+    .emp-id-badge {
+      background: #e6efff; color: #0a1c2f;
+      padding: 2px 8px; border-radius: 20px;
+      font-weight: 600; font-size: 0.68rem; display: inline-block;
+    }
+
+    .status-badge {
+      padding: 3px 10px; border-radius: 20px; font-weight: 600; font-size: 0.65rem;
+      display: inline-block;
+    }
+    .status-badge.active { background: #d1fae5; color: #065f46; }
+    .status-badge.inactive { background: #fee2e2; color: #991b1b; }
+    .status-badge.on-leave { background: #fef3c7; color: #92400e; }
+
+    .mh-cell { font-weight: 700; color: #d97706; }
+
+    /* ── MENU ── */
+    .menu-container { position: relative; display: inline-block; }
+    .menu-trigger {
+      cursor: pointer; padding: 4px 8px; border: none;
+      background: transparent; font-size: 15px; font-weight: bold;
+      color: #2b4a73; border-radius: 4px; transition: all 0.2s;
+    }
+    .menu-trigger:hover { background: #e6efff; }
+    .menu-dropdown {
+      position: absolute; right: 0; top: 100%; background: white;
+      border: 2px solid #1f3d62; border-radius: 6px; min-width: 120px;
+      z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,20,40,0.2);
+    }
+    .menu-dropdown.show { display: block; }
+    .menu-item {
+      padding: 8px 12px; cursor: pointer; font-size: 0.72rem;
+      border-bottom: 1px solid #e0e8f5;
+      display: flex; align-items: center; gap: 6px;
+      color: #0a1c2f; font-weight: 500; transition: all 0.2s;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: #e6efff; }
+
+    /* ── MODAL ── */
+    .modal {
+      display: none; position: fixed; z-index: 2000;
+      left: 0; top: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.45);
+      align-items: center; justify-content: center;
+    }
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: white; border-radius: 14px;
+      min-width: 440px; max-width: 96vw; max-height: 90vh;
+      box-shadow: 0 24px 60px rgba(0,20,40,0.4);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+      background: #0a1c2f; color: white; padding: 1rem 1.4rem;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .modal-header h3 { font-size: 0.95rem; font-weight: 600; margin: 0; }
+    .modal-close {
+      background: none; border: none; font-size: 1.2rem;
+      color: #97adc9; cursor: pointer; transition: color 0.15s;
+    }
+    .modal-close:hover { color: white; }
+
+    .modal-body { flex: 1; overflow-y: auto; padding: 1.4rem; }
+    .modal-body::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 4px; }
+
+    /* Detail section in modal */
+    .detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      background: #f4f8fd; border: 1px solid #d0dff0;
+      border-radius: 8px; padding: 12px; margin-bottom: 16px;
+      font-size: 0.75rem;
+    }
+    .detail-grid .dg-label { color: #7f96b3; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+    .detail-grid .dg-value { font-weight: 600; color: #0a1c2f; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      font-size: 0.72rem; font-weight: 600; color: #1f3d62;
+      display: block; margin-bottom: 5px;
+    }
+    .form-group input, .form-group select {
+      width: 100%; padding: 8px; border: 1px solid #b3c7e0;
+      border-radius: 6px; font-size: 0.78rem; color: #0a1c2f; background: white;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
+    }
+
+    #edit-modal-error {
+      color: #cc0000; font-size: 0.72rem; margin-bottom: 10px;
+      padding: 8px; background: #ffe5e5; border-left: 3px solid #cc0000;
+      border-radius: 4px; display: none;
+    }
+    #edit-modal-error.show { display: block; }
+
+    .modal-actions {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 1.4rem; border-top: 1px solid #e0e8f5; flex-shrink: 0;
+    }
+    .modal-actions button {
+      padding: 0.6rem 1rem; font-size: 0.72rem; border-radius: 8px;
+      border: none; cursor: pointer; font-weight: 600; transition: all 0.2s;
+    }
+    .btn-cancel  { background: white; border: 1px solid #b3c7e0 !important; color: #0a1c2f; }
+    .btn-cancel:hover  { background: #e6efff; }
+    .btn-save    { background: #059669; color: white; }
+    .btn-save:hover    { background: #047857; }
+
+    .empty-state {
+      text-align: center; padding: 60px; color: #7f96b3; font-size: 0.85rem;
+    }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+    .loading-row td { text-align: center; color: #2b4a73; padding: 40px; font-style: italic; }
+  </style>
+</head>
+<body>
+<div class="panel">
+
+  <!-- ── HEADER ── -->
+  <div class="panel-heading">
+    <a href="javascript:history.back()" class="back-link">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <span style="flex:1">👨‍💼 Employee Assignment History</span>
+    <span id="liveIndicator" style="font-size:0.65rem; opacity:0.6; display:flex; align-items:center; gap:4px;">
+      <i class="fas fa-circle" style="color:#4ade80; font-size:0.55rem"></i> Live
+    </span>
+  </div>
+
+  <!-- ── SUMMARY ── -->
+  <div class="summary-strip">
+    <div class="stat-pill emp">👨‍💼 Total Employees: <span id="statEmpCount">—</span></div>
+    <div class="stat-pill count">📋 Records: <span id="statCount">—</span></div>
+    <div class="stat-pill mh">⏱ Total MH: <span id="statTotalMH">—</span></div>
+    <div class="stat-pill">📍 Projects: <span id="statProjects">—</span></div>
+  </div>
+
+  <!-- ── FILTER BAR ── -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Employee:</span>
+      <select id="employeeFilter" class="filter-select">
+        <option value="">All</option>
+      </select>
+
+      <span class="filter-label">Project:</span>
+      <select id="projectFilter" class="filter-select">
+        <option value="">All</option>
+      </select>
+
+      <span class="filter-label">Status:</span>
+      <select id="statusFilter" class="filter-select">
+        <option value="">All</option>
+        <option value="PENDING">PENDING</option>
+        <option value="ONGOING">ONGOING</option>
+        <option value="COMPLETED">COMPLETED</option>
+      </select>
+
+      <span class="filter-label">Month:</span>
+      <select id="monthFilter" class="filter-select">
+        <option value="">All</option>
+      </select>
+
+      <input id="searchBar" class="search-bar" type="text" placeholder="Search by name, task, location..." autocomplete="off">
+    </div>
+  </div>
+
+  <!-- ── TABLE ── -->
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Employee ID</th>
+          <th>Name</th>
+          <th>Project</th>
+          <th>Location</th>
+          <th>Task ID</th>
+          <th>Description</th>
+          <th>Status</th>
+          <th>Transfer Date</th>
+          <th>MH</th>
+          <th>Cost</th>
+          <th style="min-width:60px; text-align:center">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="assignmentTableBody">
+        <tr class="loading-row"><td colspan="12"><i class="fas fa-circle-notch fa-spin"></i> Loading records...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">👨‍💼 Employee Assignment</h3>
+      <button class="modal-close" onclick="hideModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Detail view -->
+      <div class="detail-grid" id="modalDetailGrid"></div>
+      <!-- Error -->
+      <div id="edit-modal-error"></div>
+      <!-- Edit form -->
+      <form id="editForm">
+        <div class="form-group">
+          <label for="editStatus">Status:</label>
+          <select id="editStatus" required>
+            <option value="PENDING">PENDING</option>
+            <option value="ONGOING">ONGOING</option>
+            <option value="COMPLETED">COMPLETED</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editMH">Man Hours (MH):</label>
+          <input type="number" id="editMH" step="0.5" required>
+        </div>
+        <div class="form-group">
+          <label for="editTransferDate">Transfer Date:</label>
+          <input type="datetime-local" id="editTransferDate" required>
+        </div>
+      </form>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="hideModal()">Cancel</button>
+      <button class="btn-save" onclick="saveChanges()">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import {
+    getFirestore,
+    collection, query, orderBy,
+    onSnapshot, getDoc, getDocs, doc,
+    updateDoc, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+/* ── FIREBASE ── */
+const firebaseConfig = {
+    apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+    authDomain: "project-task-588c4.firebaseapp.com",
+    projectId: "project-task-588c4",
+    storageBucket: "project-task-588c4.appspot.com",
+    messagingSenderId: "411882772509",
+    appId: "1:411882772509:web:08d613186c101a99f38ef4"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ── STATE ── */
+let allAssignments  = [];      // raw records from Firestore
+let employeeCache   = {};      // employeeId → { name, surname, employeeIdNumber }
+
+/* DOM */
+const tbody             = document.getElementById('assignmentTableBody');
+const employeeFilter    = document.getElementById('employeeFilter');
+const projectFilter     = document.getElementById('projectFilter');
+const statusFilter      = document.getElementById('statusFilter');
+const monthFilterEl     = document.getElementById('monthFilter');
+const searchBarEl       = document.getElementById('searchBar');
+const editModal         = document.getElementById('editModal');
+const editStatus        = document.getElementById('editStatus');
+const editMH            = document.getElementById('editMH');
+const editTransferDate  = document.getElementById('editTransferDate');
+const editError         = document.getElementById('edit-modal-error');
+const modalDetailGrid   = document.getElementById('modalDetailGrid');
+
+let currentDocId = null;
+let currentRecord = null;
+
+/* ── HELPERS ── */
+const fmtNum = (n) => new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(+n||0);
+
+function fmtDate(val) {
+    if (!val) return '—';
+    let d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
+    return isNaN(d) ? '—' : d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+function toInputDate(val) {
+    if (!val) return '';
+    let d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
+    if (isNaN(d)) return '';
+    return d.toISOString().slice(0,16);
+}
+function getMonthKey(val) {
+    if (!val) return null;
+    let d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
+    if (isNaN(d)) return null;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+/* ── LOAD EMPLOYEES ── */
+async function loadEmployees() {
+    try {
+        const empSnap = await getDocs(collection(db, "employees"));
+        empSnap.docs.forEach(doc => {
+            const data = doc.data();
+            employeeCache[doc.id] = {
+                name: data.name || '',
+                surname: data.surname || '',
+                employeeIdNumber: data.employeeId || doc.id
+            };
+        });
+    } catch(e) { 
+        console.warn("loadEmployees failed:", e); 
+    }
+}
+
+/* ── REAL-TIME LISTENER ── */
+let firstLoad = true;
+
+onSnapshot(
+    query(collection(db, "locationHistory"), orderBy("transferDate", "desc")),
+    async (snapshot) => {
+        if (firstLoad) {
+            firstLoad = false;
+            await loadEmployees();
+        }
+
+        // Build records
+        allAssignments = snapshot.docs.map((docSnap) => {
+            const data = docSnap.data();
+            return { 
+                _docId: docSnap.id, 
+                ...data,
+                // Map fields for display
+                employeeId: data.employeeId || data.employeeIdNumber || '',
+                employeeName: data.employeeName || '',
+                projectName: data.projectName || data.projectId || '',
+                location: data.location || '',
+                taskIdDisplay: data.taskIdDisplay || data.taskId || '',
+                taskDescription: data.taskDescription || '',
+                status: data.status || 'PENDING',
+                transferDate: data.transferDate || data.assignedAt || null,
+                mh: data.mh || 0,
+                cost: data.cost || 0,
+                rate: data.rate || 18
+            };
+        });
+
+        refreshFilters();
+        applyAndRender();
+    },
+    (err) => {
+        console.error('onSnapshot error:', err);
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:red;padding:30px">
+            Error loading data: ${err.message}</td></tr>`;
+    }
+);
+
+/* ── REFRESH DROPDOWN FILTERS ── */
+function refreshFilters() {
+    const selEmp  = employeeFilter.value;
+    const selProj = projectFilter.value;
+    const selStat = statusFilter.value;
+    const selMon  = monthFilterEl.value;
+
+    // Employees
+    const emps = [...new Set(allAssignments.map(a => a.employeeName).filter(Boolean))].sort();
+    employeeFilter.innerHTML = '<option value="">All</option>' +
+        emps.map(e => `<option value="${e}" ${e===selEmp?'selected':''}>${e}</option>`).join('');
+
+    // Projects
+    const projs = [...new Set(allAssignments.map(a => a.projectName).filter(Boolean))].sort();
+    projectFilter.innerHTML = '<option value="">All</option>' +
+        projs.map(p => `<option value="${p}" ${p===selProj?'selected':''}>${p}</option>`).join('');
+
+    // Months
+    const months = [...new Set(allAssignments.map(a => getMonthKey(a.transferDate)).filter(Boolean))].sort((a,b) => b.localeCompare(a));
+    monthFilterEl.innerHTML = '<option value="">All</option>' +
+        months.map(m => `<option value="${m}" ${m===selMon?'selected':''}>${m}</option>`).join('');
+}
+
+/* ── FILTER + RENDER ── */
+function applyAndRender() {
+    const selEmp    = employeeFilter.value;
+    const selProj   = projectFilter.value;
+    const selStat   = statusFilter.value;
+    const selMon    = monthFilterEl.value;
+    const search    = searchBarEl.value.trim().toLowerCase();
+
+    let filtered = allAssignments.filter(a => {
+        if (selEmp && a.employeeName !== selEmp) return false;
+        if (selProj && a.projectName !== selProj) return false;
+        if (selStat && a.status !== selStat) return false;
+        if (selMon && getMonthKey(a.transferDate) !== selMon) return false;
+
+        if (search) {
+            const hay = [
+                a.employeeName, a.employeeId, a.location, 
+                a.taskDescription, a.taskIdDisplay, a.projectName,
+                a.status, fmtDate(a.transferDate)
+            ].filter(Boolean).join(' ').toLowerCase();
+            return hay.includes(search);
+        }
+        return true;
+    });
+
+    renderTable(filtered);
+    updateStats(filtered);
+}
+
+/* ── RENDER TABLE ── */
+function renderTable(records) {
+    if (!records.length) {
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:50px; color:#7f96b3">
+            <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px"></i>
+            No records found.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+    let row = 1;
+    for (const a of records) {
+        const mh = parseFloat(a.mh) || 0;
+        const cost = parseFloat(a.cost) || 0;
+
+        const statusClass = a.status === 'COMPLETED' ? 'active' : 
+                           a.status === 'ONGOING' ? 'on-leave' : 'inactive';
+
+        const tr = document.createElement('tr');
+        tr.dataset.docId = a._docId;
+
+        tr.innerHTML = `
+            <td>${row++}</td>
+            <td><span class="emp-id-badge">${a.employeeId || '—'}</span></td>
+            <td style="font-weight:600">${a.employeeName || '—'}</td>
+            <td>${a.projectName || '—'}</td>
+            <td>${a.location || '—'}</td>
+            <td>${a.taskIdDisplay || a.taskId || '—'}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap"
+                title="${a.taskDescription||''}">${a.taskDescription || '—'}</td>
+            <td><span class="status-badge ${statusClass}">${a.status || '—'}</span></td>
+            <td style="white-space:nowrap">${fmtDate(a.transferDate)}</td>
+            <td class="mh-cell">${mh > 0 ? mh : '—'}</td>
+            <td style="font-weight:700; color:#059669">$${cost > 0 ? fmtNum(cost) : '—'}</td>
+            <td style="text-align:center">
+                <div class="menu-container">
+                    <button class="menu-trigger" onclick="toggleMenu(this)">⋮</button>
+                    <div class="menu-dropdown">
+                        <div class="menu-item" onclick="openModal('${a._docId}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </div>
+                        <div class="menu-item" onclick="viewDetails('${a._docId}')">
+                            <i class="fas fa-eye"></i> View
+                        </div>
+                    </div>
+                </div>
+            </td>`;
+        tbody.appendChild(tr);
+    }
+}
+
+/* ── STATS ── */
+function updateStats(filtered) {
+    const uniqueEmps = new Set(filtered.map(a => a.employeeName).filter(Boolean));
+    const totalMH = filtered.reduce((s, a) => s + (parseFloat(a.mh) || 0), 0);
+    const uniqueProjs = new Set(filtered.map(a => a.projectName).filter(Boolean));
+
+    document.getElementById('statEmpCount').textContent  = uniqueEmps.size;
+    document.getElementById('statCount').textContent     = filtered.length;
+    document.getElementById('statTotalMH').textContent   = fmtNum(totalMH);
+    document.getElementById('statProjects').textContent  = uniqueProjs.size;
+}
+
+/* ── MENU ── */
+window.toggleMenu = function(btn) {
+    const menu = btn.nextElementSibling;
+    document.querySelectorAll('.menu-dropdown.show').forEach(m => { if (m !== menu) m.classList.remove('show'); });
+    menu.classList.toggle('show');
+};
+document.addEventListener('click', e => {
+    if (!e.target.closest('.menu-container'))
+        document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
+});
+
+/* ── MODAL ── */
+window.openModal = function(docId) {
+    currentDocId  = docId;
+    currentRecord = allAssignments.find(a => a._docId === docId);
+    if (!currentRecord) return;
+
+    modalDetailGrid.innerHTML = `
+        <div><div class="dg-label">Employee ID</div><div class="dg-value">${currentRecord.employeeId || '—'}</div></div>
+        <div><div class="dg-label">Name</div><div class="dg-value">${currentRecord.employeeName || '—'}</div></div>
+        <div><div class="dg-label">Project</div><div class="dg-value">${currentRecord.projectName || '—'}</div></div>
+        <div><div class="dg-label">Location</div><div class="dg-value">${currentRecord.location || '—'}</div></div>
+        <div><div class="dg-label">Task ID</div><div class="dg-value">${currentRecord.taskIdDisplay || currentRecord.taskId || '—'}</div></div>
+        <div><div class="dg-label">Description</div><div class="dg-value">${currentRecord.taskDescription || '—'}</div></div>
+        <div><div class="dg-label">Status</div><div class="dg-value">${currentRecord.status || '—'}</div></div>
+        <div><div class="dg-label">MH</div><div class="dg-value">${currentRecord.mh || '—'}</div></div>
+        <div><div class="dg-label">Rate</div><div class="dg-value">$${currentRecord.rate || '18'}/hr</div></div>
+        <div><div class="dg-label">Total Cost</div><div class="dg-value">$${fmtNum(currentRecord.cost || 0)}</div></div>
+    `;
+
+    editStatus.value = currentRecord.status || 'PENDING';
+    editMH.value = currentRecord.mh || '';
+    editTransferDate.value = toInputDate(currentRecord.transferDate);
+    editError.style.display = 'none';
+    editError.textContent = '';
+
+    document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
+    editModal.classList.add('active');
+};
+
+window.hideModal = function() {
+    editModal.classList.remove('active');
+    currentDocId  = null;
+    currentRecord = null;
+};
+editModal.addEventListener('click', e => { if (e.target === editModal) hideModal(); });
+
+window.viewDetails = function(docId) {
+    const record = allAssignments.find(a => a._docId === docId);
+    if (!record) return;
+
+    alert(`Employee: ${record.employeeName} (${record.employeeId})
+Project: ${record.projectName}
+Location: ${record.location}
+Task: ${record.taskIdDisplay} - ${record.taskDescription}
+Status: ${record.status}
+MH: ${record.mh}
+Rate: $${record.rate || 18}/hr
+Total Cost: $${fmtNum(record.cost || 0)}
+Transfer Date: ${fmtDate(record.transferDate)}`);
+};
+
+/* ── SAVE CHANGES ── */
+window.saveChanges = async function() {
+    if (!currentDocId) return;
+    try {
+        const mh = parseFloat(editMH.value) || 0;
+        const rate = currentRecord?.rate || 18;
+        const cost = mh * rate;
+
+        await updateDoc(doc(db, "locationHistory", currentDocId), {
+            status: editStatus.value,
+            mh: mh,
+            cost: cost,
+            transferDate: Timestamp.fromDate(new Date(editTransferDate.value))
+        });
+        hideModal();
+    } catch(e) {
+        editError.textContent = 'Save failed: ' + e.message;
+        editError.style.display = 'block';
+    }
+};
+
+/* ── FILTER EVENTS ── */
+employeeFilter.addEventListener('change', applyAndRender);
+projectFilter.addEventListener('change',  applyAndRender);
+statusFilter.addEventListener('change',   applyAndRender);
+monthFilterEl.addEventListener('change',  applyAndRender);
+searchBarEl.addEventListener('input',     applyAndRender);
+</script>
+</body>
+</html>
