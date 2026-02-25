@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Management · Firebase</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #d3dfed;
+        }
+
+        .app-header {
+            background: #0a1c2f;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            min-height: 60px;
+        }
+
+        .app-header h2 {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .back-btn {
+            background: white;
+            color: #0b1f33;
+            border: none;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .back-btn:hover {
+            background: #e6efff;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .add-btn {
+            background: white;
+            color: #0b1f33;
+            border: none;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .add-btn:hover {
+            background: #e6efff;
+        }
+
+        .container {
+            padding: 1.5rem;
+            overflow: auto;
+            height: calc(100vh - 60px);
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0.8rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid #b3c7e0;
+            background: white;
+            color: #1f3d62;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #0a1c2f;
+            color: white;
+            border-color: #0a1c2f;
+        }
+
+        .tab-btn:hover {
+            border-color: #1f3d62;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: #b8cde0;
+            color: #0a1c2f;
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #1f3d62;
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid #e0e8f2;
+            font-size: 0.85rem;
+            color: #1f3d62;
+        }
+
+        tbody tr:hover {
+            background: #f2f6fc;
+        }
+
+        /* Action Dropdown Styles */
+        .action-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            color: #1f3d62;
+        }
+
+        .action-btn:hover {
+            background: #e0e8f2;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: white;
+            min-width: 140px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 100;
+            border: 1px solid #e0e8f2;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.7rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #1f3d62;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: #f2f6fc;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item.edit:hover {
+            color: #2b4a73;
+        }
+
+        .dropdown-item.delete:hover {
+            color: #ff6b6b;
+        }
+
+        .dropdown-item.view:hover {
+            color: #059669;
+        }
+
+        .stock-warning {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-instock {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-lowstock {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        .status-outstock {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        /* Labor Status Dropdown */
+        .status-select {
+            padding: 0.3rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            outline: none;
+            width: 120px;
+        }
+
+        .status-assigned {
+            background: #c6f6d5;
+            color: #22543d;
+            border-color: #22543d;
+        }
+
+        .status-unassigned {
+            background: #feebc8;
+            color: #744210;
+            border-color: #744210;
+        }
+
+        .status-unavailable {
+            background: #fed7d7;
+            color: #742a2a;
+            border-color: #742a2a;
+        }
+
+        /* Price column */
+        .price-display {
+            font-weight: 600;
+            color: #0a1c2f;
+        }
+
+        .price-empty {
+            color: #7f96b3;
+            font-style: italic;
+        }
+
+        /* MODAL FORM */
+        .form-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .form-card {
+            background: white;
+            width: 420px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,20,40,0.5);
+            padding: 2rem;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .form-card h3 {
+            color: #0a1c2f;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+            font-size: 1.2rem;
+            border-left: 5px solid #2b4a73;
+            padding-left: 0.8rem;
+        }
+
+        .form-card label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #1f3d62;
+            font-weight: 600;
+            display: block;
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .form-card input,
+        .form-card select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #b3c7e0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            background: #f2f6fc;
+            outline: none;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-card input:focus,
+        .form-card select:focus {
+            border-color: #1f3d62;
+            background: white;
+        }
+
+        .button-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .button-bar button {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .button-bar button.primary {
+            background: #0a1c2f;
+            color: white;
+        }
+
+        .close-icon {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 1.4rem;
+            color: #7f96b3;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #1f3d62;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+        <h2>📦 Resources</h2>
+        <div class="header-buttons">
+            <button class="add-btn" id="addBtn"><i class="fas fa-plus"></i> Add</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- TABS -->
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('materials')">
+                <i class="fas fa-cube"></i> Materials
+            </button>
+            <button class="tab-btn" onclick="switchTab('labor')">
+                <i class="fas fa-hardhat"></i> Labor
+            </button>
+        </div>
+
+        <!-- MATERIALS TAB -->
+        <div id="materials" class="tab-content active">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Material Name</th>
+                            <th>Category</th>
+                            <th>Available Stock</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialBody"></tbody>
+                </table>
+                <div id="materialEmpty" class="empty-state" style="display:none;">
+                    <i class="fas fa-box-open"></i>
+                    <p>No materials added yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LABOR TAB -->
+        <div id="labor" class="tab-content">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Surname</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="laborBody"></tbody>
+                </table>
+                <div id="laborEmpty" class="empty-state" style="display:none;">
+                    <i class="fas fa-users"></i>
+                    <p>No employees added yet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MATERIAL FORM MODAL -->
+    <div class="form-overlay" id="materialFormOverlay">
+        <div class="form-card">
+            <i class="fas fa-times close-icon" id="closeMaterialForm"></i>
+            <h3 id="materialFormTitle">➕ Add Material</h3>
+
+            <label>Material Name</label>
+            <input type="text" id="materialNameInput" placeholder="e.g., Concrete, Steel, Bricks">
+
+            <label>Category</label>
+            <select id="materialCategoryInput">
+                <option value="">Select Category</option>
+                <option value="Structural">Structural</option>
+                <option value="Finishing">Finishing</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Plumbing">Plumbing</option>
+                <option value="HVAC">HVAC</option>
+                <option value="Safety">Safety</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label>Available Stock</label>
+            <input type="number" id="materialQuantityInput" placeholder="0" min="0">
+
+            <label>Location</label>
+            <input type="text" id="materialLocationInput" placeholder="e.g., Storage A, Site B">
+
+            <label>Price</label>
+            <input type="number" id="materialPriceInput" placeholder="0" min="0" step="1">
+
+            <div class="button-bar">
+                <button id="cancelMaterialBtn">Cancel</button>
+                <button class="primary" id="saveMaterialBtn">Save Material</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LABOR FORM MODAL -->
+    <div class="form-overlay" id="laborFormOverlay">
+        <div class="form-card">
+            <i class="fas fa-times close-icon" id="closeLaborForm"></i>
+            <h3 id="laborFormTitle">➕ Add Employee</h3>
+
+            <label>Employee ID</label>
+            <input type="text" id="empIdInput" placeholder="e.g., EMP001">
+
+            <label>Name</label>
+            <input type="text" id="nameInput" placeholder="First name">
+
+            <label>Surname</label>
+            <input type="text" id="surnameInput" placeholder="Last name">
+
+            <label>Role</label>
+            <select id="roleInput">
+                <option value="Employee">Employee</option>
+                <option value="Supervisor">Supervisor</option>
+                <option value="Manager">Manager</option>
+                <option value="Engineer">Engineer</option>
+                <option value="2">Employee (2)</option>
+            </select>
+
+            <label>Status</label>
+            <select id="laborStatusInput">
+                <option value="assigned">Assigned</option>
+                <option value="unassigned">Unassigned</option>
+                <option value="unavailable">Unavailable</option>
+            </select>
+
+            <div class="button-bar">
+                <button id="cancelLaborBtn">Cancel</button>
+                <button class="primary" id="saveLaborBtn">Save Employee</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+            authDomain: "project-task-588c4.firebaseapp.com",
+            projectId: "project-task-588c4",
+            storageBucket: "project-task-588c4.appspot.com",
+            messagingSenderId: "411882772509",
+            appId: "1:411882772509:web:08d613186c101a99f38ef4",
+            measurementId: "G-JMFLFYEM0F"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // State
+        let materialsData = [];
+        let laborData = [];
+        let currentTab = 'materials';
+        let editingId = null;
+        let editingType = null;
+
+        // DOM Elements
+        const addBtn = document.getElementById('addBtn');
+        const materialBody = document.getElementById('materialBody');
+        const laborBody = document.getElementById('laborBody');
+        const materialEmpty = document.getElementById('materialEmpty');
+        const laborEmpty = document.getElementById('laborEmpty');
+        
+        // Material Modal Elements
+        const materialFormOverlay = document.getElementById('materialFormOverlay');
+        const closeMaterialForm = document.getElementById('closeMaterialForm');
+        const cancelMaterialBtn = document.getElementById('cancelMaterialBtn');
+        const saveMaterialBtn = document.getElementById('saveMaterialBtn');
+        const materialNameInput = document.getElementById('materialNameInput');
+        const materialCategoryInput = document.getElementById('materialCategoryInput');
+        const materialQuantityInput = document.getElementById('materialQuantityInput');
+        const materialLocationInput = document.getElementById('materialLocationInput');
+        const materialPriceInput = document.getElementById('materialPriceInput');
+        const materialFormTitle = document.getElementById('materialFormTitle');
+
+        // Labor Modal Elements
+        const laborFormOverlay = document.getElementById('laborFormOverlay');
+        const closeLaborForm = document.getElementById('closeLaborForm');
+        const cancelLaborBtn = document.getElementById('cancelLaborBtn');
+        const saveLaborBtn = document.getElementById('saveLaborBtn');
+        const empIdInput = document.getElementById('empIdInput');
+        const nameInput = document.getElementById('nameInput');
+        const surnameInput = document.getElementById('surnameInput');
+        const roleInput = document.getElementById('roleInput');
+        const laborStatusInput = document.getElementById('laborStatusInput');
+        const laborFormTitle = document.getElementById('laborFormTitle');
+
+        // Go Back function
+        window.goBack = function() {
+            window.history.back();
+        };
+
+        // Tab switching
+        window.switchTab = function(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Close any open dropdowns when switching tabs
+            closeAllDropdowns();
+        };
+
+        // Close all dropdowns
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-content.show').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        }
+
+        // Toggle dropdown
+        window.toggleDropdown = function(event, id) {
+            event.stopPropagation();
+            closeAllDropdowns();
+            
+            const dropdown = document.getElementById(`dropdown-${id}`);
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        };
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.action-dropdown')) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Add button
+        addBtn.addEventListener('click', () => {
+            if (currentTab === 'materials') {
+                openMaterialForm();
+            } else {
+                openLaborForm();
+            }
+        });
+
+        // ========== MATERIAL FUNCTIONS ==========
+        function openMaterialForm() {
+            editingId = null;
+            editingType = 'material';
+            materialFormTitle.textContent = '➕ Add Material';
+            materialNameInput.value = '';
+            materialCategoryInput.value = '';
+            materialQuantityInput.value = '';
+            materialLocationInput.value = '';
+            materialPriceInput.value = '';
+            materialFormOverlay.style.display = 'flex';
+        }
+
+        window.editMaterial = function(id) {
+            const material = materialsData.find(m => m.id === id);
+            if (!material) return;
+
+            editingId = id;
+            editingType = 'material';
+            materialFormTitle.textContent = '✏️ Edit Material';
+            materialNameInput.value = material.materialName || '';
+            materialCategoryInput.value = material.category || '';
+            materialQuantityInput.value = material.quantity || '';
+            materialLocationInput.value = material.location || '';
+            materialPriceInput.value = material.price || '';
+            materialFormOverlay.style.display = 'flex';
+            closeAllDropdowns();
+        };
+
+        window.deleteMaterial = function(id) {
+            if (confirm('Delete this material?')) {
+                db.collection("materials").doc(id).delete()
+                    .catch(error => console.error("Error deleting:", error));
+            }
+            closeAllDropdowns();
+        };
+
+        saveMaterialBtn.addEventListener('click', async () => {
+            const materialName = materialNameInput.value.trim();
+            const category = materialCategoryInput.value;
+            const quantity = parseInt(materialQuantityInput.value) || 0;
+            const location = materialLocationInput.value.trim();
+            const price = parseInt(materialPriceInput.value) || 0;
+
+            if (!materialName) {
+                alert('Please enter material name');
+                return;
+            }
+
+            const materialData = {
+                materialName,
+                category: category || 'Uncategorized',
+                quantity,
+                location: location || 'Main Storage',
+                price: price,
+                updatedAt: new Date()
+            };
+
+            // Add createdAt only for new documents
+            if (!editingId) {
+                materialData.createdAt = new Date();
+            }
+
+            try {
+                if (editingId && editingType === 'material') {
+                    await db.collection("materials").doc(editingId).update(materialData);
+                } else {
+                    await db.collection("materials").add(materialData);
+                }
+                closeMaterialModal();
+            } catch (error) {
+                console.error("Error saving:", error);
+                alert('Error saving material');
+            }
+        });
+
+        function closeMaterialModal() {
+            materialFormOverlay.style.display = 'none';
+            editingId = null;
+            editingType = null;
+        }
+
+        closeMaterialForm.addEventListener('click', closeMaterialModal);
+        cancelMaterialBtn.addEventListener('click', closeMaterialModal);
+
+        // ========== LABOR FUNCTIONS ==========
+        function openLaborForm() {
+            editingId = null;
+            editingType = 'labor';
+            laborFormTitle.textContent = '➕ Add Employee';
+            empIdInput.value = '';
+            nameInput.value = '';
+            surnameInput.value = '';
+            roleInput.value = 'Employee';
+            laborStatusInput.value = 'unassigned';
+            laborFormOverlay.style.display = 'flex';
+        }
+
+        window.editLabor = function(id) {
+            const employee = laborData.find(e => e.id === id);
+            if (!employee) return;
+
+            editingId = id;
+            editingType = 'labor';
+            laborFormTitle.textContent = '✏️ Edit Employee';
+            empIdInput.value = employee.empId || '';
+            nameInput.value = employee.name || '';
+            surnameInput.value = employee.surname || '';
+            roleInput.value = employee.role || 'Employee';
+            laborStatusInput.value = employee.status || 'unassigned';
+            laborFormOverlay.style.display = 'flex';
+            closeAllDropdowns();
+        };
+
+        window.deleteLabor = function(id) {
+            if (confirm('Delete this employee?')) {
+                db.collection("employees").doc(id).delete()
+                    .catch(error => console.error("Error deleting:", error));
+            }
+            closeAllDropdowns();
+        };
+
+        window.viewEmployee = function(id) {
+            window.location.href = `viewemployee.html?id=${id}`;
+        };
+
+        // Update labor status from dropdown
+        window.updateLaborStatus = function(id, newStatus) {
+            db.collection("employees").doc(id).update({ 
+                status: newStatus,
+                updatedAt: new Date()
+            }).catch(error => console.error("Error updating status:", error));
+        };
+
+        saveLaborBtn.addEventListener('click', async () => {
+            const empId = empIdInput.value.trim();
+            const name = nameInput.value.trim();
+            const surname = surnameInput.value.trim();
+            const role = roleInput.value;
+            const status = laborStatusInput.value;
+
+            if (!name || !surname) {
+                alert('Please enter name and surname');
+                return;
+            }
+
+            const laborData = {
+                empId: empId || `EMP${Date.now()}`,
+                name,
+                surname,
+                role: role,
+                status: status,
+                updatedAt: new Date()
+            };
+
+            // Add createdAt only for new documents
+            if (!editingId) {
+                laborData.createdAt = new Date();
+            }
+
+            try {
+                if (editingId && editingType === 'labor') {
+                    await db.collection("employees").doc(editingId).update(laborData);
+                } else {
+                    await db.collection("employees").add(laborData);
+                }
+                closeLaborModal();
+            } catch (error) {
+                console.error("Error saving:", error);
+                alert('Error saving employee');
+            }
+        });
+
+        function closeLaborModal() {
+            laborFormOverlay.style.display = 'none';
+            editingId = null;
+            editingType = null;
+        }
+
+        closeLaborForm.addEventListener('click', closeLaborModal);
+        cancelLaborBtn.addEventListener('click', closeLaborModal);
+
+        // ========== LOAD MATERIALS ==========
+        db.collection("materials")
+            .orderBy("createdAt", "desc")
+            .onSnapshot((snapshot) => {
+                materialsData = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    materialsData.push(data);
+                });
+                renderMaterials();
+            });
+
+        function renderMaterials() {
+            if (materialsData.length === 0) {
+                materialBody.innerHTML = '';
+                materialEmpty.style.display = 'block';
+                return;
+            }
+
+            materialEmpty.style.display = 'none';
+            
+            let html = '';
+            let row = 1;
+            
+            materialsData.forEach(m => {
+                const quantity = parseInt(m.quantity) || 0;
+                
+                let statusClass = 'status-instock';
+                let statusText = 'In Stock';
+                
+                if (quantity === 0) {
+                    statusClass = 'status-outstock';
+                    statusText = 'Out of Stock';
+                } else if (quantity < 10) {
+                    statusClass = 'status-lowstock';
+                    statusText = 'Low Stock';
+                } else if (quantity < 50) {
+                    statusClass = 'status-lowstock';
+                    statusText = 'Medium Stock';
+                }
+                
+                // Price display - just digits, no currency symbol
+                const priceDisplay = m.price ? m.price : '<span class="price-empty">—</span>';
+                
+                html += `
+                    <tr>
+                        <td>${row++}</td>
+                        <td><strong>${m.materialName || '-'}</strong></td>
+                        <td>
+                            <span style="background: #ebf8ff; color: #0a1c2f; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">
+                                ${m.category || 'Uncategorized'}
+                            </span>
+                        </td>
+                        <td class="${quantity < 10 ? 'stock-warning' : ''}"><strong>${quantity}</strong></td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${m.location || 'Storage A'}</td>
+                        <td class="price-display">${priceDisplay}</td>
+                        <td>
+                            <div class="action-dropdown">
+                                <button class="action-btn" onclick="toggleDropdown(event, 'material-${m.id}')">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="dropdown-content" id="dropdown-material-${m.id}">
+                                    <div class="dropdown-item edit" onclick="editMaterial('${m.id}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </div>
+                                    <div class="dropdown-item delete" onclick="deleteMaterial('${m.id}')">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            materialBody.innerHTML = html;
+        }
+
+        // ========== LOAD EMPLOYEES ==========
+        db.collection("employees")
+            .onSnapshot((snapshot) => {
+                laborData = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    data.id = doc.id;
+                    laborData.push(data);
+                });
+                renderLabor();
+            });
+
+        function renderLabor() {
+            if (laborData.length === 0) {
+                laborBody.innerHTML = '';
+                laborEmpty.style.display = 'block';
+                return;
+            }
+
+            laborEmpty.style.display = 'none';
+            
+            let html = '';
+            let row = 1;
+            
+            laborData.forEach(e => {
+                const roleDisplay = (e.role === "2" || e.role === 2) ? "Employee" : (e.role || 'Employee');
+                const status = e.status || 'unassigned';
+                
+                let statusClass = '';
+                if (status === 'assigned') statusClass = 'status-assigned';
+                else if (status === 'unassigned') statusClass = 'status-unassigned';
+                else if (status === 'unavailable') statusClass = 'status-unavailable';
+                
+                html += `
+                    <tr>
+                        <td>${row++}</td>
+                        <td>${e.empId || '-'}</td>
+                        <td>${e.name || '-'}</td>
+                        <td>${e.surname || '-'}</td>
+                        <td>${roleDisplay}</td>
+                        <td>
+                            <select class="status-select ${statusClass}" onchange="updateLaborStatus('${e.id}', this.value)">
+                                <option value="assigned" ${status === 'assigned' ? 'selected' : ''}>Assigned</option>
+                                <option value="unassigned" ${status === 'unassigned' ? 'selected' : ''}>Unassigned</option>
+                                <option value="unavailable" ${status === 'unavailable' ? 'selected' : ''}>Unavailable</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="action-dropdown">
+                                <button class="action-btn" onclick="toggleDropdown(event, 'labor-${e.id}')">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="dropdown-content" id="dropdown-labor-${e.id}">
+                                    <div class="dropdown-item view" onclick="viewEmployee('${e.id}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </div>
+                                    <div class="dropdown-item edit" onclick="editLabor('${e.id}')">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </div>
+                                    <div class="dropdown-item delete" onclick="deleteLabor('${e.id}')">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            laborBody.innerHTML = html;
+        }
+
+        // ========== CLOSE MODALS ON OVERLAY CLICK ==========
+        materialFormOverlay.addEventListener('click', (e) => {
+            if (e.target === materialFormOverlay) closeMaterialModal();
+        });
+
+        laborFormOverlay.addEventListener('click', (e) => {
+            if (e.target === laborFormOverlay) closeLaborModal();
+        });
+
+        // ========== KEYBOARD SHORTCUTS ==========
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMaterialModal();
+                closeLaborModal();
+                closeAllDropdowns();
+            }
+        });
+
+    </script>
+</body>
+</html>
