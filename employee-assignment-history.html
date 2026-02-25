@@ -79,6 +79,152 @@
     }
     .search-bar::placeholder { color: #7f96b3; }
 
+    /* ── ACTIONS BUTTON ── */
+    .actions-container {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .actions-btn {
+      padding: 0.38rem 1.2rem;
+      font-size: 0.72rem;
+      border-radius: 30px;
+      border: 1px solid #0a1c2f;
+      background: #0a1c2f;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .actions-btn:hover {
+      background: #1f3d62;
+      border-color: #1f3d62;
+    }
+    
+    .actions-dropdown {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 5px;
+      background: white;
+      border: 2px solid #0a1c2f;
+      border-radius: 10px;
+      min-width: 260px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0,20,40,0.25);
+      padding: 15px;
+    }
+    .actions-dropdown.show {
+      display: block;
+    }
+    
+    .actions-section {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+    .actions-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .actions-section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1f3d62;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .date-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .date-input {
+      padding: 0.6rem;
+      font-size: 0.75rem;
+      border: 1px solid #b3c7e0;
+      border-radius: 8px;
+      background: white;
+      color: #0a1c2f;
+      width: 100%;
+    }
+    .date-input:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
+    }
+    
+    .week-select {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+      border: 1px solid #b3c7e0;
+      border-radius: 8px;
+      background: white;
+      color: #0a1c2f;
+      cursor: pointer;
+    }
+    .week-select:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
+    }
+    
+    .filter-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .filter-action-btn {
+      flex: 1;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.15s;
+    }
+    .apply-filters {
+      background: #059669;
+      color: white;
+    }
+    .apply-filters:hover {
+      background: #047857;
+    }
+    .clear-filters {
+      background: white;
+      border: 1px solid #b3c7e0 !important;
+      color: #0a1c2f;
+    }
+    .clear-filters:hover {
+      background: #e6efff;
+    }
+    
+    .active-filter-badge {
+      display: inline-block;
+      background: #059669;
+      color: white;
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border-radius: 20px;
+      margin-left: 5px;
+    }
+
     /* ── TABLE ── */
     .table-responsive {
       flex: 1; overflow: auto; background: white; position: relative;
@@ -267,12 +413,48 @@
         <option value="COMPLETED">COMPLETED</option>
       </select>
 
-      <span class="filter-label">Month:</span>
-      <select id="monthFilter" class="filter-select">
-        <option value="">All</option>
-      </select>
-
       <input id="searchBar" class="search-bar" type="text" placeholder="Search by name, task, location..." autocomplete="off">
+      
+      <!-- ── ACTIONS BUTTON WITH DROPDOWN ── -->
+      <div class="actions-container">
+        <button class="actions-btn" onclick="toggleActionsDropdown()">
+          <i class="fas fa-sliders-h"></i> Actions
+          <span id="activeFilterBadge" class="active-filter-badge" style="display: none;">!</span>
+        </button>
+        <div class="actions-dropdown" id="actionsDropdown">
+          <div class="actions-section">
+            <div class="actions-section-title">
+              <i class="fas fa-calendar-day"></i> Filter by Day
+            </div>
+            <div class="date-input-group">
+              <input type="date" id="dayFilter" class="date-input" placeholder="Select date">
+            </div>
+          </div>
+          
+          <div class="actions-section">
+            <div class="actions-section-title">
+              <i class="fas fa-calendar-week"></i> Filter by Week
+            </div>
+            <select id="weekFilter" class="week-select">
+              <option value="">All Weeks</option>
+              <option value="1">Week 1</option>
+              <option value="2">Week 2</option>
+              <option value="3">Week 3</option>
+              <option value="4">Week 4</option>
+              <option value="5">Week 5</option>
+            </select>
+          </div>
+          
+          <div class="filter-actions">
+            <button class="filter-action-btn apply-filters" onclick="applyAdvancedFilters()">
+              <i class="fas fa-check"></i> Apply
+            </button>
+            <button class="filter-action-btn clear-filters" onclick="clearAdvancedFilters()">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -368,13 +550,19 @@ const db  = getFirestore(app);
 let allAssignments  = [];      // raw records from Firestore
 let employeeCache   = {};      // employeeId → { name, surname, employeeIdNumber }
 
+// Advanced filter state
+let selectedDay = '';
+let selectedWeek = '';
+
 /* DOM */
 const tbody             = document.getElementById('assignmentTableBody');
 const employeeFilter    = document.getElementById('employeeFilter');
 const projectFilter     = document.getElementById('projectFilter');
 const statusFilter      = document.getElementById('statusFilter');
-const monthFilterEl     = document.getElementById('monthFilter');
 const searchBarEl       = document.getElementById('searchBar');
+const dayFilterEl       = document.getElementById('dayFilter');
+const weekFilterEl      = document.getElementById('weekFilter');
+const activeFilterBadge = document.getElementById('activeFilterBadge');
 const editModal         = document.getElementById('editModal');
 const editStatus        = document.getElementById('editStatus');
 const editMH            = document.getElementById('editMH');
@@ -384,6 +572,43 @@ const modalDetailGrid   = document.getElementById('modalDetailGrid');
 
 let currentDocId = null;
 let currentRecord = null;
+
+// Load saved filter state from localStorage
+function loadFilterState() {
+    const savedState = localStorage.getItem('employeeAssignmentFilters');
+    if (savedState) {
+        try {
+            const state = JSON.parse(savedState);
+            employeeFilter.value = state.employee || '';
+            projectFilter.value = state.project || '';
+            statusFilter.value = state.status || '';
+            searchBarEl.value = state.search || '';
+            dayFilterEl.value = state.day || '';
+            weekFilterEl.value = state.week || '';
+            selectedDay = state.day || '';
+            selectedWeek = state.week || '';
+        } catch (e) {
+            console.warn('Failed to load filter state:', e);
+        }
+    }
+}
+
+// Save filter state to localStorage
+function saveFilterState() {
+    const state = {
+        employee: employeeFilter.value,
+        project: projectFilter.value,
+        status: statusFilter.value,
+        search: searchBarEl.value,
+        day: dayFilterEl.value,
+        week: weekFilterEl.value
+    };
+    localStorage.setItem('employeeAssignmentFilters', JSON.stringify(state));
+    
+    // Update active filter badge
+    const hasActiveFilters = Object.values(state).some(v => v && v !== '');
+    activeFilterBadge.style.display = hasActiveFilters ? 'inline-block' : 'none';
+}
 
 /* ── HELPERS ── */
 const fmtNum = (n) => new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(+n||0);
@@ -399,11 +624,18 @@ function toInputDate(val) {
     if (isNaN(d)) return '';
     return d.toISOString().slice(0,16);
 }
-function getMonthKey(val) {
-    if (!val) return null;
-    let d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
+
+// Get week number of month (1-5)
+function getWeekOfMonth(date) {
+    if (!date) return null;
+    const d = date?.toDate ? date.toDate() : date?.seconds ? new Date(date.seconds*1000) : new Date(date);
     if (isNaN(d)) return null;
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    
+    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+    const firstDayWeek = firstDay.getDay(); // 0 = Sunday
+    const dayOfMonth = d.getDate();
+    
+    return Math.ceil((dayOfMonth + firstDayWeek) / 7);
 }
 
 /* ── LOAD EMPLOYEES ── */
@@ -432,6 +664,7 @@ onSnapshot(
         if (firstLoad) {
             firstLoad = false;
             await loadEmployees();
+            loadFilterState(); // Load saved filters after employees are loaded
         }
 
         // Build records
@@ -470,7 +703,6 @@ function refreshFilters() {
     const selEmp  = employeeFilter.value;
     const selProj = projectFilter.value;
     const selStat = statusFilter.value;
-    const selMon  = monthFilterEl.value;
 
     // Employees
     const emps = [...new Set(allAssignments.map(a => a.employeeName).filter(Boolean))].sort();
@@ -481,11 +713,6 @@ function refreshFilters() {
     const projs = [...new Set(allAssignments.map(a => a.projectName).filter(Boolean))].sort();
     projectFilter.innerHTML = '<option value="">All</option>' +
         projs.map(p => `<option value="${p}" ${p===selProj?'selected':''}>${p}</option>`).join('');
-
-    // Months
-    const months = [...new Set(allAssignments.map(a => getMonthKey(a.transferDate)).filter(Boolean))].sort((a,b) => b.localeCompare(a));
-    monthFilterEl.innerHTML = '<option value="">All</option>' +
-        months.map(m => `<option value="${m}" ${m===selMon?'selected':''}>${m}</option>`).join('');
 }
 
 /* ── FILTER + RENDER ── */
@@ -493,14 +720,30 @@ function applyAndRender() {
     const selEmp    = employeeFilter.value;
     const selProj   = projectFilter.value;
     const selStat   = statusFilter.value;
-    const selMon    = monthFilterEl.value;
     const search    = searchBarEl.value.trim().toLowerCase();
+    const day       = dayFilterEl.value;
+    const week      = weekFilterEl.value;
 
     let filtered = allAssignments.filter(a => {
         if (selEmp && a.employeeName !== selEmp) return false;
         if (selProj && a.projectName !== selProj) return false;
         if (selStat && a.status !== selStat) return false;
-        if (selMon && getMonthKey(a.transferDate) !== selMon) return false;
+
+        // Day filter
+        if (day) {
+            const transferDate = a.transferDate?.toDate ? a.transferDate.toDate() : 
+                                a.transferDate?.seconds ? new Date(a.transferDate.seconds * 1000) : null;
+            if (transferDate) {
+                const transferDateStr = transferDate.toISOString().split('T')[0];
+                if (transferDateStr !== day) return false;
+            }
+        }
+
+        // Week filter
+        if (week) {
+            const weekNum = getWeekOfMonth(a.transferDate);
+            if (weekNum !== parseInt(week)) return false;
+        }
 
         if (search) {
             const hay = [
@@ -515,6 +758,7 @@ function applyAndRender() {
 
     renderTable(filtered);
     updateStats(filtered);
+    saveFilterState();
 }
 
 /* ── RENDER TABLE ── */
@@ -579,6 +823,44 @@ function updateStats(filtered) {
     document.getElementById('statTotalMH').textContent   = fmtNum(totalMH);
     document.getElementById('statProjects').textContent  = uniqueProjs.size;
 }
+
+/* ── ACTIONS DROPDOWN FUNCTIONS ── */
+window.toggleActionsDropdown = function() {
+    const dropdown = document.getElementById('actionsDropdown');
+    dropdown.classList.toggle('show');
+    
+    // Close when clicking outside
+    if (dropdown.classList.contains('show')) {
+        setTimeout(() => {
+            document.addEventListener('click', closeActionsDropdown);
+        }, 0);
+    }
+};
+
+function closeActionsDropdown(e) {
+    const dropdown = document.getElementById('actionsDropdown');
+    const actionsBtn = document.querySelector('.actions-btn');
+    
+    if (!dropdown.contains(e.target) && !actionsBtn.contains(e.target)) {
+        dropdown.classList.remove('show');
+        document.removeEventListener('click', closeActionsDropdown);
+    }
+}
+
+window.applyAdvancedFilters = function() {
+    selectedDay = dayFilterEl.value;
+    selectedWeek = weekFilterEl.value;
+    applyAndRender();
+    document.getElementById('actionsDropdown').classList.remove('show');
+};
+
+window.clearAdvancedFilters = function() {
+    dayFilterEl.value = '';
+    weekFilterEl.value = '';
+    selectedDay = '';
+    selectedWeek = '';
+    applyAndRender();
+};
 
 /* ── MENU ── */
 window.toggleMenu = function(btn) {
@@ -667,8 +949,16 @@ window.saveChanges = async function() {
 employeeFilter.addEventListener('change', applyAndRender);
 projectFilter.addEventListener('change',  applyAndRender);
 statusFilter.addEventListener('change',   applyAndRender);
-monthFilterEl.addEventListener('change',  applyAndRender);
 searchBarEl.addEventListener('input',     applyAndRender);
+
+// Close actions dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('actionsDropdown');
+    const actionsBtn = document.querySelector('.actions-btn');
+    if (dropdown && actionsBtn && !dropdown.contains(e.target) && !actionsBtn.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
 </script>
 </body>
 </html>
