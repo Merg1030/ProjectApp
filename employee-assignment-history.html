@@ -264,6 +264,7 @@
     .status-badge.on-leave { background: #fef3c7; color: #92400e; }
 
     .mh-cell { font-weight: 700; color: #d97706; }
+    .cost-cell { font-weight: 700; color: #059669; }
 
     /* ── MENU ── */
     .menu-container { position: relative; display: inline-block; }
@@ -287,6 +288,8 @@
     }
     .menu-item:last-child { border-bottom: none; }
     .menu-item:hover { background: #e6efff; }
+    .menu-item.delete-item { color: #dc2626; }
+    .menu-item.delete-item:hover { background: #fee2e2; }
 
     /* ── MODAL ── */
     .modal {
@@ -361,6 +364,18 @@
     .btn-cancel:hover  { background: #e6efff; }
     .btn-save    { background: #059669; color: white; }
     .btn-save:hover    { background: #047857; }
+
+    /* Delete confirmation modal */
+    .delete-modal .modal-content { min-width: 380px; }
+    .delete-modal .modal-body { text-align: center; padding: 2rem; }
+    .delete-icon { font-size: 3rem; color: #dc2626; margin-bottom: 1rem; }
+    .delete-title { font-size: 1.1rem; font-weight: 700; color: #0a1c2f; margin-bottom: 0.5rem; }
+    .delete-message { color: #4b5563; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .delete-actions { display: flex; gap: 10px; justify-content: center; }
+    .delete-confirm { background: #dc2626; color: white; padding: 0.6rem 1.5rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
+    .delete-confirm:hover { background: #b91c1c; }
+    .delete-cancel { background: white; border: 1px solid #b3c7e0; padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .delete-cancel:hover { background: #f3f4f6; }
 
     .empty-state {
       text-align: center; padding: 60px; color: #7f96b3; font-size: 0.85rem;
@@ -525,13 +540,30 @@
   </div>
 </div>
 
+<!-- ── DELETE CONFIRMATION MODAL ── -->
+<div id="deleteModal" class="modal delete-modal">
+  <div class="modal-content">
+    <div class="modal-body">
+      <div class="delete-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="delete-title">Delete Assignment</div>
+      <div class="delete-message" id="deleteMessage">Are you sure you want to delete this assignment? This action cannot be undone.</div>
+      <div class="delete-actions">
+        <button class="delete-cancel" onclick="hideDeleteModal()">Cancel</button>
+        <button class="delete-confirm" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
 import {
     getFirestore,
     collection, query, orderBy,
-    onSnapshot, getDoc, getDocs, doc,
-    updateDoc, Timestamp
+    onSnapshot, getDocs, doc,
+    updateDoc, deleteDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
 /* ── FIREBASE ── */
@@ -554,6 +586,9 @@ let employeeCache   = {};      // employeeId → { name, surname, employeeIdNumb
 let selectedDay = '';
 let selectedWeek = '';
 
+// Delete state
+let deleteDocId = null;
+
 /* DOM */
 const tbody             = document.getElementById('assignmentTableBody');
 const employeeFilter    = document.getElementById('employeeFilter');
@@ -564,6 +599,8 @@ const dayFilterEl       = document.getElementById('dayFilter');
 const weekFilterEl      = document.getElementById('weekFilter');
 const activeFilterBadge = document.getElementById('activeFilterBadge');
 const editModal         = document.getElementById('editModal');
+const deleteModal       = document.getElementById('deleteModal');
+const deleteMessage     = document.getElementById('deleteMessage');
 const editStatus        = document.getElementById('editStatus');
 const editMH            = document.getElementById('editMH');
 const editTransferDate  = document.getElementById('editTransferDate');
@@ -794,7 +831,7 @@ function renderTable(records) {
             <td><span class="status-badge ${statusClass}">${a.status || '—'}</span></td>
             <td style="white-space:nowrap">${fmtDate(a.transferDate)}</td>
             <td class="mh-cell">${mh > 0 ? mh : '—'}</td>
-            <td style="font-weight:700; color:#059669">$${cost > 0 ? fmtNum(cost) : '—'}</td>
+            <td class="cost-cell">${cost > 0 ? cost : '—'}</td>
             <td style="text-align:center">
                 <div class="menu-container">
                     <button class="menu-trigger" onclick="toggleMenu(this)">⋮</button>
@@ -804,6 +841,9 @@ function renderTable(records) {
                         </div>
                         <div class="menu-item" onclick="viewDetails('${a._docId}')">
                             <i class="fas fa-eye"></i> View
+                        </div>
+                        <div class="menu-item delete-item" onclick="openDeleteModal('${a._docId}')">
+                            <i class="fas fa-trash"></i> Delete
                         </div>
                     </div>
                 </div>
@@ -888,8 +928,8 @@ window.openModal = function(docId) {
         <div><div class="dg-label">Description</div><div class="dg-value">${currentRecord.taskDescription || '—'}</div></div>
         <div><div class="dg-label">Status</div><div class="dg-value">${currentRecord.status || '—'}</div></div>
         <div><div class="dg-label">MH</div><div class="dg-value">${currentRecord.mh || '—'}</div></div>
-        <div><div class="dg-label">Rate</div><div class="dg-value">$${currentRecord.rate || '18'}/hr</div></div>
-        <div><div class="dg-label">Total Cost</div><div class="dg-value">$${fmtNum(currentRecord.cost || 0)}</div></div>
+        <div><div class="dg-label">Rate</div><div class="dg-value">${currentRecord.rate || '18'}/hr</div></div>
+        <div><div class="dg-label">Total Cost</div><div class="dg-value">${fmtNum(currentRecord.cost || 0)}</div></div>
     `;
 
     editStatus.value = currentRecord.status || 'PENDING';
@@ -909,6 +949,39 @@ window.hideModal = function() {
 };
 editModal.addEventListener('click', e => { if (e.target === editModal) hideModal(); });
 
+/* ── DELETE MODAL FUNCTIONS ── */
+window.openDeleteModal = function(docId) {
+    deleteDocId = docId;
+    const record = allAssignments.find(a => a._docId === docId);
+    if (record) {
+        deleteMessage.textContent = `Are you sure you want to delete the assignment for ${record.employeeName || 'this employee'}? This action cannot be undone.`;
+    }
+    document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
+    deleteModal.classList.add('active');
+};
+
+window.hideDeleteModal = function() {
+    deleteModal.classList.remove('active');
+    deleteDocId = null;
+};
+
+window.confirmDelete = async function() {
+    if (!deleteDocId) return;
+    
+    try {
+        await deleteDoc(doc(db, "locationHistory", deleteDocId));
+        hideDeleteModal();
+        // The real-time listener will automatically update the UI
+    } catch (e) {
+        console.error('Delete failed:', e);
+        alert('Failed to delete: ' + e.message);
+    }
+};
+
+deleteModal.addEventListener('click', e => { 
+    if (e.target === deleteModal) hideDeleteModal(); 
+});
+
 window.viewDetails = function(docId) {
     const record = allAssignments.find(a => a._docId === docId);
     if (!record) return;
@@ -919,8 +992,8 @@ Location: ${record.location}
 Task: ${record.taskIdDisplay} - ${record.taskDescription}
 Status: ${record.status}
 MH: ${record.mh}
-Rate: $${record.rate || 18}/hr
-Total Cost: $${fmtNum(record.cost || 0)}
+Rate: ${record.rate || 18}/hr
+Total Cost: ${fmtNum(record.cost || 0)}
 Transfer Date: ${fmtDate(record.transferDate)}`);
 };
 
