@@ -227,6 +227,28 @@ let taskAssigned  = {};   // taskDocId → "John, Jane" (first names from locati
 const fmt     = n => (+(n||0)).toFixed(2);
 const fmtDate = d => d ? new Date(d.toDate?d.toDate():d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
 
+// ── Storage key for persisting filter ──
+const getStorageKey = () => `completedTasks_filter_${projectId}`;
+
+// ── Save filter to localStorage ──
+function saveFilter(value) {
+    try {
+        localStorage.setItem(getStorageKey(), value || '');
+    } catch(e) {
+        console.warn('Failed to save filter:', e);
+    }
+}
+
+// ── Load filter from localStorage ──
+function loadFilter() {
+    try {
+        return localStorage.getItem(getStorageKey()) || '';
+    } catch(e) {
+        console.warn('Failed to load filter:', e);
+        return '';
+    }
+}
+
 // ── Load assigned names from locationHistory ──
 async function loadAssignedNames() {
     try {
@@ -265,10 +287,11 @@ async function loadTaskTree() {
     allTasks.sort((a,b) => (a.taskLine||0)-(b.taskLine||0));
 }
 
-// ── Build group filter dropdown ──
+// ── Build group filter dropdown and restore saved value ──
 function buildGroupFilter() {
     const sel = groupFilter;
-    const cur = sel.value;
+    const savedFilter = loadFilter();
+    
     sel.innerHTML = '<option value="">All</option>';
     allTasks.forEach(t => {
         const hasCompleted = hasAnyCompleted(t);
@@ -276,7 +299,7 @@ function buildGroupFilter() {
         const opt = document.createElement('option');
         opt.value = t.id;
         opt.textContent = t.taskDescription || t.taskId || t.id;
-        if (opt.value === cur) opt.selected = true;
+        if (opt.value === savedFilter) opt.selected = true;
         sel.appendChild(opt);
     });
 }
@@ -317,6 +340,9 @@ function getCompletedRows(task) {
 function render() {
     const search  = searchInput.value.toLowerCase().trim();
     const selGroup = groupFilter.value;
+
+    // Save current filter whenever render is called (filter changed)
+    saveFilter(selGroup);
 
     // Groups = main tasks that have at least one completed item
     const groups = allTasks.filter(t => {
@@ -439,7 +465,7 @@ function render() {
                 <i class="fas fa-search"></i>
                 No results match your search.
             </div>`;
-        updateStats([], 0);
+        updateStats(0, 0, 0, 0);
         return;
     }
 
@@ -467,7 +493,14 @@ function updateStats(completed, hrs, cost, groups) {
             query(collection(db,"projectTasks"), where("projectId","==",projectId)),
             async () => {
                 await Promise.all([loadAssignedNames(), loadTaskTree()]);
+                // Preserve filter selection when rebuilding dropdown
+                const currentFilter = groupFilter.value;
                 buildGroupFilter();
+                // If the saved filter is different from current, update select
+                const savedFilter = loadFilter();
+                if (savedFilter && savedFilter !== groupFilter.value) {
+                    groupFilter.value = savedFilter;
+                }
                 render();
             }
         );
