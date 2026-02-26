@@ -338,6 +338,38 @@
         .modal-foot .enter-hint { font-size: 0.62rem; color: #97adc9; display: flex; align-items: center; gap: 5px; }
         .enter-hint kbd { background: #e6efff; color: #2b4a73; border: 1px solid #b3c7e0; border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; font-family: monospace; }
 
+        /* ── PURCHASE MODE TOGGLE ── */
+        .purchase-toggle-bar {
+            display: flex; align-items: center; gap: 0;
+            background: #f2f6fc; border-bottom: 2px solid #d0dff0;
+            padding: 8px 16px; flex-shrink: 0;
+        }
+        .ptb-label {
+            font-size: 0.7rem; font-weight: 700; color: #7f96b3;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-right: 14px;
+        }
+        .ptb-option {
+            display: flex; align-items: center; gap: 7px;
+            padding: 5px 16px; border-radius: 30px; cursor: pointer;
+            font-size: 0.72rem; font-weight: 600; color: #4a6a8a;
+            border: 2px solid transparent; transition: all 0.18s; user-select: none;
+        }
+        .ptb-option.active-inventory {
+            background: #0a1c2f; color: white; border-color: #0a1c2f;
+        }
+        .ptb-option.active-direct {
+            background: #d97706; color: white; border-color: #d97706;
+        }
+        .ptb-option:not(.active-inventory):not(.active-direct):hover {
+            background: #e6efff; border-color: #b3c7e0;
+        }
+        .ptb-divider {
+            width: 1px; height: 20px; background: #b3c7e0; margin: 0 4px;
+        }
+        .ptb-desc {
+            margin-left: 14px; font-size: 0.65rem; color: #7f96b3; font-style: italic;
+        }
+
         /* ══════════════════════════════════
            TASK FILTER PICKER DROPDOWN
            ══════════════════════════════════ */
@@ -663,16 +695,30 @@
             <div class="ctx-item"><span class="ctx-label">Description</span><span class="ctx-value" id="ctxDescription">—</span></div>
             <div class="ctx-item"><span class="ctx-label">Location</span><span class="ctx-value" id="ctxLocation">—</span></div>
         </div>
+
+        <!-- ── PURCHASE MODE TOGGLE ── -->
+        <div class="purchase-toggle-bar">
+            <span class="ptb-label">Source:</span>
+            <div class="ptb-option active-inventory" id="ptbInventory" onclick="setPurchaseMode('inventory')">
+                <i class="fas fa-warehouse"></i> Assign from Inventory
+            </div>
+            <div class="ptb-divider"></div>
+            <div class="ptb-option" id="ptbDirect" onclick="setPurchaseMode('direct')">
+                <i class="fas fa-shopping-cart"></i> Direct Purchase
+            </div>
+            <span class="ptb-desc" id="ptbDesc">Deducts from stock</span>
+        </div>
+
         <div class="modal-body">
             <div class="entry-table-wrap">
                 <table class="entry-table">
                     <thead>
-                        <tr>
-                            <th style="min-width:70px">#</th>
+                        <tr id="matEntryHead">
+                            <th style="min-width:36px">#</th>
                             <th style="min-width:70px">Task ID</th>
                             <th style="min-width:40px">Line</th>
                             <th style="min-width:140px">Description</th>
-                            <th style="min-width:220px">Material</th>
+                            <th style="min-width:220px" id="matColMaterial">Material</th>
                             <th style="min-width:85px">Quantity</th>
                             <th style="min-width:100px">Unit Price</th>
                             <th style="min-width:100px">Amount</th>
@@ -686,7 +732,7 @@
             </div>
             <div class="add-entry-row">
                 <button class="add-entry-btn" onclick="addMaterialEntryRow()">
-                    <i class="fas fa-plus"></i> Add Another Material Row
+                    <i class="fas fa-plus"></i> Add Another Row
                 </button>
             </div>
             <div id="matStockWarning" class="stock-warning"></div>
@@ -696,7 +742,7 @@
             </div>
         </div>
         <div class="modal-foot">
-            <span class="enter-hint"><kbd>Enter</kbd> to save last row &nbsp;|&nbsp; <kbd>Tab</kbd> to move between fields</span>
+            <span class="enter-hint"><kbd>Enter</kbd> next row &nbsp;|&nbsp; <kbd>Tab</kbd> between fields</span>
             <button class="btn-cancel" onclick="closeMaterialAllocModal()">Cancel</button>
             <button class="btn-save" onclick="assignMaterials()"><i class="fas fa-check"></i> Save All</button>
         </div>
@@ -1065,8 +1111,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ══════════════════════════════════════
-    // MATERIAL MODAL
+    // MATERIAL MODAL — INVENTORY + DIRECT PURCHASE
     // ══════════════════════════════════════
+    let currentPurchaseMode = 'inventory'; // 'inventory' | 'direct'
+
+    window.setPurchaseMode = function(mode) {
+        currentPurchaseMode = mode;
+        const invBtn  = document.getElementById('ptbInventory');
+        const dirBtn  = document.getElementById('ptbDirect');
+        const desc    = document.getElementById('ptbDesc');
+        const colHead = document.getElementById('matColMaterial');
+
+        if (mode === 'inventory') {
+            invBtn.className  = 'ptb-option active-inventory';
+            dirBtn.className  = 'ptb-option';
+            desc.textContent  = 'Deducts from stock';
+            colHead.textContent = 'Material (Stock)';
+        } else {
+            invBtn.className  = 'ptb-option';
+            dirBtn.className  = 'ptb-option active-direct';
+            desc.textContent  = 'Does not touch inventory — direct supplier purchase';
+            colHead.textContent = 'Material / Supplier';
+        }
+
+        // Rebuild all existing rows to match new mode
+        const rids = [...matEntryBody.querySelectorAll('tr')].map(r => r.dataset.rid);
+        matEntryBody.innerHTML = '';
+        matRowCounter = 0;
+        if (rids.length === 0) { window.addMaterialEntryRow(); }
+        else { rids.forEach(() => window.addMaterialEntryRow()); }
+    };
+
     function matOptions(selectedId) {
         return '<option value="">— Select Material —</option>' +
             materials.map(m => {
@@ -1082,25 +1157,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.addMaterialEntryRow = function(prefill = {}) {
         matRowCounter++;
-        const rid = matRowCounter;
-        const ctx = currentTaskContext;
-        const tr  = document.createElement('tr');
+        const rid  = matRowCounter;
+        const ctx  = currentTaskContext;
+        const tr   = document.createElement('tr');
         tr.dataset.rid = rid;
+        tr.dataset.mode = currentPurchaseMode;
+
+        // Material cell differs by mode
+        const materialCell = currentPurchaseMode === 'inventory'
+            ? `<select class="cell-select mat-material" data-rid="${rid}" onchange="onMatEntrySelect(${rid})">${matOptions(prefill.materialId||'')}</select>`
+            : `<input class="cell-input mat-material-name" data-rid="${rid}" type="text"
+                  value="${prefill.materialName||''}" placeholder="Material name / supplier"
+                  style="min-width:200px">`;
+
         tr.innerHTML = `
             <td><span class="cell-readonly">${rid}</span></td>
-            <td><span class="cell-readonly" id="mat_taskId_${rid}">${ctx.taskId||'—'}</span></td>
-            <td><span class="cell-readonly" id="mat_line_${rid}">${ctx.taskLine||'—'}</span></td>
-            <td><input class="cell-input mat-desc" data-rid="${rid}" type="text" value="${prefill.description||ctx.taskDescription||''}" placeholder="Description" style="min-width:120px"></td>
-            <td><select class="cell-select mat-material" data-rid="${rid}" onchange="onMatEntrySelect(${rid})">${matOptions(prefill.materialId||'')}</select></td>
-            <td><input class="cell-input mat-qty" data-rid="${rid}" type="number" min="0" step="0.01" placeholder="0" value="${prefill.qty||''}" oninput="recalcMatEntry(${rid})" style="min-width:70px;text-align:right"></td>
-            <td><input class="cell-input mat-uprice" data-rid="${rid}" type="number" min="0" step="0.01" placeholder="0.00" value="${prefill.price||''}" oninput="recalcMatEntry(${rid})" style="min-width:80px;text-align:right"></td>
+            <td><span class="cell-readonly">${ctx.taskId||'—'}</span></td>
+            <td><span class="cell-readonly">${ctx.taskLine||'—'}</span></td>
+            <td><input class="cell-input mat-desc" data-rid="${rid}" type="text"
+                value="${prefill.description||ctx.taskDescription||''}"
+                placeholder="Description" style="min-width:120px"></td>
+            <td>${materialCell}</td>
+            <td><input class="cell-input mat-qty" data-rid="${rid}" type="number" min="0" step="0.01"
+                placeholder="0" value="${prefill.qty||''}" oninput="recalcMatEntry(${rid})"
+                style="min-width:70px;text-align:right"></td>
+            <td><input class="cell-input mat-uprice" data-rid="${rid}" type="number" min="0" step="0.01"
+                placeholder="0.00" value="${prefill.price||''}" oninput="recalcMatEntry(${rid})"
+                style="min-width:80px;text-align:right"></td>
             <td><span class="amount-cell zero" id="matAmount_${rid}">—</span></td>
-            <td><input class="cell-input mat-location" data-rid="${rid}" type="text" value="${prefill.location||ctx.location||''}" placeholder="Location" style="min-width:110px"></td>
-            <td><input class="cell-input mat-assignedAt" data-rid="${rid}" type="datetime-local" value="${prefill.assignedAt||nowInputVal()}" style="min-width:150px;font-size:0.68rem"></td>
-            <td style="text-align:center"><button class="remove-entry-btn" onclick="removeMatEntryRow(${rid})" title="Remove row">×</button></td>
+            <td><input class="cell-input mat-location" data-rid="${rid}" type="text"
+                value="${prefill.location||ctx.location||''}" placeholder="Location" style="min-width:110px"></td>
+            <td><input class="cell-input mat-assignedAt" data-rid="${rid}" type="datetime-local"
+                value="${prefill.assignedAt||nowInputVal()}" style="min-width:150px;font-size:0.68rem"></td>
+            <td style="text-align:center">
+                <button class="remove-entry-btn" onclick="removeMatEntryRow(${rid})" title="Remove row">×</button>
+            </td>
         `;
+
+        // Highlight direct-purchase rows with a subtle orange tint
+        if (currentPurchaseMode === 'direct') {
+            tr.style.background = '#fffbf0';
+        }
+
         matEntryBody.appendChild(tr);
         if (prefill.qty && prefill.price) recalcMatEntry(rid);
+
         const inputs = tr.querySelectorAll('input, select');
         inputs.forEach((inp, idx) => {
             inp.addEventListener('keydown', (e) => {
@@ -1108,7 +1209,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 if (idx === inputs.length - 1) {
                     window.addMaterialEntryRow();
-                    setTimeout(() => { const rows = matEntryBody.querySelectorAll('tr'); rows[rows.length-1]?.querySelector('select')?.focus(); }, 30);
+                    setTimeout(() => {
+                        const rows = matEntryBody.querySelectorAll('tr');
+                        const lastRow = rows[rows.length - 1];
+                        const firstInput = lastRow?.querySelector('input, select');
+                        firstInput?.focus();
+                    }, 30);
                 } else { inputs[idx+1]?.focus(); }
             });
         });
@@ -1117,10 +1223,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.onMatEntrySelect = function(rid) {
         const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`); if (!row) return;
-        const opt = row.querySelector('.mat-material').options[row.querySelector('.mat-material').selectedIndex];
+        const sel = row.querySelector('.mat-material');
+        if (!sel) return;
+        const opt = sel.options[sel.selectedIndex];
         if (parseFloat(opt?.dataset?.price||0)) row.querySelector('.mat-uprice').value = parseFloat(opt.dataset.price).toFixed(2);
         recalcMatEntry(rid);
     };
+
     window.recalcMatEntry = function(rid) {
         const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`); if (!row) return;
         const amt = (parseFloat(row.querySelector('.mat-qty').value)||0) * (parseFloat(row.querySelector('.mat-uprice').value)||0);
@@ -1129,10 +1238,12 @@ document.addEventListener('DOMContentLoaded', function() {
         el.classList.toggle('zero', amt <= 0);
         updateMatGrandTotal();
     };
+
     window.removeMatEntryRow = function(rid) {
         matEntryBody.querySelector(`tr[data-rid="${rid}"]`)?.remove();
         updateMatGrandTotal();
     };
+
     function updateMatGrandTotal() {
         let t = 0;
         matEntryBody.querySelectorAll('.amount-cell').forEach(el => { const v=parseFloat(el.textContent); if(!isNaN(v)) t+=v; });
@@ -1142,54 +1253,107 @@ document.addEventListener('DOMContentLoaded', function() {
     window.openMaterialAssign = function(taskId) {
         currentAssigningTaskId = taskId;
         const { found, level, parentDocId, subDocId } = findPathFor(taskId);
-        currentAssigningDocId = found?.id || taskId;
+        currentAssigningDocId       = found?.id || taskId;
         currentAssigningTaskLevel   = level || 'main';
         currentAssigningParentDocId = parentDocId;
         currentAssigningSubDocId    = subDocId;
-        currentTaskContext = { taskId: found?.taskId||'', taskLine: found?.taskLine||'', taskDescription: found?.taskDescription||'', location: found?.location||'' };
+        currentTaskContext = {
+            taskId: found?.taskId||'', taskLine: found?.taskLine||'',
+            taskDescription: found?.taskDescription||'', location: found?.location||''
+        };
         document.getElementById('taskNameMaterial').textContent = found?.taskDescription || 'Task';
         document.getElementById('ctxTaskId').textContent        = currentTaskContext.taskId || '—';
         document.getElementById('ctxLine').textContent          = currentTaskContext.taskLine || '—';
         document.getElementById('ctxDescription').textContent   = currentTaskContext.taskDescription || '—';
         document.getElementById('ctxLocation').textContent      = currentTaskContext.location || '—';
-        matEntryBody.innerHTML = ''; matStockWarning.style.display = 'none'; matRowCounter = 0;
-        loadResources().then(() => { window.addMaterialEntryRow(); materialModal.classList.add('active'); setTimeout(() => matEntryBody.querySelector('select')?.focus(), 80); });
+        matEntryBody.innerHTML = '';
+        matStockWarning.style.display = 'none';
+        matRowCounter = 0;
+        // Reset to inventory mode on open
+        currentPurchaseMode = 'inventory';
+        setPurchaseMode('inventory');
+        loadResources().then(() => {
+            window.addMaterialEntryRow();
+            materialModal.classList.add('active');
+            setTimeout(() => matEntryBody.querySelector('select,input')?.focus(), 80);
+        });
     };
     window.closeMaterialAllocModal = function() { materialModal.classList.remove('active'); currentAssigningTaskId = null; };
 
     window.assignMaterials = async function() {
         matStockWarning.style.display = 'none';
         const entries = [];
+
         for (const row of matEntryBody.querySelectorAll('tr')) {
-            const matId = row.querySelector('.mat-material')?.value; if (!matId) continue;
-            const qty   = parseFloat(row.querySelector('.mat-qty').value);
-            const price = parseFloat(row.querySelector('.mat-uprice').value);
-            if (!qty||qty<=0)   { alert('Enter a valid quantity.'); return; }
-            if (!price||price<=0) { alert('Enter a valid unit price.'); return; }
-            const mat = materials.find(m => m.docId === matId); if (!mat) continue;
-            if (qty > +(mat.quantity||0)) {
-                matStockWarning.innerHTML = `⚠️ <b>${mat.materialName||mat.name}</b>: only ${mat.quantity} in stock, you entered ${qty}.`;
-                matStockWarning.style.display = 'block'; return;
+            const mode = row.dataset.mode || 'inventory';
+            const qty   = parseFloat(row.querySelector('.mat-qty')?.value);
+            const price = parseFloat(row.querySelector('.mat-uprice')?.value);
+
+            if (!qty  || qty   <= 0) { alert('Enter a valid quantity for all rows.');   return; }
+            if (!price|| price <= 0) { alert('Enter a valid unit price for all rows.'); return; }
+
+            const assignedAt = row.querySelector('.mat-assignedAt')?.value
+                ? Timestamp.fromDate(new Date(row.querySelector('.mat-assignedAt').value))
+                : Timestamp.now();
+            const desc     = row.querySelector('.mat-desc')?.value.trim() || '';
+            const location = row.querySelector('.mat-location')?.value.trim() || '';
+
+            if (mode === 'inventory') {
+                // ── Inventory row ──
+                const matId = row.querySelector('.mat-material')?.value;
+                if (!matId) { alert('Select a material from inventory for all inventory rows.'); return; }
+                const mat = materials.find(m => m.docId === matId);
+                if (!mat) continue;
+                if (qty > +(mat.quantity||0)) {
+                    matStockWarning.innerHTML = `⚠️ <b>${mat.materialName||mat.name}</b>: only ${mat.quantity} in stock, you entered ${qty}.`;
+                    matStockWarning.style.display = 'block';
+                    return;
+                }
+                entries.push({ mode: 'inventory', matId, mat, qty, price, cost: qty*price, desc, location, assignedAt });
+
+            } else {
+                // ── Direct purchase row ──
+                const materialName = row.querySelector('.mat-material-name')?.value.trim();
+                if (!materialName) { alert('Enter a material name / supplier for all direct purchase rows.'); return; }
+                entries.push({ mode: 'direct', materialName, qty, price, cost: qty*price, desc, location, assignedAt });
             }
-            const assignedAt = row.querySelector('.mat-assignedAt').value ? Timestamp.fromDate(new Date(row.querySelector('.mat-assignedAt').value)) : Timestamp.now();
-            entries.push({ matId, mat, qty, price, cost: qty*price, desc: row.querySelector('.mat-desc').value.trim(), location: row.querySelector('.mat-location').value.trim(), assignedAt });
         }
+
         if (!entries.length) { alert('Add at least one material row.'); return; }
+
         try {
-            for (const { matId, mat, qty, price, cost, desc, location, assignedAt } of entries) {
-                await updateDoc(doc(db,"materials",matId), { quantity: (+(mat.quantity||0)) - qty });
-                await addDoc(collection(db,"materialsUsage"), {
-                    taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
-                    taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
-                    taskDescription: desc||currentTaskContext.taskDescription||'',
-                    materialId: matId, materialName: mat.materialName||mat.name,
-                    quantity: qty, unitPrice: price, cost,
-                    location: location||currentTaskContext.location||'',
-                    assignedAt, projectId, savedAt: Timestamp.now(), reversed: false
-                });
+            for (const e of entries) {
+                if (e.mode === 'inventory') {
+                    // Deduct stock
+                    await updateDoc(doc(db,"materials",e.matId), { quantity: (+(e.mat.quantity||0)) - e.qty });
+                    await addDoc(collection(db,"materialsUsage"), {
+                        taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                        taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
+                        taskDescription: e.desc||currentTaskContext.taskDescription||'',
+                        materialId: e.matId, materialName: e.mat.materialName||e.mat.name,
+                        quantity: e.qty, unitPrice: e.price, cost: e.cost,
+                        location: e.location||currentTaskContext.location||'',
+                        assignedAt: e.assignedAt, projectId,
+                        savedAt: Timestamp.now(), reversed: false,
+                        purchaseType: 'inventory'
+                    });
+                } else {
+                    // Direct purchase — no stock deduction
+                    await addDoc(collection(db,"materialsUsage"), {
+                        taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                        taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
+                        taskDescription: e.desc||currentTaskContext.taskDescription||'',
+                        materialId: null, materialName: e.materialName,
+                        quantity: e.qty, unitPrice: e.price, cost: e.cost,
+                        location: e.location||currentTaskContext.location||'',
+                        assignedAt: e.assignedAt, projectId,
+                        savedAt: Timestamp.now(), reversed: false,
+                        purchaseType: 'direct'
+                    });
+                }
             }
             closeMaterialAllocModal();
-        } catch(e) { alert('Error saving: ' + e.message); }
+        } catch(err) { alert('Error saving: ' + err.message); }
     };
 
     // ══════════════════════════════════════
