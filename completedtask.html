@@ -3,1211 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Completed Tasks | Task Management</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            /* Color Palette */
-            --primary: #4361ee;
-            --primary-light: #4cc9f0;
-            --primary-dark: #3a0ca3;
-            --success: #4cc9f0;
-            --danger: #f72585;
-            --warning: #f8961e;
-            --info: #4895ef;
-            --gray-100: #f8f9fa;
-            --gray-200: #e9ecef;
-            --gray-300: #dee2e6;
-            --gray-400: #ced4da;
-            --gray-500: #adb5bd;
-            --gray-600: #6c757d;
-            --gray-700: #495057;
-            --gray-800: #343a40;
-            --gray-900: #212529;
-            
-            /* Spacing */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 32px;
-            
-            /* Typography */
-            --font-size-sm: 12px;
-            --font-size-md: 14px;
-            --font-size-lg: 16px;
-            --font-size-xl: 20px;
-            --font-size-xxl: 24px;
-            
-            /* Border */
-            --border-radius-sm: 4px;
-            --border-radius-md: 8px;
-            --border-radius-lg: 12px;
-            
-            /* Shadows */
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-            
-            /* Transitions */
-            --transition-fast: 0.15s ease;
-            --transition-medium: 0.3s ease;
-            --transition-slow: 0.5s ease;
-        }
+    <title>Completed Tasks</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #d3dfed; color: #0a1c2f; height: 100vh; overflow: hidden;
+    }
+    .page { height: 100vh; width: 100vw; display: flex; flex-direction: column; background: white; overflow: hidden; }
 
-        /* Dark Mode Colors */
-        .dark-mode {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --surface-hover: #2a2a2a;
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255,255,255,0.7);
-            --text-disabled: rgba(255,255,255,0.5);
-            --divider-color: rgba(255,255,255,0.12);
-            --input-bg: #2d2d2d;
-            --input-border: #444;
-        }
+    /* ── HEADER ── */
+    .page-header {
+        padding: 6px 14px; background: #0a1c2f; color: white;
+        border-bottom: 2px solid #1f3d62; display: flex; align-items: center;
+        justify-content: space-between; flex-shrink: 0; min-height: 48px;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-left h2 { font-size: 14px; font-weight: 600; color: white; }
+    .back-link {
+        color: white; text-decoration: none; padding: 0.3rem 0.9rem;
+        border: 1px solid rgba(255,255,255,0.3); border-radius: 30px; font-size: 0.72rem;
+        font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;
+    }
+    .back-link:hover { background: rgba(255,255,255,0.1); border-color: white; }
 
-        /* Light Mode Colors */
-        .light-mode {
-            --bg-color: #f5f7fa;
-            --surface-color: #ffffff;
-            --surface-hover: #f8f9fa;
-            --text-primary: #212529;
-            --text-secondary: #495057;
-            --text-disabled: #adb5bd;
-            --divider-color: #e9ecef;
-            --input-bg: #ffffff;
-            --input-border: #ced4da;
-        }
+    /* ── SUMMARY STRIP ── */
+    .summary-strip {
+        display: flex; gap: 10px; padding: 6px 14px;
+        background: #f2f6fc; border-bottom: 1px solid #b3c7e0;
+        flex-shrink: 0; flex-wrap: wrap; align-items: center;
+    }
+    .stat-pill {
+        background: white; border: 1px solid #b3c7e0; border-radius: 30px;
+        padding: 3px 12px; font-size: 0.7rem; font-weight: 600; color: #0a1c2f; white-space: nowrap;
+    }
+    .stat-pill span { color: #059669; font-weight: 700; }
 
-        /* Base Styles */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    /* ── FILTER BAR ── */
+    .filter-bar {
+        padding: 6px 14px; background: #f2f6fc; border-bottom: 1px solid #b3c7e0;
+        display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex-shrink: 0;
+    }
+    .search-box {
+        display: flex; align-items: center; background: white;
+        border: 1px solid #b3c7e0; border-radius: 30px; padding: 0.2rem 0.8rem;
+    }
+    .search-box input { border: none; padding: 2px 4px; width: 180px; outline: none; font-size: 11px; background: transparent; color: #0a1c2f; }
+    .search-box input::placeholder { color: #7f96b3; }
+    .filter-label { font-size: 11px; font-weight: 600; color: #1f3d62; }
+    .filter-select {
+        padding: 0.25rem 0.7rem; font-size: 0.7rem; border-radius: 30px;
+        border: 1px solid #b3c7e0; background: white; color: #0a1c2f; font-weight: 500;
+    }
+    .filter-select:focus { outline: none; border-color: #2b4a73; }
 
-        body {
-            font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            line-height: 1.6;
-            transition: background-color var(--transition-medium), color var(--transition-medium);
-            padding: 0;
-        }
+    /* ── SCROLL AREA ── */
+    .scroll-area {
+        flex: 1; overflow: auto; background: #f0f4fa;
+        scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa;
+        padding: 12px 14px;
+    }
+    .scroll-area::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; }
 
-        .container {
-            margin: 0 auto;
-            padding: var(--space-md);
-           
-        }
+    /* ── GROUP CARD ── */
+    .group-card {
+        background: white; border-radius: 10px; border: 1px solid #b3c7e0;
+        box-shadow: 0 2px 8px rgba(10,28,47,0.07); margin-bottom: 16px; overflow: hidden;
+    }
 
-        /* Header Styles */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-xl);
-            padding-bottom: var(--space-md);
-            border-bottom: 1px solid var(--divider-color);
-        }
+    /* Group heading — main task name */
+    .group-heading {
+        background: #0a1c2f; color: white;
+        padding: 8px 14px; display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 8px;
+    }
+    .group-heading-left { display: flex; align-items: center; gap: 10px; }
+    .group-title { font-size: 0.85rem; font-weight: 700; }
+    .group-taskid {
+        background: rgba(255,255,255,0.15); padding: 2px 8px;
+        border-radius: 20px; font-size: 0.65rem; font-weight: 600; color: #d4e2f2;
+    }
+    .group-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+    .group-badge {
+        background: rgba(255,255,255,0.12); color: white;
+        padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 600;
+    }
+    .group-badge.green { background: rgba(5,150,105,0.5); }
 
-        .page-title {
-            font-size: var(--font-size-xxl);
-            font-weight: 600;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
+    /* Main task status banner (if main task itself is not completed) */
+    .main-status-banner {
+        padding: 4px 14px; font-size: 0.68rem; font-weight: 600;
+        display: flex; align-items: center; gap: 6px;
+        background: #fef9e7; color: #92400e; border-bottom: 1px solid #fde68a;
+    }
+    .main-status-banner.ongoing { background: #eff6ff; color: #1e40af; border-bottom-color: #bfdbfe; }
+    .main-status-banner.pending { background: #f9fafb; color: #6b7280; border-bottom-color: #e5e7eb; }
 
-        .controls {
-            display: flex;
-            gap: var(--space-sm);
-            align-items: center;
-        }
+    /* ── TABLE ── */
+    .task-table-wrap { overflow-x: auto; }
+    .task-table {
+        width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1000px;
+    }
+    .task-table th {
+        background: #d4e2f2; font-weight: 700; font-size: 0.62rem; padding: 7px 8px;
+        border: 1px solid #9bb1cc; position: sticky; top: 0; z-index: 5;
+        white-space: nowrap; text-align: center; color: #0a1c2f; border-bottom: 2px solid #1f3d62;
+    }
+    .task-table td {
+        padding: 6px 8px; border: 1px solid #c7d6ec; white-space: nowrap;
+        vertical-align: middle; color: #0a1c2f; font-size: 0.68rem;
+    }
+    .task-table tbody tr:hover td { background: #e3ecf7; }
 
-        /* Button Styles */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-xs);
-            padding: var(--space-sm) var(--space-md);
-            border-radius: var(--border-radius-md);
-            font-weight: 500;
-            font-size: var(--font-size-md);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            border: none;
-            text-decoration: none;
-            white-space: nowrap;
-        }
+    /* Row types */
+    .row-sub    td { background: #f8fbff; }
+    .row-subsub td { background: #f0f4fa; }
+    .row-subsub td:first-child { padding-left: 36px; }
 
-        .btn i {
-            font-size: var(--font-size-md);
-        }
+    .task-id-cell { font-size: 0.6rem; color: #4a6a8a; font-weight: 600; }
 
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
+    .status-badge {
+        display: inline-block; padding: 2px 7px; border-radius: 20px;
+        font-size: 0.58rem; font-weight: 700; border: 1px solid;
+    }
+    .status-COMPLETED { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+    .status-ONGOING   { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .status-PENDING   { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
 
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-sm);
-        }
+    .cost-cell  { text-align: right; font-weight: 600; color: #059669; }
+    .total-cell { text-align: right; font-weight: 700; color: #0a1c2f; }
+    .hrs-cell   { text-align: center; color: #d97706; font-weight: 600; }
 
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--divider-color);
-            color: var(--text-primary);
-        }
+    /* Prefix arrows */
+    .task-prefix { color: #4a6a8a; font-size: 0.7rem; margin-right: 4px; }
 
-        .btn-outline:hover {
-            background-color: var(--surface-hover);
-        }
+    /* Empty state */
+    .empty-state {
+        text-align: center; padding: 60px; color: #7f96b3; font-size: 0.8rem;
+    }
+    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; color: #b3c7e0; }
 
-        .btn-success {
-            background-color: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #38b2ac;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* Project Info */
-        .project-info {
-            background-color: var(--surface-color);
-            padding: var(--space-md);
-            border-radius: var(--border-radius-md);
-            margin-bottom: var(--space-lg);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .project-name {
-            font-size: var(--font-size-xl);
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: var(--space-xs);
-        }
-
-        .project-details {
-            display: flex;
-            gap: var(--space-lg);
-            flex-wrap: wrap;
-            color: var(--text-secondary);
-            font-size: var(--font-size-md);
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--space-md);
-            margin-bottom: var(--space-xl);
-        }
-
-        .stat-card {
-            background-color: var(--surface-color);
-            padding: var(--space-lg);
-            border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-md);
-            text-align: center;
-            border-left: 4px solid var(--success);
-        }
-
-        .stat-value {
-            font-size: var(--font-size-xxl);
-            font-weight: 700;
-            color: var(--success);
-            margin-bottom: var(--space-xs);
-        }
-
-        .stat-label {
-            font-size: var(--font-size-md);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* Filters */
-        .filters-bar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--space-md);
-            padding: var(--space-md);
-            background: var(--surface-color);
-            border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: var(--space-lg);
-            border: 1px solid var(--divider-color);
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .filter-label {
-            font-size: var(--font-size-md);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .filter-select {
-            background-color: var(--input-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--input-border);
-            border-radius: var(--border-radius-md);
-            padding: var(--space-xs) var(--space-sm);
-            font-size: var(--font-size-md);
-            transition: all var(--transition-fast);
-        }
-
-        .filter-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
-        }
-
-        .search-container {
-            display: flex;
-            align-items: center;
-            background: var(--input-bg);
-            border-radius: var(--border-radius-md);
-            padding: var(--space-xs) var(--space-sm);
-            box-shadow: var(--shadow-sm);
-            flex: 1 1 300px;
-            max-width: 400px;
-            border: 1px solid var(--input-border);
-        }
-
-        .search-input {
-            border: none;
-            background: transparent;
-            padding: var(--space-xs);
-            width: 100%;
-            outline: none;
-            color: var(--text-primary);
-            font-size: var(--font-size-md);
-        }
-
-        /* Table Styles */
-        .table-container {
-            background-color: var(--surface-color);
-            border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-md);
-            overflow: hidden;
-            margin-bottom: var(--space-xl);
-        }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        .completed-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: var(--font-size-md);
-        }
-
-        .completed-table thead {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .completed-table th {
-            padding: var(--space-md);
-            text-align: left;
-            font-weight: 600;
-            font-size: var(--font-size-sm);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .completed-table td {
-            padding: var(--space-md);
-            border-bottom: 1px solid var(--divider-color);
-            vertical-align: middle;
-        }
-
-        .completed-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .completed-table tr:hover {
-            background-color: var(--surface-hover);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: var(--space-xs) var(--space-sm);
-            border-radius: var(--border-radius-sm);
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-completed {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-            border: 1px solid #10b981;
-        }
-
-        .cost-badge {
-            display: inline-block;
-            padding: var(--space-xs) var(--space-sm);
-            border-radius: var(--border-radius-sm);
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            background: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
-            border: 1px solid #3b82f6;
-        }
-
-        .text-truncate {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        /* Empty State */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-xl);
-            text-align: center;
-            background-color: var(--surface-color);
-            border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-md);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-md);
-        }
-
-        .empty-state-text {
-            color: var(--text-secondary);
-            margin-bottom: var(--space-md);
-            max-width: 400px;
-        }
-
-        /* Total Row */
-        .total-row {
-            font-weight: bold;
-            background-color: var(--surface-hover) !important;
-        }
-
-        .total-row td {
-            border-top: 2px solid var(--divider-color);
-            font-weight: 600;
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .progress-bar {
-            flex-grow: 1;
-            height: 6px;
-            background-color: var(--input-bg);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--success), #10b981);
-            width: 100%;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: var(--space-md);
-            }
-            
-            .controls {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .filters-bar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: var(--space-sm);
-            }
-            
-            .search-container {
-                max-width: 100%;
-            }
-            
-            .project-details {
-                flex-direction: column;
-                gap: var(--space-sm);
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Print Styles */
-        @media print {
-            .btn, .filters-bar, .stats-grid {
-                display: none;
-            }
-            
-            .table-container {
-                box-shadow: none;
-                border: 1px solid #000;
-            }
-        }
-    </style>
+    /* Loading */
+    .loading { text-align: center; padding: 60px; color: #2b4a73; font-style: italic; font-size: 0.8rem; }
+</style>
 </head>
-<body class="dark-mode">
-    <div class="container">
-        <div class="header">
-            <h1 class="page-title">
-                <i class="fas fa-check-circle"></i> Completed Tasks
-            </h1>
-            <div class="controls">
-                <a href="#" class="btn btn-outline" id="backBtn">
-                    <i class="fas fa-arrow-left"></i> Back to Tasks
-                </a>
-                <button class="btn btn-success" id="printBtn">
-                    <i class="fas fa-print"></i> Print Report
-                </button>
-                <button class="btn btn-outline" id="toggleModeBtn">
-                    <i class="fas fa-moon"></i> Light Mode
-                </button>
-            </div>
+<body>
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <div class="header-left">
+            <i class="fas fa-check-circle" style="font-size:16px; color:#4ade80;"></i>
+            <h2>Completed Tasks — <span id="projectTitle">Project</span></h2>
         </div>
-        
-        <div class="project-info" id="projectInfo">
-            <div class="project-name" id="projectName">Loading project...</div>
-            <div class="project-details">
-                <span><i class="fas fa-user"></i> Project Manager: Christopher Chishela</span>
-                <span><i class="fas fa-user-tie"></i> Supervisor: Orscar Mushimbi</span>
-                <span><i class="fas fa-calendar"></i> Report Date: <span id="reportDate">Loading...</span></span>
-            </div>
+        <a href="javascript:history.back()" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary-strip">
+        <div class="stat-pill">✅ Groups: <span id="statGroups">—</span></div>
+        <div class="stat-pill">📋 Completed Tasks: <span id="statCompleted">—</span></div>
+        <div class="stat-pill">⏱ Total HRS: <span id="statHrs">—</span></div>
+        <div class="stat-pill">💰 Total Cost: <span id="statCost">—</span></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+        <div class="search-box">
+            <i class="fas fa-search" style="color:#7f96b3; font-size:10px;"></i>
+            <input type="text" id="searchInput" placeholder="Search tasks, description...">
         </div>
-        
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="stat-value" id="totalCompleted">0</div>
-                <div class="stat-label">Total Completed Tasks</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalHours">0</div>
-                <div class="stat-label">Total Hours Worked</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="totalCost">ZMW 0</div>
-                <div class="stat-label">Total Project Cost</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="completionRate">0%</div>
-                <div class="stat-label">Overall Completion</div>
-            </div>
-        </div>
-        
-        <div class="filters-bar">
-            <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search completed tasks...">
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">Category:</span>
-                <select id="categoryFilter" class="filter-select">
-                    <option value="">All Categories</option>
-                    <option value="general">General Work</option>
-                    <option value="electrical">Electrical Maintenance</option>
-                    <option value="plumbing">Plumbing Maintenance</option>
-                    <option value="carpentry">Carpentry Maintenance</option>
-                    <option value="welding">Welding Maintenance</option>
-                    <option value="networking">Networking & IT</option>
-                    <option value="gardening">Plants & Gardening</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">Month:</span>
-                <select id="monthFilter" class="filter-select">
-                    <option value="">All Months</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">Year:</span>
-                <select id="yearFilter" class="filter-select">
-                    <option value="">All Years</option>
-                    <option value="2023">2023</option>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            <div class="table-responsive">
-                <table class="completed-table" id="completedTable">
-                    <thead>
-                        <tr>
-                            <th>TASK ID</th>
-                            <th>TASK LINE</th>
-                            <th>DESCRIPTION</th>
-                            <th>ASSIGNED</th>
-                            <th>STATUS</th>
-                            <th>START DATE</th>
-                            <th>END DATE</th>
-                            <th>GIVE TARGET</th>
-                            <th>DURATION (Hrs)</th>
-                            <th>MATERIAL COST</th>
-                            <th>MAN COST</th>
-                            <th>TOTAL COST</th>
-                            <th>LOCATION</th>
-                        </tr>
-                    </thead>
-                    <tbody id="completedTasksBody">
-                        <tr>
-                            <td colspan="13" class="empty-state">
-                                <i class="fas fa-spinner fa-spin empty-state-icon"></i>
-                                <p class="empty-state-text">Loading completed tasks...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr class="total-row">
-                            <td colspan="8" style="text-align: right; font-weight: bold;">TOTALS:</td>
-                            <td id="totalDuration">0</td>
-                            <td id="totalMaterialCost">ZMW 0</td>
-                            <td id="totalManCost">ZMW 0</td>
-                            <td id="grandTotalCost">ZMW 0</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+        <span class="filter-label">Main Task:</span>
+        <select id="groupFilter" class="filter-select">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="scroll-area" id="scrollArea">
+        <div class="loading" id="loadingState">
+            <i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem; display:block; margin-bottom:8px;"></i>
+            Loading completed tasks...
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-            authDomain: "project-task-588c4.firebaseapp.com",
-            projectId: "project-task-588c4",
-            storageBucket: "project-task-588c4.appspot.com",
-            messagingSenderId: "411882772509",
-            appId: "1:411882772509:web:08d613186c101a99f38ef4",
-            measurementId: "G-JMFLFYEM0F"
-        };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import {
+    getFirestore, collection, query, where, onSnapshot, getDocs
+} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+const firebaseConfig = {
+    apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+    authDomain: "project-task-588c4.firebaseapp.com",
+    projectId: "project-task-588c4",
+    storageBucket: "project-task-588c4.appspot.com",
+    messagingSenderId: "411882772509",
+    appId: "1:411882772509:web:08d613186c101a99f38ef4"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
 
-        // DOM Elements
-        const toggleModeBtn = document.getElementById('toggleModeBtn');
-        const backBtn = document.getElementById('backBtn');
-        const printBtn = document.getElementById('printBtn');
-        const searchInput = document.getElementById('searchInput');
-        const categoryFilter = document.getElementById('categoryFilter');
-        const monthFilter = document.getElementById('monthFilter');
-        const yearFilter = document.getElementById('yearFilter');
-        const completedTasksBody = document.getElementById('completedTasksBody');
-        const projectInfo = document.getElementById('projectInfo');
-        const projectName = document.getElementById('projectName');
-        const reportDate = document.getElementById('reportDate');
-        const body = document.body;
+const urlParams  = new URLSearchParams(window.location.search);
+const projectId  = urlParams.get('id');
+if (!projectId) alert('Project ID missing!');
 
-        // Stats elements
-        const totalCompleted = document.getElementById('totalCompleted');
-        const totalHours = document.getElementById('totalHours');
-        const totalCost = document.getElementById('totalCost');
-        const completionRate = document.getElementById('completionRate');
+document.getElementById('projectTitle').textContent = `Project ${projectId?.slice(0,8) || ''}...`;
 
-        // Total elements
-        const totalDuration = document.getElementById('totalDuration');
-        const totalMaterialCost = document.getElementById('totalMaterialCost');
-        const totalManCost = document.getElementById('totalManCost');
-        const grandTotalCost = document.getElementById('grandTotalCost');
+const scrollArea   = document.getElementById('scrollArea');
+const loadingState = document.getElementById('loadingState');
+const searchInput  = document.getElementById('searchInput');
+const groupFilter  = document.getElementById('groupFilter');
 
-        // State
-        let projectId = null;
-        let projectData = null;
-        let allCompletedTasks = [];
-        let allTasks = [];
+let allTasks      = [];   // full task tree
+let taskAssigned  = {};   // taskDocId → "John, Jane" (first names from locationHistory)
 
-        // Category definitions
-        const categories = {
-            'general': 'General Work',
-            'electrical': 'Electrical Maintenance',
-            'plumbing': 'Plumbing Maintenance',
-            'carpentry': 'Carpentry Maintenance',
-            'welding': 'Welding Maintenance',
-            'networking': 'Networking & IT Maintenance',
-            'gardening': 'Plants & Gardening Maintenance'
-        };
+const fmt     = n => (+(n||0)).toFixed(2);
+const fmtDate = d => d ? new Date(d.toDate?d.toDate():d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
 
-        // Get project ID from URL
-        function getProjectIdFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            
-            if (!id) {
-                alert("Project ID is missing from URL. Please access this page from the tasks page.");
-                window.location.href = 'dashboard.html';
-                return null;
-            }
-            
-            return id;
+// ── Load assigned names from locationHistory ──
+async function loadAssignedNames() {
+    try {
+        const snap = await getDocs(query(collection(db,"locationHistory"), where("projectId","==",projectId)));
+        const nameMap = {};
+        snap.docs.forEach(d => {
+            const x = d.data(); if (x.reversed) return;
+            const tid = x.taskId || x.taskDocId; if (!tid) return;
+            if (!nameMap[tid]) nameMap[tid] = new Set();
+            const first = (x.employeeName||'').trim().split(' ')[0];
+            if (first) nameMap[tid].add(first);
+        });
+        Object.keys(nameMap).forEach(tid => { taskAssigned[tid] = [...nameMap[tid]].join(', '); });
+    } catch(e) { console.warn('loadAssignedNames:', e); }
+}
+
+// ── Load full task tree ──
+async function loadTaskTree() {
+    allTasks = [];
+    const snap = await getDocs(query(collection(db,"projectTasks"), where("projectId","==",projectId)));
+
+    const promises = snap.docs.map(async mainDoc => {
+        const task = { id: mainDoc.id, ...mainDoc.data(), subTasks: [] };
+        const subSnap = await getDocs(collection(db,"projectTasks",mainDoc.id,"subtasks"));
+        const subPromises = subSnap.docs.map(async subDoc => {
+            const sub = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
+            const ssSnap = await getDocs(collection(db,"projectTasks",mainDoc.id,"subtasks",subDoc.id,"subsubtasks"));
+            sub.subSubtasks = ssSnap.docs.map(ssDoc => ({ id: ssDoc.id, ...ssDoc.data() }));
+            return sub;
+        });
+        task.subTasks = await Promise.all(subPromises);
+        return task;
+    });
+
+    allTasks = await Promise.all(promises);
+    allTasks.sort((a,b) => (a.taskLine||0)-(b.taskLine||0));
+}
+
+// ── Build group filter dropdown ──
+function buildGroupFilter() {
+    const sel = groupFilter;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All</option>';
+    allTasks.forEach(t => {
+        const hasCompleted = hasAnyCompleted(t);
+        if (!hasCompleted) return;
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.taskDescription || t.taskId || t.id;
+        if (opt.value === cur) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function hasAnyCompleted(task) {
+    if (task.status === 'COMPLETED') return true;
+    for (const sub of (task.subTasks||[])) {
+        if (sub.status === 'COMPLETED') return true;
+        for (const ss of (sub.subSubtasks||[])) {
+            if (ss.status === 'COMPLETED') return true;
         }
+    }
+    return false;
+}
 
-        // Toggle dark/light mode
-        toggleModeBtn.addEventListener('click', function() {
-            body.classList.toggle('light-mode');
-            if (body.classList.contains('light-mode')) {
-                this.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
-                localStorage.setItem('theme', 'light');
-            } else {
-                this.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
-                localStorage.setItem('theme', 'dark');
+// ── Gather completed items for a task group ──
+// Returns array of row objects: { task, level, parentTask, parentSub }
+function getCompletedRows(task) {
+    const rows = [];
+    // Main task itself if COMPLETED
+    if (task.status === 'COMPLETED') {
+        rows.push({ item: task, level: 'main', parentTask: null, parentSub: null });
+    }
+    for (const sub of (task.subTasks||[])) {
+        if (sub.status === 'COMPLETED') {
+            rows.push({ item: sub, level: 'sub', parentTask: task, parentSub: null });
+        }
+        for (const ss of (sub.subSubtasks||[])) {
+            if (ss.status === 'COMPLETED') {
+                rows.push({ item: ss, level: 'subsub', parentTask: task, parentSub: sub });
             }
+        }
+    }
+    return rows;
+}
+
+// ── Render everything ──
+function render() {
+    const search  = searchInput.value.toLowerCase().trim();
+    const selGroup = groupFilter.value;
+
+    // Groups = main tasks that have at least one completed item
+    const groups = allTasks.filter(t => {
+        if (selGroup && t.id !== selGroup) return false;
+        return hasAnyCompleted(t);
+    });
+
+    if (groups.length === 0) {
+        scrollArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                No completed tasks found for this project.
+            </div>`;
+        updateStats([], 0);
+        return;
+    }
+
+    let totalCompleted = 0, totalHrs = 0, totalCost = 0;
+    const cards = [];
+
+    groups.forEach(task => {
+        let rows = getCompletedRows(task);
+
+        // Apply search
+        if (search) {
+            rows = rows.filter(r => {
+                const s = [r.item.taskId, r.item.taskDescription, r.item.location, r.item.assignedTo, taskAssigned[r.item.id]].filter(Boolean).join(' ').toLowerCase();
+                return s.includes(search);
+            });
+        }
+        if (!rows.length) return;
+
+        totalCompleted += rows.length;
+        rows.forEach(r => {
+            totalHrs  += parseFloat(r.item.totalHours||r.item._hours||0);
+            totalCost += (parseFloat(r.item.matCost||r.item._matCost||0) + parseFloat(r.item.labCost||r.item._labCost||0));
         });
 
-        // Check for saved theme preference
-        if (localStorage.getItem('theme') === 'light') {
-            body.classList.add('light-mode');
-            toggleModeBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
-        } else {
-            toggleModeBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+        // Build card HTML
+        const mainStatus = task.status || 'PENDING';
+        const mainStatusClass = mainStatus === 'ONGOING' ? 'ongoing' : mainStatus === 'COMPLETED' ? '' : 'pending';
+        const completedCount = rows.length;
+
+        let bannerHtml = '';
+        if (mainStatus !== 'COMPLETED') {
+            bannerHtml = `
+                <div class="main-status-banner ${mainStatusClass}">
+                    <i class="fas fa-info-circle"></i>
+                    Main task is <strong>${mainStatus}</strong> — showing completed sub-tasks only
+                </div>`;
         }
 
-        // Set back button URL
-        backBtn.href = `Projectworks.html?id=${projectId}`;
+        let tableRows = '';
+        rows.forEach(({ item, level }) => {
+            const mat   = parseFloat(item.matCost||item._matCost||0);
+            const lab   = parseFloat(item.labCost||item._labCost||0);
+            const total = mat + lab;
+            const hrs   = parseFloat(item.totalHours||item._hours||0);
+            const assigned = taskAssigned[item.id] || item.assignedTo || '—';
+            const descPrefix = level === 'sub' ? '<span class="task-prefix">↪</span>' : level === 'subsub' ? '<span class="task-prefix">↪↪</span>' : '';
+            const rowClass   = level === 'sub' ? 'row-sub' : level === 'subsub' ? 'row-subsub' : '';
 
-        // Print functionality
-        printBtn.addEventListener('click', function() {
-            window.print();
+            tableRows += `
+                <tr class="${rowClass}">
+                    <td class="task-id-cell">${item.taskId||''}</td>
+                    <td style="text-align:center">${item.taskLine||''}</td>
+                    <td style="${level==='subsub'?'padding-left:35px':level==='sub'?'padding-left:20px':''}">${descPrefix}${item.taskDescription||'—'}</td>
+                    <td>${assigned}</td>
+                    <td><span class="status-badge status-${item.status||'PENDING'}">${item.status||'PENDING'}</span></td>
+                    <td>${fmtDate(item.startDate)}</td>
+                    <td>${fmtDate(item.endDate)}</td>
+                    <td class="hrs-cell">${hrs>0?hrs:''}</td>
+                    <td class="cost-cell">${mat>0?fmt(mat):''}</td>
+                    <td class="cost-cell">${lab>0?fmt(lab):''}</td>
+                    <td class="total-cell">${total>0?fmt(total):''}</td>
+                    <td>${item.location||''}</td>
+                </tr>`;
         });
 
-        // Format date
-        function formatDate(dateString) {
-            if (!dateString) return 'Not set';
-            const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-            });
-        }
+        cards.push(`
+            <div class="group-card">
+                <div class="group-heading">
+                    <div class="group-heading-left">
+                        <span class="group-taskid">${task.taskId||''}</span>
+                        <span class="group-title">${task.taskDescription || 'Unnamed Task'}</span>
+                    </div>
+                    <div class="group-meta">
+                        <span class="group-badge green"><i class="fas fa-check"></i> ${completedCount} completed</span>
+                        <span class="group-badge status-badge status-${mainStatus}" style="font-size:0.62rem;">${mainStatus}</span>
+                    </div>
+                </div>
+                ${bannerHtml}
+                <div class="task-table-wrap">
+                    <table class="task-table">
+                        <thead>
+                            <tr>
+                                <th>TASK ID</th>
+                                <th>LINE</th>
+                                <th>DESCRIPTION</th>
+                                <th>ASSIGNED</th>
+                                <th>STATUS</th>
+                                <th>START</th>
+                                <th>END</th>
+                                <th>HRS</th>
+                                <th>MAT COST</th>
+                                <th>MAN COST</th>
+                                <th>TOTAL</th>
+                                <th>LOCATION</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                </div>
+            </div>`);
+    });
 
-        // Format currency
-        function formatCurrency(amount, curr = 'ZMW') {
-            if (!amount && amount !== 0) return 'ZMW 0';
-            const formatter = new Intl.NumberFormat(undefined, {
-                style: 'currency',
-                currency: curr || 'ZMW',
-                minimumFractionDigits: 2
-            });
-            return formatter.format(amount);
-        }
+    if (cards.length === 0) {
+        scrollArea.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                No results match your search.
+            </div>`;
+        updateStats([], 0);
+        return;
+    }
 
-        // Calculate task duration in hours
-        function calculateTaskDuration(task) {
-            if (task._durationHours !== undefined) return task._durationHours;
-            return task.duration || 0;
-        }
+    scrollArea.innerHTML = cards.join('');
+    updateStats(totalCompleted, totalHrs, totalCost, groups.length);
+}
 
-        // Calculate task costs
-        function calculateTaskCosts(task) {
-            const hours = calculateTaskDuration(task);
-            const materialCost = task._materialCost || 0;
-            const manCost = hours * 20; // Assuming ZMW 20 per hour
-            const totalCost = manCost + materialCost;
-            
-            return {
-                materialCost,
-                manCost,
-                totalCost
-            };
-        }
+function updateStats(completed, hrs, cost, groups) {
+    document.getElementById('statGroups').textContent    = groups || 0;
+    document.getElementById('statCompleted').textContent = completed || 0;
+    document.getElementById('statHrs').textContent       = (hrs||0).toFixed(1);
+    document.getElementById('statCost').textContent      = fmt(cost||0);
+}
 
-        // Load project data
-        async function loadProjectData() {
-            try {
-                const projectDoc = await getDoc(doc(db, "projectDashboard", projectId));
-                if (projectDoc.exists()) {
-                    projectData = projectDoc.data();
-                    projectName.textContent = projectData.name + " - Completed Tasks";
-                    reportDate.textContent = new Date().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                } else {
-                    projectName.textContent = 'Project Not Found';
-                    projectInfo.style.display = 'none';
-                }
-            } catch (error) {
-                console.error("Error loading project: ", error);
-                projectName.textContent = 'Error Loading Project';
+// ── Init ──
+(async () => {
+    try {
+        await Promise.all([loadAssignedNames(), loadTaskTree()]);
+        buildGroupFilter();
+        loadingState.remove();
+        render();
+
+        // Live re-listen: re-load and re-render when data changes
+        onSnapshot(
+            query(collection(db,"projectTasks"), where("projectId","==",projectId)),
+            async () => {
+                await Promise.all([loadAssignedNames(), loadTaskTree()]);
+                buildGroupFilter();
+                render();
             }
-        }
+        );
+    } catch(e) {
+        console.error(e);
+        loadingState.innerHTML = `<span style="color:red">Error loading: ${e.message}</span>`;
+    }
+})();
 
-        // Get all tasks to calculate completion rate
-        async function loadAllTasks() {
-            const tasksQuery = query(
-                collection(db, "projectTasks"), 
-                where("projectId", "==", projectId)
-            );
-            
-            try {
-                const snapshot = await getDocs(tasksQuery);
-                allTasks = [];
-                
-                if (snapshot.empty) {
-                    updateStats();
-                    return;
-                }
-                
-                const promises = snapshot.docs.map(async (docSnap) => {
-                    const taskData = { id: docSnap.id, ...docSnap.data() };
-                    allTasks.push(taskData);
-                    
-                    // Load subtasks
-                    const subtasksQuery = collection(db, "projectTasks", docSnap.id, "subtasks");
-                    const subSnapshot = await getDocs(subtasksQuery);
-                    
-                    subSnapshot.forEach(subDoc => {
-                        const subtaskData = { id: subDoc.id, ...subDoc.data() };
-                        allTasks.push(subtaskData);
-                        
-                        // Load sub-subtasks
-                        loadSubSubtasks(docSnap.id, subDoc.id);
-                    });
-                });
-                
-                await Promise.all(promises);
-                updateStats();
-            } catch (error) {
-                console.error("Error loading all tasks: ", error);
-            }
-        }
-
-        // Load sub-subtasks
-        async function loadSubSubtasks(mainId, subtaskId) {
-            try {
-                const subsubtasksQuery = collection(db, "projectTasks", mainId, "subtasks", subtaskId, "subsubtasks");
-                const subsubSnapshot = await getDocs(subsubtasksQuery);
-                
-                subsubSnapshot.forEach(subsubDoc => {
-                    const subsubtaskData = { id: subsubDoc.id, ...subsubDoc.data() };
-                    allTasks.push(subsubtaskData);
-                });
-                
-                updateStats();
-            } catch (error) {
-                console.error("Error loading sub-subtasks: ", error);
-            }
-        }
-
-        // Load completed tasks
-        function loadCompletedTasks() {
-            const tasksQuery = query(
-                collection(db, "projectTasks"), 
-                where("projectId", "==", projectId)
-            );
-            
-            onSnapshot(tasksQuery, async (snapshot) => {
-                allCompletedTasks = [];
-                
-                if (snapshot.empty) {
-                    renderCompletedTasks([]);
-                    updateStats();
-                    return;
-                }
-                
-                const promises = snapshot.docs.map(async (docSnap) => {
-                    const taskData = { id: docSnap.id, ...docSnap.data() };
-                    
-                    // Only include completed tasks
-                    if (taskData.status === 'COMPLETED') {
-                        // Get hours and material costs
-                        const [hours, materialCost] = await Promise.all([
-                            getWorkedHoursForTaskId(taskData.taskId),
-                            getMaterialCostForTaskId(taskData.taskId)
-                        ]);
-                        
-                        taskData._durationHours = hours;
-                        taskData._materialCost = materialCost;
-                        allCompletedTasks.push(taskData);
-                    }
-                    
-                    // Load completed subtasks
-                    const subtasksQuery = collection(db, "projectTasks", docSnap.id, "subtasks");
-                    const subSnapshot = await getDocs(subtasksQuery);
-                    
-                    const subPromises = subSnapshot.docs.map(async (subDoc) => {
-                        const subtaskData = { id: subDoc.id, ...subDoc.data() };
-                        
-                        if (subtaskData.status === 'COMPLETED') {
-                            const [subHours, subMaterialCost] = await Promise.all([
-                                getWorkedHoursForTaskId(subtaskData.taskId),
-                                getMaterialCostForTaskId(subtaskData.taskId)
-                            ]);
-                            
-                            subtaskData._durationHours = subHours;
-                            subtaskData._materialCost = subMaterialCost;
-                            allCompletedTasks.push(subtaskData);
-                        }
-                        
-                        // Load completed sub-subtasks
-                        await loadCompletedSubSubtasks(docSnap.id, subDoc.id);
-                    });
-                    
-                    await Promise.all(subPromises);
-                });
-                
-                await Promise.all(promises);
-                renderCompletedTasks(allCompletedTasks);
-                updateStats();
-            }, (error) => {
-                console.error("Error loading completed tasks: ", error);
-                completedTasksBody.innerHTML = `
-                    <tr>
-                        <td colspan="13" class="empty-state">
-                            <i class="fas fa-exclamation-triangle empty-state-icon"></i>
-                            <p class="empty-state-text">Error loading completed tasks. Please refresh the page.</p>
-                            <button class="btn btn-primary" onclick="window.location.reload()">
-                                <i class="fas fa-sync-alt"></i> Refresh
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // Load completed sub-subtasks
-        async function loadCompletedSubSubtasks(mainId, subtaskId) {
-            try {
-                const subsubtasksQuery = collection(db, "projectTasks", mainId, "subtasks", subtaskId, "subsubtasks");
-                const subsubSnapshot = await getDocs(subsubtasksQuery);
-                
-                const promises = subsubSnapshot.docs.map(async (subsubDoc) => {
-                    const subsubtaskData = { id: subsubDoc.id, ...subsubDoc.data() };
-                    
-                    if (subsubtaskData.status === 'COMPLETED') {
-                        const [subsubHours, subsubMaterialCost] = await Promise.all([
-                            getWorkedHoursForTaskId(subsubtaskData.taskId),
-                            getMaterialCostForTaskId(subsubtaskData.taskId)
-                        ]);
-                        
-                        subsubtaskData._durationHours = subsubHours;
-                        subsubtaskData._materialCost = subsubMaterialCost;
-                        allCompletedTasks.push(subsubtaskData);
-                    }
-                });
-                
-                await Promise.all(promises);
-            } catch (error) {
-                console.error("Error loading completed sub-subtasks: ", error);
-            }
-        }
-
-        // Get worked hours for task
-        async function getWorkedHoursForTaskId(taskId) {
-            if (!taskId) return 0;
-            const q = query(collection(db, "locationHistory"), where("taskId", "==", taskId));
-            let sum = 0;
-            const snap = await getDocs(q);
-            snap.forEach(doc => {
-                const d = doc.data();
-                if (d.mh && !isNaN(d.mh)) sum += Number(d.mh);
-            });
-            return sum;
-        }
-
-        // Get material cost for task
-        async function getMaterialCostForTaskId(taskId) {
-            if (!taskId) return 0;
-            const q = query(collection(db, "materialsUsage"), where("taskId", "==", taskId));
-            let sum = 0;
-            const snap = await getDocs(q);
-            
-            // For inventory items
-            const materialIds = new Set();
-            snap.forEach(doc => {
-                const d = doc.data();
-                if (d.materialId) materialIds.add(d.materialId);
-            });
-            
-            // Fetch prices for inventory items
-            const materialPriceMap = {};
-            await Promise.all([...materialIds].map(async materialId => {
-                const matSnap = await getDoc(doc(db, "materials", materialId));
-                if (matSnap.exists()) {
-                    materialPriceMap[materialId] = matSnap.data().unitPrice || 0;
-                }
-            }));
-            
-            // Calculate total cost
-            snap.forEach(doc => {
-                const d = doc.data();
-                if (!d.reversed) {
-                    // Inventory items
-                    if (d.quantity && d.materialId) {
-                        const price = materialPriceMap[d.materialId] || 0;
-                        sum += Number(d.quantity) * Number(price);
-                    }
-                    // Supplier items
-                    else if (d.boughtFromSupplier && d.amount) {
-                        sum += Number(d.amount);
-                    }
-                    // Backward compatibility
-                    else if (d.quantity && d.unitPrice && !d.materialId) {
-                        sum += Number(d.quantity) * Number(d.unitPrice);
-                    }
-                }
-            });
-            
-            return sum;
-        }
-
-        // Filter completed tasks
-        function filterCompletedTasks() {
-            const searchVal = searchInput.value.toLowerCase();
-            const categoryVal = categoryFilter.value;
-            const monthVal = monthFilter.value;
-            const yearVal = yearFilter.value;
-            
-            return allCompletedTasks.filter(task => {
-                // Check search filter
-                let matchesSearch = true;
-                if (searchVal) {
-                    matchesSearch = (
-                        (task.taskId && task.taskId.toLowerCase().includes(searchVal)) ||
-                        (task.taskDescription && task.taskDescription.toLowerCase().includes(searchVal)) ||
-                        (task.assignedTo && task.assignedTo.toLowerCase().includes(searchVal)) ||
-                        (task.location && task.location.toLowerCase().includes(searchVal))
-                    );
-                }
-                
-                // Check category filter
-                let matchesCategory = true;
-                if (categoryVal) {
-                    matchesCategory = (task.category === categoryVal);
-                }
-                
-                // Check month filter
-                let matchesMonth = true;
-                if (monthVal) {
-                    const monthNum = parseInt(monthVal);
-                    if (task.endDate) {
-                        const date = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
-                        matchesMonth = date.getMonth() + 1 === monthNum;
-                    } else {
-                        matchesMonth = false;
-                    }
-                }
-                
-                // Check year filter
-                let matchesYear = true;
-                if (yearVal) {
-                    const yearNum = parseInt(yearVal);
-                    if (task.endDate) {
-                        const date = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
-                        matchesYear = date.getFullYear() === yearNum;
-                    } else {
-                        matchesYear = false;
-                    }
-                }
-                
-                return matchesSearch && matchesCategory && matchesMonth && matchesYear;
-            });
-        }
-
-        // Render completed tasks
-        function renderCompletedTasks(tasks) {
-            completedTasksBody.innerHTML = '';
-            
-            if (tasks.length === 0) {
-                completedTasksBody.innerHTML = `
-                    <tr>
-                        <td colspan="13" class="empty-state">
-                            <i class="fas fa-check-circle empty-state-icon"></i>
-                            <p class="empty-state-text">No completed tasks found. Completed tasks will appear here automatically when marked as completed.</p>
-                            <a href="Projectworks.html?id=${projectId}" class="btn btn-primary">
-                                <i class="fas fa-tasks"></i> View Active Tasks
-                            </a>
-                        </td>
-                    </tr>
-                `;
-                updateTotals([]);
-                return;
-            }
-            
-            // Sort by completion date (most recent first)
-            tasks.sort((a, b) => {
-                const dateA = a.endDate ? (a.endDate.toDate ? a.endDate.toDate() : new Date(a.endDate)) : new Date(0);
-                const dateB = b.endDate ? (b.endDate.toDate ? b.endDate.toDate() : new Date(b.endDate)) : new Date(0);
-                return dateB - dateA;
-            });
-            
-            let grandTotalDuration = 0;
-            let grandTotalMaterialCost = 0;
-            let grandTotalManCost = 0;
-            let grandTotalCost = 0;
-            
-            tasks.forEach(task => {
-                const hours = calculateTaskDuration(task);
-                const costs = calculateTaskCosts(task);
-                
-                grandTotalDuration += hours;
-                grandTotalMaterialCost += costs.materialCost;
-                grandTotalManCost += costs.manCost;
-                grandTotalCost += costs.totalCost;
-                
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${task.taskId || ''}</td>
-                    <td>${task.taskLine || ''}</td>
-                    <td class="text-truncate" title="${task.taskDescription || ''}">${task.taskDescription || ''}</td>
-                    <td>${task.assignedTo || ''}</td>
-                    <td>
-                        <span class="status-badge status-completed">Completed</span>
-                    </td>
-                    <td>${formatDate(task.startDate)}</td>
-                    <td>${formatDate(task.endDate)}</td>
-                    <td>${formatDate(task.giveTarget)}</td>
-                    <td>${hours}</td>
-                    <td><span class="cost-badge">${formatCurrency(costs.materialCost)}</span></td>
-                    <td><span class="cost-badge">${formatCurrency(costs.manCost)}</span></td>
-                    <td><span class="cost-badge">${formatCurrency(costs.totalCost)}</span></td>
-                    <td>${task.location || ''}</td>
-                `;
-                completedTasksBody.appendChild(tr);
-            });
-            
-            updateTotals({
-                duration: grandTotalDuration,
-                materialCost: grandTotalMaterialCost,
-                manCost: grandTotalManCost,
-                totalCost: grandTotalCost
-            });
-        }
-
-        // Update totals
-        function updateTotals(totals) {
-            totalDuration.textContent = totals.duration || 0;
-            totalMaterialCost.textContent = formatCurrency(totals.materialCost || 0);
-            totalManCost.textContent = formatCurrency(totals.manCost || 0);
-            grandTotalCost.textContent = formatCurrency(totals.totalCost || 0);
-        }
-
-        // Update statistics
-        function updateStats() {
-            const completedCount = allCompletedTasks.length;
-            const totalTasks = allTasks.length;
-            
-            // Calculate total hours and costs from completed tasks
-            let totalHours = 0;
-            let totalProjectCost = 0;
-            
-            allCompletedTasks.forEach(task => {
-                totalHours += calculateTaskDuration(task);
-                const costs = calculateTaskCosts(task);
-                totalProjectCost += costs.totalCost;
-            });
-            
-            const completionPercentage = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
-            
-            totalCompleted.textContent = completedCount;
-            totalHours.textContent = totalHours;
-            totalCost.textContent = formatCurrency(totalProjectCost);
-            completionRate.textContent = `${completionPercentage}%`;
-        }
-
-        // Initialize the page
-        function init() {
-            projectId = getProjectIdFromURL();
-            if (projectId) {
-                loadProjectData();
-                loadAllTasks();
-                loadCompletedTasks();
-                
-                // Set up event listeners for filters
-                searchInput.addEventListener('input', () => {
-                    renderCompletedTasks(filterCompletedTasks());
-                });
-                
-                categoryFilter.addEventListener('change', () => {
-                    renderCompletedTasks(filterCompletedTasks());
-                });
-                
-                monthFilter.addEventListener('change', () => {
-                    renderCompletedTasks(filterCompletedTasks());
-                });
-                
-                yearFilter.addEventListener('change', () => {
-                    renderCompletedTasks(filterCompletedTasks());
-                });
-            }
-        }
-
-        // Start the application
-        init();
-
-        // Inactivity timeout
-        let inactivityTimeout;
-        function resetInactivityTimeout() {
-            clearTimeout(inactivityTimeout);
-            inactivityTimeout = setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 600000); // 10 minutes
-        }
-
-        // Set up inactivity timer
-        resetInactivityTimeout();
-        document.addEventListener('mousemove', resetInactivityTimeout);
-        document.addEventListener('keypress', resetInactivityTimeout);
-        document.addEventListener('click', resetInactivityTimeout);
-        document.addEventListener('touchstart', resetInactivityTimeout);
-    </script>
+searchInput.addEventListener('input', render);
+groupFilter.addEventListener('change', render);
+</script>
 </body>
 </html>
-
