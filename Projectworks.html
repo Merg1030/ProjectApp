@@ -183,13 +183,16 @@
         .gantt-container::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; border: 2px solid #ecf2fa; }
         .gantt-table { border-collapse: collapse; font-size: 10px; min-width: 800px; }
         .gantt-table th { background: #d4e2f2; padding: 4px 2px; border: 1px solid #9bb1cc; border-bottom: 2px solid #1f3d62; position: sticky; top: 0; z-index: 10; font-size: 0.6rem; font-weight: 700; color: #0a1c2f; }
-        .gantt-table td { border: 1px solid #c7d6ec; padding: 4px 1px; text-align: center; color: #0a1c2f; cursor: pointer; font-size: 0.6rem; }
-        .gantt-table td:hover { background: rgba(30,60,100,0.15); }
-        .gantt-bar       { background: #66c2ff; height: 10px; width: 90%; margin: 0 auto; border-radius: 2px; }
-        .gantt-bar-empty { background: #ecf3fc; border: 1px dashed #2b4a73; height: 10px; width: 90%; margin: 0 auto; }
-        .gantt-bar-main  { background: #2b4a73; height: 10px; }
-        .gantt-bar-sub   { background: #4a6a8a; opacity: 0.8; height: 8px; }
-        .gantt-bar-subsub{ background: #7f96b3; opacity: 0.7; height: 6px; }
+        .gantt-table td { border: 1px solid #c7d6ec; padding: 0; text-align: center; color: #0a1c2f; cursor: pointer; font-size: 0.6rem; height: 18px; }
+        .gantt-table td:hover { filter: brightness(0.88); }
+        /* Solid filled cells — no divs inside, entire TD gets background */
+        .gantt-td-main   { background: #2b4a73 !important; border-color: #1f3562 !important; }
+        .gantt-td-sub    { background: #4a7aaa !important; border-color: #3a6090 !important; }
+        .gantt-td-subsub { background: #7fb3d9 !important; border-color: #6a9fbf !important; }
+        .gantt-td-pending-main   { background: #7f96b3 !important; border-color: #6a82a0 !important; }
+        .gantt-td-pending-sub    { background: #a0b8d0 !important; border-color: #8aa8c0 !important; }
+        .gantt-td-pending-subsub { background: #c0d4e6 !important; border-color: #b0c8da !important; }
+        .gantt-td-done   { background: #059669 !important; border-color: #047857 !important; }
         .today-highlight { background: #fce3cd !important; font-weight: bold; }
         .current-month-btn { padding: 0.2rem 1.2rem; border: 1px solid #2b4a73; background: white; border-radius: 30px; cursor: pointer; font-size: 0.65rem; font-weight: 600; color: #0b1f33; }
         .current-month-btn:hover { background: #0a1c2f; color: white; }
@@ -452,23 +455,10 @@
             cursor: pointer; transition: color 0.15s; padding: 2px 4px;
         }
         .notes-close-btn:hover { color: white; }
-        .notes-toolbar {
-            padding: 6px 10px; border-bottom: 1px solid #e0e8f5;
-            display: flex; gap: 4px; flex-shrink: 0; align-items: center; flex-wrap: wrap;
-        }
-        .notes-tool {
-            padding: 3px 8px; font-size: 0.65rem; border: 1px solid #d0dff0;
-            border-radius: 6px; background: white; cursor: pointer; color: #0a1c2f;
-            font-weight: 600; transition: 0.12s;
-        }
-        .notes-tool:hover { background: #e6efff; border-color: #2b4a73; }
-        .notes-char-count {
-            margin-left: auto; font-size: 0.6rem; color: #97adc9; white-space: nowrap;
-        }
         .notes-textarea {
             flex: 1; border: none; outline: none; resize: none;
-            padding: 12px 14px; font-size: 0.75rem; font-family: inherit;
-            color: #0a1c2f; line-height: 1.6; min-height: 200px;
+            padding: 14px 14px; font-size: 0.78rem; font-family: inherit;
+            color: #0a1c2f; line-height: 1.7; min-height: 220px;
             scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa;
         }
         .notes-textarea::-webkit-scrollbar { width: 5px; }
@@ -646,18 +636,10 @@
         <span><i class="fas fa-sticky-note"></i> Project Notes</span>
         <button class="notes-close-btn" id="notesCloseBtn" title="Close notes"><i class="fas fa-times"></i></button>
     </div>
-    <div class="notes-toolbar">
-        <button class="notes-tool" onclick="insertNoteText('• ')">• Bullet</button>
-        <button class="notes-tool" onclick="insertNoteText('→ ')">→ Arrow</button>
-        <button class="notes-tool" onclick="insertNoteText('✓ ')">✓ Done</button>
-        <button class="notes-tool" onclick="insertNoteText('⚠ ')">⚠ Warn</button>
-        <button class="notes-tool" onclick="insertNoteText('\n---\n')">── Line</button>
-        <span class="notes-char-count" id="notesCharCount">0 chars</span>
-    </div>
-    <textarea class="notes-textarea" id="notesTextarea" placeholder="Write your project notes here…&#10;&#10;• Use bullets to list things&#10;→ Track important items&#10;✓ Mark completed thoughts"></textarea>
+    <textarea class="notes-textarea" id="notesTextarea" placeholder="Write your project notes here…"></textarea>
     <div class="notes-foot">
-        <span class="notes-saved-txt" id="notesSavedTxt"><i class="fas fa-check-circle" style="color:#059669"></i> Auto-saved</span>
-        <button class="notes-clear-btn" onclick="clearNotes()">Clear All</button>
+        <span class="notes-saved-txt" id="notesSavedTxt"><i class="fas fa-check-circle" style="color:#059669"></i> Saved</span>
+        <button class="notes-clear-btn" onclick="clearNotes()">Clear</button>
     </div>
 </div>
 
@@ -1787,16 +1769,52 @@ document.addEventListener('DOMContentLoaded', function() {
         ganttBodyEl.innerHTML=body;
     }
 
-    function ganttRow(task,level,minYear,today) {
-        const desc=level==='main'?`<b>${task.taskDescription||''}</b>`:level==='sub'?`<span style="margin-left:15px">↪ ${task.taskDescription||''}</span>`:`<span style="margin-left:30px">↪↪ ${task.taskDescription||''}</span>`;
-        const status=(task.status||'PENDING').toUpperCase();
-        const pct=status==='COMPLETED'?'100':status==='ONGOING'?'60':'0';
-        let start=null,end=null;
-        if(task.startDate){start=task.startDate.toDate?task.startDate.toDate():new Date(task.startDate);start.setHours(0,0,0,0);if(task.endDate){end=task.endDate.toDate?task.endDate.toDate():new Date(task.endDate);end.setHours(0,0,0,0);}else if(status!=='COMPLETED')end=today;}
-        const md=[31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
-        let row=`<tr><td style="text-align:left">${desc}</td>`;
-        for(let m=0;m<12;m++){if(showCurrentMonthOnly&&m!==today.getMonth())continue;for(let d=1;d<=md[m];d++){const dt=new Date(minYear,m,d);let bar='';if(start&&dt>=start&&(!end||dt<=end)){const cls=level==='main'?'gantt-bar-main':level==='sub'?'gantt-bar-sub':'gantt-bar-subsub';bar=pct==='0'?'<div class="gantt-bar-empty"></div>':`<div class="gantt-bar ${cls}"></div>`;}row+=`<td>${bar}</td>`;}}
-        return row+'</tr>';
+    function ganttRow(task, level, minYear, today) {
+        const desc = level==='main'
+            ? `<b>${task.taskDescription||''}</b>`
+            : level==='sub'
+                ? `<span style="margin-left:14px">↪ ${task.taskDescription||''}</span>`
+                : `<span style="margin-left:28px">↪↪ ${task.taskDescription||''}</span>`;
+
+        const status = (task.status||'PENDING').toUpperCase();
+
+        let start = null, end = null;
+        if (task.startDate) {
+            start = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+            start.setHours(0,0,0,0);
+            if (task.endDate) {
+                end = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
+                end.setHours(23,59,59,999);
+            } else if (status !== 'COMPLETED') {
+                end = new Date(today); end.setHours(23,59,59,999);
+            }
+        }
+
+        // Pick solid color classes based on level + status
+        let hitClass = '';
+        if (status === 'COMPLETED') {
+            hitClass = 'gantt-td-done';
+        } else if (status === 'ONGOING') {
+            hitClass = level==='main' ? 'gantt-td-main' : level==='sub' ? 'gantt-td-sub' : 'gantt-td-subsub';
+        } else {
+            hitClass = level==='main' ? 'gantt-td-pending-main' : level==='sub' ? 'gantt-td-pending-sub' : 'gantt-td-pending-subsub';
+        }
+
+        const md = [31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
+        let row = `<tr><td style="text-align:left;padding:3px 6px;white-space:nowrap;min-width:120px">${desc}</td>`;
+        for (let m = 0; m < 12; m++) {
+            if (showCurrentMonthOnly && m !== today.getMonth()) continue;
+            for (let d = 1; d <= md[m]; d++) {
+                const dt = new Date(minYear, m, d);
+                const isToday = dt.toDateString() === today.toDateString();
+                const inRange = start && dt >= start && (!end || dt <= end);
+                const cls = isToday
+                    ? (inRange ? hitClass + ' today-highlight' : 'today-highlight')
+                    : (inRange ? hitClass : '');
+                row += `<td class="${cls}" title="${dt.toDateString()}"></td>`;
+            }
+        }
+        return row + '</tr>';
     }
 
     // ─── Task CRUD ───
@@ -1948,22 +1966,47 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ══════════════════════════════════════════════════════
-    // NOTES PANEL — floating, persistent per project
+    // NOTES PANEL — floating, saved to Firebase + localStorage cache
     // ══════════════════════════════════════════════════════
     const NOTES_KEY      = `notes_${projectId}`;
     const notesFab       = document.getElementById('notesFab');
     const notesPanel     = document.getElementById('notesPanel');
     const notesDot       = document.getElementById('notesDot');
     const notesTextarea  = document.getElementById('notesTextarea');
-    const notesCharCount = document.getElementById('notesCharCount');
     const notesSavedTxt  = document.getElementById('notesSavedTxt');
 
-    // Load saved notes
+    // Load from localStorage immediately for instant display
     notesTextarea.value = localStorage.getItem(NOTES_KEY) || '';
-    updateNotesMeta();
+    updateNotesDot();
 
-    let notesOpen  = false;
+    // Also load from Firebase (source of truth)
+    (async () => {
+        try {
+            const notesSnap = await getDocs(query(collection(db, "projectNotes"), where("projectId","==",projectId)));
+            if (!notesSnap.empty) {
+                const data = notesSnap.docs[0].data();
+                const fbText = data.notes || '';
+                // Firebase wins if different
+                if (fbText !== notesTextarea.value) {
+                    notesTextarea.value = fbText;
+                    localStorage.setItem(NOTES_KEY, fbText);
+                    updateNotesDot();
+                }
+            }
+        } catch(e) { console.warn('Notes load:', e); }
+    })();
+
+    let notesOpen      = false;
     let notesSaveTimer = null;
+    let notesDocId     = null; // cached Firestore doc id for upsert
+
+    // Pre-fetch doc ID for upsert
+    (async () => {
+        try {
+            const snap = await getDocs(query(collection(db,"projectNotes"), where("projectId","==",projectId)));
+            if (!snap.empty) notesDocId = snap.docs[0].id;
+        } catch(e) {}
+    })();
 
     notesFab.addEventListener('click', () => {
         notesOpen = !notesOpen;
@@ -1978,36 +2021,45 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     notesTextarea.addEventListener('input', () => {
-        updateNotesMeta();
-        // Debounced auto-save
+        updateNotesDot();
+        // Save to localStorage immediately
+        localStorage.setItem(NOTES_KEY, notesTextarea.value);
+        // Debounced Firebase save
         clearTimeout(notesSaveTimer);
         notesSavedTxt.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#97adc9"></i> Saving…';
-        notesSaveTimer = setTimeout(() => {
-            localStorage.setItem(NOTES_KEY, notesTextarea.value);
-            notesSavedTxt.innerHTML = '<i class="fas fa-check-circle" style="color:#059669"></i> Saved';
-        }, 600);
+        notesSaveTimer = setTimeout(() => saveNotesToFirebase(), 800);
     });
 
-    function updateNotesMeta() {
-        const len = notesTextarea.value.length;
-        notesCharCount.textContent = len + ' chars';
-        notesDot.classList.toggle('has-content', len > 0);
+    async function saveNotesToFirebase() {
+        const text = notesTextarea.value;
+        try {
+            if (notesDocId) {
+                await updateDoc(doc(db, "projectNotes", notesDocId), { notes: text, updatedAt: Timestamp.now() });
+            } else {
+                const ref = await addDoc(collection(db, "projectNotes"), {
+                    projectId, notes: text, createdAt: Timestamp.now(), updatedAt: Timestamp.now()
+                });
+                notesDocId = ref.id;
+            }
+            localStorage.setItem(NOTES_KEY, text);
+            notesSavedTxt.innerHTML = '<i class="fas fa-check-circle" style="color:#059669"></i> Saved';
+        } catch(e) {
+            console.error('Notes save:', e);
+            notesSavedTxt.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#cc3333"></i> Save failed';
+        }
     }
 
-    window.insertNoteText = function(txt) {
-        const ta  = notesTextarea;
-        const pos = ta.selectionStart;
-        ta.value  = ta.value.slice(0, pos) + txt + ta.value.slice(ta.selectionEnd);
-        ta.selectionStart = ta.selectionEnd = pos + txt.length;
-        ta.focus();
-        ta.dispatchEvent(new Event('input'));
-    };
-    window.clearNotes = function() {
+    function updateNotesDot() {
+        notesDot.classList.toggle('has-content', notesTextarea.value.length > 0);
+    }
+
+    window.clearNotes = async function() {
         if (!notesTextarea.value || confirm('Clear all notes?')) {
             notesTextarea.value = '';
             localStorage.setItem(NOTES_KEY, '');
-            updateNotesMeta();
-            notesSavedTxt.innerHTML = '<i class="fas fa-check-circle" style="color:#059669"></i> Cleared';
+            updateNotesDot();
+            notesSavedTxt.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#97adc9"></i> Clearing…';
+            await saveNotesToFirebase();
         }
     };
 });
