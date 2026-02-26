@@ -56,6 +56,9 @@
         .btn-primary { background: #0a1c2f; color: white; border: none; }
         .btn-primary:hover { background: #1f3d62; }
         .btn:hover { background: #e6efff; }
+        /* Active filter state — used for Hide Completed when active */
+        .btn.btn-active { background: #0a1c2f; color: white; border-color: #0a1c2f; }
+        .btn.btn-active:hover { background: #1f3d62; }
 
         .filter-group {
             display: flex; align-items: center; gap: 4px; background: white;
@@ -71,11 +74,35 @@
         .search-box input { border: none; padding: 2px 4px; width: 100%; outline: none; font-size: 11px; background: transparent; color: #0a1c2f; }
         .search-box input::placeholder { color: #7f96b3; }
 
+        /* ── SPLIT CONTAINER ── */
         .split-container { flex: 1; display: flex; min-height: 0; overflow: hidden; border-top: 2px solid #1f3d62; }
 
-        .left-panel { flex: 1; width: 50%; display: flex; flex-direction: column; overflow: hidden; background: white; border-right: 2px solid #1f3d62; }
+        /* Left panel — flex:1 so it expands when gantt hidden */
+        .left-panel {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
+            background: white; border-right: 2px solid #1f3d62;
+            transition: border-right 0.25s;
+        }
+        .left-panel.gantt-hidden { border-right: none; }
 
-        .panel-header { padding: 4px 8px; background: #b8cde0; border-bottom: 2px solid #1f3d62; font-weight: 700; font-size: 12px; color: #0a1c2f; }
+        /* Panel header with gantt toggle */
+        .panel-header {
+            padding: 4px 8px; background: #b8cde0; border-bottom: 2px solid #1f3d62;
+            font-weight: 700; font-size: 12px; color: #0a1c2f;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .panel-header-left { display: flex; align-items: center; gap: 6px; }
+
+        /* Gantt toggle button */
+        .toggle-gantt-btn {
+            padding: 2px 10px; border: 1px solid #2b4a73; background: white;
+            border-radius: 20px; font-size: 0.62rem; font-weight: 700; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 4px; color: #0b1f33;
+            transition: 0.15s; white-space: nowrap; line-height: 1.7;
+        }
+        .toggle-gantt-btn:hover { background: #0a1c2f; color: white; border-color: #0a1c2f; }
+        .toggle-gantt-btn.is-off { background: #ecf3fc; border-color: #97adc9; color: #7f96b3; }
+        .toggle-gantt-btn.is-off:hover { background: #0a1c2f; color: white; border-color: #0a1c2f; }
 
         .table-container { flex: 1; overflow: auto !important; position: relative; background: white; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
         .table-container::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
@@ -94,15 +121,17 @@
         .main-task-row td { font-weight: 700; background: #ecf3fc; }
         .main-task-row td:first-child { font-weight: 700; padding-left: 6px; }
 
-        .task-table th:nth-child(1) { min-width: 70px; }
-        .task-table th:nth-child(2) { min-width: 35px; }
-        .task-table th:nth-child(3) { min-width: 160px; }
-        .task-table th:nth-child(4) { min-width: 80px; }
-        .task-table th:nth-child(5) { min-width: 65px; }
-        .task-table th:nth-child(6) { min-width: 60px; }
-        .task-table th:nth-child(7) { min-width: 60px; }
-        .task-table th:nth-child(8) { min-width: 35px; }
-        .task-table th:nth-child(9) { min-width: 65px; }
+        /* Compact TASK ID column */
+        .task-table th:nth-child(1)  { min-width: 52px; width: 58px; }
+        .task-table td:nth-child(1)  { max-width: 65px; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; }
+        .task-table th:nth-child(2)  { min-width: 35px; }
+        .task-table th:nth-child(3)  { min-width: 160px; }
+        .task-table th:nth-child(4)  { min-width: 80px; }
+        .task-table th:nth-child(5)  { min-width: 65px; }
+        .task-table th:nth-child(6)  { min-width: 60px; }
+        .task-table th:nth-child(7)  { min-width: 60px; }
+        .task-table th:nth-child(8)  { min-width: 35px; }
+        .task-table th:nth-child(9)  { min-width: 65px; }
         .task-table th:nth-child(10) { min-width: 65px; }
         .task-table th:nth-child(11) { min-width: 65px; }
         .task-table th:nth-child(12) { min-width: 75px; }
@@ -114,13 +143,13 @@
             background: #e1ecfe; color: #1d3a5c; text-align: center; width: 100%;
         }
         .status-COMPLETED { background: #d4e2f2; border-color: #2b4a73; }
-        .status-ONGOING { background: #b8cde0; border-color: #1f3d62; }
-        .status-PENDING { background: #ecf3fc; border-color: #97adc9; }
+        .status-ONGOING   { background: #b8cde0; border-color: #1f3d62; }
+        .status-PENDING   { background: #ecf3fc; border-color: #97adc9; }
 
         .total-cost { font-size: 0.68rem; font-weight: 600; color: #0a1c2f; text-align: right; width: 100%; }
 
-        .subtask-row td { background: #f8f8f8; font-weight: 400; }
-        .subtask-desc { padding-left: 24px !important; position: relative; }
+        .subtask-row td    { background: #f8f8f8; font-weight: 400; }
+        .subtask-desc      { padding-left: 24px !important; position: relative; }
         .subtask-desc::before { content: "↳"; position: absolute; left: 12px; color: #1f3d62; font-size: 0.7rem; }
         .subsubtask-row td { background: #f0f0f0; font-weight: 400; }
         .task-prefix { color: #4a6a8a; font-size: 10px; margin-right: 3px; display: inline-block; font-weight: 500; }
@@ -129,10 +158,10 @@
         .empty-row:hover td { background: #e3ecf7; }
         .empty-row .empty-text { display: block; min-width: 80px; outline: none; color: #4a6a8a; font-size: 0.68rem; }
 
-        .menu-container { position: relative; display: inline-block; }
-        .menu-trigger { cursor: pointer; padding: 2px 6px; border: none; background: transparent; font-size: 14px; font-weight: bold; color: #2b4a73; }
+        .menu-container  { position: relative; display: inline-block; }
+        .menu-trigger    { cursor: pointer; padding: 2px 6px; border: none; background: transparent; font-size: 14px; font-weight: bold; color: #2b4a73; }
         .menu-trigger:hover { background: #e6efff; border-radius: 30px; }
-        .menu-dropdown { position: absolute; right: 0; top: 100%; background: white; border: 2px solid #1f3d62; border-radius: 6px; min-width: 110px; z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,20,40,0.2); }
+        .menu-dropdown   { position: absolute; right: 0; top: 100%; background: white; border: 2px solid #1f3d62; border-radius: 6px; min-width: 110px; z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,20,40,0.2); }
         .menu-dropdown.show { display: block; }
         .menu-item { padding: 6px 10px; cursor: pointer; font-size: 11px; border-bottom: 1px solid #b3c7e0; display: flex; align-items: center; gap: 6px; color: #0a1c2f; }
         .menu-item:last-child { border-bottom: none; }
@@ -140,8 +169,15 @@
 
         .empty-state { text-align: center; padding: 40px; color: #7f96b3; font-size: 0.8rem; }
 
-        .right-panel { flex: 1; width: 50%; display: flex; flex-direction: column; overflow: hidden; background: white; }
-        .gantt-header { padding: 4px 8px; background: #b8cde0; border-bottom: 2px solid #1f3d62; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 12px; color: #0a1c2f; }
+        /* ── RIGHT PANEL — collapses smoothly to 0 when gantt hidden ── */
+        .right-panel {
+            width: 50%; flex-shrink: 0; display: flex; flex-direction: column;
+            overflow: hidden; background: white;
+            transition: width 0.28s ease, opacity 0.2s ease;
+        }
+        .right-panel.gantt-hidden { width: 0 !important; opacity: 0; pointer-events: none; }
+
+        .gantt-header { padding: 4px 8px; background: #b8cde0; border-bottom: 2px solid #1f3d62; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 12px; color: #0a1c2f; white-space: nowrap; }
         .gantt-container { flex: 1; overflow: auto !important; padding: 6px; background: white; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
         .gantt-container::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
         .gantt-container::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; border: 2px solid #ecf2fa; }
@@ -149,11 +185,11 @@
         .gantt-table th { background: #d4e2f2; padding: 4px 2px; border: 1px solid #9bb1cc; border-bottom: 2px solid #1f3d62; position: sticky; top: 0; z-index: 10; font-size: 0.6rem; font-weight: 700; color: #0a1c2f; }
         .gantt-table td { border: 1px solid #c7d6ec; padding: 4px 1px; text-align: center; color: #0a1c2f; cursor: pointer; font-size: 0.6rem; }
         .gantt-table td:hover { background: rgba(30,60,100,0.15); }
-        .gantt-bar { background: #66c2ff; height: 10px; width: 90%; margin: 0 auto; border-radius: 2px; }
+        .gantt-bar       { background: #66c2ff; height: 10px; width: 90%; margin: 0 auto; border-radius: 2px; }
         .gantt-bar-empty { background: #ecf3fc; border: 1px dashed #2b4a73; height: 10px; width: 90%; margin: 0 auto; }
-        .gantt-bar-main { background: #2b4a73; height: 10px; }
-        .gantt-bar-sub { background: #4a6a8a; opacity: 0.8; height: 8px; }
-        .gantt-bar-subsub { background: #7f96b3; opacity: 0.7; height: 6px; }
+        .gantt-bar-main  { background: #2b4a73; height: 10px; }
+        .gantt-bar-sub   { background: #4a6a8a; opacity: 0.8; height: 8px; }
+        .gantt-bar-subsub{ background: #7f96b3; opacity: 0.7; height: 6px; }
         .today-highlight { background: #fce3cd !important; font-weight: bold; }
         .current-month-btn { padding: 0.2rem 1.2rem; border: 1px solid #2b4a73; background: white; border-radius: 30px; cursor: pointer; font-size: 0.65rem; font-weight: 600; color: #0b1f33; }
         .current-month-btn:hover { background: #0a1c2f; color: white; }
@@ -170,8 +206,7 @@
         .cost-clickable.cost-zero::before { content: '+'; color: #97adc9; font-size: 0.7rem; font-weight: 700; }
 
         /* =============================================
-           FULL FORM MODAL — Material Assignment
-           Wide table-style form matching history columns
+           MODALS
            ============================================= */
         .allocation-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -179,17 +214,12 @@
         }
         .allocation-overlay.active { display: flex; }
 
-        /* MATERIAL modal — very wide to accommodate all columns */
         .allocation-modal {
             background: white; width: 96vw; max-width: 1200px; max-height: 92vh;
             border-radius: 14px; box-shadow: 0 24px 60px rgba(0,20,40,0.45);
             display: flex; flex-direction: column; overflow: hidden;
         }
-
-        /* LABOR MODAL — wide table format with all 9 columns */
-        .allocation-modal.labor-modal {
-            max-width: 1100px;
-        }
+        .allocation-modal.labor-modal { max-width: 1100px; }
 
         .modal-head {
             padding: 0.9rem 1.4rem; background: #0a1c2f; color: white;
@@ -200,81 +230,69 @@
         .modal-head .modal-close { cursor: pointer; font-size: 1.1rem; color: #97adc9; transition: color 0.15s; }
         .modal-head .modal-close:hover { color: white; }
 
-        /* History link in header */
         .history-link {
             font-size: 0.68rem; color: #97adc9; text-decoration: none;
             border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
-            padding: 3px 10px; display: flex; align-items: center; gap: 5px;
-            transition: 0.15s;
+            padding: 3px 10px; display: flex; align-items: center; gap: 5px; transition: 0.15s;
         }
         .history-link:hover { background: rgba(255,255,255,0.1); color: white; border-color: white; }
 
-        /* Task context bar — shows pre-filled read-only info */
         .task-context-bar {
             background: #f2f6fc; border-bottom: 2px solid #d0dff0;
             padding: 8px 16px; display: flex; gap: 20px; flex-shrink: 0; flex-wrap: wrap;
         }
-        .ctx-item { display: flex; align-items: center; gap: 5px; }
+        .ctx-item  { display: flex; align-items: center; gap: 5px; }
         .ctx-label { font-size: 0.62rem; font-weight: 700; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.4px; }
         .ctx-value { font-size: 0.75rem; font-weight: 700; color: #0a1c2f; }
-        .ctx-badge {
-            background: #e6efff; color: #0a1c2f; padding: 2px 8px;
-            border-radius: 20px; font-size: 0.68rem; font-weight: 700;
-        }
+        .ctx-badge { background: #e6efff; color: #0a1c2f; padding: 2px 8px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; }
 
-        /* Full-form table inside modal */
         .modal-body { flex: 1; overflow-y: auto; padding: 0; }
         .modal-body::-webkit-scrollbar { width: 6px; }
         .modal-body::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 4px; }
 
-        /* The actual entry table for LABOR with all 9 columns */
         .entry-table-wrap { overflow-x: auto; padding: 12px 16px 0; }
-        .labor-entry-table {
-            width: 100%; border-collapse: collapse; font-size: 0.72rem;
-            min-width: 1100px;
+
+        /* Material entry table */
+        .entry-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; min-width: 900px; }
+        .entry-table th {
+            background: #d4e2f2; color: #0a1c2f; font-weight: 700;
+            font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.4px;
+            padding: 8px 10px; border: 1px solid #b3c7e0; border-bottom: 2px solid #1f3d62;
+            white-space: nowrap; text-align: left; position: sticky; top: 0; z-index: 5;
         }
+        .entry-table td { padding: 6px 6px; border: 1px solid #d0dff0; vertical-align: middle; background: white; }
+        .entry-table tr:hover td { background: #f4f8fd; }
+
+        /* Labor entry table — full 12-column form */
+        .labor-entry-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; min-width: 1100px; }
         .labor-entry-table th {
             background: #d4e2f2; color: #0a1c2f; font-weight: 700;
             font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.4px;
             padding: 8px 10px; border: 1px solid #b3c7e0; border-bottom: 2px solid #1f3d62;
             white-space: nowrap; text-align: left; position: sticky; top: 0; z-index: 5;
         }
-        .labor-entry-table td {
-            padding: 6px 6px; border: 1px solid #d0dff0; vertical-align: middle;
-            background: white;
-        }
+        .labor-entry-table td { padding: 6px 6px; border: 1px solid #d0dff0; vertical-align: middle; background: white; }
         .labor-entry-table tr:hover td { background: #f4f8fd; }
 
-        /* Read-only pre-filled cells */
         .cell-readonly {
             font-size: 0.72rem; color: #0a1c2f; font-weight: 600; padding: 4px 6px;
             background: #f4f8fd; border-radius: 4px; display: block; white-space: nowrap;
         }
-
-        /* Editable input cells */
         .cell-input {
             width: 100%; padding: 5px 7px; border: 1px solid #b3c7e0; border-radius: 6px;
-            font-size: 0.75rem; background: white; outline: none; color: #0a1c2f;
-            transition: border-color 0.15s;
+            font-size: 0.75rem; background: white; outline: none; color: #0a1c2f; transition: border-color 0.15s;
         }
         .cell-input:focus { border-color: #2b4a73; box-shadow: 0 0 0 2px rgba(43,74,115,0.12); }
         .cell-input.is-invalid { border-color: #cc0000; background: #fff5f5; }
-
-        /* Select dropdown in table */
         .cell-select {
             width: 100%; padding: 5px 7px; border: 1px solid #b3c7e0; border-radius: 6px;
             font-size: 0.72rem; background: white; outline: none; color: #0a1c2f;
         }
         .cell-select:focus { border-color: #2b4a73; }
 
-        /* Amount cell — auto-calculated, shown prominently */
-        .amount-cell {
-            font-weight: 700; color: #059669; font-size: 0.82rem;
-            white-space: nowrap; text-align: right; padding-right: 4px;
-        }
+        .amount-cell { font-weight: 700; color: #059669; font-size: 0.82rem; white-space: nowrap; text-align: right; padding-right: 4px; }
         .amount-cell.zero { color: #b3c7e0; }
 
-        /* Remove row button */
         .remove-entry-btn {
             width: 26px; height: 26px; border: none; background: #ffe5e5; color: #cc0000;
             border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: bold;
@@ -283,54 +301,39 @@
         }
         .remove-entry-btn:hover { background: #ffc0c0; }
 
-        /* Add row button — sits below the table */
-        .add-entry-row {
-            padding: 0 16px 10px; margin-top: 6px;
-        }
+        .add-entry-row { padding: 0 16px 10px; margin-top: 6px; }
         .add-entry-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 7px 16px; background: #eaf2ff; border: 1px dashed #2b4a73;
-            border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: #1f3d62;
-            cursor: pointer; transition: background 0.15s; width: 100%; justify-content: center;
+            display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px;
+            background: #eaf2ff; border: 1px dashed #2b4a73; border-radius: 8px;
+            font-size: 0.75rem; font-weight: 600; color: #1f3d62; cursor: pointer;
+            transition: background 0.15s; width: 100%; justify-content: center;
         }
         .add-entry-btn:hover { background: #d4e4ff; }
 
-        /* Stock warning */
         .stock-warning {
-            color: #cc0000; font-size: 0.72rem; margin: 6px 16px 0;
-            padding: 7px 10px; background: #ffe5e5; border-radius: 6px;
-            border-left: 3px solid #cc0000; display: none;
+            color: #cc0000; font-size: 0.72rem; margin: 6px 16px 0; padding: 7px 10px;
+            background: #ffe5e5; border-radius: 6px; border-left: 3px solid #cc0000; display: none;
         }
 
-        /* Grand total bar */
         .grand-total-bar {
             display: flex; align-items: center; justify-content: space-between;
             background: #0a1c2f; color: white; padding: 10px 20px;
             margin: 10px 16px 12px; border-radius: 8px; flex-shrink: 0;
         }
         .grand-total-bar .gt-label { font-size: 0.75rem; opacity: 0.75; }
-        .grand-total-bar .gt-value { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.5px; }
+        .grand-total-bar .gt-value  { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.5px; }
 
         .modal-foot {
             padding: 0.75rem 1.4rem; border-top: 1px solid #e0e8f5;
-            display: flex; gap: 8px; flex-shrink: 0; background: #fafcff;
-            align-items: center;
+            display: flex; gap: 8px; flex-shrink: 0; background: #fafcff; align-items: center;
         }
-        .modal-foot button {
-            padding: 0.6rem 1.4rem; border-radius: 8px; border: none;
-            font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
-        }
+        .modal-foot button { padding: 0.6rem 1.4rem; border-radius: 8px; border: none; font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
         .btn-cancel { background: white; border: 1px solid #b3c7e0 !important; color: #0a1c2f; }
         .btn-cancel:hover { background: #e6efff; }
         .btn-save { background: #059669; color: white; margin-left: auto; }
         .btn-save:hover { background: #047857; }
-        .modal-foot .enter-hint {
-            font-size: 0.62rem; color: #97adc9; display: flex; align-items: center; gap: 5px;
-        }
-        .enter-hint kbd {
-            background: #e6efff; color: #2b4a73; border: 1px solid #b3c7e0;
-            border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; font-family: monospace;
-        }
+        .modal-foot .enter-hint { font-size: 0.62rem; color: #97adc9; display: flex; align-items: center; gap: 5px; }
+        .enter-hint kbd { background: #e6efff; color: #2b4a73; border: 1px solid #b3c7e0; border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; font-family: monospace; }
 </style>
 </head>
 <body>
@@ -400,8 +403,19 @@
     </div>
 
     <div class="split-container">
-        <div class="left-panel">
-            <div class="panel-header"><i class="fas fa-tasks"></i> Task List</div>
+        <!-- LEFT: task list -->
+        <div class="left-panel" id="leftPanel">
+            <div class="panel-header">
+                <div class="panel-header-left">
+                    <i class="fas fa-tasks"></i>
+                    <span>Task List</span>
+                </div>
+                <!-- Gantt toggle — always visible -->
+                <button class="toggle-gantt-btn" id="toggleGanttBtn">
+                    <i class="fas fa-eye-slash" id="toggleGanttIcon"></i>
+                    <span id="toggleGanttLabel">Hide Gantt</span>
+                </button>
+            </div>
             <div class="table-container" id="tableContainer">
                 <table class="task-table" id="taskTable">
                     <thead>
@@ -419,7 +433,8 @@
             </div>
         </div>
 
-        <div class="right-panel">
+        <!-- RIGHT: Gantt -->
+        <div class="right-panel" id="rightPanel">
             <div class="gantt-header">
                 <span><i class="fas fa-calendar-alt"></i> Gantt Calendar</span>
                 <button class="current-month-btn" id="currentMonthBtn">Current Month</button>
@@ -435,8 +450,7 @@
 </main>
 
 <!-- =============================================
-     MATERIAL ASSIGNMENT MODAL
-     Wide table-form for materials
+     MATERIAL MODAL
      ============================================= -->
 <div class="allocation-overlay" id="materialAllocOverlay">
     <div class="allocation-modal">
@@ -449,29 +463,13 @@
                 <i class="fas fa-times modal-close" onclick="closeMaterialAllocModal()"></i>
             </div>
         </div>
-
-        <!-- Read-only task context bar -->
         <div class="task-context-bar">
-            <div class="ctx-item">
-                <span class="ctx-label">Task ID</span>
-                <span class="ctx-badge" id="ctxTaskId">—</span>
-            </div>
-            <div class="ctx-item">
-                <span class="ctx-label">Line</span>
-                <span class="ctx-value" id="ctxLine">—</span>
-            </div>
-            <div class="ctx-item">
-                <span class="ctx-label">Description</span>
-                <span class="ctx-value" id="ctxDescription">—</span>
-            </div>
-            <div class="ctx-item">
-                <span class="ctx-label">Location</span>
-                <span class="ctx-value" id="ctxLocation">—</span>
-            </div>
+            <div class="ctx-item"><span class="ctx-label">Task ID</span><span class="ctx-badge" id="ctxTaskId">—</span></div>
+            <div class="ctx-item"><span class="ctx-label">Line</span><span class="ctx-value" id="ctxLine">—</span></div>
+            <div class="ctx-item"><span class="ctx-label">Description</span><span class="ctx-value" id="ctxDescription">—</span></div>
+            <div class="ctx-item"><span class="ctx-label">Location</span><span class="ctx-value" id="ctxLocation">—</span></div>
         </div>
-
         <div class="modal-body">
-            <!-- Full entry table -->
             <div class="entry-table-wrap">
                 <table class="entry-table">
                     <thead>
@@ -486,45 +484,34 @@
                             <th style="min-width:100px">Amount</th>
                             <th style="min-width:130px">Location</th>
                             <th style="min-width:160px">Assigned At</th>
-                            <th style="min-width:40px; text-align:center">✕</th>
+                            <th style="min-width:40px;text-align:center">✕</th>
                         </tr>
                     </thead>
-                    <tbody id="matEntryBody">
-                        <!-- Rows injected by JS -->
-                    </tbody>
+                    <tbody id="matEntryBody"></tbody>
                 </table>
             </div>
-
             <div class="add-entry-row">
                 <button class="add-entry-btn" onclick="addMaterialEntryRow()">
                     <i class="fas fa-plus"></i> Add Another Material Row
                 </button>
             </div>
-
             <div id="matStockWarning" class="stock-warning"></div>
-
             <div class="grand-total-bar">
                 <span class="gt-label">Total Material Cost</span>
                 <span class="gt-value" id="matGrandTotal">0.00</span>
             </div>
         </div>
-
         <div class="modal-foot">
-            <span class="enter-hint">
-                <kbd>Enter</kbd> to save last row &nbsp;|&nbsp;
-                <kbd>Tab</kbd> to move between fields
-            </span>
+            <span class="enter-hint"><kbd>Enter</kbd> to save last row &nbsp;|&nbsp; <kbd>Tab</kbd> to move between fields</span>
             <button class="btn-cancel" onclick="closeMaterialAllocModal()">Cancel</button>
-            <button class="btn-save" onclick="assignMaterials()">
-                <i class="fas fa-check"></i> Save All
-            </button>
+            <button class="btn-save" onclick="assignMaterials()"><i class="fas fa-check"></i> Save All</button>
         </div>
     </div>
 </div>
 
 <!-- =============================================
-     LABOR MODAL — FULL 9-COLUMN TABLE
-     EMPLOYEE ID | NAME | PROJECT NAME | LOCATION | TASK ID | DESCRIPTION | STATUS | TRANSFER DATE | MH
+     LABOR MODAL — FULL 12-COLUMN TABLE
+     # | EMPLOYEE ID | NAME | PROJECT NAME | LOCATION | TASK ID | DESCRIPTION | STATUS | TRANSFER DATE | MH | COST | ✕
      ============================================= -->
 <div class="allocation-overlay" id="laborAllocOverlay">
     <div class="allocation-modal labor-modal">
@@ -537,34 +524,18 @@
                 <i class="fas fa-times modal-close" onclick="closeLaborAllocModal()"></i>
             </div>
         </div>
-
-        <!-- Task context bar (pre-filled) -->
         <div class="task-context-bar">
-            <div class="ctx-item">
-                <span class="ctx-label">TASK ID</span>
-                <span class="ctx-badge" id="labCtxTaskId">—</span>
-            </div>
-            <div class="ctx-item">
-                <span class="ctx-label">DESCRIPTION</span>
-                <span class="ctx-value" id="labCtxDesc">—</span>
-            </div>
-            <div class="ctx-item">
-                <span class="ctx-label">LOCATION</span>
-                <span class="ctx-value" id="labCtxLoc">—</span>
-            </div>
-            <div class="ctx-item">
-                <span class="ctx-label">PROJECT</span>
-                <span class="ctx-value" id="labCtxProject">—</span>
-            </div>
+            <div class="ctx-item"><span class="ctx-label">TASK ID</span><span class="ctx-badge" id="labCtxTaskId">—</span></div>
+            <div class="ctx-item"><span class="ctx-label">DESCRIPTION</span><span class="ctx-value" id="labCtxDesc">—</span></div>
+            <div class="ctx-item"><span class="ctx-label">LOCATION</span><span class="ctx-value" id="labCtxLoc">—</span></div>
+            <div class="ctx-item"><span class="ctx-label">PROJECT</span><span class="ctx-value" id="labCtxProject">—</span></div>
         </div>
-
         <div class="modal-body">
-            <!-- Full 9-column labor table -->
             <div class="entry-table-wrap">
                 <table class="labor-entry-table" id="laborEntryTable">
                     <thead>
                         <tr>
-                            <th style="min-width:80px">#</th>
+                            <th style="min-width:36px">#</th>
                             <th style="min-width:100px">EMPLOYEE ID</th>
                             <th style="min-width:140px">NAME</th>
                             <th style="min-width:120px">PROJECT NAME</th>
@@ -575,36 +546,26 @@
                             <th style="min-width:140px">TRANSFER DATE</th>
                             <th style="min-width:70px">MH</th>
                             <th style="min-width:100px">COST</th>
-                            <th style="min-width:40px">✕</th>
+                            <th style="min-width:36px">✕</th>
                         </tr>
                     </thead>
-                    <tbody id="labEntryBody">
-                        <!-- Rows injected by JS -->
-                    </tbody>
+                    <tbody id="labEntryBody"></tbody>
                 </table>
             </div>
-
             <div class="add-entry-row">
                 <button class="add-entry-btn" onclick="addLaborEntryRow()">
                     <i class="fas fa-plus"></i> Add Another Worker
                 </button>
             </div>
-
             <div class="grand-total-bar">
                 <span class="gt-label">Total Labor Cost</span>
                 <span class="gt-value" id="labGrandTotal">0.00</span>
             </div>
         </div>
-
         <div class="modal-foot">
-            <span class="enter-hint">
-                <kbd>Enter</kbd> to save last row &nbsp;|&nbsp;
-                <kbd>Tab</kbd> to move between fields
-            </span>
+            <span class="enter-hint"><kbd>Enter</kbd> to save last row &nbsp;|&nbsp; <kbd>Tab</kbd> to move between fields</span>
             <button class="btn-cancel" onclick="closeLaborAllocModal()">Cancel</button>
-            <button class="btn-save" onclick="assignLabors()">
-                <i class="fas fa-check"></i> Save All
-            </button>
+            <button class="btn-save" onclick="assignLabors()"><i class="fas fa-check"></i> Save All</button>
         </div>
     </div>
 </div>
@@ -634,12 +595,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectId = urlParams.get('id');
     if (!projectId) alert("Project ID missing!");
 
-    // Set history links
+    // Nav links
     document.getElementById('completedtasksBtn').href = `completedtask.html?id=${projectId}`;
-    document.getElementById('matHistoryNavBtn').href = `material-usage-history.html?id=${projectId}`;
-    document.getElementById('matHistoryLink').href = `material-usage-history.html?id=${projectId}`;
-    document.getElementById('labHistoryNavBtn').href = `employee-assignment-history.html?id=${projectId}`;
-    document.getElementById('labHistoryLink').href = `employee-assignment-history.html?id=${projectId}`;
+    document.getElementById('matHistoryNavBtn').href  = `material-usage-history.html?id=${projectId}`;
+    document.getElementById('matHistoryLink').href    = `material-usage-history.html?id=${projectId}`;
+    document.getElementById('labHistoryNavBtn').href  = `employee-assignment-history.html?id=${projectId}`;
+    document.getElementById('labHistoryLink').href    = `employee-assignment-history.html?id=${projectId}`;
     document.getElementById('projectTitle').textContent = `Project ${projectId.slice(0,6)}...`;
 
     // DOM refs
@@ -665,39 +626,96 @@ document.addEventListener('DOMContentLoaded', function() {
     const matGrandTotalEl    = document.getElementById('matGrandTotal');
     const labGrandTotalEl    = document.getElementById('labGrandTotal');
     const matStockWarning    = document.getElementById('matStockWarning');
+    const leftPanel          = document.getElementById('leftPanel');
+    const rightPanel         = document.getElementById('rightPanel');
+    const toggleGanttBtn     = document.getElementById('toggleGanttBtn');
+    const toggleGanttLabel   = document.getElementById('toggleGanttLabel');
+    const toggleGanttIcon    = document.getElementById('toggleGanttIcon');
 
     const LABOR_RATE = 18;
 
     let materials    = [];
     let laborWorkers = [];
-
-    // Current assigning context
     let currentAssigningTaskId      = null;
     let currentAssigningDocId       = null;
     let currentAssigningTaskLevel   = null;
     let currentAssigningParentDocId = null;
     let currentAssigningSubDocId    = null;
     let currentTaskContext          = {};
-
-    let matRowCounter = 0;
-    let labRowCounter = 0;
-    let allTasks      = [];
-    let emptyRows     = JSON.parse(localStorage.getItem(`emptyRows_${projectId}`)) || [];
-    let hideCompleted = false;
+    let matRowCounter  = 0;
+    let labRowCounter  = 0;
+    let allTasks       = [];
+    let emptyRows      = JSON.parse(localStorage.getItem(`emptyRows_${projectId}`)) || [];
     let showCurrentMonthOnly = false;
-    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
-    let unsubMain = null;
-    let subUnsubs = {};
-    let openMenuId = null;
-
-    // Real-time listeners for history collections
+    let actionsCollapsed     = localStorage.getItem('actionsCollapsed') === 'true';
+    let unsubMain      = null;
+    let subUnsubs      = {};
+    let openMenuId     = null;
     let unsubMaterials = null;
-    let unsubLabor = null;
+    let unsubLabor     = null;
 
     function saveEmptyRows() { localStorage.setItem(`emptyRows_${projectId}`, JSON.stringify(emptyRows)); }
 
-    if (actionsCollapsed) { actionsPanel.classList.add('collapsed'); toggleIcon.style.transform = 'rotate(-90deg)'; }
+    // ═══════════════════════════════════════════════════════
+    // HIDE COMPLETED — persisted per project in localStorage
+    // Stays hidden across page refreshes until user clicks again
+    // ═══════════════════════════════════════════════════════
+    const HIDE_COMPLETED_KEY = `hideCompleted_${projectId}`;
+    let hideCompleted = localStorage.getItem(HIDE_COMPLETED_KEY) === 'true';
 
+    function applyHideCompletedUI() {
+        if (hideCompleted) {
+            toggleCompletedBtn.innerHTML = '<i class="fas fa-eye"></i> Show Completed';
+            toggleCompletedBtn.classList.add('btn-active');
+        } else {
+            toggleCompletedBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Completed';
+            toggleCompletedBtn.classList.remove('btn-active');
+        }
+    }
+    // Apply on page load immediately (before tasks even render)
+    applyHideCompletedUI();
+
+    toggleCompletedBtn.onclick = () => {
+        hideCompleted = !hideCompleted;
+        // Persist — survives refresh, browser close, everything
+        localStorage.setItem(HIDE_COMPLETED_KEY, String(hideCompleted));
+        applyHideCompletedUI();
+        renderTasks(filterTasks());
+        renderGantt();
+    };
+
+    // ═══════════════════════════════════════════════════════
+    // GANTT HIDE/SHOW — persisted per project in localStorage
+    // ═══════════════════════════════════════════════════════
+    const GANTT_KEY = `ganttVisible_${projectId}`;
+    let ganttVisible = localStorage.getItem(GANTT_KEY) !== 'false'; // default visible
+
+    function applyGanttState() {
+        if (ganttVisible) {
+            rightPanel.classList.remove('gantt-hidden');
+            leftPanel.classList.remove('gantt-hidden');
+            toggleGanttLabel.textContent = 'Hide Gantt';
+            toggleGanttIcon.className    = 'fas fa-eye-slash';
+            toggleGanttBtn.classList.remove('is-off');
+        } else {
+            rightPanel.classList.add('gantt-hidden');
+            leftPanel.classList.add('gantt-hidden');
+            toggleGanttLabel.textContent = 'Show Gantt';
+            toggleGanttIcon.className    = 'fas fa-calendar-alt';
+            toggleGanttBtn.classList.add('is-off');
+        }
+    }
+    applyGanttState(); // apply immediately on load
+
+    toggleGanttBtn.addEventListener('click', () => {
+        ganttVisible = !ganttVisible;
+        localStorage.setItem(GANTT_KEY, String(ganttVisible));
+        applyGanttState();
+        if (ganttVisible) renderGantt();
+    });
+
+    // Actions panel collapse
+    if (actionsCollapsed) { actionsPanel.classList.add('collapsed'); toggleIcon.style.transform = 'rotate(-90deg)'; }
     actionsHeader.addEventListener('click', () => {
         actionsPanel.classList.toggle('collapsed');
         toggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
@@ -714,60 +732,45 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === materialModal) closeMaterialAllocModal();
         if (e.target === laborModal)    closeLaborAllocModal();
     };
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closeMaterialAllocModal(); closeLaborAllocModal(); }
+    });
 
     const fmt        = (n) => (+(n||0)).toFixed(2);
     const formatDate = (d) => d ? new Date(d.toDate ? d.toDate() : d).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
 
-    // Make cost cell
     const makeCostCell = (value, taskId, type) => {
-        const hasVal  = value && value > 0;
+        const hasVal    = value && value > 0;
         const zeroClass = hasVal ? '' : ' cost-zero';
-        const fn = type === 'material' ? 'openMaterialAssign' : 'openLaborAssign';
+        const fn        = type === 'material' ? 'openMaterialAssign' : 'openLaborAssign';
         return `<span class="cost-clickable${zeroClass}" id="${type==='material'?'matCell':'labCell'}_${taskId}" onclick="${fn}('${taskId}')">${hasVal ? fmt(value) : ''}</span>`;
     };
 
     function updateCostCellInDom(taskId, type, newValue) {
-        const id  = `${type === 'material' ? 'matCell' : 'labCell'}_${taskId}`;
-        const el  = document.getElementById(id);
+        const id = `${type === 'material' ? 'matCell' : 'labCell'}_${taskId}`;
+        const el = document.getElementById(id);
         if (!el) return;
         el.textContent = newValue > 0 ? fmt(newValue) : '';
         el.classList.toggle('cost-zero', !(newValue > 0));
-        
-        // Update total in the same row
         const tr = el.closest('tr');
         if (tr) {
             const matSpan = tr.querySelector('[id^="matCell_"]');
             const labSpan = tr.querySelector('[id^="labCell_"]');
             const totTd   = tr.querySelector('.total-cost');
             if (totTd) {
-                const matVal = matSpan ? (parseFloat(matSpan.textContent) || 0) : 0;
-                const labVal = labSpan ? (parseFloat(labSpan.textContent) || 0) : 0;
-                const tot = matVal + labVal;
+                const tot = (parseFloat(matSpan?.textContent)||0) + (parseFloat(labSpan?.textContent)||0);
                 totTd.textContent = tot > 0 ? fmt(tot) : '';
             }
         }
     }
 
     function updateHoursCellInDom(taskId, newHours) {
-        // Find the row with this task ID and update the HRS column (8th column, index 7)
+        // HRS column = index 7 (0-based), 13 columns total with ASSIGNED present
         const allRows = document.querySelectorAll('#taskList tr');
         for (const row of allRows) {
-            // Check if this row has a menu with the task ID or check data attribute
-            const menuBtn = row.querySelector('.menu-trigger');
-            if (menuBtn && menuBtn.getAttribute('onclick')?.includes(taskId)) {
-                const hrsCell = row.cells[7]; // HRS column
-                if (hrsCell) {
-                    hrsCell.textContent = newHours > 0 ? newHours : '';
-                }
-                break;
-            }
-            
-            // Alternative: check if the row contains a cost cell with this task ID
             if (row.querySelector(`[id^="matCell_${taskId}"]`) || row.querySelector(`[id^="labCell_${taskId}"]`)) {
                 const hrsCell = row.cells[7];
-                if (hrsCell) {
-                    hrsCell.textContent = newHours > 0 ? newHours : '';
-                }
+                if (hrsCell) hrsCell.textContent = newHours > 0 ? newHours : '';
                 break;
             }
         }
@@ -782,212 +785,94 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch(e) { console.error('loadResources:', e); }
     }
 
-    // =============================================
-    // REAL-TIME LISTENERS FOR HISTORY CHANGES
-    // =============================================
-    
+    // ─── Real-time listeners for history collections ───
     function listenForMaterialChanges() {
         if (unsubMaterials) unsubMaterials();
-        
         unsubMaterials = onSnapshot(
             query(collection(db, "materialsUsage"), where("projectId", "==", projectId)),
             (snapshot) => {
-                // Group by taskId and calculate total material cost (excluding reversed)
-                const taskMaterialTotals = {};
-                
-                snapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    // Skip reversed entries
-                    if (data.reversed) return;
-                    
-                    const taskId = data.taskId || data.taskDocId;
-                    if (!taskId) return;
-                    
-                    const cost = data.cost || (parseFloat(data.quantity) * parseFloat(data.unitPrice)) || 0;
-                    
-                    if (!taskMaterialTotals[taskId]) taskMaterialTotals[taskId] = 0;
-                    taskMaterialTotals[taskId] += cost;
+                const totals = {};
+                snapshot.docs.forEach(d => {
+                    const x = d.data(); if (x.reversed) return;
+                    const tid = x.taskId || x.taskDocId; if (!tid) return;
+                    totals[tid] = (totals[tid]||0) + (x.cost || ((parseFloat(x.quantity)||0)*(parseFloat(x.unitPrice)||0)));
                 });
-                
-                // Update each task's material cost in UI and Firestore if needed
-                allTasks.forEach(task => {
-                    updateTaskMaterialCost(task.id, taskMaterialTotals[task.id] || 0);
-                    
-                    // Check subtasks
-                    task.subTasks?.forEach(sub => {
-                        updateTaskMaterialCost(sub.id, taskMaterialTotals[sub.id] || 0);
-                        
-                        sub.subSubtasks?.forEach(ss => {
-                            updateTaskMaterialCost(ss.id, taskMaterialTotals[ss.id] || 0);
-                        });
+                allTasks.forEach(t => {
+                    updateTaskMaterialCost(t.id, totals[t.id]||0);
+                    t.subTasks?.forEach(sub => {
+                        updateTaskMaterialCost(sub.id, totals[sub.id]||0);
+                        sub.subSubtasks?.forEach(ss => updateTaskMaterialCost(ss.id, totals[ss.id]||0));
                     });
                 });
             },
-            (err) => console.error('Material listener error:', err)
+            (err) => console.error('Material listener:', err)
         );
     }
 
     function listenForLaborChanges() {
         if (unsubLabor) unsubLabor();
-        
         unsubLabor = onSnapshot(
             query(collection(db, "locationHistory"), where("projectId", "==", projectId)),
             (snapshot) => {
-                // Group by taskId and calculate total labor cost and hours (excluding reversed)
-                const taskLaborTotals = {};
-                const taskHoursTotals = {};
-                
-                snapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    // Skip if reversed (if you add reversal later)
-                    if (data.reversed) return;
-                    
-                    const taskId = data.taskId || data.taskDocId;
-                    if (!taskId) return;
-                    
-                    const cost = data.cost || (parseFloat(data.mh) * parseFloat(data.rate || LABOR_RATE)) || 0;
-                    const hours = parseFloat(data.mh) || 0;
-                    
-                    if (!taskLaborTotals[taskId]) taskLaborTotals[taskId] = 0;
-                    if (!taskHoursTotals[taskId]) taskHoursTotals[taskId] = 0;
-                    
-                    taskLaborTotals[taskId] += cost;
-                    taskHoursTotals[taskId] += hours;
+                const costTot = {}, hrsTot = {};
+                snapshot.docs.forEach(d => {
+                    const x = d.data(); if (x.reversed) return;
+                    const tid = x.taskId || x.taskDocId; if (!tid) return;
+                    costTot[tid] = (costTot[tid]||0) + (x.cost || ((parseFloat(x.mh)||0)*(parseFloat(x.rate)||LABOR_RATE)));
+                    hrsTot[tid]  = (hrsTot[tid]||0)  + (parseFloat(x.mh)||0);
                 });
-                
-                // Update each task's labor cost and hours
-                allTasks.forEach(task => {
-                    updateTaskLaborCost(task.id, taskLaborTotals[task.id] || 0);
-                    updateTaskHours(task.id, taskHoursTotals[task.id] || 0);
-                    
-                    // Check subtasks
-                    task.subTasks?.forEach(sub => {
-                        updateTaskLaborCost(sub.id, taskLaborTotals[sub.id] || 0);
-                        updateTaskHours(sub.id, taskHoursTotals[sub.id] || 0);
-                        
+                allTasks.forEach(t => {
+                    updateTaskLaborCost(t.id, costTot[t.id]||0);
+                    updateTaskHours(t.id, hrsTot[t.id]||0);
+                    t.subTasks?.forEach(sub => {
+                        updateTaskLaborCost(sub.id, costTot[sub.id]||0);
+                        updateTaskHours(sub.id, hrsTot[sub.id]||0);
                         sub.subSubtasks?.forEach(ss => {
-                            updateTaskLaborCost(ss.id, taskLaborTotals[ss.id] || 0);
-                            updateTaskHours(ss.id, taskHoursTotals[ss.id] || 0);
+                            updateTaskLaborCost(ss.id, costTot[ss.id]||0);
+                            updateTaskHours(ss.id, hrsTot[ss.id]||0);
                         });
                     });
                 });
             },
-            (err) => console.error('Labor listener error:', err)
+            (err) => console.error('Labor listener:', err)
         );
     }
 
-    async function updateTaskMaterialCost(taskId, newCost) {
-        // Update in allTasks array
-        const taskObj = findTaskObj(taskId);
-        if (taskObj) {
-            taskObj._matCost = newCost;
-        }
-        
-        // Update UI
-        updateCostCellInDom(taskId, 'material', newCost);
-        
-        // Update Firestore if this is the main document for the task
-        // Find the task to get its level and parent info
-        let found = null, level = null, parentDocId = null, subDocId = null;
+    function findPathFor(taskId) {
         for (const t of allTasks) {
-            if (t.id === taskId) { found = t; level = 'main'; break; }
+            if (t.id === taskId) return { found: t, level: 'main', parentDocId: null, subDocId: null };
             for (const sub of (t.subTasks||[])) {
-                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
+                if (sub.id === taskId) return { found: sub, level: 'sub', parentDocId: t.id, subDocId: null };
                 for (const ss of (sub.subSubtasks||[])) {
-                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
-                }
-                if (found) break;
-            }
-            if (found) break;
-        }
-        
-        if (found) {
-            const docRef = getTaskDocRef(taskId, level, parentDocId, subDocId);
-            if (docRef) {
-                try {
-                    await updateDoc(docRef, { matCost: newCost });
-                } catch (e) {
-                    console.warn('Could not update material cost in Firestore:', e);
+                    if (ss.id === taskId) return { found: ss, level: 'subsub', parentDocId: t.id, subDocId: sub.id };
                 }
             }
         }
+        return { found: null, level: 'main', parentDocId: null, subDocId: null };
     }
 
-    async function updateTaskLaborCost(taskId, newCost) {
-        // Update in allTasks array
-        const taskObj = findTaskObj(taskId);
-        if (taskObj) {
-            taskObj._labCost = newCost;
-        }
-        
-        // Update UI
-        updateCostCellInDom(taskId, 'labor', newCost);
-        
-        // Update Firestore if this is the main document for the task
-        let found = null, level = null, parentDocId = null, subDocId = null;
-        for (const t of allTasks) {
-            if (t.id === taskId) { found = t; level = 'main'; break; }
-            for (const sub of (t.subTasks||[])) {
-                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
-                for (const ss of (sub.subSubtasks||[])) {
-                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
-                }
-                if (found) break;
-            }
-            if (found) break;
-        }
-        
-        if (found) {
-            const docRef = getTaskDocRef(taskId, level, parentDocId, subDocId);
-            if (docRef) {
-                try {
-                    await updateDoc(docRef, { labCost: newCost });
-                } catch (e) {
-                    console.warn('Could not update labor cost in Firestore:', e);
-                }
-            }
-        }
+    async function updateTaskMaterialCost(taskId, val) {
+        const obj = findTaskObj(taskId); if (obj) obj._matCost = val;
+        updateCostCellInDom(taskId, 'material', val);
+        const { found, level, parentDocId, subDocId } = findPathFor(taskId);
+        if (found) { const r = getTaskDocRef(taskId, level, parentDocId, subDocId); if (r) try { await updateDoc(r, { matCost: val }); } catch(e) { console.warn(e); } }
+    }
+    async function updateTaskLaborCost(taskId, val) {
+        const obj = findTaskObj(taskId); if (obj) obj._labCost = val;
+        updateCostCellInDom(taskId, 'labor', val);
+        const { found, level, parentDocId, subDocId } = findPathFor(taskId);
+        if (found) { const r = getTaskDocRef(taskId, level, parentDocId, subDocId); if (r) try { await updateDoc(r, { labCost: val }); } catch(e) { console.warn(e); } }
+    }
+    async function updateTaskHours(taskId, val) {
+        const obj = findTaskObj(taskId); if (obj) obj._hours = val;
+        updateHoursCellInDom(taskId, val);
+        const { found, level, parentDocId, subDocId } = findPathFor(taskId);
+        if (found) { const r = getTaskDocRef(taskId, level, parentDocId, subDocId); if (r) try { await updateDoc(r, { totalHours: val }); } catch(e) { console.warn(e); } }
     }
 
-    async function updateTaskHours(taskId, newHours) {
-        // Update in allTasks array
-        const taskObj = findTaskObj(taskId);
-        if (taskObj) {
-            taskObj._hours = newHours;
-        }
-        
-        // Update UI
-        updateHoursCellInDom(taskId, newHours);
-        
-        // Update Firestore if this is the main document for the task
-        let found = null, level = null, parentDocId = null, subDocId = null;
-        for (const t of allTasks) {
-            if (t.id === taskId) { found = t; level = 'main'; break; }
-            for (const sub of (t.subTasks||[])) {
-                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
-                for (const ss of (sub.subSubtasks||[])) {
-                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
-                }
-                if (found) break;
-            }
-            if (found) break;
-        }
-        
-        if (found) {
-            const docRef = getTaskDocRef(taskId, level, parentDocId, subDocId);
-            if (docRef) {
-                try {
-                    await updateDoc(docRef, { totalHours: newHours });
-                } catch (e) {
-                    console.warn('Could not update hours in Firestore:', e);
-                }
-            }
-        }
-    }
-
-    // =============================================
-    // MATERIAL MODAL (unchanged from original)
-    // =============================================
+    // ══════════════════════════════════════
+    // MATERIAL MODAL
+    // ══════════════════════════════════════
     function matOptions(selectedId) {
         return '<option value="">— Select Material —</option>' +
             materials.map(m => {
@@ -999,258 +884,129 @@ document.addEventListener('DOMContentLoaded', function() {
             }).join('');
     }
 
-    function nowInputVal() {
-        return new Date().toISOString().slice(0,16);
-    }
+    function nowInputVal() { return new Date().toISOString().slice(0,16); }
 
     window.addMaterialEntryRow = function(prefill = {}) {
         matRowCounter++;
         const rid = matRowCounter;
         const ctx = currentTaskContext;
-
-        const tr = document.createElement('tr');
+        const tr  = document.createElement('tr');
         tr.dataset.rid = rid;
-
         tr.innerHTML = `
             <td><span class="cell-readonly">${rid}</span></td>
-            <td><span class="cell-readonly" id="mat_taskId_${rid}">${ctx.taskId || '—'}</span></td>
-            <td><span class="cell-readonly" id="mat_line_${rid}">${ctx.taskLine || '—'}</span></td>
-            <td>
-                <input class="cell-input mat-desc" data-rid="${rid}" type="text"
-                    value="${prefill.description || ctx.taskDescription || ''}"
-                    placeholder="Description" style="min-width:120px">
-            </td>
-            <td>
-                <select class="cell-select mat-material" data-rid="${rid}"
-                    onchange="onMatEntrySelect(${rid})">
-                    ${matOptions(prefill.materialId || '')}
-                </select>
-            </td>
-            <td>
-                <input class="cell-input mat-qty" data-rid="${rid}" type="number"
-                    min="0" step="0.01" placeholder="0"
-                    value="${prefill.qty || ''}"
-                    oninput="recalcMatEntry(${rid})"
-                    style="min-width:70px; text-align:right">
-            </td>
-            <td>
-                <input class="cell-input mat-uprice" data-rid="${rid}" type="number"
-                    min="0" step="0.01" placeholder="0.00"
-                    value="${prefill.price || ''}"
-                    oninput="recalcMatEntry(${rid})"
-                    style="min-width:80px; text-align:right">
-            </td>
-            <td>
-                <span class="amount-cell zero" id="matAmount_${rid}">—</span>
-            </td>
-            <td>
-                <input class="cell-input mat-location" data-rid="${rid}" type="text"
-                    value="${prefill.location || ctx.location || ''}"
-                    placeholder="Location" style="min-width:110px">
-            </td>
-            <td>
-                <input class="cell-input mat-assignedAt" data-rid="${rid}" type="datetime-local"
-                    value="${prefill.assignedAt || nowInputVal()}"
-                    style="min-width:150px; font-size:0.68rem">
-            </td>
-            <td style="text-align:center">
-                <button class="remove-entry-btn" onclick="removeMatEntryRow(${rid})" title="Remove row">×</button>
-            </td>
+            <td><span class="cell-readonly" id="mat_taskId_${rid}">${ctx.taskId||'—'}</span></td>
+            <td><span class="cell-readonly" id="mat_line_${rid}">${ctx.taskLine||'—'}</span></td>
+            <td><input class="cell-input mat-desc" data-rid="${rid}" type="text" value="${prefill.description||ctx.taskDescription||''}" placeholder="Description" style="min-width:120px"></td>
+            <td><select class="cell-select mat-material" data-rid="${rid}" onchange="onMatEntrySelect(${rid})">${matOptions(prefill.materialId||'')}</select></td>
+            <td><input class="cell-input mat-qty" data-rid="${rid}" type="number" min="0" step="0.01" placeholder="0" value="${prefill.qty||''}" oninput="recalcMatEntry(${rid})" style="min-width:70px;text-align:right"></td>
+            <td><input class="cell-input mat-uprice" data-rid="${rid}" type="number" min="0" step="0.01" placeholder="0.00" value="${prefill.price||''}" oninput="recalcMatEntry(${rid})" style="min-width:80px;text-align:right"></td>
+            <td><span class="amount-cell zero" id="matAmount_${rid}">—</span></td>
+            <td><input class="cell-input mat-location" data-rid="${rid}" type="text" value="${prefill.location||ctx.location||''}" placeholder="Location" style="min-width:110px"></td>
+            <td><input class="cell-input mat-assignedAt" data-rid="${rid}" type="datetime-local" value="${prefill.assignedAt||nowInputVal()}" style="min-width:150px;font-size:0.68rem"></td>
+            <td style="text-align:center"><button class="remove-entry-btn" onclick="removeMatEntryRow(${rid})" title="Remove row">×</button></td>
         `;
-
         matEntryBody.appendChild(tr);
         if (prefill.qty && prefill.price) recalcMatEntry(rid);
-
         const inputs = tr.querySelectorAll('input, select');
         inputs.forEach((inp, idx) => {
             inp.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (idx === inputs.length - 1) {
-                        window.addMaterialEntryRow();
-                        setTimeout(() => {
-                            const allRows = matEntryBody.querySelectorAll('tr');
-                            const lastRow = allRows[allRows.length - 1];
-                            lastRow?.querySelector('select')?.focus();
-                        }, 30);
-                    } else {
-                        inputs[idx + 1]?.focus();
-                    }
-                }
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                if (idx === inputs.length - 1) {
+                    window.addMaterialEntryRow();
+                    setTimeout(() => { const rows = matEntryBody.querySelectorAll('tr'); rows[rows.length-1]?.querySelector('select')?.focus(); }, 30);
+                } else { inputs[idx+1]?.focus(); }
             });
         });
-
         return tr;
     };
 
     window.onMatEntrySelect = function(rid) {
-        const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`);
-        if (!row) return;
-        const sel   = row.querySelector('.mat-material');
-        const opt   = sel.options[sel.selectedIndex];
-        const price = parseFloat(opt?.dataset?.price || 0);
-        if (price) row.querySelector('.mat-uprice').value = price.toFixed(2);
+        const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`); if (!row) return;
+        const opt = row.querySelector('.mat-material').options[row.querySelector('.mat-material').selectedIndex];
+        if (parseFloat(opt?.dataset?.price||0)) row.querySelector('.mat-uprice').value = parseFloat(opt.dataset.price).toFixed(2);
         recalcMatEntry(rid);
     };
-
     window.recalcMatEntry = function(rid) {
-        const row   = matEntryBody.querySelector(`tr[data-rid="${rid}"]`);
-        if (!row) return;
-        const qty   = parseFloat(row.querySelector('.mat-qty').value)    || 0;
-        const price = parseFloat(row.querySelector('.mat-uprice').value) || 0;
-        const amt   = qty * price;
-        const el    = row.querySelector(`#matAmount_${rid}`);
-        if (amt > 0) {
-            el.textContent = amt.toFixed(2);
-            el.classList.remove('zero');
-        } else {
-            el.textContent = '—';
-            el.classList.add('zero');
-        }
+        const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`); if (!row) return;
+        const amt = (parseFloat(row.querySelector('.mat-qty').value)||0) * (parseFloat(row.querySelector('.mat-uprice').value)||0);
+        const el  = row.querySelector(`#matAmount_${rid}`);
+        el.textContent = amt > 0 ? amt.toFixed(2) : '—';
+        el.classList.toggle('zero', amt <= 0);
         updateMatGrandTotal();
     };
-
     window.removeMatEntryRow = function(rid) {
-        const row = matEntryBody.querySelector(`tr[data-rid="${rid}"]`);
-        if (row) row.remove();
+        matEntryBody.querySelector(`tr[data-rid="${rid}"]`)?.remove();
         updateMatGrandTotal();
     };
-
     function updateMatGrandTotal() {
         let t = 0;
-        matEntryBody.querySelectorAll('.amount-cell').forEach(el => {
-            const v = parseFloat(el.textContent);
-            if (!isNaN(v)) t += v;
-        });
+        matEntryBody.querySelectorAll('.amount-cell').forEach(el => { const v=parseFloat(el.textContent); if(!isNaN(v)) t+=v; });
         matGrandTotalEl.textContent = t.toFixed(2);
     }
 
     window.openMaterialAssign = function(taskId) {
         currentAssigningTaskId = taskId;
-
-        let found = null, level = null, parentDocId = null, subDocId = null;
-        for (const t of allTasks) {
-            if (t.id === taskId) { found = t; level = 'main'; break; }
-            for (const sub of (t.subTasks||[])) {
-                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
-                for (const ss of (sub.subSubtasks||[])) {
-                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
-                }
-                if (found) break;
-            }
-            if (found) break;
-        }
-
-        currentAssigningDocId        = found?.id || taskId;
-        currentAssigningTaskLevel    = level || 'main';
-        currentAssigningParentDocId  = parentDocId;
-        currentAssigningSubDocId     = subDocId;
-
-        currentTaskContext = {
-            taskId:      found?.taskId      || '',
-            taskLine:    found?.taskLine    || '',
-            taskDescription: found?.taskDescription || '',
-            location:    found?.location   || ''
-        };
-
+        const { found, level, parentDocId, subDocId } = findPathFor(taskId);
+        currentAssigningDocId = found?.id || taskId;
+        currentAssigningTaskLevel   = level || 'main';
+        currentAssigningParentDocId = parentDocId;
+        currentAssigningSubDocId    = subDocId;
+        currentTaskContext = { taskId: found?.taskId||'', taskLine: found?.taskLine||'', taskDescription: found?.taskDescription||'', location: found?.location||'' };
         document.getElementById('taskNameMaterial').textContent = found?.taskDescription || 'Task';
-        document.getElementById('ctxTaskId').textContent      = currentTaskContext.taskId      || '—';
-        document.getElementById('ctxLine').textContent        = currentTaskContext.taskLine    || '—';
-        document.getElementById('ctxDescription').textContent = currentTaskContext.taskDescription || '—';
-        document.getElementById('ctxLocation').textContent    = currentTaskContext.location    || '—';
-
-        matEntryBody.innerHTML = '';
-        matStockWarning.style.display = 'none';
-        matRowCounter = 0;
-
-        loadResources().then(() => {
-            window.addMaterialEntryRow();
-            materialModal.classList.add('active');
-            setTimeout(() => matEntryBody.querySelector('select')?.focus(), 80);
-        });
+        document.getElementById('ctxTaskId').textContent        = currentTaskContext.taskId || '—';
+        document.getElementById('ctxLine').textContent          = currentTaskContext.taskLine || '—';
+        document.getElementById('ctxDescription').textContent   = currentTaskContext.taskDescription || '—';
+        document.getElementById('ctxLocation').textContent      = currentTaskContext.location || '—';
+        matEntryBody.innerHTML = ''; matStockWarning.style.display = 'none'; matRowCounter = 0;
+        loadResources().then(() => { window.addMaterialEntryRow(); materialModal.classList.add('active'); setTimeout(() => matEntryBody.querySelector('select')?.focus(), 80); });
     };
-
-    window.closeMaterialAllocModal = function() {
-        materialModal.classList.remove('active');
-        currentAssigningTaskId = null;
-    };
+    window.closeMaterialAllocModal = function() { materialModal.classList.remove('active'); currentAssigningTaskId = null; };
 
     window.assignMaterials = async function() {
         matStockWarning.style.display = 'none';
-        const rows = matEntryBody.querySelectorAll('tr');
         const entries = [];
-
-        for (const row of rows) {
-            const sel   = row.querySelector('.mat-material');
-            const matId = sel?.value;
-            if (!matId) continue;
-
-            const qty       = parseFloat(row.querySelector('.mat-qty').value);
-            const price     = parseFloat(row.querySelector('.mat-uprice').value);
-            const desc      = row.querySelector('.mat-desc').value.trim();
-            const location  = row.querySelector('.mat-location').value.trim();
-            const assignedAtVal = row.querySelector('.mat-assignedAt').value;
-
-            if (!qty   || qty   <= 0) { alert('Enter a valid quantity for all rows.'); return; }
-            if (!price || price <= 0) { alert('Enter a valid unit price for all rows.'); return; }
-
-            const mat   = materials.find(m => m.docId === matId);
-            if (!mat) continue;
-
-            const stock = +(mat.quantity || 0);
-            if (qty > stock) {
-                matStockWarning.innerHTML = `⚠️ <b>${mat.materialName || mat.name}</b>: only ${stock} in stock, you entered ${qty}.`;
-                matStockWarning.style.display = 'block';
-                return;
+        for (const row of matEntryBody.querySelectorAll('tr')) {
+            const matId = row.querySelector('.mat-material')?.value; if (!matId) continue;
+            const qty   = parseFloat(row.querySelector('.mat-qty').value);
+            const price = parseFloat(row.querySelector('.mat-uprice').value);
+            if (!qty||qty<=0)   { alert('Enter a valid quantity.'); return; }
+            if (!price||price<=0) { alert('Enter a valid unit price.'); return; }
+            const mat = materials.find(m => m.docId === matId); if (!mat) continue;
+            if (qty > +(mat.quantity||0)) {
+                matStockWarning.innerHTML = `⚠️ <b>${mat.materialName||mat.name}</b>: only ${mat.quantity} in stock, you entered ${qty}.`;
+                matStockWarning.style.display = 'block'; return;
             }
-
-            const assignedAt = assignedAtVal ? Timestamp.fromDate(new Date(assignedAtVal)) : Timestamp.now();
-
-            entries.push({ matId, mat, qty, price, cost: qty * price, desc, location, assignedAt });
+            const assignedAt = row.querySelector('.mat-assignedAt').value ? Timestamp.fromDate(new Date(row.querySelector('.mat-assignedAt').value)) : Timestamp.now();
+            entries.push({ matId, mat, qty, price, cost: qty*price, desc: row.querySelector('.mat-desc').value.trim(), location: row.querySelector('.mat-location').value.trim(), assignedAt });
         }
-
         if (!entries.length) { alert('Add at least one material row.'); return; }
-
         try {
-            const newMatCostAdded = entries.reduce((s, e) => s + e.cost, 0);
-
             for (const { matId, mat, qty, price, cost, desc, location, assignedAt } of entries) {
-                await updateDoc(doc(db, "materials", matId), { quantity: (+(mat.quantity||0)) - qty });
-
-                await addDoc(collection(db, "materialsUsage"), {
-                    taskId:      currentAssigningTaskId,
-                    taskDocId:   currentAssigningDocId,
-                    taskLevel:   currentAssigningTaskLevel,
-                    taskLine:    currentTaskContext.taskLine    || '',
-                    taskDescription: desc || currentTaskContext.taskDescription || '',
-                    materialId:  matId,
-                    materialName: mat.materialName || mat.name,
-                    quantity:    qty,
-                    unitPrice:   price,
-                    cost:        cost,
-                    location:    location || currentTaskContext.location || '',
-                    assignedAt:  assignedAt,
-                    projectId,
-                    savedAt:     Timestamp.now(),
-                    reversed:    false
+                await updateDoc(doc(db,"materials",matId), { quantity: (+(mat.quantity||0)) - qty });
+                await addDoc(collection(db,"materialsUsage"), {
+                    taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                    taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
+                    taskDescription: desc||currentTaskContext.taskDescription||'',
+                    materialId: matId, materialName: mat.materialName||mat.name,
+                    quantity: qty, unitPrice: price, cost,
+                    location: location||currentTaskContext.location||'',
+                    assignedAt, projectId, savedAt: Timestamp.now(), reversed: false
                 });
             }
-
-            // Don't update manually - the listener will handle it
             closeMaterialAllocModal();
         } catch(e) { alert('Error saving: ' + e.message); }
     };
 
-    // =============================================
-    // LABOR MODAL — FULL 9-COLUMN TABLE
-    // =============================================
-
+    // ══════════════════════════════════════
+    // LABOR MODAL — FULL TABLE FORM
+    // ══════════════════════════════════════
     function employeeOptions(selectedId) {
         return '<option value="">— Select Employee —</option>' +
             laborWorkers.map(e => {
-                const name = `${e.name || ''} ${e.surname || ''}`.trim() || 'Unnamed';
+                const name  = `${e.name||''} ${e.surname||''}`.trim() || 'Unnamed';
                 const empId = e.employeeId || e.id || e.docId || '';
-                const sel  = e.docId === selectedId ? 'selected' : '';
+                const sel   = e.docId === selectedId ? 'selected' : '';
                 return `<option value="${e.docId}" data-empid="${empId}" data-name="${name}" ${sel}>${empId} - ${name}</option>`;
             }).join('');
     }
@@ -1259,53 +1015,52 @@ document.addEventListener('DOMContentLoaded', function() {
         labRowCounter++;
         const rid = labRowCounter;
         const ctx = currentTaskContext;
-
-        const tr = document.createElement('tr');
+        const tr  = document.createElement('tr');
         tr.dataset.rid = rid;
-
         const projectName = projectId ? `Project ${projectId.slice(0,6)}...` : 'Current Project';
 
         tr.innerHTML = `
             <td><span class="cell-readonly">${rid}</span></td>
             <td>
                 <select class="cell-select lab-employee" data-rid="${rid}" onchange="onLaborEmployeeSelect(${rid})">
-                    ${employeeOptions(prefill.employeeId || '')}
+                    ${employeeOptions(prefill.employeeId||'')}
                 </select>
             </td>
             <td>
-                <span class="cell-readonly lab-name" id="lab_name_${rid}">${prefill.employeeName || ''}</span>
-                <input type="hidden" class="lab-name-hidden" value="${prefill.employeeName || ''}">
+                <span class="cell-readonly lab-name" id="lab_name_${rid}">${prefill.employeeName||''}</span>
+                <input type="hidden" class="lab-name-hidden" value="${prefill.employeeName||''}">
             </td>
             <td>
-                <input class="cell-input lab-project" data-rid="${rid}" type="text" 
-                    value="${prefill.projectName || projectName}" placeholder="Project Name" readonly>
+                <input class="cell-input lab-project" data-rid="${rid}" type="text"
+                    value="${prefill.projectName||projectName}" placeholder="Project Name" readonly>
             </td>
             <td>
                 <input class="cell-input lab-location" data-rid="${rid}" type="text"
-                    value="${prefill.location || ctx.location || ''}" placeholder="Location">
+                    value="${prefill.location||ctx.location||''}" placeholder="Location">
             </td>
             <td>
-                <span class="cell-readonly lab-taskid" id="lab_taskid_${rid}">${ctx.taskId || '—'}</span>
+                <span class="cell-readonly lab-taskid" id="lab_taskid_${rid}">${ctx.taskId||'—'}</span>
             </td>
             <td>
                 <input class="cell-input lab-description" data-rid="${rid}" type="text"
-                    value="${prefill.description || ctx.taskDescription || ''}" placeholder="Description">
+                    value="${prefill.description||ctx.taskDescription||''}" placeholder="Description">
             </td>
             <td>
                 <select class="cell-select lab-status" data-rid="${rid}">
-                    <option value="PENDING" ${prefill.status === 'PENDING' ? 'selected' : ''}>PENDING</option>
-                    <option value="ONGOING" ${prefill.status === 'ONGOING' ? 'selected' : ''}>ONGOING</option>
-                    <option value="COMPLETED" ${prefill.status === 'COMPLETED' ? 'selected' : ''}>COMPLETED</option>
+                    <option value="PENDING"   ${(prefill.status||'PENDING')==='PENDING'  ?'selected':''}>PENDING</option>
+                    <option value="ONGOING"   ${prefill.status==='ONGOING'  ?'selected':''}>ONGOING</option>
+                    <option value="COMPLETED" ${prefill.status==='COMPLETED'?'selected':''}>COMPLETED</option>
                 </select>
             </td>
             <td>
                 <input class="cell-input lab-transferdate" data-rid="${rid}" type="datetime-local"
-                    value="${prefill.transferDate || nowInputVal()}" style="min-width:140px">
+                    value="${prefill.transferDate||nowInputVal()}" style="min-width:140px">
             </td>
             <td>
                 <input class="cell-input lab-mh" data-rid="${rid}" type="number" min="0" step="0.5"
-                    value="${prefill.mh || ''}" placeholder="MH" style="min-width:70px; text-align:right"
-                    oninput="recalcLaborEntry(${rid})">
+                    value="${prefill.mh||''}" placeholder="MH"
+                    oninput="recalcLaborEntry(${rid})"
+                    style="min-width:70px;text-align:right">
             </td>
             <td>
                 <span class="amount-cell lab-cost" id="labCost_${rid}">—</span>
@@ -1319,233 +1074,126 @@ document.addEventListener('DOMContentLoaded', function() {
         labEntryBody.appendChild(tr);
         recalcLaborEntry(rid);
 
+        // Enter/Tab navigation — skip readonly inputs
         const inputs = tr.querySelectorAll('input, select');
         inputs.forEach((inp, idx) => {
             inp.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (idx === inputs.length - 1) {
-                        window.addLaborEntryRow();
-                        setTimeout(() => {
-                            const allRows = labEntryBody.querySelectorAll('tr');
-                            const lastRow = allRows[allRows.length - 1];
-                            lastRow?.querySelector('select')?.focus();
-                        }, 30);
-                    } else {
-                        let nextIdx = idx + 1;
-                        while (nextIdx < inputs.length && inputs[nextIdx].readOnly) {
-                            nextIdx++;
-                        }
-                        if (nextIdx < inputs.length) {
-                            inputs[nextIdx]?.focus();
-                        }
-                    }
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                if (idx === inputs.length - 1) {
+                    window.addLaborEntryRow();
+                    setTimeout(() => {
+                        const rows = labEntryBody.querySelectorAll('tr');
+                        rows[rows.length-1]?.querySelector('select')?.focus();
+                    }, 30);
+                } else {
+                    let next = idx + 1;
+                    while (next < inputs.length && inputs[next].readOnly) next++;
+                    inputs[next]?.focus();
                 }
             });
         });
-
         return tr;
     };
 
     window.onLaborEmployeeSelect = function(rid) {
-        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`);
-        if (!row) return;
-        
-        const sel = row.querySelector('.lab-employee');
-        const opt = sel.options[sel.selectedIndex];
-        const empName = opt?.dataset?.name || '';
-        
+        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`); if (!row) return;
+        const opt  = row.querySelector('.lab-employee').options[row.querySelector('.lab-employee').selectedIndex];
+        const name = opt?.dataset?.name || '';
         const nameSpan = row.querySelector('.lab-name');
-        if (nameSpan) {
-            nameSpan.textContent = empName;
-        }
-        
-        const nameHidden = row.querySelector('.lab-name-hidden');
-        if (nameHidden) nameHidden.value = empName;
-        
+        if (nameSpan) nameSpan.textContent = name;
+        const nameHid = row.querySelector('.lab-name-hidden');
+        if (nameHid) nameHid.value = name;
         recalcLaborEntry(rid);
     };
 
     window.recalcLaborEntry = function(rid) {
-        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`);
-        if (!row) return;
-        
-        const mh = parseFloat(row.querySelector('.lab-mh').value) || 0;
-        const rate = LABOR_RATE;
-        const cost = mh * rate;
-        
-        const costSpan = row.querySelector(`#labCost_${rid}`);
-        const costHidden = row.querySelector('.lab-cost-hidden');
-        
-        if (cost > 0) {
-            costSpan.textContent = cost.toFixed(2);
-            costSpan.classList.remove('zero');
-            if (costHidden) costHidden.value = cost;
-        } else {
-            costSpan.textContent = '—';
-            costSpan.classList.add('zero');
-            if (costHidden) costHidden.value = 0;
-        }
-        
+        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`); if (!row) return;
+        const mh   = parseFloat(row.querySelector('.lab-mh').value)||0;
+        const cost = mh * LABOR_RATE;
+        const el   = row.querySelector(`#labCost_${rid}`);
+        const hid  = row.querySelector('.lab-cost-hidden');
+        if (cost > 0) { el.textContent = cost.toFixed(2); el.classList.remove('zero'); if (hid) hid.value = cost; }
+        else          { el.textContent = '—'; el.classList.add('zero'); if (hid) hid.value = 0; }
         updateLaborGrandTotal();
     };
 
     window.removeLaborEntryRow = function(rid) {
-        const row = labEntryBody.querySelector(`tr[data-rid="${rid}"]`);
-        if (row) row.remove();
+        labEntryBody.querySelector(`tr[data-rid="${rid}"]`)?.remove();
         updateLaborGrandTotal();
     };
 
     function updateLaborGrandTotal() {
-        let total = 0;
-        labEntryBody.querySelectorAll('.lab-cost').forEach(el => {
-            const val = parseFloat(el.textContent);
-            if (!isNaN(val)) total += val;
-        });
-        labGrandTotalEl.textContent = total.toFixed(2);
+        let t = 0;
+        labEntryBody.querySelectorAll('.lab-cost').forEach(el => { const v=parseFloat(el.textContent); if(!isNaN(v)) t+=v; });
+        labGrandTotalEl.textContent = t.toFixed(2);
     }
 
     window.openLaborAssign = function(taskId) {
         currentAssigningTaskId = taskId;
-        
-        let found = null, level = null, parentDocId = null, subDocId = null;
-        for (const t of allTasks) {
-            if (t.id === taskId) { found = t; level = 'main'; break; }
-            for (const sub of (t.subTasks||[])) {
-                if (sub.id === taskId) { found = sub; level = 'sub'; parentDocId = t.id; break; }
-                for (const ss of (sub.subSubtasks||[])) {
-                    if (ss.id === taskId) { found = ss; level = 'subsub'; parentDocId = t.id; subDocId = sub.id; break; }
-                }
-                if (found) break;
-            }
-            if (found) break;
-        }
-        
-        currentAssigningDocId        = found?.id || taskId;
-        currentAssigningTaskLevel    = level || 'main';
-        currentAssigningParentDocId  = parentDocId;
-        currentAssigningSubDocId     = subDocId;
-        
-        currentTaskContext = {
-            taskId:      found?.taskId      || '',
-            taskLine:    found?.taskLine    || '',
-            taskDescription: found?.taskDescription || '',
-            location:    found?.location   || '',
-            status:      found?.status      || 'PENDING'
-        };
+        const { found, level, parentDocId, subDocId } = findPathFor(taskId);
+        currentAssigningDocId       = found?.id || taskId;
+        currentAssigningTaskLevel   = level || 'main';
+        currentAssigningParentDocId = parentDocId;
+        currentAssigningSubDocId    = subDocId;
+        currentTaskContext = { taskId: found?.taskId||'', taskLine: found?.taskLine||'', taskDescription: found?.taskDescription||'', location: found?.location||'', status: found?.status||'PENDING' };
 
-        document.getElementById('taskNameLabor').textContent = found?.taskDescription || 'Task';
-        document.getElementById('labCtxTaskId').textContent = currentTaskContext.taskId || '—';
-        document.getElementById('labCtxDesc').textContent = currentTaskContext.taskDescription || '—';
-        document.getElementById('labCtxLoc').textContent = currentTaskContext.location || '—';
-        document.getElementById('labCtxProject').textContent = projectId ? `Project ${projectId.slice(0,6)}...` : '—';
+        document.getElementById('taskNameLabor').textContent    = found?.taskDescription || 'Task';
+        document.getElementById('labCtxTaskId').textContent     = currentTaskContext.taskId || '—';
+        document.getElementById('labCtxDesc').textContent       = currentTaskContext.taskDescription || '—';
+        document.getElementById('labCtxLoc').textContent        = currentTaskContext.location || '—';
+        document.getElementById('labCtxProject').textContent    = projectId ? `Project ${projectId.slice(0,6)}...` : '—';
 
-        labEntryBody.innerHTML = '';
-        labRowCounter = 0;
-
-        loadResources().then(() => {
-            window.addLaborEntryRow();
-            laborModal.classList.add('active');
-            setTimeout(() => labEntryBody.querySelector('select')?.focus(), 80);
-        });
+        labEntryBody.innerHTML = ''; labRowCounter = 0;
+        loadResources().then(() => { window.addLaborEntryRow(); laborModal.classList.add('active'); setTimeout(() => labEntryBody.querySelector('select')?.focus(), 80); });
     };
-
-    window.closeLaborAllocModal = function() {
-        laborModal.classList.remove('active');
-        currentAssigningTaskId = null;
-    };
+    window.closeLaborAllocModal = function() { laborModal.classList.remove('active'); currentAssigningTaskId = null; };
 
     window.assignLabors = async function() {
-        const rows = labEntryBody.querySelectorAll('tr');
         const entries = [];
-
-        for (const row of rows) {
-            const sel = row.querySelector('.lab-employee');
-            const employeeId = sel?.value;
-            if (!employeeId) continue;
-
-            const mh = parseFloat(row.querySelector('.lab-mh').value);
-            if (!mh || mh <= 0) {
-                alert('Please enter valid Man Hours (MH) for all rows.');
-                return;
-            }
-
-            const employee = laborWorkers.find(e => e.docId === employeeId);
-            if (!employee) continue;
-
-            const employeeName = `${employee.name || ''} ${employee.surname || ''}`.trim() || 'Unknown';
-            const location = row.querySelector('.lab-location').value.trim() || currentTaskContext.location || '';
-            const description = row.querySelector('.lab-description').value.trim() || currentTaskContext.taskDescription || '';
-            const status = row.querySelector('.lab-status').value;
-            const transferDateVal = row.querySelector('.lab-transferdate').value;
-            const transferDate = transferDateVal ? Timestamp.fromDate(new Date(transferDateVal)) : Timestamp.now();
-            const projectName = row.querySelector('.lab-project').value;
-            const rate = LABOR_RATE;
-            const cost = mh * rate;
-
+        for (const row of labEntryBody.querySelectorAll('tr')) {
+            const empId = row.querySelector('.lab-employee')?.value; if (!empId) continue;
+            const mh    = parseFloat(row.querySelector('.lab-mh').value);
+            if (!mh || mh <= 0) { alert('Please enter valid Man Hours (MH) for all rows.'); return; }
+            const emp = laborWorkers.find(e => e.docId === empId); if (!emp) continue;
             entries.push({
-                employeeId: employee.docId,
-                employeeIdNumber: employee.employeeId || employee.docId,
-                employeeName: employeeName,
-                projectName,
-                location,
-                taskId: currentTaskContext.taskId,
-                taskDescription: description,
-                status,
-                transferDate,
-                mh,
-                rate,
-                cost
+                employeeId:       emp.docId,
+                employeeIdNumber: emp.employeeId || emp.docId,
+                employeeName:     `${emp.name||''} ${emp.surname||''}`.trim() || 'Unknown',
+                projectName:      row.querySelector('.lab-project').value,
+                location:         row.querySelector('.lab-location').value.trim() || currentTaskContext.location||'',
+                taskDescription:  row.querySelector('.lab-description').value.trim() || currentTaskContext.taskDescription||'',
+                status:           row.querySelector('.lab-status').value,
+                transferDate:     row.querySelector('.lab-transferdate').value ? Timestamp.fromDate(new Date(row.querySelector('.lab-transferdate').value)) : Timestamp.now(),
+                mh, rate: LABOR_RATE, cost: mh * LABOR_RATE
             });
         }
-
-        if (!entries.length) {
-            alert('Please add at least one employee with MH entered.');
-            return;
-        }
-
+        if (!entries.length) { alert('Please add at least one employee with MH entered.'); return; }
         try {
-            for (const entry of entries) {
-                await addDoc(collection(db, "locationHistory"), {
-                    projectId,
-                    taskId: currentAssigningTaskId,
-                    taskDocId: currentAssigningDocId,
+            for (const e of entries) {
+                await addDoc(collection(db,"locationHistory"), {
+                    projectId, taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
                     taskLevel: currentAssigningTaskLevel,
-                    employeeId: entry.employeeId,
-                    employeeIdNumber: entry.employeeIdNumber,
-                    employeeName: entry.employeeName,
-                    projectName: entry.projectName,
-                    location: entry.location,
-                    taskIdDisplay: entry.taskId,
-                    taskDescription: entry.taskDescription,
-                    status: entry.status,
-                    transferDate: entry.transferDate,
-                    mh: entry.mh,
-                    rate: entry.rate,
-                    cost: entry.cost,
-                    savedAt: Timestamp.now(),
-                    reversed: false
+                    employeeId: e.employeeId, employeeIdNumber: e.employeeIdNumber,
+                    employeeName: e.employeeName, projectName: e.projectName,
+                    location: e.location, taskIdDisplay: currentTaskContext.taskId,
+                    taskDescription: e.taskDescription, status: e.status,
+                    transferDate: e.transferDate, mh: e.mh, rate: e.rate, cost: e.cost,
+                    savedAt: Timestamp.now(), reversed: false
                 });
             }
-
             closeLaborAllocModal();
-        } catch (error) {
-            console.error('Error saving labor:', error);
-            alert('Error saving labor assignments: ' + error.message);
-        }
+        } catch(err) { console.error('Error saving labor:', err); alert('Error saving labor: ' + err.message); }
     };
 
-    // =============================================
-    // Firestore path helpers
-    // =============================================
+    // ─── Firestore helpers ───
     function getTaskDocRef(docId, level, parentDocId, subDocId) {
         if (!docId) return null;
-        if (level === 'main') return doc(db, "projectTasks", docId);
-        if (level === 'sub'    && parentDocId)             return doc(db, "projectTasks", parentDocId, "subtasks", docId);
-        if (level === 'subsub' && parentDocId && subDocId) return doc(db, "projectTasks", parentDocId, "subtasks", subDocId, "subsubtasks", docId);
+        if (level==='main')   return doc(db,"projectTasks",docId);
+        if (level==='sub'    && parentDocId)             return doc(db,"projectTasks",parentDocId,"subtasks",docId);
+        if (level==='subsub' && parentDocId && subDocId) return doc(db,"projectTasks",parentDocId,"subtasks",subDocId,"subsubtasks",docId);
         return null;
     }
-
     function findTaskObj(taskId) {
         for (const t of allTasks) {
             if (t.id === taskId) return t;
@@ -1556,23 +1204,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return null;
     }
-
-    // =============================================
-    // Firebase helpers
-    // =============================================
-    async function getNextTaskNumber(projectId) {
-        const snap = await getDocs(query(collection(db, "projectTasks"), where("projectId","==",projectId)));
+    async function getNextTaskNumber(pId) {
+        const snap = await getDocs(query(collection(db,"projectTasks"),where("projectId","==",pId)));
         let max = 0;
-        snap.forEach(d => {
-            const m = (d.data().taskId||'').match(/PRJ-(\d+)$/);
-            if (m) max = Math.max(max, parseInt(m[1]));
-        });
+        snap.forEach(d => { const m=(d.data().taskId||'').match(/PRJ-(\d+)$/); if(m) max=Math.max(max,parseInt(m[1])); });
         return max + 1;
     }
 
-    // =============================================
-    // Load tasks (real-time)
-    // =============================================
+    // ─── Load tasks ───
     async function loadTasks() {
         if (unsubMain) unsubMain();
         Object.values(subUnsubs).forEach(fn => fn?.());
@@ -1582,121 +1221,147 @@ document.addEventListener('DOMContentLoaded', function() {
             async (snap) => {
                 allTasks = [];
                 const promises = [];
-
                 snap.docs.forEach(docSnap => {
                     const task = { id: docSnap.id, ...docSnap.data(), subTasks: [] };
                     allTasks.push(task);
-
                     promises.push(new Promise(resolve => {
-                        const unsub = onSnapshot(
-                            collection(db,"projectTasks",docSnap.id,"subtasks"),
-                            async (subSnap) => {
-                                task.subTasks = [];
-                                const sp = [];
-                                subSnap.docs.forEach(subDoc => {
-                                    const sub = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
-                                    task.subTasks.push(sub);
-                                    sub._matCost = sub.matCost || 0;
-                                    sub._labCost = sub.labCost || 0;
-                                    sub._hours   = sub.totalHours || 0;
-
-                                    sp.push(new Promise(async res2 => {
-                                        const ssSnap = await getDocs(collection(db,"projectTasks",docSnap.id,"subtasks",subDoc.id,"subsubtasks"));
-                                        sub.subSubtasks = [];
-                                        ssSnap.docs.forEach(ssDoc => {
-                                            const ss = { id: ssDoc.id, ...ssDoc.data() };
-                                            sub.subSubtasks.push(ss);
-                                            ss._matCost = ss.matCost || 0;
-                                            ss._labCost = ss.labCost || 0;
-                                            ss._hours   = ss.totalHours || 0;
-                                        });
-                                        res2();
-                                    }));
-                                });
-                                await Promise.all(sp);
-                                resolve();
-                            }
-                        );
+                        const unsub = onSnapshot(collection(db,"projectTasks",docSnap.id,"subtasks"), async (subSnap) => {
+                            task.subTasks = [];
+                            const sp = [];
+                            subSnap.docs.forEach(subDoc => {
+                                const sub = { id: subDoc.id, ...subDoc.data(), subSubtasks: [] };
+                                task.subTasks.push(sub);
+                                sub._matCost = sub.matCost||0; sub._labCost = sub.labCost||0; sub._hours = sub.totalHours||0;
+                                sp.push(new Promise(async res2 => {
+                                    const ssSnap = await getDocs(collection(db,"projectTasks",docSnap.id,"subtasks",subDoc.id,"subsubtasks"));
+                                    sub.subSubtasks = [];
+                                    ssSnap.docs.forEach(ssDoc => {
+                                        const ss = { id: ssDoc.id, ...ssDoc.data() };
+                                        sub.subSubtasks.push(ss);
+                                        ss._matCost = ss.matCost||0; ss._labCost = ss.labCost||0; ss._hours = ss.totalHours||0;
+                                    });
+                                    res2();
+                                }));
+                            });
+                            await Promise.all(sp);
+                            resolve();
+                        });
                         subUnsubs[docSnap.id] = unsub;
                     }));
                 });
-
                 await Promise.all(promises);
-
                 allTasks.forEach(t => {
-                    t._matCost = t.matCost || 0;
-                    t._labCost = t.labCost || 0;
-                    t._hours   = t.totalHours || 0;
+                    t._matCost = t.matCost||0; t._labCost = t.labCost||0; t._hours = t.totalHours||0;
                     if (t.subTasks.length) {
-                        let amc = t._matCost, alc = t._labCost;
-                        t.subTasks.forEach(sub => {
-                            amc += sub._matCost || 0; alc += sub._labCost || 0;
-                            sub.subSubtasks?.forEach(ss => { amc += ss._matCost||0; alc += ss._labCost||0; });
-                        });
-                        t._aggMatCost = amc; t._aggLabCost = alc;
+                        let amc=t._matCost, alc=t._labCost;
+                        t.subTasks.forEach(sub => { amc+=sub._matCost||0; alc+=sub._labCost||0; sub.subSubtasks?.forEach(ss=>{amc+=ss._matCost||0;alc+=ss._labCost||0;}); });
+                        t._aggMatCost=amc; t._aggLabCost=alc;
                     }
                 });
-
                 renderTasks(filterTasks());
                 renderGantt();
-                
-                // Start listening to history collections after tasks are loaded
                 listenForMaterialChanges();
                 listenForLaborChanges();
+                listenForAssignedNames();
             }
         );
     }
 
     function filterTasks() {
-        const status = statusFilter.value, month = monthFilter.value,
-              year   = yearFilter.value,   search = searchInput.value.toLowerCase();
-        return allTasks.filter(task => {
-            if (hideCompleted && task.status==='COMPLETED') return false;
-            if (status && task.status !== status) return false;
-            if (month || year) {
-                if (!task.startDate) return false;
-                const d = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-                if (month && d.getMonth()+1 !== parseInt(month)) return false;
-                if (year  && d.getFullYear()  !== parseInt(year))  return false;
+        const status=statusFilter.value, month=monthFilter.value, year=yearFilter.value, search=searchInput.value.toLowerCase();
+        return allTasks
+            .filter(task => {
+                if (hideCompleted && task.status==='COMPLETED') return false;
+                if (status && task.status!==status) return false;
+                if (month||year) {
+                    if (!task.startDate) return false;
+                    const d=task.startDate.toDate?task.startDate.toDate():new Date(task.startDate);
+                    if (month && d.getMonth()+1!==parseInt(month)) return false;
+                    if (year  && d.getFullYear()!==parseInt(year))  return false;
+                }
+                if (search) {
+                    const s=[task.taskId,task.taskDescription,task.assignedTo,task.status,task.location,task.taskLine?.toString()].filter(Boolean).join(' ').toLowerCase();
+                    return s.includes(search);
+                }
+                return true;
+            })
+            .map(task => {
+                // Deep-clone task with filtered subtasks so we don't mutate allTasks
+                const filteredSubs = (task.subTasks||[])
+                    .filter(sub => !(hideCompleted && sub.status==='COMPLETED'))
+                    .map(sub => ({
+                        ...sub,
+                        subSubtasks: (sub.subSubtasks||[])
+                            .filter(ss => !(hideCompleted && ss.status==='COMPLETED'))
+                    }));
+                return { ...task, subTasks: filteredSubs };
+            });
+    }
+
+    // ─── Assigned names: listen to locationHistory for this project ───
+    // Maps taskDocId → array of first names of assigned workers
+    let taskAssignedNames = {}; // taskDocId → "John, Jane"
+    let unsubAssignedNames = null;
+
+    function listenForAssignedNames() {
+        if (unsubAssignedNames) unsubAssignedNames();
+        unsubAssignedNames = onSnapshot(
+            query(collection(db, "locationHistory"), where("projectId", "==", projectId)),
+            (snapshot) => {
+                const nameMap = {}; // taskId → Set of first names
+                snapshot.docs.forEach(d => {
+                    const x = d.data(); if (x.reversed) return;
+                    const tid = x.taskId || x.taskDocId; if (!tid) return;
+                    if (!nameMap[tid]) nameMap[tid] = new Set();
+                    // Use first name only
+                    const fullName = x.employeeName || '';
+                    const firstName = fullName.trim().split(' ')[0];
+                    if (firstName) nameMap[tid].add(firstName);
+                });
+                // Convert sets to comma-separated strings
+                taskAssignedNames = {};
+                Object.keys(nameMap).forEach(tid => {
+                    taskAssignedNames[tid] = [...nameMap[tid]].join(', ');
+                });
+                // Update ASSIGNED cells in DOM without full re-render
+                updateAssignedCellsInDom();
             }
-            if (search) {
-                const s = [task.taskId,task.taskDescription,task.assignedTo,task.status,task.location,task.taskLine?.toString()].filter(Boolean).join(' ').toLowerCase();
-                return s.includes(search);
+        );
+    }
+
+    function updateAssignedCellsInDom() {
+        // Update each row's assigned cell (col index 3) based on data-task-id
+        document.querySelectorAll('#taskList tr[data-task-id]').forEach(row => {
+            const tid = row.dataset.taskId;
+            if (!tid) return;
+            // Find assigned cell — it's the editable cell with data-field="assignedTo"
+            const cell = row.querySelector('[data-field="assignedTo"]');
+            if (cell && !cell.querySelector('input') && !cell.querySelector('select')) {
+                // Only update if not currently being edited
+                const names = taskAssignedNames[tid] || '';
+                if (cell.textContent !== names) cell.textContent = names;
             }
-            return true;
         });
     }
 
     addEmptyRowBtn.addEventListener('click', () => {
-        const id = 'empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
-        emptyRows.push({ id, type:'empty', description:'', location:'', createdAt: new Date().toISOString() });
+        const id='empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+        emptyRows.push({id,type:'empty',description:'',location:'',createdAt:new Date().toISOString()});
         saveEmptyRows(); renderTasks(filterTasks());
     });
-
-    window.insertRow = (position, targetId) => {
-        const id = 'empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
-        emptyRows.push({ id, type:'empty', position, targetId, description:'', location:'', createdAt: new Date().toISOString() });
+    window.insertRow = (pos,tid) => {
+        const id='empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
+        emptyRows.push({id,type:'empty',position:pos,targetId:tid,description:'',location:'',createdAt:new Date().toISOString()});
         saveEmptyRows(); renderTasks(filterTasks());
     };
-    window.updateEmptyRow = (id, field, value) => {
-        const r = emptyRows.find(r=>r.id===id); if (r) { r[field]=value; saveEmptyRows(); }
-    };
-    window.removeEmptyRow = (id) => {
-        emptyRows = emptyRows.filter(r=>r.id!==id); saveEmptyRows(); renderTasks(filterTasks());
-    };
-
+    window.updateEmptyRow = (id,field,val) => { const r=emptyRows.find(r=>r.id===id); if(r){r[field]=val;saveEmptyRows();} };
+    window.removeEmptyRow = (id) => { emptyRows=emptyRows.filter(r=>r.id!==id); saveEmptyRows(); renderTasks(filterTasks()); };
     window.toggleMenu = (menuId) => {
-        if (openMenuId===menuId) {
-            openMenuId=null; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show'));
-        } else {
-            openMenuId=menuId; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show'));
-            document.getElementById(`menu-${menuId}`)?.classList.add('show');
-        }
+        if (openMenuId===menuId) { openMenuId=null; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show')); }
+        else { openMenuId=menuId; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show')); document.getElementById(`menu-${menuId}`)?.classList.add('show'); }
     };
 
-    // =============================================
-    // Render tasks
-    // =============================================
+    // ─── Render tasks ───
     function renderTasks(tasks) {
         taskListEl.innerHTML = '';
         tasks.sort((a,b) => (a.taskLine||0)-(b.taskLine||0));
@@ -1720,15 +1385,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const tr = document.createElement('tr');
             tr.className = 'main-task-row';
             tr.dataset.taskId = task.id;
+            // Assigned: from labor history (first names) OR manual assignedTo field
+            const mainAssigned = taskAssignedNames[task.id] || task.assignedTo || '';
             tr.innerHTML = `
                 <td>${task.taskId||''}</td>
                 <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine||''}</td>
                 <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription||''}</td>
-                <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${task.assignedTo||''}</td>
+                <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${mainAssigned}</td>
                 <td class="editable" data-type="main" data-field="status" data-id="${task.id}"><span class="status-badge status-${task.status||'PENDING'}">${task.status||'PENDING'}</span></td>
                 <td class="editable" data-type="main" data-field="startDate" data-id="${task.id}">${formatDate(task.startDate)}</td>
                 <td class="editable" data-type="main" data-field="endDate" data-id="${task.id}">${formatDate(task.endDate)}</td>
-                <td>${hours}</td>
+                <td>${hours||''}</td>
                 <td>${makeCostCell(matCost, task.id, 'material')}</td>
                 <td>${makeCostCell(labCost, task.id, 'labor')}</td>
                 <td><span class="total-cost">${total>0?fmt(total):''}</span></td>
@@ -1750,14 +1417,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sMat=sub._matCost||0, sLab=sub._labCost||0, sTotal=sMat+sLab;
                 const subTr = document.createElement('tr');
                 subTr.className = 'subtask-row';
+                subTr.dataset.taskId = sub.id;
+                const subAssigned = taskAssignedNames[sub.id] || sub.assignedTo || '';
                 subTr.innerHTML = `
                     <td>${sub.taskId||''}</td><td></td>
                     <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}"><span class="task-prefix">↪</span> ${sub.taskDescription||''}</td>
-                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${sub.assignedTo||''}</td>
+                    <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${subAssigned}</td>
                     <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}"><span class="status-badge status-${sub.status||'PENDING'}">${sub.status||'PENDING'}</span></td>
                     <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="startDate" data-id="${sub.id}">${formatDate(sub.startDate)}</td>
                     <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="endDate" data-id="${sub.id}">${formatDate(sub.endDate)}</td>
-                    <td>${sub._hours||0}</td>
+                    <td>${sub._hours||''}</td>
                     <td>${makeCostCell(sMat, sub.id, 'material')}</td>
                     <td>${makeCostCell(sLab, sub.id, 'labor')}</td>
                     <td><span class="total-cost">${sTotal>0?fmt(sTotal):''}</span></td>
@@ -1779,14 +1448,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const ssMat=ss._matCost||0, ssLab=ss._labCost||0, ssTotal=ssMat+ssLab;
                     const ssTr = document.createElement('tr');
                     ssTr.className = 'subsubtask-row';
+                    ssTr.dataset.taskId = ss.id;
+                    const ssAssigned = taskAssignedNames[ss.id] || ss.assignedTo || '';
                     ssTr.innerHTML = `
                         <td>${ss.taskId||''}</td><td></td>
                         <td class="editable" style="padding-left:35px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${ss.id}"><span class="task-prefix">↪↪</span> ${ss.taskDescription||''}</td>
-                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${ss.id}">${ss.assignedTo||''}</td>
+                        <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${ss.id}">${ssAssigned}</td>
                         <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${ss.id}"><span class="status-badge status-${ss.status||'PENDING'}">${ss.status||'PENDING'}</span></td>
                         <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="startDate" data-id="${ss.id}">${formatDate(ss.startDate)}</td>
                         <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="endDate" data-id="${ss.id}">${formatDate(ss.endDate)}</td>
-                        <td>${ss._hours||0}</td>
+                        <td>${ss._hours||''}</td>
                         <td>${makeCostCell(ssMat, ss.id, 'material')}</td>
                         <td>${makeCostCell(ssLab, ss.id, 'labor')}</td>
                         <td><span class="total-cost">${ssTotal>0?fmt(ssTotal):''}</span></td>
@@ -1813,24 +1484,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.editable').forEach(cell => {
             cell.onclick = (e) => {
                 e.stopPropagation();
-                const {type, field} = cell.dataset;
+                const {type,field} = cell.dataset;
                 const val = cell.textContent.trim().replace(/↪/g,'').trim();
                 if (field==='status') {
-                    const sel = document.createElement('select');
-                    ['COMPLETED','ONGOING','PENDING'].forEach(s => {
-                        const o = document.createElement('option'); o.value=s; o.text=s;
-                        if (val===s) o.selected=true; sel.appendChild(o);
-                    });
+                    const sel=document.createElement('select');
+                    ['COMPLETED','ONGOING','PENDING'].forEach(s=>{const o=document.createElement('option');o.value=s;o.text=s;if(val===s)o.selected=true;sel.appendChild(o);});
                     cell.innerHTML=''; cell.appendChild(sel); sel.focus();
                     sel.onblur = () => saveEdit(cell,type,field,sel.value);
                 } else if (field==='startDate'||field==='endDate') {
-                    const inp = document.createElement('input'); inp.type='date';
-                    if (val) inp.value = formatDateForInput(val);
+                    const inp=document.createElement('input'); inp.type='date';
+                    if(val) inp.value=formatDateForInput(val);
                     cell.innerHTML=''; cell.appendChild(inp); inp.focus();
                     inp.onblur = () => saveEdit(cell,type,field,inp.value?new Date(inp.value):null);
                 } else {
-                    const inp = document.createElement('input');
-                    inp.type = field==='taskLine'?'number':'text'; inp.value=val;
+                    const inp=document.createElement('input');
+                    inp.type=field==='taskLine'?'number':'text'; inp.value=val;
                     cell.innerHTML=''; cell.appendChild(inp); inp.focus();
                     inp.onblur = () => saveEdit(cell,type,field,inp.value);
                 }
@@ -1839,9 +1507,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderEmptyRow(empty) {
-        const tr = document.createElement('tr');
+        const tr=document.createElement('tr');
         tr.className='empty-row'; tr.dataset.emptyId=empty.id;
-        tr.innerHTML = `
+        tr.innerHTML=`
             <td></td><td></td>
             <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}','description',this.textContent)">${empty.description||''}</span></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
@@ -1860,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function saveEdit(cell, type, field, value) {
         const mainId = cell.dataset.mainid || cell.dataset.id;
         try {
-            if (type==='main')   await updateDoc(doc(db,"projectTasks",mainId),{[field]:value,updatedAt:new Date()});
+            if (type==='main')        await updateDoc(doc(db,"projectTasks",mainId),{[field]:value,updatedAt:new Date()});
             else if (type==='sub')    await updateDoc(doc(db,"projectTasks",mainId,"subtasks",cell.dataset.id),{[field]:value,updatedAt:new Date()});
             else if (type==='subsub') await updateDoc(doc(db,"projectTasks",mainId,"subtasks",cell.dataset.subid,"subsubtasks",cell.dataset.id),{[field]:value,updatedAt:new Date()});
         } catch(e) { alert("Error saving: "+e.message); }
@@ -1869,9 +1537,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.deleteTask = async (type,mainId,subId,subSubId) => {
         if (!confirm("Delete task?")) return;
         try {
-            if (type==='main')   await deleteDoc(doc(db,"projectTasks",mainId));
+            if (type==='main')        await deleteDoc(doc(db,"projectTasks",mainId));
             else if (type==='sub')    await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId));
-            else await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks",subSubId));
+            else                      await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks",subSubId));
         } catch(e) { alert("Delete error: "+e.message); }
     };
 
@@ -1881,38 +1549,25 @@ document.addEventListener('DOMContentLoaded', function() {
         return d.toISOString().split('T')[0];
     }
 
-    // =============================================
-    // Gantt
-    // =============================================
+    // ─── Gantt ───
     function renderGantt() {
+        if (!ganttVisible) return; // skip when hidden
         const tasks = filterTasks();
         if (!tasks.length) return;
         const today = new Date(); today.setHours(0,0,0,0);
         let minYear = today.getFullYear();
-        tasks.forEach(t => {
-            if (t.startDate) {
-                const y = new Date(t.startDate.toDate?t.startDate.toDate():t.startDate).getFullYear();
-                if (y<minYear) minYear=y;
-            }
-        });
+        tasks.forEach(t => { if(t.startDate){const y=new Date(t.startDate.toDate?t.startDate.toDate():t.startDate).getFullYear();if(y<minYear)minYear=y;} });
         const md=[31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
         const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         let h1='<tr><th rowspan="3" style="min-width:120px">TASK</th>', r2='<tr>', r3='<tr>';
-        for (let m=0;m<12;m++) {
-            if (showCurrentMonthOnly && m!==today.getMonth()) continue;
+        for(let m=0;m<12;m++){
+            if(showCurrentMonthOnly&&m!==today.getMonth()) continue;
             h1+=`<th colspan="${md[m]}">${mn[m]}</th>`;
-            for (let d=1;d<=md[m];d++) {
-                const dt=new Date(minYear,m,d), it=dt.toDateString()===today.toDateString();
-                r2+=`<th class="${it?'today-highlight':''}">${d}</th>`;
-                r3+=`<th class="${it?'today-highlight':''}">${['S','M','T','W','R','F','S'][dt.getDay()]}</th>`;
-            }
+            for(let d=1;d<=md[m];d++){const dt=new Date(minYear,m,d),it=dt.toDateString()===today.toDateString();r2+=`<th class="${it?'today-highlight':''}">${d}</th>`;r3+=`<th class="${it?'today-highlight':''}">${['S','M','T','W','R','F','S'][dt.getDay()]}</th>`;}
         }
         ganttHeadEl.innerHTML=h1+'</tr>'+r2+'</tr>'+r3+'</tr>';
         let body='';
-        tasks.forEach(t => {
-            body+=ganttRow(t,'main',minYear,today);
-            t.subTasks.forEach(s => { body+=ganttRow(s,'sub',minYear,today); s.subSubtasks?.forEach(ss=>{ body+=ganttRow(ss,'subsub',minYear,today); }); });
-        });
+        tasks.forEach(t=>{body+=ganttRow(t,'main',minYear,today);t.subTasks.forEach(s=>{body+=ganttRow(s,'sub',minYear,today);s.subSubtasks?.forEach(ss=>{body+=ganttRow(ss,'subsub',minYear,today);});});});
         ganttBodyEl.innerHTML=body;
     }
 
@@ -1921,59 +1576,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const status=(task.status||'PENDING').toUpperCase();
         const pct=status==='COMPLETED'?'100':status==='ONGOING'?'60':'0';
         let start=null,end=null;
-        if (task.startDate) {
-            start=task.startDate.toDate?task.startDate.toDate():new Date(task.startDate); start.setHours(0,0,0,0);
-            if (task.endDate) { end=task.endDate.toDate?task.endDate.toDate():new Date(task.endDate); end.setHours(0,0,0,0); }
-            else if (status!=='COMPLETED') end=today;
-        }
+        if(task.startDate){start=task.startDate.toDate?task.startDate.toDate():new Date(task.startDate);start.setHours(0,0,0,0);if(task.endDate){end=task.endDate.toDate?task.endDate.toDate():new Date(task.endDate);end.setHours(0,0,0,0);}else if(status!=='COMPLETED')end=today;}
         const md=[31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
         let row=`<tr><td style="text-align:left">${desc}</td>`;
-        for (let m=0;m<12;m++) {
-            if (showCurrentMonthOnly&&m!==today.getMonth()) continue;
-            for (let d=1;d<=md[m];d++) {
-                const dt=new Date(minYear,m,d);
-                let bar='';
-                if (start&&dt>=start&&(!end||dt<=end)) {
-                    const cls=level==='main'?'gantt-bar-main':level==='sub'?'gantt-bar-sub':'gantt-bar-subsub';
-                    bar=pct==='0'?'<div class="gantt-bar-empty"></div>':`<div class="gantt-bar ${cls}"></div>`;
-                }
-                row+=`<td>${bar}</td>`;
-            }
-        }
+        for(let m=0;m<12;m++){if(showCurrentMonthOnly&&m!==today.getMonth())continue;for(let d=1;d<=md[m];d++){const dt=new Date(minYear,m,d);let bar='';if(start&&dt>=start&&(!end||dt<=end)){const cls=level==='main'?'gantt-bar-main':level==='sub'?'gantt-bar-sub':'gantt-bar-subsub';bar=pct==='0'?'<div class="gantt-bar-empty"></div>':`<div class="gantt-bar ${cls}"></div>`;}row+=`<td>${bar}</td>`;}}
         return row+'</tr>';
     }
 
-    // =============================================
-    // Task CRUD
-    // =============================================
+    // ─── Task CRUD ───
     addTaskBtn.onclick = async () => {
         const desc=prompt("Task description:"); if(!desc) return;
         const num=await getNextTaskNumber(projectId);
-        await addDoc(collection(db,"projectTasks"),{
-            projectId, taskId:`PRJ-${num}`, taskDescription:desc, status:"PENDING",
-            matCost:0, labCost:0, totalHours:0,
-            createdAt:new Date(), updatedAt:new Date()
-        });
+        await addDoc(collection(db,"projectTasks"),{projectId,taskId:`PRJ-${num}`,taskDescription:desc,status:"PENDING",matCost:0,labCost:0,totalHours:0,createdAt:new Date(),updatedAt:new Date()});
     };
 
     window.addSubtask = async (mainId) => {
         const main=await getDoc(doc(db,"projectTasks",mainId)); if(!main.exists()) return;
         const desc=prompt("Subtask description:"); if(!desc) return;
-        await addDoc(collection(db,"projectTasks",mainId,"subtasks"),{
-            taskId:`${main.data().taskId}-${Date.now()}`, taskDescription:desc, status:"PENDING",
-            matCost:0, labCost:0, totalHours:0,
-            createdAt:new Date(), updatedAt:new Date()
-        });
+        // Sequential: PRJ-1-1, PRJ-1-2, etc.
+        const existSnap = await getDocs(collection(db,"projectTasks",mainId,"subtasks"));
+        const nextNum   = existSnap.size + 1;
+        const parentId  = main.data().taskId || 'PRJ';
+        await addDoc(collection(db,"projectTasks",mainId,"subtasks"),{taskId:`${parentId}-${nextNum}`,taskDescription:desc,status:"PENDING",matCost:0,labCost:0,totalHours:0,createdAt:new Date(),updatedAt:new Date()});
     };
 
     window.addSubSubtask = async (mainId,subId) => {
         const sub=await getDoc(doc(db,"projectTasks",mainId,"subtasks",subId)); if(!sub.exists()) return;
         const desc=prompt("Sub-subtask description:"); if(!desc) return;
-        await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"),{
-            taskId:`${sub.data().taskId}-${Date.now()}`, taskDescription:desc, status:"PENDING",
-            matCost:0, labCost:0, totalHours:0,
-            createdAt:new Date(), updatedAt:new Date()
-        });
+        // Sequential: PRJ-1-1-1, PRJ-1-1-2, etc.
+        const existSnap = await getDocs(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"));
+        const nextNum   = existSnap.size + 1;
+        const parentId  = sub.data().taskId || 'PRJ-1';
+        await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"),{taskId:`${parentId}-${nextNum}`,taskDescription:desc,status:"PENDING",matCost:0,labCost:0,totalHours:0,createdAt:new Date(),updatedAt:new Date()});
     };
 
     currentMonthBtn.onclick = () => {
@@ -1981,24 +1615,12 @@ document.addEventListener('DOMContentLoaded', function() {
         currentMonthBtn.textContent=showCurrentMonthOnly?"All Months":"Current Month";
         renderGantt();
     };
-    toggleCompletedBtn.onclick = () => {
-        hideCompleted=!hideCompleted;
-        toggleCompletedBtn.innerHTML=hideCompleted?'<i class="fas fa-eye"></i> Show Completed':'<i class="fas fa-eye-slash"></i> Hide Completed';
-        renderTasks(filterTasks()); renderGantt();
-    };
+
     statusFilter.onchange=monthFilter.onchange=yearFilter.onchange=searchInput.oninput=()=>{ renderTasks(filterTasks()); renderGantt(); };
 
     loadResources();
     loadTasks();
     setInterval(()=>renderGantt(), 60000);
-
-    // Escape closes modals
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeMaterialAllocModal();
-            closeLaborAllocModal();
-        }
-    });
 });
 </script>
 </body>
