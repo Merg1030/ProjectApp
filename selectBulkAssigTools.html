@@ -3,223 +3,1076 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IMS | Assign Tools Location Bulk/Single</title>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <title>PENTA | Assign Tools Location</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
-  :root {
-  --primary: #4361ee;
-  --primary-light: #4cc9f0;
-  --primary-dark: #3a0ca3;
-  --success: #4cc9f0;
-  --danger: #b90d0d;
-  --warning: #f8961e;
-  --info: #00b4d8;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  --text-color: #e0e0e0;
-  --background-color: #181a22;
-  --card-background: #1f2129;
-  --border-color: #2c2f36;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-}
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #d3dfed;
+      color: #0a1c2f;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+    /* Main Layout */
+    .main-wrapper {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
 
-body {
-  font-family: 'Segoe UI', 'Roboto', sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-color);
-  line-height: 1.6;
-  padding: 20px;
-}
+    /* Sidebar Toggle Button - Always Visible */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 32px;
+      height: 32px;
+      background: #0a1c2f;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.8rem;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
 
-a {
-  color: var(--primary-light);
-  text-decoration: none;
-}
-a:hover {
-  color: var(--primary);
-}
+    .sidebar-toggle-btn:hover {
+      background: #1f3d62;
+      transform: scale(1.1);
+    }
 
-.container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
-  background: var(--card-background);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-}
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: white;
+      color: #0a1c2f;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      border-right: 2px solid #1f3d62;
+      transition: transform 0.28s ease;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      transform: translateX(0);
+    }
 
-button, input[type="submit"] {
-  background-color: var(--primary);
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-button:hover, input[type="submit"]:hover {
-  background-color: var(--primary-dark);
-}
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
 
-input[type="text"], input[type="email"], textarea, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  margin-bottom: 20px;
-  background-color: var(--card-background);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-}
+    .sidebar-header {
+      padding: 16px 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      background: #0a1c2f;
+    }
 
-.card {
-  background-color: var(--card-background);
-  padding: 20px;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  margin-bottom: 20px;
-}
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-h1, h2, h3, h4 {
-  color: var(--text-color);
-  margin-bottom: 15px;
-}
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #b8cde0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #0a1c2f;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--card-background);
-  color: var(--text-color);
-  margin-bottom: 20px;
-}
-th, td {
-  padding: 12px;
-  border: 1px solid var(--border-color);
-}
-th {
-  background-color: var(--primary-dark);
-}
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      color: white;
+    }
 
-.alert-success {
-  background-color: var(--success);
-  color: black;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-.alert-danger {
-  background-color: var(--danger);
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-.alert-warning {
-  background-color: var(--warning);
-  color: black;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
-.alert-info {
-  background-color: var(--info);
-  color: black;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-}
+    .logo-text span {
+      font-size: 0.7rem;
+      color: #97adc9;
+    }
 
+    /* Navigation */
+    .nav-section {
+      padding: 20px 16px;
+      border-bottom: 1px solid #e0e8f5;
+    }
 
+    .nav-section h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7f96b3;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      color: #0a1c2f;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: #e6efff;
+    }
+
+    .nav-link.active {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      font-weight: 600;
+      border-left: 3px solid #1f3d62;
+    }
+
+    .nav-icon {
+      font-size: 0.9rem;
+      width: 20px;
+      text-align: center;
+      color: #2b4a73;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: white;
+      transition: margin-left 0.28s ease;
+      margin-left: 0;
+    }
+
+    .main-content.expanded {
+      margin-left: -260px;
+    }
+
+    /* Header */
+    .app-header {
+      background: #0a1c2f;
+      color: white;
+      padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      min-height: 56px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .mobile-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .mobile-toggle:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-title h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .page-title i {
+      color: #97adc9;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-info {
+      background: #1f3d62;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-info i {
+      color: #97adc9;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid #2b4a73;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+      color: #0b1f33;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0a1c2f;
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+    }
+
+    .btn-success {
+      background: #059669;
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background: #047857;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: white;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn:hover {
+      background: #e6efff;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+      color: white;
+    }
+
+    /* Actions Panel */
+    .actions-container {
+      padding: 4px 20px;
+      background: #f2f6fc;
+      border-bottom: 1px solid #b3c7e0;
+      flex-shrink: 0;
+    }
+
+    .actions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .actions-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .actions-header i {
+      font-size: 12px;
+      transition: transform 0.2s;
+      color: #1f3d62;
+    }
+
+    .actions-panel {
+      display: flex;
+      gap: 8px;
+      padding: 8px 0 12px;
+      transition: all 0.2s;
+      max-height: 100px;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .actions-panel.collapsed {
+      max-height: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Dashboard Container */
+    .dashboard-container {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+      background: #f2f6fc;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,20,40,0.2);
+    }
+
+    .welcome-text h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .welcome-text p {
+      color: #97adc9;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    .welcome-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b8cde0;
+      font-size: 1.8rem;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    /* Panel */
+    .panel {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      background: #b8cde0;
+      padding: 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    /* Search Bar */
+    .search-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 12px 10px 40px;
+      border: 1px solid #b3c7e0;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a1c2f;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.12);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #7f96b3;
+    }
+
+    /* Tools Grid */
+    .tools-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding-right: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tools-grid::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .tools-grid::-webkit-scrollbar-track {
+      background: #ecf2fa;
+      border-radius: 4px;
+    }
+
+    .tools-grid::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 4px;
+    }
+
+    .tool-item {
+      background: white;
+      border: 1px solid #b3c7e0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      transition: all 0.15s;
+    }
+
+    .tool-item:hover {
+      background: #e6efff;
+      border-color: #2b4a73;
+    }
+
+    .tool-item label {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .tool-item input[type="checkbox"] {
+      margin-top: 2px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #0a1c2f;
+    }
+
+    .tool-info {
+      flex: 1;
+    }
+
+    .tool-code {
+      font-weight: 700;
+      color: #0a1c2f;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-code i {
+      color: #2b4a73;
+    }
+
+    .tool-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.75rem;
+      color: #1f3d62;
+    }
+
+    .tool-detail {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tool-detail i {
+      color: #7f96b3;
+      width: 14px;
+    }
+
+    .tool-assigned {
+      background: #d4e2f2;
+      border-left: 4px solid #2b4a73;
+    }
+
+    /* Action Buttons Row */
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* Selected Tools Panel */
+    .selected-panel {
+      background: #f2f6fc;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .selected-panel h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .selected-tools-list {
+      list-style: none;
+    }
+
+    .selected-tools-list li {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e0e8f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .selected-tools-list li i {
+      color: #2b4a73;
+    }
+
+    .selected-tools-list li:last-child {
+      border-bottom: none;
+    }
+
+    /* Popup */
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.55);
+      z-index: 2000;
+    }
+
+    .form-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 24px 60px rgba(0,20,40,0.45);
+      z-index: 2001;
+      overflow: hidden;
+    }
+
+    .popup-header {
+      background: #0a1c2f;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .popup-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #97adc9;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: white;
+    }
+
+    .popup-body {
+      padding: 20px;
+    }
+
+    .popup-body label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .popup-body input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a1c2f;
+      margin-bottom: 16px;
+    }
+
+    .popup-body input:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.12);
+    }
+
+    .current-holder-info {
+      background: #f2f6fc;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+    }
+
+    .current-holder-info div {
+      padding: 4px 0;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .current-holder-info div:last-child {
+      border-bottom: none;
+    }
+
+    .popup-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e8f5;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Alert Messages */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert-success {
+      background: #c6f6d5;
+      color: #22543d;
+      border-left: 4px solid #059669;
+    }
+
+    .alert-danger {
+      background: #fed7d7;
+      color: #742a2a;
+      border-left: 4px solid #cc0000;
+    }
+
+    .alert-warning {
+      background: #feebc8;
+      color: #744210;
+      border-left: 4px solid #d97706;
+    }
+
+    .alert-info {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      border-left: 4px solid #2b4a73;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        z-index: 1000;
+        height: 100vh;
+        transform: translateX(-100%);
+      }
+      
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
+      }
+      
+      .main-content.expanded {
+        margin-left: 0;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .sidebar-toggle-btn {
+        display: none;
+      }
+      
+      .app-header {
+        padding-left: 20px;
+      }
+      
+      .actions-panel {
+        flex-direction: column;
+        max-height: 300px;
+      }
+      
+      .search-container {
+        flex-direction: column;
+      }
+      
+      .search-input-wrapper {
+        width: 100%;
+      }
+      
+      .tool-details {
+        flex-direction: column;
+        gap: 4px;
+      }
+      
+      .action-row {
+        flex-direction: column;
+      }
+      
+      .action-row button {
+        width: 100%;
+      }
+      
+      .welcome-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div id="wrapper">
-    <nav class="navbar" role="navigation">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle" aria-label="Toggle navigation">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="#">IMS Portal <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a></a>
-        <span class="user-info" style="margin-left:auto;">
-          Welcome Christopher Chishela&nbsp;
-        </span>
-      </div>
-    </nav>
-    <div id="page-wrapper">
-      <div id="page-inner">
-        <div class="row"><div class="col-md-12"></div></div>
-        <hr />
-        <div class="row">
-          <div class="col-md-12">
-            <div class="panel panel-default">
-              <div class="panel-heading">
-                Select Below and Submit
-                <a href="toolshistory.html" class="btn btn-primary" style="float:right;margin-top:-7px;">Tools History</a>
-              </div>
-              <div class="panel-body">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="bulk-search-row">
-                      <input type="text" id="bulkSearchInput" class="bulk-search-bar" placeholder="Search for a tool...">
-                      <button type="button" id="bulkSearchBtn" class="bulk-search-btn"><i class="fa fa-search"></i> Search</button>
-                    </div>
-                    <form id="bulkToolsForm" autocomplete="off">
-                      <input type="button" id="selectAllBtn" value="Select All"/>
-                      <input type="button" id="deselectAllBtn" value="Deselect All"/>
-                      <div id="tools-checkbox-list">
-                        <!-- Firestore data will populate here -->
-                      </div>
-                      <button type="submit" class="btn btn-default">Submit</button>
-                      <button type="reset" class="btn btn-primary">Reset</button>
-                    </form>
-                    <br />
-                  </div>
-                  <div class="col-md-6">
-                    <div id="bulkResult" style="display:none;">
-                      <h3>Selected tools</h3>
-                      <ul id="bulkToolsList"></ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Form Elements -->
+  <!-- Sidebar Toggle Button - Always Visible -->
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+    <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
+  </div>
+
+  <div class="main-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="logo-text">
+            <h2>PENTA</h2>
+            <span>Construction Pro</span>
           </div>
         </div>
       </div>
-    </div>
+
+      <!-- Navigation -->
+      <div style="flex:1; overflow-y: auto; scrollbar-width: thin;">
+        <nav class="nav-section">
+          <h3>Dashboard</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link">
+                <i class="fas fa-gauge-high nav-icon"></i>
+                <span>Overview</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="projectdashboard.html" class="nav-link">
+                <i class="fas fa-diagram-project nav-icon"></i>
+                <span>Projects</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Employees.html" class="nav-link">
+                <i class="fas fa-user-tie nav-icon"></i>
+                <span>Team</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Resources</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Tool.html" class="nav-link">
+                <i class="fas fa-screwdriver-wrench nav-icon"></i>
+                <span>Equipment</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Fire-extinguishers.html" class="nav-link">
+                <i class="fas fa-fire-extinguisher nav-icon"></i>
+                <span>Fire extinguisher</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="material.html" class="nav-link">
+                <i class="fas fa-truck-ramp-box nav-icon"></i>
+                <span>Materials</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link active">
+                <i class="fas fa-tools nav-icon"></i>
+                <span>Assign Tools</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Management</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Accountsdash.html" class="nav-link">
+                <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                <span>Finances</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Table.html" class="nav-link">
+                <i class="fas fa-chart-column nav-icon"></i>
+                <span>Reports</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Header -->
+      <div class="app-header">
+        <div class="header-left">
+          <button class="mobile-toggle" id="mobileToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <i class="fas fa-tools"></i>
+            <h1>Assign Tools Location</h1>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="user-info">
+            <i class="fas fa-user-circle"></i>
+            <span>Christopher Chishela</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Panel -->
+      <div class="actions-container">
+        <div class="actions-header" id="actionsHeader">
+          <h3><i class="fas fa-sliders-h"></i> Quick Actions</h3>
+          <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+          <a href="toolshistory.html" class="btn">
+            <i class="fas fa-history"></i> Tools History
+          </a>
+          <a href="Tool.html" class="btn">
+            <i class="fas fa-list"></i> Tools Inventory
+          </a>
+          <a href="dashboard.html" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Dashboard Container -->
+      <div class="dashboard-container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Bulk / Single Tool Assignment</h2>
+            <p>Select tools below and assign them to employees</p>
+          </div>
+          <div class="welcome-icon">
+            <i class="fas fa-user-check"></i>
+          </div>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-check-square"></i> Select Below and Submit</h2>
+          </div>
+          <div class="panel-body">
+            <!-- Search Bar -->
+            <div class="search-container">
+              <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="bulkSearchInput" placeholder="Search by tool code, name, holder, location...">
+              </div>
+              <button class="btn" id="bulkSearchBtn">
+                <i class="fas fa-search"></i> Search
+              </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-row">
+              <button class="btn" id="selectAllBtn">
+                <i class="fas fa-check-square"></i> Select All
+              </button>
+              <button class="btn" id="deselectAllBtn">
+                <i class="fas fa-square"></i> Deselect All
+              </button>
+            </div>
+
+            <!-- Tools List -->
+            <div class="tools-grid" id="tools-checkbox-list">
+              <!-- Tools will be populated here -->
+            </div>
+
+            <!-- Submit/Reset Buttons -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button type="reset" class="btn" id="resetBtn">
+                <i class="fas fa-undo"></i> Reset
+              </button>
+              <button class="btn btn-primary" id="submitBtn">
+                <i class="fas fa-check"></i> Submit
+              </button>
+            </div>
+
+            <!-- Selected Tools Panel -->
+            <div class="selected-panel" id="bulkResult" style="display: none;">
+              <h3><i class="fas fa-list"></i> Selected Tools</h3>
+              <ul class="selected-tools-list" id="bulkToolsList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
-  <!-- Popup overlay and form -->
+
+  <!-- Transfer Popup -->
   <div class="overlay" id="overlay"></div>
   <div class="form-popup" id="transferFormPopup">
-    <button class="close-btn" id="closePopupBtn">&times;</button>
-    <h3>Transfer Tools</h3>
-    <form id="transferForm" autocomplete="off">
-      <label for="personName">Person receiving the tool(s):</label>
-      <input list="magicEmployees" name="personName" id="personName" placeholder="Enter name..." required />
-      <datalist id="magicEmployees">
-        <!-- Will be populated by Firestore from project-task-588c4 -->
-      </datalist>
-      <label for="location">Location:</label>
-      <input name="location" id="location" placeholder="Enter location..." required />
-      <div id="currentHolderLocation" style="margin-bottom:18px;"></div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-default">Confirm Transfer</button>
-      </div>
-    </form>
+    <div class="popup-header">
+      <h3><i class="fas fa-exchange-alt"></i> Transfer Tools</h3>
+      <button class="close-btn" id="closePopupBtn">&times;</button>
+    </div>
+    <div class="popup-body">
+      <form id="transferForm" autocomplete="off">
+        <label for="personName">Person receiving the tool(s):</label>
+        <input list="magicEmployees" name="personName" id="personName" placeholder="Enter name..." required />
+        <datalist id="magicEmployees"></datalist>
+
+        <label for="location">Location:</label>
+        <input name="location" id="location" placeholder="Enter location..." required />
+
+        <div class="current-holder-info" id="currentHolderLocation"></div>
+
+        <div class="popup-footer">
+          <button type="button" class="btn" id="cancelPopupBtn">Cancel</button>
+          <button type="submit" class="btn btn-success">Confirm Transfer</button>
+        </div>
+      </form>
+    </div>
   </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import {
@@ -233,37 +1086,98 @@ th {
       projectId: "project-task-588c4",
       storageBucket: "project-task-588c4.appspot.com",
       messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // DOM refs
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const actionsHeader = document.getElementById('actionsHeader');
+    const actionsPanel = document.getElementById('actionsPanel');
+    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
+
     const toolsListDiv = document.getElementById('tools-checkbox-list');
-    const form = document.getElementById('bulkToolsForm');
-    const bulkResultDiv = document.getElementById('bulkResult');
-    const bulkToolsList = document.getElementById('bulkToolsList');
     const selectAllBtn = document.getElementById('selectAllBtn');
     const deselectAllBtn = document.getElementById('deselectAllBtn');
     const bulkSearchInput = document.getElementById('bulkSearchInput');
     const bulkSearchBtn = document.getElementById('bulkSearchBtn');
-    // Popup
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const bulkResultDiv = document.getElementById('bulkResult');
+    const bulkToolsList = document.getElementById('bulkToolsList');
+
+    // Popup elements
     const overlay = document.getElementById('overlay');
     const popup = document.getElementById('transferFormPopup');
     const transferForm = document.getElementById('transferForm');
     const closePopupBtn = document.getElementById('closePopupBtn');
+    const cancelPopupBtn = document.getElementById('cancelPopupBtn');
     const magicEmployees = document.getElementById('magicEmployees');
     const personNameInput = document.getElementById('personName');
     const currentHolderLocationDiv = document.getElementById('currentHolderLocation');
 
+    // State
     let toolDocs = [];
     let filteredDocs = [];
     let employeeNames = [];
     let selectedToolObjects = [];
+    let popupSelectedIDs = [];
 
-    // Populate employees datalist ONLY with those in employees collection in this project
+    // Actions panel collapse
+    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
+    if (actionsCollapsed) {
+      actionsPanel.classList.add('collapsed');
+      actionsToggleIcon.style.transform = 'rotate(-90deg)';
+    }
+
+    actionsHeader.addEventListener('click', () => {
+      actionsPanel.classList.toggle('collapsed');
+      actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+      localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
+
+    // Sidebar functionality
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleBtnIcon.classList.remove('fa-chevron-left');
+      toggleBtnIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      if (sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
+
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      if (!sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+      }
+    });
+
+    // Load employees for datalist
     function loadEmployees() {
       onSnapshot(collection(db, "employees"), (snapshot) => {
         employeeNames = [];
@@ -280,7 +1194,7 @@ th {
     }
     loadEmployees();
 
-    // Populate checkboxes from Firestore, with IDs (COLLECTION tools-2)
+    // Load tools from Firestore
     onSnapshot(collection(db, "tools-2"), (snapshot) => {
       toolDocs = [];
       snapshot.forEach(docSnap => {
@@ -295,31 +1209,48 @@ th {
     function renderToolsCheckboxList(list) {
       toolsListDiv.innerHTML = "";
       list.forEach(t => {
-        const isAssigned = (t.location || "").trim().toLowerCase() !== "warehouse";
+        const isAssigned = t.currentHolder && t.currentHolder !== "Warehouse" && t.currentHolder !== "-";
         const div = document.createElement('div');
-        div.className = "radio" + (isAssigned ? " radio-assigned" : "");
+        div.className = "tool-item" + (isAssigned ? " tool-assigned" : "");
+        
         div.innerHTML = `
           <label>
             <input type="checkbox" name="tools[]" value="${t.id}" />
-            &nbsp;&nbsp;${t.bin ? `T-${t.bin}` : t.id} --> ${t.name || "Unnamed"}
-            <span class="current-info">
-              Holder: <b>${t.currentHolder || "Warehouse"}</b>
-              | Location: <b>${t.location || "-"}</b>
-            </span>
+            <div class="tool-info">
+              <div class="tool-code">
+                <i class="fas fa-tag"></i> ${t.bin ? `T-${t.bin}` : t.id}
+              </div>
+              <div class="tool-details">
+                <span class="tool-detail">
+                  <i class="fas fa-tools"></i> ${t.name || "Unnamed"}
+                </span>
+                <span class="tool-detail">
+                  <i class="fas fa-user"></i> ${t.currentHolder || "Warehouse"}
+                </span>
+                <span class="tool-detail">
+                  <i class="fas fa-map-marker-alt"></i> ${t.location || "-"}
+                </span>
+              </div>
+            </div>
           </label>
         `;
         toolsListDiv.appendChild(div);
       });
     }
 
-    // Select all/deselect all logic
+    // Select all / deselect all
     selectAllBtn.onclick = function() {
       toolsListDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
     };
+
     deselectAllBtn.onclick = function() {
       toolsListDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      bulkResultDiv.style.display = "none";
+      bulkToolsList.innerHTML = "";
+      currentHolderLocationDiv.innerHTML = "";
     };
 
+    // Search functionality
     function doBulkSearch() {
       const val = bulkSearchInput.value.trim().toLowerCase();
       if (!val) {
@@ -328,74 +1259,90 @@ th {
         filteredDocs = toolDocs.filter(t => {
           return [t.bin, t.name, t.currentHolder, t.location].some(field => {
             if (!field) return false;
-            return field.toLowerCase().split(/\s+/).some(word =>
-              word.startsWith(val) || word.includes(val)
-            );
+            return field.toLowerCase().includes(val);
           });
         });
       }
       renderToolsCheckboxList(filteredDocs);
     }
+
     bulkSearchInput.addEventListener('input', doBulkSearch);
     bulkSearchBtn.onclick = doBulkSearch;
 
-    // Show selected tools in right panel and open popup for transfer info
-    form.addEventListener('submit', function(e) {
+    // Submit button - show selected tools and open popup
+    submitBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      const selectedIDs = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-      bulkToolsList.innerHTML = "";
-      selectedToolObjects = [];
+      const selectedIDs = Array.from(toolsListDiv.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+      
       if (selectedIDs.length === 0) {
-        bulkResultDiv.style.display = "none";
-        currentHolderLocationDiv.innerHTML = "";
+        alert('Please select at least one tool');
         return;
       }
+
+      bulkToolsList.innerHTML = "";
+      selectedToolObjects = [];
+      
       selectedIDs.forEach(id => {
         const t = toolDocs.find(x => x.id === id);
         selectedToolObjects.push(t);
         const li = document.createElement('li');
-        li.innerHTML = `${t ? (t.name || "Unnamed") : id} [${t ? t.bin : ''}] <span class="current-info">Holder: <b>${t?.currentHolder || "Warehouse"}</b> | Location: <b>${t?.location || "-"}</b></span>`;
+        li.innerHTML = `<i class="fas fa-tools"></i> ${t.name || "Unnamed"} (${t.bin || id}) - Holder: ${t.currentHolder || "Warehouse"}`;
         bulkToolsList.appendChild(li);
       });
-      // Show current holder/location in the popup for all selected
+
+      // Show current holder info in popup
       currentHolderLocationDiv.innerHTML = selectedToolObjects.map(t =>
-        `<div><span class="current-info">
-          <b>${t.name || "Unnamed"}</b> [${t.bin ? "T-"+t.bin : t.id}]<br>
-          Holder: <b>${t.currentHolder || "Warehouse"}</b>
-          | Location: <b>${t.location || "-"}</b>
-        </span></div>`
+        `<div><i class="fas fa-info-circle"></i> <strong>${t.name || "Unnamed"}</strong> [${t.bin || t.id}]<br>Current Holder: <b>${t.currentHolder || "Warehouse"}</b><br>Current Location: <b>${t.location || "-"}</b></div>`
       ).join("");
-      bulkResultDiv.style.display = "";
-      overlay.style.display = popup.style.display = "block";
-      popup.selectedIDs = selectedIDs;
+
+      bulkResultDiv.style.display = "block";
+      overlay.style.display = "block";
+      popup.style.display = "block";
+      popupSelectedIDs = selectedIDs;
     });
 
-    closePopupBtn.onclick = function() {
-      overlay.style.display = popup.style.display = "none";
+    // Reset button
+    resetBtn.addEventListener('click', function() {
+      toolsListDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      bulkResultDiv.style.display = "none";
+      bulkToolsList.innerHTML = "";
+      currentHolderLocationDiv.innerHTML = "";
+    });
+
+    // Close popup
+    function closePopup() {
+      overlay.style.display = "none";
+      popup.style.display = "none";
       transferForm.reset();
       currentHolderLocationDiv.innerHTML = "";
-    };
+    }
 
+    closePopupBtn.onclick = closePopup;
+    cancelPopupBtn.onclick = closePopup;
+
+    // Normalize string for comparison
     function normalize(str) {
       return (str || '').trim().replace(/\s+/g, ' ').toLowerCase();
     }
 
+    // Transfer form submit
     transferForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const personName = transferForm.personName.value.trim();
       const location = transferForm.location.value.trim();
-      if (!personName || !location || !popup.selectedIDs) return;
+
+      if (!personName || !location || !popupSelectedIDs) return;
 
       const normalizedInput = normalize(personName);
       const normalizedList = employeeNames.map(normalize);
 
       if (!normalizedList.includes(normalizedInput)) {
-        alert("You can only assign to a person who is an employee in the system!\n\nYou entered: " + personName + "\nValid employees are:\n" + employeeNames.join('\n'));
+        alert(`You can only assign to an employee in the system!\n\nValid employees:\n${employeeNames.join('\n')}`);
         return;
       }
 
       let count = 0;
-      for (const id of popup.selectedIDs) {
+      for (const id of popupSelectedIDs) {
         try {
           const toolRef = doc(db, "tools-2", id);
           const toolDoc = await getDoc(toolRef);
@@ -420,17 +1367,15 @@ th {
           alert(`Error updating tool ${id}: ` + err);
         }
       }
-      alert(`Updated ${count} tool(s) with new holder and location!`);
-      overlay.style.display = popup.style.display = "none";
-      transferForm.reset();
-      currentHolderLocationDiv.innerHTML = "";
-      form.reset();
+
+      alert(`✅ Successfully transferred ${count} tool(s) to ${personName}`);
+      closePopup();
+      
+      // Reset form
+      toolsListDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
       bulkResultDiv.style.display = "none";
       bulkToolsList.innerHTML = "";
-    });
-
-    form.addEventListener('reset', function() {
-      setTimeout(() => { bulkResultDiv.style.display = "none"; bulkToolsList.innerHTML = ""; currentHolderLocationDiv.innerHTML = ""; }, 100);
+      currentHolderLocationDiv.innerHTML = "";
     });
   </script>
 </body>
