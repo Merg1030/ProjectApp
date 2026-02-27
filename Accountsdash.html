@@ -27,6 +27,37 @@
       height: 100vh;
       width: 100vw;
       overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar Toggle Button - Always Visible */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 32px;
+      height: 32px;
+      background: #0a1c2f;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.8rem;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: #1f3d62;
+      transform: scale(1.1);
+    }
+
+    .sidebar-toggle-btn.collapsed {
+      left: 10px;
     }
 
     /* Sidebar - Matching exactly */
@@ -38,17 +69,16 @@
       flex-direction: column;
       height: 100vh;
       border-right: 2px solid #1f3d62;
-      transition: all 0.28s ease;
+      transition: transform 0.28s ease;
       position: relative;
       flex-shrink: 0;
       overflow: hidden;
       box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      transform: translateX(0);
     }
 
     .sidebar.collapsed {
-      width: 0;
-      opacity: 0;
-      border-right: none;
+      transform: translateX(-100%);
     }
 
     .sidebar-header {
@@ -85,32 +115,6 @@
     .logo-text span {
       font-size: 0.7rem;
       color: #97adc9;
-    }
-
-    /* Sidebar Toggle Button */
-    .sidebar-toggle {
-      position: absolute;
-      top: 20px;
-      right: -12px;
-      width: 24px;
-      height: 24px;
-      background: #0a1c2f;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 2px solid white;
-      font-size: 0.7rem;
-      z-index: 100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      transition: all 0.15s;
-    }
-
-    .sidebar-toggle:hover {
-      background: #1f3d62;
-      transform: scale(1.1);
     }
 
     /* Navigation */
@@ -174,18 +178,19 @@
       flex-direction: column;
       overflow: hidden;
       background: white;
-      transition: all 0.28s ease;
+      transition: margin-left 0.28s ease;
+      margin-left: 0;
     }
 
     .main-content.expanded {
-      margin-left: 0;
+      margin-left: -260px;
     }
 
     /* Header - Exactly matching */
     .app-header {
       background: #0a1c2f;
       color: white;
-      padding: 4px 20px;
+      padding: 4px 20px 4px 50px;
       border-bottom: 2px solid #1f3d62;
       display: flex;
       align-items: center;
@@ -546,12 +551,11 @@
         position: fixed;
         z-index: 1000;
         height: 100vh;
+        transform: translateX(-100%);
       }
       
-      .sidebar.collapsed {
-        transform: translateX(-100%);
-        width: 260px;
-        opacity: 1;
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
       }
       
       .main-content.expanded {
@@ -560,6 +564,14 @@
       
       .mobile-toggle {
         display: block;
+      }
+      
+      .sidebar-toggle-btn {
+        display: none;
+      }
+      
+      .app-header {
+        padding-left: 20px;
       }
       
       .actions-panel {
@@ -580,13 +592,14 @@
   </style>
 </head>
 <body>
+  <!-- Sidebar Toggle Button - Always Visible -->
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+    <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
+  </div>
+
   <div class="main-wrapper">
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-toggle" id="sidebarToggle">
-        <i class="fas fa-chevron-left" id="toggleIcon"></i>
-      </div>
-      
       <div class="sidebar-header">
         <div class="logo-container">
           <div class="logo-icon">
@@ -795,8 +808,8 @@
   <script>
     // DOM Elements
     const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const toggleIcon = document.getElementById('toggleIcon');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
     const mainContent = document.getElementById('mainContent');
     const mobileToggle = document.getElementById('mobileToggle');
     const actionsHeader = document.getElementById('actionsHeader');
@@ -817,32 +830,39 @@
       localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
     });
 
-    // Sidebar functionality
+    // Sidebar functionality with always-visible button
     const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
     if (isSidebarCollapsed) {
       sidebar.classList.add('collapsed');
       mainContent.classList.add('expanded');
-      toggleIcon.classList.remove('fa-chevron-left');
-      toggleIcon.classList.add('fa-chevron-right');
+      toggleBtnIcon.classList.remove('fa-chevron-left');
+      toggleBtnIcon.classList.add('fa-chevron-right');
     }
 
-    sidebarToggle.addEventListener('click', function() {
+    sidebarToggleBtn.addEventListener('click', function() {
       sidebar.classList.toggle('collapsed');
       mainContent.classList.toggle('expanded');
       
       if (sidebar.classList.contains('collapsed')) {
-        toggleIcon.classList.remove('fa-chevron-left');
-        toggleIcon.classList.add('fa-chevron-right');
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
         localStorage.setItem('sidebarCollapsed', 'true');
       } else {
-        toggleIcon.classList.remove('fa-chevron-right');
-        toggleIcon.classList.add('fa-chevron-left');
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
         localStorage.setItem('sidebarCollapsed', 'false');
       }
     });
 
     mobileToggle.addEventListener('click', function() {
       sidebar.classList.toggle('collapsed');
+      if (!sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+      }
     });
 
     // Theme toggle
