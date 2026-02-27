@@ -3,446 +3,1780 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PENTA · Personnel Expenses (fixed filter)</title>
-  <!-- Font Awesome & Bootstrap -->
+  <title>PENTA | Personnel Expenses</title>
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; width: 100%; background: white; font-family: 'Inter', sans-serif; color: #171923; overflow-x: hidden; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    /* sidebar */
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #d3dfed;
+      color: #0a1c2f;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Main Layout */
+    .main-wrapper {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar Toggle Button - Always Visible */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 32px;
+      height: 32px;
+      background: #0a1c2f;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.8rem;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: #1f3d62;
+      transform: scale(1.1);
+    }
+
+    /* Sidebar */
     .sidebar {
-      width: 260px; background: white; border-right: 1px solid #e2e8f0; position: fixed; top: 0; left: 0;
-      height: 100vh; z-index: 1050; transition: transform 0.25s ease; overflow-y: auto;
+      width: 260px;
+      background: white;
+      color: #0a1c2f;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      border-right: 2px solid #1f3d62;
+      transition: transform 0.28s ease;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      transform: translateX(0);
     }
-    .sidebar.collapsed { transform: translateX(-100%); }
-    .sidebar-header { padding: 1rem 1rem 0.8rem; border-bottom: 1px solid #e2e8f0; }
-    .logo-container { display: flex; align-items: center; gap: 0.7rem; }
-    .logo-icon { width: 36px; height: 36px; background: #1a365d; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; }
-    .logo-text h2 { font-size: 1.25rem; font-weight: 700; color: #1a365d; margin: 0; }
-    .logo-text span { font-size: 0.65rem; color: #718096; }
 
-    .nav-section { padding: 0 1rem 0.5rem; }
-    .nav-section h3 { font-size: 0.7rem; text-transform: uppercase; color: #a0aec0; margin: 1rem 0 0.5rem; }
-    .nav-links { list-style: none; }
-    .nav-item { margin-bottom: 0.15rem; }
-    .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0.75rem; color: #2d3748; text-decoration: none; border-radius: 0.375rem; font-size: 0.9rem; }
-    .nav-link:hover { background: #f7fafc; color: #1a365d; }
-    .nav-link.active { background: #ebf8ff; color: #1a365d; font-weight: 500; }
-    .nav-icon { width: 1.2rem; font-size: 1rem; color: #4a5568; }
-
-    .sidebar-toggle {
-      position: absolute; top: 1rem; right: -12px; width: 24px; height: 24px; background: #1a365d; color: white;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;
-      border: 2px solid white; font-size: 0.7rem; z-index: 1060;
+    .sidebar.collapsed {
+      transform: translateX(-100%);
     }
-    .mobile-toggle { display: none; position: fixed; top: 0.5rem; left: 0.5rem; z-index: 1100; background: #1a365d; color: white; border: none; border-radius: 0.375rem; padding: 0.4rem 0.7rem; font-size: 1.1rem; cursor: pointer; }
 
-    /* main */
+    .sidebar-header {
+      padding: 16px 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      background: #0a1c2f;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #b8cde0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #0a1c2f;
+    }
+
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      color: white;
+    }
+
+    .logo-text span {
+      font-size: 0.7rem;
+      color: #97adc9;
+    }
+
+    /* Navigation */
+    .nav-section {
+      padding: 20px 16px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .nav-section h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7f96b3;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      color: #0a1c2f;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: #e6efff;
+    }
+
+    .nav-link.active {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      font-weight: 600;
+      border-left: 3px solid #1f3d62;
+    }
+
+    .nav-icon {
+      font-size: 0.9rem;
+      width: 20px;
+      text-align: center;
+      color: #2b4a73;
+    }
+
+    /* Main Content Area */
     .main-content {
-      margin-left: 260px; padding: 1rem 1.5rem 1.5rem; transition: margin-left 0.25s ease;
-      min-height: 100vh; background: white; width: calc(100% - 260px);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: white;
+      transition: margin-left 0.28s ease;
+      margin-left: 0;
     }
-    .main-content.expanded { margin-left: 0; width: 100%; }
 
-    .top-bar {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
-      flex-wrap: wrap; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.7rem; margin-top: 0;
+    .main-content.expanded {
+      margin-left: -260px;
     }
-    .top-left h1 { font-size: 1.7rem; font-weight: 700; color: #1a365d; margin: 0; }
-    .top-left p { color: #4a5568; margin: 0.15rem 0 0; font-size: 0.9rem; }
 
-    .panel { background: white; border-radius: 1rem; padding: 1.2rem 1.5rem; border: 1px solid #edf2f7; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-    .panel-heading { display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.7rem; margin-bottom: 1rem; border-bottom: 2px solid #1a365d; font-weight: 700; font-size: 1.25rem; color: #1a365d; }
-    .back-btn { background: #1a365d; color: white; border: none; padding: 0.3rem 1rem; border-radius: 2rem; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
-    .back-btn:hover { background: #0c1f38; }
+    /* Header */
+    .app-header {
+      background: #0a1c2f;
+      color: white;
+      padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      min-height: 56px;
+    }
 
-    .top-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
-    .btn-action { background: #1a365d; color: white; border: none; padding: 0.4rem 1.2rem; border-radius: 2rem; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; border: 1px solid transparent; }
-    .btn-action:hover { background: #0d2747; }
-    .btn-outline { background: white; color: #1a365d; border: 1px solid #cbd5e0; }
-    .btn-outline:hover { background: #f8fafc; border-color: #1a365d; }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-    .controls-panel { background: white; border-radius: 1rem; padding: 1rem 1.5rem; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; display: none; }
-    .controls-panel.show { display: block; }
-    .controls-content { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; }
-    .control-group { display: flex; flex-direction: column; gap: 0.3rem; }
-    .control-group label { font-weight: 600; font-size: 0.75rem; color: #4a5568; }
-    .filter-select { background: #f9f9fc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 2rem 0.4rem 0.8rem; font-size: 0.85rem; min-width: 150px; }
+    .mobile-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
 
-    .form-container { background: white; border-radius: 1rem; border: 1px solid #e2e8f0; margin-bottom: 1.2rem; max-height: 0; overflow: hidden; opacity: 0; transition: all 0.25s ease; }
-    .form-container.visible { max-height: 900px; opacity: 1; padding: 1.5rem; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.2rem; }
-    .form-label { font-weight: 600; font-size: 0.8rem; color: #2d3748; }
-    .form-control { background: #f9f9fc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 0.7rem; font-size: 0.85rem; }
-    .form-actions { display: flex; justify-content: flex-end; gap: 0.7rem; padding-top: 1rem; border-top: 1px dashed #cbd5e0; margin-top: 0.5rem; }
+    .mobile-toggle:hover {
+      background: rgba(255,255,255,0.1);
+    }
 
-    .company-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; margin: 1rem 0 1.2rem; }
-    .company-card { background: white; border: 1px solid #e2e8f0; border-radius: 0.8rem; padding: 0.8rem 0.2rem; text-align: center; }
-    .company-label { font-weight: 700; color: #1a365d; font-size: 0.85rem; margin-bottom: 0.3rem; }
-    .company-cost { font-weight: 700; background: #f7fafc; padding: 0.3rem; border-radius: 0.4rem; color: #171923; font-size: 0.9rem; }
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    .table-responsive { border-radius: 0.8rem; border: 1px solid #edf2f7; overflow-x: auto; margin-top: 0.2rem; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 1000px; }
-    th { background: #f7fafc; color: #1a365d; font-weight: 600; padding: 0.7rem 0.5rem; border-bottom: 2px solid #cbd5e0; }
-    td { padding: 0.5rem; border-bottom: 1px solid #e2e8f0; }
-    .total-row { background: #f0f5fa; font-weight: 700; }
-    .total-row td { border-top: 2px solid #1a365d; }
+    .page-title h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+    }
 
-    .dropdown { position: relative; display: inline-block; }
-    .dots-btn { background: none; border: none; color: #718096; font-size: 1rem; padding: 0.2rem 0.3rem; cursor: pointer; }
-    .dots-btn:hover { color: #1a365d; }
-    .dropdown-content { display: none; position: absolute; right: 0; background: white; min-width: 110px; border-radius: 0.5rem; border: 1px solid #e2e8f0; z-index: 100; }
-    .dropdown-content.show { display: block; }
-    .dropdown-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem; width: 100%; background: none; border: none; text-align: left; font-size: 0.8rem; cursor: pointer; }
-    .dropdown-item.edit:hover { background: #ebf8ff; color: #1a365d; }
-    .dropdown-item.delete:hover { background: #fff5f5; color: #c53030; }
+    .page-title i {
+      color: #97adc9;
+    }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-display {
+      background: #1f3d62;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .date-display i {
+      color: #97adc9;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid #2b4a73;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+      color: #0b1f33;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0a1c2f;
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: white;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn:hover {
+      background: #e6efff;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+      color: white;
+    }
+
+    /* Actions Panel */
+    .actions-container {
+      padding: 4px 20px;
+      background: #f2f6fc;
+      border-bottom: 1px solid #b3c7e0;
+      flex-shrink: 0;
+    }
+
+    .actions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .actions-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .actions-header i {
+      font-size: 12px;
+      transition: transform 0.2s;
+      color: #1f3d62;
+    }
+
+    .actions-panel {
+      display: flex;
+      gap: 8px;
+      padding: 8px 0 12px;
+      transition: all 0.2s;
+      max-height: 100px;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .actions-panel.collapsed {
+      max-height: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Search and Filter Groups */
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #b3c7e0;
+      border-radius: 30px;
+      padding: 0.2rem 0.8rem;
+      min-width: 200px;
+    }
+
+    .search-box i {
+      color: #7f96b3;
+    }
+
+    .search-box input {
+      border: none;
+      padding: 4px 4px;
+      width: 100%;
+      outline: none;
+      font-size: 11px;
+      background: transparent;
+      color: #0a1c2f;
+    }
+
+    .search-box input::placeholder {
+      color: #7f96b3;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: white;
+      border: 1px solid #b3c7e0;
+      border-radius: 30px;
+      padding: 0.2rem 0.8rem;
+    }
+
+    .filter-group label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #1f3d62;
+    }
+
+    .filter-group select {
+      border: none;
+      outline: none;
+      font-size: 11px;
+      background: transparent;
+      cursor: pointer;
+      color: #0a1c2f;
+    }
+
+    /* Dashboard Container */
+    .dashboard-container {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+      background: #f2f6fc;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,20,40,0.2);
+    }
+
+    .welcome-text h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .welcome-text p {
+      color: #97adc9;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    .welcome-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b8cde0;
+      font-size: 1.8rem;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    /* Form Container */
+    .form-container {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .form-container.visible {
+      max-height: 800px;
+      opacity: 1;
+      margin-bottom: 24px;
+    }
+
+    .form-header {
+      background: #b8cde0;
+      padding: 12px 20px;
+      border-bottom: 2px solid #1f3d62;
+    }
+
+    .form-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-body {
+      padding: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a1c2f;
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.12);
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e8f5;
+    }
+
+    .form-error {
+      color: #cc0000;
+      font-size: 0.7rem;
+      margin-top: 8px;
+      padding: 8px;
+      background: #ffe5e5;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .form-error.visible {
+      display: block;
+    }
+
+    /* Filter Panel */
+    .filter-panel {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .filter-panel.show {
+      display: block;
+    }
+
+    .filter-header {
+      background: #b8cde0;
+      padding: 12px 20px;
+      border-bottom: 2px solid #1f3d62;
+    }
+
+    .filter-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-body {
+      padding: 20px;
+    }
+
+    .filter-grid {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-item {
+      min-width: 200px;
+    }
+
+    .filter-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a1c2f;
+    }
+
+    /* Company Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .summary-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .summary-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0a1c2f;
+    }
+
+    .summary-value small {
+      font-size: 0.65rem;
+      color: #7f96b3;
+      font-weight: normal;
+    }
+
+    /* Table Styles */
+    .table-wrapper {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+    }
+
+    .table-wrapper::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    .expenses-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      min-width: 1200px;
+    }
+
+    .expenses-table th {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #9bb1cc;
+      border-bottom: 2px solid #1f3d62;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .expenses-table td {
+      padding: 10px;
+      border: 1px solid #c7d6ec;
+      color: #0a1c2f;
+      vertical-align: middle;
+      background: white;
+    }
+
+    .expenses-table tbody tr:hover td {
+      background: #e3ecf7;
+    }
+
+    .expenses-table tfoot td {
+      background: #f2f6fc;
+      font-weight: 700;
+      border-top: 2px solid #1f3d62;
+    }
+
+    /* Amount Styling */
+    .amount-positive {
+      color: #059669;
+      font-weight: 600;
+    }
+
+    /* Action Dropdown */
+    .action-cell {
+      position: relative;
+      width: 40px;
+      text-align: center;
+    }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #b3c7e0;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #1f3d62;
+      transition: all 0.15s;
+      margin: 0 auto;
+    }
+
+    .action-btn:hover {
+      background: #e6efff;
+      border-color: #2b4a73;
+    }
+
+    .row-dropdown-content {
+      display: none;
+      position: absolute;
+      right: 25px;
+      top: 0;
+      background: white;
+      min-width: 120px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 6px;
+      z-index: 100;
+      border: 2px solid #1f3d62;
+    }
+
+    .row-dropdown-content.show {
+      display: block;
+    }
+
+    .row-dropdown-item {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 11px;
+      color: #0a1c2f;
+      border-bottom: 1px solid #b3c7e0;
+      width: 100%;
+      border: none;
+      background: none;
+      text-align: left;
+    }
+
+    .row-dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .row-dropdown-item:hover {
+      background: #e6efff;
+    }
+
+    .row-dropdown-item.edit:hover {
+      color: #2b4a73;
+    }
+
+    .row-dropdown-item.delete:hover {
+      color: #cc0000;
+    }
+
+    /* Empty State */
+    .empty-state {
+      padding: 40px !important;
+      text-align: center;
+    }
+
+    .empty-state-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .empty-state-icon {
+      font-size: 2.5rem;
+      color: #97adc9;
+    }
+
+    .empty-state-text {
+      color: #7f96b3;
+      font-size: 0.8rem;
+    }
+
+    /* Hide Class */
+    .hide {
+      display: none !important;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.active { transform: translateX(0); }
-      .main-content { margin-left: 0; width: 100%; padding: 0.8rem; }
-      .mobile-toggle { display: block; }
-      .sidebar-toggle { display: none; }
-      .company-summary { grid-template-columns: repeat(2,1fr); }
-      .controls-content { flex-direction: column; align-items: stretch; }
+      .sidebar {
+        position: fixed;
+        z-index: 1000;
+        height: 100vh;
+        transform: translateX(-100%);
+      }
+      
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
+      }
+      
+      .main-content.expanded {
+        margin-left: 0;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .sidebar-toggle-btn {
+        display: none;
+      }
+      
+      .app-header {
+        padding-left: 20px;
+      }
+      
+      .actions-panel {
+        flex-direction: column;
+        max-height: 300px;
+      }
+      
+      .filter-grid {
+        flex-direction: column;
+      }
+      
+      .filter-item {
+        width: 100%;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .welcome-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+      }
+      
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
-    #formError { color: #e53e3e; font-size: 0.8rem; margin-top: 0.3rem; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-<button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
-
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left" id="toggleIcon"></i></div>
-  <div class="sidebar-header">
-    <div class="logo-container">
-      <div class="logo-icon"><i class="fas fa-building"></i></div>
-      <div class="logo-text"><h2>PENTA</h2><span>Construction Pro</span></div>
-    </div>
+  <!-- Sidebar Toggle Button - Always Visible -->
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+    <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
   </div>
-  <nav class="nav-section"><h3>Dashboard</h3><ul class="nav-links"><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-gauge-high nav-icon"></i><span>Overview</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-diagram-project nav-icon"></i><span>Projects</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-user-tie nav-icon"></i><span>Team</span></a></li></ul></nav>
-  <nav class="nav-section"><h3>Resources</h3><ul class="nav-links"><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-screwdriver-wrench nav-icon"></i><span>Equipment</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-truck-ramp-box nav-icon"></i><span>Materials</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-warehouse nav-icon"></i><span>Inventory</span></a></li></ul></nav>
-  <nav class="nav-section"><h3>Management</h3><ul class="nav-links"><li class="nav-item"><a href="#" class="nav-link active"><i class="fas fa-file-invoice-dollar nav-icon"></i><span>Finances</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-chart-column nav-icon"></i><span>Reports</span></a></li></ul></nav>
-</aside>
 
-<main class="main-content" id="mainContent">
-  <div class="top-bar">
-    <div class="top-left"><h1>Personnel Expenses Tracker</h1><p id="currentDate"></p></div>
-  </div>
-  <div class="panel">
-    <div class="panel-heading"><span>Expense Management</span><a href="#" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a></div>
-    <div class="top-actions">
-      <button class="btn-action" id="toggleFormBtn"><i class="fas fa-plus"></i> Add Entry</button>
-      <button class="btn-action btn-outline" id="toggleControlsBtn"><i class="fas fa-filter"></i> Show Filters</button>
-    </div>
-    <!-- filter panel -->
-    <div class="controls-panel" id="controlsPanel">
-      <div class="controls-content">
-        <div class="control-group"><label for="weekFilter">Week Filter</label><select id="weekFilter" class="filter-select"><option value="ALL">All Weeks</option></select></div>
-        <div class="control-group"><label for="companyFilter">Company</label><select id="companyFilter" class="filter-select"><option value="ALL">All Companies</option><option value="FPS">FPS</option><option value="HML">HML</option><option value="HL">HL</option><option value="HFL">HFL</option><option value="HEL">HEL</option></select></div>
-        <button class="btn-action" id="downloadAllBtn"><i class="fas fa-download"></i> Download All Data</button>
-        <button class="btn-action btn-outline" id="downloadFilteredBtn"><i class="fas fa-download"></i> Download Filtered</button>
+  <div class="main-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="logo-text">
+            <h2>PENTA</h2>
+            <span>Construction Pro</span>
+          </div>
+        </div>
       </div>
-    </div>
-    <!-- form -->
-    <div class="form-container" id="formContainer">
-      <form id="expenseForm" autocomplete="off">
-        <input type="hidden" id="editId">
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">Date *</label><input type="date" id="expDate" class="form-control" required></div>
-          <div class="form-group"><label class="form-label">Personnel *</label><input type="text" id="expPersonnel" class="form-control" required></div>
-          <div class="form-group"><label class="form-label">Purpose</label><input type="text" id="expPurpose" class="form-control"></div>
-          <div class="form-group"><label class="form-label">Company *</label><select id="expCompany" class="form-control" required><option value="">--</option><option value="FPS">FPS</option><option value="HML">HML</option><option value="HL">HL</option><option value="HFL">HFL</option><option value="HEL">HEL</option></select></div>
-          <div class="form-group"><label class="form-label">Task ID</label><input type="text" id="expTaskId" class="form-control"></div>
-          <div class="form-group"><label class="form-label">Location</label><input type="text" id="expLocation" class="form-control"></div>
-          <div class="form-group"><label class="form-label">Transport (ZMW)</label><input type="number" id="expTransport" class="form-control" min="0" step="0.01" value="0"></div>
-          <div class="form-group"><label class="form-label">Airtime (ZMW)</label><input type="number" id="expAirtime" class="form-control" min="0" step="0.01" value="0"></div>
-          <div class="form-group"><label class="form-label">Lunch (ZMW)</label><input type="number" id="expLunch" class="form-control" min="0" step="0.01" value="0"></div>
+
+      <!-- Navigation -->
+      <div style="flex:1; overflow-y: auto; scrollbar-width: thin;">
+        <nav class="nav-section">
+          <h3>Dashboard</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link">
+                <i class="fas fa-gauge-high nav-icon"></i>
+                <span>Overview</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="projectdashboard.html" class="nav-link">
+                <i class="fas fa-diagram-project nav-icon"></i>
+                <span>Projects</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Employees.html" class="nav-link">
+                <i class="fas fa-user-tie nav-icon"></i>
+                <span>Team</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Resources</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Tool.html" class="nav-link">
+                <i class="fas fa-screwdriver-wrench nav-icon"></i>
+                <span>Equipment</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Fire-extinguishers.html" class="nav-link">
+                <i class="fas fa-fire-extinguisher nav-icon"></i>
+                <span>Fire extinguisher</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="material.html" class="nav-link">
+                <i class="fas fa-truck-ramp-box nav-icon"></i>
+                <span>Materials</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="inventory.html" class="nav-link">
+                <i class="fas fa-warehouse nav-icon"></i>
+                <span>Inventory</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Management</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="#" class="nav-link active">
+                <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                <span>Personnel Expenses</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Table.html" class="nav-link">
+                <i class="fas fa-chart-column nav-icon"></i>
+                <span>Reports</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Header -->
+      <div class="app-header">
+        <div class="header-left">
+          <button class="mobile-toggle" id="mobileToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <h1>Personnel Expenses</h1>
+          </div>
         </div>
-        <div class="form-actions">
-          <button type="button" class="btn-action btn-outline" id="cancelEditBtn"><i class="fas fa-times"></i> Cancel</button>
-          <button type="submit" class="btn-action" id="submitBtn"><i class="fas fa-save"></i> Add Entry</button>
+        <div class="header-right">
+          <div class="date-display" id="currentDate">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Loading...</span>
+          </div>
         </div>
-        <div id="formError"></div>
-      </form>
-    </div>
-    <!-- company summary cards -->
-    <div class="company-summary" id="companySummary"></div>
-    <!-- table -->
-    <div class="table-responsive">
-      <table>
-        <thead><tr><th>Date</th><th>Personnel</th><th>Purpose</th><th>Company</th><th>Task ID</th><th>Location</th><th>Transport</th><th>Airtime</th><th>Lunch</th><th>Total</th><th style="width:40px;"></th></tr></thead>
-        <tbody id="expensesTableBody"></tbody>
-        <tfoot><tr class="total-row" id="expensesTableTotal"></tr></tfoot>
-      </table>
-    </div>
+      </div>
+
+      <!-- Actions Panel -->
+      <div class="actions-container">
+        <div class="actions-header" id="actionsHeader">
+          <h3><i class="fas fa-sliders-h"></i> Quick Actions</h3>
+          <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+          <button class="btn" id="toggleFormBtn">
+            <i class="fas fa-plus"></i> Add Entry
+          </button>
+          <button class="btn" id="toggleFiltersBtn">
+            <i class="fas fa-filter"></i> Show Filters
+          </button>
+          <button class="btn" id="downloadAllBtn">
+            <i class="fas fa-download"></i> All Data
+          </button>
+          <button class="btn" id="downloadFilteredBtn">
+            <i class="fas fa-download"></i> Filtered
+          </button>
+          <a href="dashboard.html" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Dashboard Container -->
+      <div class="dashboard-container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Personnel Expenses Tracker</h2>
+            <p>Track transport, airtime, and lunch expenses by company</p>
+          </div>
+          <div class="welcome-icon">
+            <i class="fas fa-users"></i>
+          </div>
+        </div>
+
+        <!-- Add Entry Form -->
+        <div class="form-container" id="formContainer">
+          <div class="form-header">
+            <h3><i class="fas fa-plus-circle"></i> <span id="formTitle">Add New Entry</span></h3>
+          </div>
+          <div class="form-body">
+            <form id="expenseForm" autocomplete="off">
+              <input type="hidden" id="editId">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="expDate" class="form-label">Date *</label>
+                  <input type="date" id="expDate" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="expPersonnel" class="form-label">Personnel *</label>
+                  <input type="text" id="expPersonnel" class="form-control" placeholder="Employee name" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="expPurpose" class="form-label">Purpose</label>
+                  <input type="text" id="expPurpose" class="form-control" placeholder="Purpose of expense">
+                </div>
+                
+                <div class="form-group">
+                  <label for="expCompany" class="form-label">Company *</label>
+                  <select id="expCompany" class="form-control" required>
+                    <option value="">-- Select Company --</option>
+                    <option value="FPS">FPS</option>
+                    <option value="HML">HML</option>
+                    <option value="HL">HL</option>
+                    <option value="HFL">HFL</option>
+                    <option value="HEL">HEL</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="expTaskId" class="form-label">Task ID</label>
+                  <input type="text" id="expTaskId" class="form-control" placeholder="Task reference">
+                </div>
+                
+                <div class="form-group">
+                  <label for="expLocation" class="form-label">Location</label>
+                  <input type="text" id="expLocation" class="form-control" placeholder="Site location">
+                </div>
+                
+                <div class="form-group">
+                  <label for="expTransport" class="form-label">Transport (ZMW)</label>
+                  <input type="number" id="expTransport" class="form-control" min="0" step="0.01" value="0">
+                </div>
+                
+                <div class="form-group">
+                  <label for="expAirtime" class="form-label">Airtime (ZMW)</label>
+                  <input type="number" id="expAirtime" class="form-control" min="0" step="0.01" value="0">
+                </div>
+                
+                <div class="form-group">
+                  <label for="expLunch" class="form-label">Lunch (ZMW)</label>
+                  <input type="number" id="expLunch" class="form-control" min="0" step="0.01" value="0">
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="btn" id="cancelEditBtn">
+                  <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                  <i class="fas fa-save"></i> Add Entry
+                </button>
+              </div>
+              
+              <div id="formError" class="form-error"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Filters Panel -->
+        <div class="filter-panel" id="filtersPanel">
+          <div class="filter-header">
+            <h3><i class="fas fa-filter"></i> Filter Options</h3>
+          </div>
+          <div class="filter-body">
+            <div class="filter-grid">
+              <div class="filter-item">
+                <label for="weekFilter" class="filter-label">Week</label>
+                <select id="weekFilter" class="filter-select">
+                  <option value="ALL">All Weeks</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label for="companyFilter" class="filter-label">Company</label>
+                <select id="companyFilter" class="filter-select">
+                  <option value="ALL">All Companies</option>
+                  <option value="FPS">FPS</option>
+                  <option value="HML">HML</option>
+                  <option value="HL">HL</option>
+                  <option value="HFL">HFL</option>
+                  <option value="HEL">HEL</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Company Summary Cards -->
+        <div class="summary-grid" id="companySummary"></div>
+
+        <!-- Expenses Table -->
+        <div class="table-wrapper">
+          <table class="expenses-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Personnel</th>
+                <th>Purpose</th>
+                <th>Company</th>
+                <th>Task ID</th>
+                <th>Location</th>
+                <th>Transport</th>
+                <th>Airtime</th>
+                <th>Lunch</th>
+                <th>Total</th>
+                <th class="action-cell">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="expensesTableBody">
+              <tr>
+                <td colspan="11" class="empty-state">
+                  <div class="empty-state-content">
+                    <i class="fas fa-spinner fa-spin empty-state-icon"></i>
+                    <p class="empty-state-text">Loading expenses...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot id="expensesTableTotal"></tfoot>
+          </table>
+        </div>
+      </div>
+    </main>
   </div>
-</main>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, Timestamp, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, Timestamp, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-    authDomain: "project-task-588c4.firebaseapp.com",
-    projectId: "project-task-588c4",
-    storageBucket: "project-task-588c4.appspot.com",
-    messagingSenderId: "411882772509",
-    appId: "1:411882772509:web:08d613186c101a99f38ef4",
-    measurementId: "G-JMFLFYEM0F"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // --- DOM elements ---
-  const sidebar = document.getElementById('sidebar'), mainContent = document.getElementById('mainContent'), toggleIcon = document.getElementById('toggleIcon');
-  const sidebarToggle = document.getElementById('sidebarToggle'), mobileToggle = document.getElementById('mobileToggle');
-  const toggleFormBtn = document.getElementById('toggleFormBtn'), toggleControlsBtn = document.getElementById('toggleControlsBtn');
-  const formContainer = document.getElementById('formContainer'), expenseForm = document.getElementById('expenseForm');
-  const controlsPanel = document.getElementById('controlsPanel'), weekFilter = document.getElementById('weekFilter'), companyFilter = document.getElementById('companyFilter');
-  const downloadAllBtn = document.getElementById('downloadAllBtn'), downloadFilteredBtn = document.getElementById('downloadFilteredBtn');
-  const companySummary = document.getElementById('companySummary'), expensesTableBody = document.getElementById('expensesTableBody'), expensesTableTotal = document.getElementById('expensesTableTotal');
-  const formError = document.getElementById('formError'), cancelEditBtn = document.getElementById('cancelEditBtn'), submitBtn = document.getElementById('submitBtn'), editId = document.getElementById('editId');
-  const expDate = document.getElementById('expDate'), expPersonnel = document.getElementById('expPersonnel'), expPurpose = document.getElementById('expPurpose'), expCompany = document.getElementById('expCompany'), expTaskId = document.getElementById('expTaskId'), expLocation = document.getElementById('expLocation'), expTransport = document.getElementById('expTransport'), expAirtime = document.getElementById('expAirtime'), expLunch = document.getElementById('expLunch');
-
-  let allExpenses = [];
-  let uniqueWeeks = [];
-  let dropdownOpen = null;
-  let formVisible = false, controlsVisible = false, isEditing = false;
-  const FILTER_STORAGE_KEY = 'personnelExpensesFilters';
-  let currentFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{"week":"ALL","company":"ALL"}');
-
-  // --- sidebar state ---
-  if (localStorage.getItem('sidebarCollapsed') === 'true') {
-    sidebar.classList.add('collapsed'); mainContent.classList.add('expanded'); toggleIcon.classList.replace('fa-chevron-left','fa-chevron-right');
-  }
-  sidebarToggle.addEventListener('click',()=>{
-    sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded');
-    const collapsed = sidebar.classList.contains('collapsed');
-    toggleIcon.className = collapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
-    localStorage.setItem('sidebarCollapsed', collapsed);
-  });
-  mobileToggle.addEventListener('click',()=> sidebar.classList.toggle('active'));
-
-  // --- toggle form/filters ---
-  toggleFormBtn.addEventListener('click',()=>{
-    formVisible = !formVisible;
-    formContainer.classList.toggle('visible', formVisible);
-    toggleFormBtn.innerHTML = formVisible ? '<i class="fas fa-eye-slash"></i> Hide Form' : '<i class="fas fa-plus"></i> Add Entry';
-  });
-  toggleControlsBtn.addEventListener('click',()=>{
-    controlsVisible = !controlsVisible;
-    controlsPanel.classList.toggle('show', controlsVisible);
-    toggleControlsBtn.innerHTML = controlsVisible ? '<i class="fas fa-times"></i> Hide Filters' : '<i class="fas fa-filter"></i> Show Filters';
-  });
-  cancelEditBtn.addEventListener('click',()=> cancelEdit());
-
-  function saveFilters() { localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(currentFilters)); }
-  function applySavedFilters() { weekFilter.value = currentFilters.week; companyFilter.value = currentFilters.company; }
-
-  // --- week helpers (consistent) ---
-  function getWeekYear(dateStr) {
-    let d = new Date(dateStr);
-    if (isNaN(d)) return { week: 0, year: 0 };
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-    return { week: weekNo, year: d.getUTCFullYear() };
-  }
-
-  function getUniqueWeeksFromData(data) {
-    const weekSet = new Set();
-    data.forEach(exp => {
-      if (exp.date) {
-        const wy = getWeekYear(exp.date);
-        if (wy.year && wy.week) weekSet.add(`${wy.year}-${wy.week}`);
-      }
-    });
-    return Array.from(weekSet).map(w => {
-      const [y, we] = w.split('-').map(Number);
-      return { year: y, week: we, label: `Week ${we}, ${y}` };
-    }).sort((a,b) => (b.year - a.year) || (b.week - a.week));
-  }
-
-  function fillWeekFilter(weeks) {
-    let options = '<option value="ALL">All Weeks</option>';
-    weeks.forEach(w => {
-      const val = `${w.year}-${w.week}`;
-      options += `<option value="${val}"${currentFilters.week === val ? ' selected' : ''}>${w.label}</option>`;
-    });
-    weekFilter.innerHTML = options;
-  }
-
-  // --- filter function: returns entries that match BOTH week and company (fixed bug: was ignoring company sometimes) ---
-  function getFilteredData() {
-    let filtered = [...allExpenses];
-
-    // filter by week if not ALL
-    if (currentFilters.week !== 'ALL') {
-      const [targetYear, targetWeek] = currentFilters.week.split('-').map(Number);
-      filtered = filtered.filter(exp => {
-        if (!exp.date) return false;
-        const wy = getWeekYear(exp.date);
-        return wy.week === targetWeek && wy.year === targetYear;
-      });
-    }
-
-    // filter by company if not ALL (this was missing/incorrect in earlier version)
-    if (currentFilters.company !== 'ALL') {
-      filtered = filtered.filter(exp => exp.company === currentFilters.company);
-    }
-
-    return filtered;
-  }
-
-  function formatDate(iso) {
-    const d = new Date(iso);
-    if (isNaN(d)) return iso;
-    return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
-  }
-
-  // --- dropdown ---
-  window.toggleDropdown = (btn) => {
-    const dd = btn.parentElement.querySelector('.dropdown-content');
-    document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-    dd.classList.toggle('show');
-    dropdownOpen = dd.classList.contains('show') ? btn.parentElement : null;
-  };
-  document.addEventListener('click', (e) => {
-    if (dropdownOpen && !dropdownOpen.contains(e.target) && !e.target.classList.contains('dots-btn')) {
-      dropdownOpen.querySelector('.dropdown-content')?.classList.remove('show'); dropdownOpen = null;
-    }
-  });
-
-  // edit / delete
-  window.editEntry = (id, exp) => {
-    isEditing = true; editId.value = id;
-    expDate.value = exp.date || ''; expPersonnel.value = exp.personnel || ''; expPurpose.value = exp.purpose || '';
-    expCompany.value = exp.company || ''; expTaskId.value = exp.taskId || ''; expLocation.value = exp.location || '';
-    expTransport.value = exp.transport || 0; expAirtime.value = exp.airtime || 0; expLunch.value = exp.lunch || 0;
-    submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Entry';
-    if (!formVisible) { formVisible = true; formContainer.classList.add('visible'); toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Form'; }
-    if (dropdownOpen) { dropdownOpen.querySelector('.dropdown-content')?.classList.remove('show'); dropdownOpen = null; }
-  };
-  window.deleteEntry = async (id) => { if (confirm('Delete entry?')) try { await deleteDoc(doc(db, 'PersonnelExpenses', id)); } catch(err) { alert(err.message); } };
-
-  function cancelEdit() { isEditing = false; editId.value = ''; submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Entry'; expenseForm.reset(); formError.textContent = ''; }
-
-  // form submit
-  expenseForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); formError.textContent = '';
-    if (!expDate.value || !expPersonnel.value.trim() || !expCompany.value) { formError.textContent = 'Date, Personnel, Company required'; return; }
-    const data = {
-      date: expDate.value, personnel: expPersonnel.value.trim(), purpose: expPurpose.value.trim(), company: expCompany.value,
-      taskId: expTaskId.value.trim(), location: expLocation.value.trim(), transport: parseFloat(expTransport.value) || 0,
-      airtime: parseFloat(expAirtime.value) || 0, lunch: parseFloat(expLunch.value) || 0, updatedAt: Timestamp.now()
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
-    try {
-      if (isEditing && editId.value) { await updateDoc(doc(db, 'PersonnelExpenses', editId.value), data); cancelEdit(); }
-      else { data.createdAt = Timestamp.now(); await addDoc(collection(db, 'PersonnelExpenses'), data); expenseForm.reset(); }
-    } catch(err) { formError.textContent = err.message; }
-  });
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  // render company summary (based on filtered data)
-  function renderCompanySummary() {
-    const filtered = getFilteredData();
-    const companies = ['FPS','HML','HL','HFL','HEL'];
-    const totals = { FPS:0, HML:0, HL:0, HFL:0, HEL:0 };
-    filtered.forEach(e => {
-      if (companies.includes(e.company)) {
-        totals[e.company] += (e.transport||0) + (e.airtime||0) + (e.lunch||0);
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const actionsHeader = document.getElementById('actionsHeader');
+    const actionsPanel = document.getElementById('actionsPanel');
+    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
+    const currentDate = document.getElementById('currentDate');
+    
+    // Form Elements
+    const formContainer = document.getElementById('formContainer');
+    const toggleFormBtn = document.getElementById('toggleFormBtn');
+    const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+    const filtersPanel = document.getElementById('filtersPanel');
+    const expenseForm = document.getElementById('expenseForm');
+    const editId = document.getElementById('editId');
+    const submitBtn = document.getElementById('submitBtn');
+    const formTitle = document.getElementById('formTitle');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const formError = document.getElementById('formError');
+    
+    // Input Fields
+    const expDate = document.getElementById('expDate');
+    const expPersonnel = document.getElementById('expPersonnel');
+    const expPurpose = document.getElementById('expPurpose');
+    const expCompany = document.getElementById('expCompany');
+    const expTaskId = document.getElementById('expTaskId');
+    const expLocation = document.getElementById('expLocation');
+    const expTransport = document.getElementById('expTransport');
+    const expAirtime = document.getElementById('expAirtime');
+    const expLunch = document.getElementById('expLunch');
+    
+    // Filter Elements
+    const weekFilter = document.getElementById('weekFilter');
+    const companyFilter = document.getElementById('companyFilter');
+    
+    // Download Buttons
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const downloadFilteredBtn = document.getElementById('downloadFilteredBtn');
+    
+    // Table Elements
+    const companySummary = document.getElementById('companySummary');
+    const expensesTableBody = document.getElementById('expensesTableBody');
+    const expensesTableTotal = document.getElementById('expensesTableTotal');
+
+    // State
+    let allExpenses = [];
+    let filtersVisible = false;
+    let formVisible = false;
+    let isEditing = false;
+    let dropdownOpen = null;
+    
+    // Filter storage
+    const FILTER_STORAGE_KEY = 'personnelExpensesFilters';
+    let currentFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{"week":"ALL","company":"ALL"}');
+
+    // Actions panel collapse
+    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
+    if (actionsCollapsed) {
+      actionsPanel.classList.add('collapsed');
+      actionsToggleIcon.style.transform = 'rotate(-90deg)';
+    }
+
+    actionsHeader.addEventListener('click', () => {
+      actionsPanel.classList.toggle('collapsed');
+      actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+      localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
+
+    // Sidebar functionality with always-visible button
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleBtnIcon.classList.remove('fa-chevron-left');
+      toggleBtnIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      if (sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
       }
     });
-    let html = '';
-    companies.forEach(c => {
-      html += `<div class="company-card"><div class="company-label">${c}</div><div class="company-cost">ZMW ${totals[c].toFixed(2)}</div></div>`;
+
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      if (!sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+      }
     });
-    companySummary.innerHTML = html;
-  }
 
-  // render table (filtered)
-  function renderTable() {
-    const filtered = getFilteredData().sort((a,b) => (b.date||'') < (a.date||'') ? -1 : (b.date||'') > (a.date||'') ? 1 : (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-    let sumT=0, sumA=0, sumL=0, grand=0;
-    let rows = '';
-    filtered.forEach(e => {
-      const t = (e.transport||0)+(e.airtime||0)+(e.lunch||0);
-      sumT += e.transport||0; sumA += e.airtime||0; sumL += e.lunch||0; grand += t;
-      rows += `<tr>
-        <td>${e.date ? formatDate(e.date) : '-'}</td>
-        <td>${e.personnel || '-'}</td>
-        <td>${e.purpose || '-'}</td>
-        <td>${e.company || '-'}</td>
-        <td>${e.taskId || '-'}</td>
-        <td>${e.location || '-'}</td>
-        <td>${(e.transport||0).toFixed(2)}</td>
-        <td>${(e.airtime||0).toFixed(2)}</td>
-        <td>${(e.lunch||0).toFixed(2)}</td>
-        <td>${t.toFixed(2)}</td>
-        <td><div class="dropdown"><button class="dots-btn" onclick="toggleDropdown(this)"><i class="fas fa-ellipsis-v"></i></button>
-        <div class="dropdown-content"><button class="dropdown-item edit" onclick='editEntry("${e.id}", ${JSON.stringify(e).replace(/'/g,"\\'")})'><i class="fas fa-edit"></i> Edit</button>
-        <button class="dropdown-item delete" onclick="deleteEntry('${e.id}')"><i class="fas fa-trash"></i> Delete</button></div></div></td></tr>`;
+    // Update date
+    function updateDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      currentDate.querySelector('span').textContent = now.toLocaleDateString('en-US', options);
+    }
+    updateDate();
+
+    // Toggle form
+    toggleFormBtn.addEventListener('click', () => {
+      formVisible = !formVisible;
+      formContainer.classList.toggle('visible', formVisible);
+      toggleFormBtn.innerHTML = formVisible ? 
+        '<i class="fas fa-eye-slash"></i> Hide Form' : 
+        '<i class="fas fa-plus"></i> Add Entry';
+      
+      if (!formVisible && !isEditing) {
+        expenseForm.reset();
+      }
     });
-    expensesTableBody.innerHTML = rows;
-    expensesTableTotal.innerHTML = `<td colspan="6"><b>TOTAL (${filtered.length} entries)</b></td><td>${sumT.toFixed(2)}</td><td>${sumA.toFixed(2)}</td><td>${sumL.toFixed(2)}</td><td>${grand.toFixed(2)}</td><td></td>`;
-  }
 
-  // filter listeners
-  weekFilter.addEventListener('change', ()=>{ currentFilters.week = weekFilter.value; saveFilters(); renderCompanySummary(); renderTable(); });
-  companyFilter.addEventListener('change', ()=>{ currentFilters.company = companyFilter.value; saveFilters(); renderCompanySummary(); renderTable(); });
-
-  // pdf downloads
-  async function generateAllDataPDF() {
-    const q = query(collection(db, 'PersonnelExpenses'), orderBy('date', 'desc'));
-    const snap = await getDocs(q); let data = []; snap.forEach(d => data.push({ id: d.id, ...d.data() }));
-    if (!data.length) return alert('No data');
-    generatePDF(data, 'ALL DATA REPORT - COMPLETE', 'all-expenses');
-  }
-  function generateFilteredPDF() { const f = getFilteredData(); if (!f.length) alert('No data for filter'); else generatePDF(f, 'Filtered Report', 'filtered'); }
-  function generatePDF(data, title, prefix) {
-    let totalT=0,totalA=0,totalL=0,grand=0; const comps={FPS:0,HML:0,HL:0,HFL:0,HEL:0};
-    data.forEach(e=>{ const tr=e.transport||0, ai=e.airtime||0, lu=e.lunch||0, tot=tr+ai+lu; totalT+=tr; totalA+=ai; totalL+=lu; grand+=tot; if(comps.hasOwnProperty(e.company)) comps[e.company]+=tot; });
-    let html = `<div style="font-family:Inter; padding:0.5rem"><h3 style="color:#1a365d;text-align:center">PENTA • Personnel Expenses</h3><h4 style="text-align:center">${title}</h4>`;
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:1rem 0">';
-    for(let c in comps) html+=`<div style="background:#f1f5f9;padding:4px 12px;border-radius:20px;border:1px solid #1a365d">${c} ZMW ${comps[c].toFixed(2)}</div>`;
-    html += '</div><table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #cbd5e0">';
-    html += '<thead><tr>'+['Date','Personnel','Purpose','Company','Task','Location','Transport','Airtime','Lunch','Total'].map(h=>`<th style="border:1px solid #cbd5e0;background:#e2e8f0;padding:4px">${h}</th>`).join('')+'</tr></thead><tbody>';
-    data.forEach(e=>{
-      const tr=e.transport||0, ai=e.airtime||0, lu=e.lunch||0, tot=tr+ai+lu;
-      html+=`<tr><td style="border:1px solid #cbd5e0;padding:3px">${formatDate(e.date)}</td><td>${e.personnel||''}</td><td>${e.purpose||''}</td><td>${e.company||''}</td><td>${e.taskId||''}</td><td>${e.location||''}</td><td style="text-align:right">${tr.toFixed(2)}</td><td style="text-align:right">${ai.toFixed(2)}</td><td style="text-align:right">${lu.toFixed(2)}</td><td style="text-align:right">${tot.toFixed(2)}</td></tr>`;
+    // Toggle filters
+    toggleFiltersBtn.addEventListener('click', () => {
+      filtersVisible = !filtersVisible;
+      filtersPanel.classList.toggle('show', filtersVisible);
+      toggleFiltersBtn.innerHTML = filtersVisible ? 
+        '<i class="fas fa-times"></i> Hide Filters' : 
+        '<i class="fas fa-filter"></i> Show Filters';
     });
-    html+=`<tr style="font-weight:bold;background:#edf2f7"><td colspan="6">GRAND TOTAL (${data.length})</td><td>${totalT.toFixed(2)}</td><td>${totalA.toFixed(2)}</td><td>${totalL.toFixed(2)}</td><td>${grand.toFixed(2)}</td></tr></tbody></table></div>`;
-    const div = document.createElement('div'); div.innerHTML = html; document.body.appendChild(div);
-    html2pdf().set({ margin:0.3, filename:`${prefix}-${new Date().toISOString().slice(0,10)}.pdf`, html2canvas:{scale:1.8}, jsPDF:{unit:'mm',format:'a4',orientation:'landscape'} }).from(div).save().then(()=> document.body.removeChild(div));
-  }
 
-  downloadAllBtn.addEventListener('click', generateAllDataPDF);
-  downloadFilteredBtn.addEventListener('click', generateFilteredPDF);
+    // Cancel edit
+    cancelEditBtn.addEventListener('click', cancelEdit);
 
-  // firestore snapshot
-  onSnapshot(collection(db, 'PersonnelExpenses'), (snap) => {
-    allExpenses = [];
-    snap.forEach(d => {
-      let ex = d.data();
-      ex.id = d.id;
-      allExpenses.push(ex);
+    function cancelEdit() {
+      isEditing = false;
+      editId.value = '';
+      submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Entry';
+      formTitle.textContent = 'Add New Entry';
+      expenseForm.reset();
+      formError.classList.remove('visible');
+      formError.textContent = '';
+    }
+
+    // Save filters
+    function saveFilters() {
+      localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(currentFilters));
+    }
+
+    function applySavedFilters() {
+      weekFilter.value = currentFilters.week;
+      companyFilter.value = currentFilters.company;
+    }
+
+    // Week helpers
+    function getWeekYear(dateStr) {
+      let d = new Date(dateStr);
+      if (isNaN(d)) return { week: 0, year: 0 };
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+      return { week: weekNo, year: d.getUTCFullYear() };
+    }
+
+    function getUniqueWeeksFromData(data) {
+      const weekSet = new Set();
+      data.forEach(exp => {
+        if (exp.date) {
+          const wy = getWeekYear(exp.date);
+          if (wy.year && wy.week) weekSet.add(`${wy.year}-${wy.week}`);
+        }
+      });
+      return Array.from(weekSet).map(w => {
+        const [y, we] = w.split('-').map(Number);
+        return { year: y, week: we, label: `Week ${we}, ${y}` };
+      }).sort((a,b) => (b.year - a.year) || (b.week - a.week));
+    }
+
+    function fillWeekFilter(weeks) {
+      let options = '<option value="ALL">All Weeks</option>';
+      weeks.forEach(w => {
+        const val = `${w.year}-${w.week}`;
+        options += `<option value="${val}"${currentFilters.week === val ? ' selected' : ''}>${w.label}</option>`;
+      });
+      weekFilter.innerHTML = options;
+    }
+
+    // Filter function
+    function getFilteredData() {
+      let filtered = [...allExpenses];
+
+      if (currentFilters.week !== 'ALL') {
+        const [targetYear, targetWeek] = currentFilters.week.split('-').map(Number);
+        filtered = filtered.filter(exp => {
+          if (!exp.date) return false;
+          const wy = getWeekYear(exp.date);
+          return wy.week === targetWeek && wy.year === targetYear;
+        });
+      }
+
+      if (currentFilters.company !== 'ALL') {
+        filtered = filtered.filter(exp => exp.company === currentFilters.company);
+      }
+
+      return filtered;
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
+    }
+
+    // Dropdown toggle
+    window.toggleDropdown = (btn) => {
+      const dd = btn.parentElement.querySelector('.row-dropdown-content');
+      document.querySelectorAll('.row-dropdown-content').forEach(d => d.classList.remove('show'));
+      dd.classList.toggle('show');
+      dropdownOpen = dd.classList.contains('show') ? btn.parentElement : null;
+    };
+
+    document.addEventListener('click', (e) => {
+      if (dropdownOpen && !dropdownOpen.contains(e.target) && !e.target.classList.contains('action-btn')) {
+        dropdownOpen.querySelector('.row-dropdown-content')?.classList.remove('show');
+        dropdownOpen = null;
+      }
     });
-    uniqueWeeks = getUniqueWeeksFromData(allExpenses);
-    fillWeekFilter(uniqueWeeks);
-    applySavedFilters();
-    renderCompanySummary();
-    renderTable();
-  });
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-US',{weekday:'long', year:'numeric', month:'long', day:'numeric'});
-  });
-</script>
+    // Edit entry
+    window.editEntry = (id, exp) => {
+      isEditing = true;
+      editId.value = id;
+      expDate.value = exp.date || '';
+      expPersonnel.value = exp.personnel || '';
+      expPurpose.value = exp.purpose || '';
+      expCompany.value = exp.company || '';
+      expTaskId.value = exp.taskId || '';
+      expLocation.value = exp.location || '';
+      expTransport.value = exp.transport || 0;
+      expAirtime.value = exp.airtime || 0;
+      expLunch.value = exp.lunch || 0;
+      
+      submitBtn.innerHTML = '<i class="fas fa-edit"></i> Update Entry';
+      formTitle.textContent = 'Edit Entry';
+      
+      if (!formVisible) {
+        formVisible = true;
+        formContainer.classList.add('visible');
+        toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Form';
+      }
+      
+      if (dropdownOpen) {
+        dropdownOpen.querySelector('.row-dropdown-content')?.classList.remove('show');
+        dropdownOpen = null;
+      }
+    };
+
+    // Delete entry
+    window.deleteEntry = async (id) => {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        try {
+          await deleteDoc(doc(db, 'PersonnelExpenses', id));
+        } catch(err) {
+          alert(err.message);
+        }
+      }
+    };
+
+    // Form submit
+    expenseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formError.classList.remove('visible');
+      formError.textContent = '';
+      
+      if (!expDate.value || !expPersonnel.value.trim() || !expCompany.value) {
+        formError.textContent = 'Date, Personnel, and Company are required';
+        formError.classList.add('visible');
+        return;
+      }
+      
+      const data = {
+        date: expDate.value,
+        personnel: expPersonnel.value.trim(),
+        purpose: expPurpose.value.trim(),
+        company: expCompany.value,
+        taskId: expTaskId.value.trim(),
+        location: expLocation.value.trim(),
+        transport: parseFloat(expTransport.value) || 0,
+        airtime: parseFloat(expAirtime.value) || 0,
+        lunch: parseFloat(expLunch.value) || 0,
+        updatedAt: Timestamp.now()
+      };
+      
+      try {
+        if (isEditing && editId.value) {
+          await updateDoc(doc(db, 'PersonnelExpenses', editId.value), data);
+          cancelEdit();
+        } else {
+          data.createdAt = Timestamp.now();
+          await addDoc(collection(db, 'PersonnelExpenses'), data);
+          expenseForm.reset();
+        }
+      } catch(err) {
+        formError.textContent = err.message;
+        formError.classList.add('visible');
+      }
+    });
+
+    // Render company summary
+    function renderCompanySummary() {
+      const filtered = getFilteredData();
+      const companies = ['FPS','HML','HL','HFL','HEL'];
+      const totals = { FPS:0, HML:0, HL:0, HFL:0, HEL:0 };
+      
+      filtered.forEach(e => {
+        if (companies.includes(e.company)) {
+          totals[e.company] += (e.transport||0) + (e.airtime||0) + (e.lunch||0);
+        }
+      });
+      
+      let html = '';
+      companies.forEach(c => {
+        html += `
+          <div class="summary-card">
+            <div class="summary-label">${c}</div>
+            <div class="summary-value">ZMW ${totals[c].toFixed(2)}</div>
+          </div>
+        `;
+      });
+      companySummary.innerHTML = html;
+    }
+
+    // Render table
+    function renderTable() {
+      const filtered = getFilteredData().sort((a,b) => {
+        if (b.date !== a.date) return (b.date||'') < (a.date||'') ? -1 : 1;
+        return (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0);
+      });
+      
+      let sumT=0, sumA=0, sumL=0, grand=0;
+      let rows = '';
+      
+      filtered.forEach(e => {
+        const t = (e.transport||0)+(e.airtime||0)+(e.lunch||0);
+        sumT += e.transport||0;
+        sumA += e.airtime||0;
+        sumL += e.lunch||0;
+        grand += t;
+        
+        rows += `
+          <tr>
+            <td>${e.date ? formatDate(e.date) : '-'}</td>
+            <td>${e.personnel || '-'}</td>
+            <td>${e.purpose || '-'}</td>
+            <td>${e.company || '-'}</td>
+            <td>${e.taskId || '-'}</td>
+            <td>${e.location || '-'}</td>
+            <td class="amount-positive">${(e.transport||0).toFixed(2)}</td>
+            <td class="amount-positive">${(e.airtime||0).toFixed(2)}</td>
+            <td class="amount-positive">${(e.lunch||0).toFixed(2)}</td>
+            <td class="amount-positive">${t.toFixed(2)}</td>
+            <td class="action-cell">
+              <button class="action-btn" onclick="toggleDropdown(this)">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="row-dropdown-content">
+                <button class="row-dropdown-item edit" onclick='editEntry("${e.id}", ${JSON.stringify(e).replace(/'/g, "\\'")})'>
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="row-dropdown-item delete" onclick="deleteEntry('${e.id}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      if (rows === '') {
+        expensesTableBody.innerHTML = `
+          <tr>
+            <td colspan="11" class="empty-state">
+              <div class="empty-state-content">
+                <i class="fas fa-file-invoice empty-state-icon"></i>
+                <p class="empty-state-text">No expenses found</p>
+              </div>
+            </td>
+          </tr>
+        `;
+      } else {
+        expensesTableBody.innerHTML = rows;
+      }
+      
+      expensesTableTotal.innerHTML = `
+        <tr class="total-row">
+          <td colspan="6"><strong>TOTAL (${filtered.length} entries)</strong></td>
+          <td><strong>${sumT.toFixed(2)}</strong></td>
+          <td><strong>${sumA.toFixed(2)}</strong></td>
+          <td><strong>${sumL.toFixed(2)}</strong></td>
+          <td><strong>${grand.toFixed(2)}</strong></td>
+          <td></td>
+        </tr>
+      `;
+    }
+
+    // Filter listeners
+    weekFilter.addEventListener('change', () => {
+      currentFilters.week = weekFilter.value;
+      saveFilters();
+      renderCompanySummary();
+      renderTable();
+    });
+
+    companyFilter.addEventListener('change', () => {
+      currentFilters.company = companyFilter.value;
+      saveFilters();
+      renderCompanySummary();
+      renderTable();
+    });
+
+    // PDF Generation
+    async function generateAllDataPDF() {
+      const q = query(collection(db, 'PersonnelExpenses'), orderBy('date', 'desc'));
+      const snap = await getDocs(q);
+      let data = [];
+      snap.forEach(d => data.push({ id: d.id, ...d.data() }));
+      if (!data.length) return alert('No data available');
+      generatePDF(data, 'ALL DATA REPORT - COMPLETE', 'all-expenses');
+    }
+
+    function generateFilteredPDF() {
+      const f = getFilteredData();
+      if (!f.length) {
+        alert('No data for current filter');
+        return;
+      }
+      generatePDF(f, 'Filtered Report', 'filtered');
+    }
+
+    function generatePDF(data, title, prefix) {
+      let totalT=0, totalA=0, totalL=0, grand=0;
+      const comps = {FPS:0, HML:0, HL:0, HFL:0, HEL:0};
+      
+      data.forEach(e => {
+        const tr = e.transport||0;
+        const ai = e.airtime||0;
+        const lu = e.lunch||0;
+        const tot = tr+ai+lu;
+        totalT += tr;
+        totalA += ai;
+        totalL += lu;
+        grand += tot;
+        if (comps.hasOwnProperty(e.company)) comps[e.company] += tot;
+      });
+      
+      let html = `
+        <div style="font-family:Inter; padding:0.5rem">
+          <h3 style="color:#0a1c2f;text-align:center">PENTA • Personnel Expenses</h3>
+          <h4 style="text-align:center">${title}</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:1rem 0">
+      `;
+      
+      for (let c in comps) {
+        html += `<div style="background:#f2f6fc;padding:4px 12px;border-radius:20px;border:1px solid #1f3d62">${c} ZMW ${comps[c].toFixed(2)}</div>`;
+      }
+      
+      html += `
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:9px;border:1px solid #b3c7e0">
+            <thead>
+              <tr>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Date</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Personnel</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Purpose</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Company</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Task</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Location</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Transport</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Airtime</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Lunch</th>
+                <th style="border:1px solid #b3c7e0;background:#d4e2f2;padding:4px">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      data.forEach(e => {
+        const tr = e.transport||0;
+        const ai = e.airtime||0;
+        const lu = e.lunch||0;
+        const tot = tr+ai+lu;
+        html += `
+          <tr>
+            <td style="border:1px solid #b3c7e0;padding:3px">${formatDate(e.date)}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px">${e.personnel||''}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px">${e.purpose||''}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px">${e.company||''}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px">${e.taskId||''}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px">${e.location||''}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px;text-align:right">${tr.toFixed(2)}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px;text-align:right">${ai.toFixed(2)}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px;text-align:right">${lu.toFixed(2)}</td>
+            <td style="border:1px solid #b3c7e0;padding:3px;text-align:right">${tot.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+            </tbody>
+            <tfoot>
+              <tr style="font-weight:bold;background:#f2f6fc">
+                <td colspan="6">GRAND TOTAL (${data.length})</td>
+                <td style="text-align:right">${totalT.toFixed(2)}</td>
+                <td style="text-align:right">${totalA.toFixed(2)}</td>
+                <td style="text-align:right">${totalL.toFixed(2)}</td>
+                <td style="text-align:right">${grand.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+      
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      document.body.appendChild(div);
+      
+      html2pdf().set({
+        margin: 0.3,
+        filename: `${prefix}-${new Date().toISOString().slice(0,10)}.pdf`,
+        html2canvas: { scale: 1.8 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      }).from(div).save().then(() => document.body.removeChild(div));
+    }
+
+    downloadAllBtn.addEventListener('click', generateAllDataPDF);
+    downloadFilteredBtn.addEventListener('click', generateFilteredPDF);
+
+    // Firebase snapshot
+    onSnapshot(collection(db, 'PersonnelExpenses'), (snap) => {
+      allExpenses = [];
+      snap.forEach(d => {
+        let ex = d.data();
+        ex.id = d.id;
+        allExpenses.push(ex);
+      });
+      
+      const uniqueWeeks = getUniqueWeeksFromData(allExpenses);
+      fillWeekFilter(uniqueWeeks);
+      applySavedFilters();
+      renderCompanySummary();
+      renderTable();
+    }, (error) => {
+      console.error("Error loading expenses:", error);
+      expensesTableBody.innerHTML = `
+        <tr>
+          <td colspan="11" class="empty-state">
+            <div class="empty-state-content">
+              <i class="fas fa-exclamation-triangle empty-state-icon"></i>
+              <p class="empty-state-text">Error loading expenses. Please refresh the page.</p>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+  </script>
 </body>
 </html>
