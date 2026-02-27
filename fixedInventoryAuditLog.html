@@ -3,292 +3,1284 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IMS | Transfer or Issue Out Fixed Inventory</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <title>PENTA | Transfer/Issue Out Inventory</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
-    body { font-family: 'Open Sans', Arial, sans-serif; background: #f4f7fa; margin: 0; }
-    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.04); margin: 40px auto 18px auto; padding: 30px;}
-    .panel-heading { background: #666363; color: #fff; padding: 18px 24px; font-size: 1.16rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; }
-    .toggle-form-btn {
-      margin-bottom: 24px;
-      background: #2980b9;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 10px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .toggle-form-btn:hover { background: #1a5fa0; }
-    #transfer-form {
-      max-width: 400px;
-      margin: 0 auto 30px auto;
-      padding: 18px 24px 18px 24px;
-      background: #f7fafd;
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #d3dfed;
+      color: #0a1c2f;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Main Layout */
+    .main-wrapper {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar Toggle Button - Always Visible */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 32px;
+      height: 32px;
+      background: #0a1c2f;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.8rem;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: #1f3d62;
+      transform: scale(1.1);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: white;
+      color: #0a1c2f;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      border-right: 2px solid #1f3d62;
+      transition: transform 0.28s ease;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      transform: translateX(0);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header {
+      padding: 16px 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      background: #0a1c2f;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #b8cde0;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(44,62,80,0.03);
-      transition: box-shadow 0.2s;
-      display: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #0a1c2f;
     }
-    #transfer-form.visible { display: block; }
-    .form-group label { font-weight: 600; margin-bottom: 6px; }
-    .form-group input, .form-group select, .form-group textarea { border-radius: 5px; font-size: 1rem; padding: 8px 12px; border: 1px solid #ccc; width: 100%; background: #fff; }
-    .btn-primary { background: #8c9391; border: none; color: #fff; border-radius: 4px; padding: 10px 18px; font-weight: 600; font-size: 15px; margin-right: 10px; }
-    .btn-primary:hover { background: #16a085; }
-    .success-msg { color: #1abc9c; font-weight: bold; margin-top: 16px; }
-    .error-msg { color: #e74c3c; font-weight: bold; margin-top: 16px; }
-    .readonly-info { background: #f7fafc; border: 1px solid #ddd; border-radius: 5px; padding: 7px 12px; margin-bottom: 8px; font-size: 15px; }
-    .action-btns { display: flex; gap: 12px; margin-bottom: 18px; }
-    .btn-toggle { background: #ecf0f1; color: #444; border: 1px solid #bbb; border-radius: 4px; padding: 8px 18px; font-weight: 600; cursor: pointer; }
-    .btn-toggle.active, .btn-toggle:focus { background: #1abc9c; color: #fff; border: 1.5px solid #1abc9c; }
-    .hidden { display: none; }
-    .log-section { margin-top: 50px; }
-    .toggle-bar { display: flex; gap: 14px; margin-bottom: 10px; align-items: center; }
-    .toggle-btn {
-      background: #ecf0f1;
-      color: #444;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      padding: 8px 24px;
+
+    .logo-text h2 {
+      font-size: 1.25rem;
       font-weight: 600;
-      font-size: 15px;
+      margin: 0;
+      color: white;
+    }
+
+    .logo-text span {
+      font-size: 0.7rem;
+      color: #97adc9;
+    }
+
+    /* Navigation */
+    .nav-section {
+      padding: 20px 16px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .nav-section h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7f96b3;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      color: #0a1c2f;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: #e6efff;
+    }
+
+    .nav-link.active {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      font-weight: 600;
+      border-left: 3px solid #1f3d62;
+    }
+
+    .nav-icon {
+      font-size: 0.9rem;
+      width: 20px;
+      text-align: center;
+      color: #2b4a73;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: white;
+      transition: margin-left 0.28s ease;
+      margin-left: 0;
+    }
+
+    .main-content.expanded {
+      margin-left: -260px;
+    }
+
+    /* Header */
+    .app-header {
+      background: #0a1c2f;
+      color: white;
+      padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      min-height: 56px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .mobile-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 6px;
+      padding: 6px 10px;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      font-size: 1rem;
     }
-    .toggle-btn.active, .toggle-btn:focus {
-      background: #1abc9c;
-      color: #fff;
-      border: 1.5px solid #1abc9c;
+
+    .mobile-toggle:hover {
+      background: rgba(255,255,255,0.1);
     }
-    .table-responsive { overflow-x: auto; }
+
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-title h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .page-title i {
+      color: #97adc9;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-display {
+      background: #1f3d62;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .date-display i {
+      color: #97adc9;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid #2b4a73;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+      color: #0b1f33;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0a1c2f;
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+    }
+
+    .btn-success {
+      background: #059669;
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background: #047857;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: white;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn:hover {
+      background: #e6efff;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+      color: white;
+    }
+
+    /* Actions Panel */
+    .actions-container {
+      padding: 4px 20px;
+      background: #f2f6fc;
+      border-bottom: 1px solid #b3c7e0;
+      flex-shrink: 0;
+    }
+
+    .actions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .actions-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .actions-header i {
+      font-size: 12px;
+      transition: transform 0.2s;
+      color: #1f3d62;
+    }
+
+    .actions-panel {
+      display: flex;
+      gap: 8px;
+      padding: 8px 0 12px;
+      transition: all 0.2s;
+      max-height: 100px;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .actions-panel.collapsed {
+      max-height: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Dashboard Container */
+    .dashboard-container {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+      background: #f2f6fc;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,20,40,0.2);
+    }
+
+    .welcome-text h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .welcome-text p {
+      color: #97adc9;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    .welcome-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b8cde0;
+      font-size: 1.8rem;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    /* Panel */
+    .panel {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .panel-header {
+      background: #b8cde0;
+      padding: 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    /* Form */
+    .form-container {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .form-container.visible {
+      max-height: 800px;
+      opacity: 1;
+      margin-bottom: 24px;
+    }
+
+    .form-header {
+      background: #b8cde0;
+      padding: 12px 20px;
+      border-bottom: 2px solid #1f3d62;
+    }
+
+    .form-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-body {
+      padding: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a1c2f;
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.12);
+    }
+
+    .form-control[readonly] {
+      background: #f2f6fc;
+      color: #1f3d62;
+    }
+
+    .readonly-info {
+      background: #f2f6fc;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+      color: #0a1c2f;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e8f5;
+    }
+
+    .success-msg {
+      color: #059669;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 8px;
+      background: #c6f6d5;
+      border-radius: 4px;
+    }
+
+    .error-msg {
+      color: #cc0000;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 8px;
+      background: #ffe5e5;
+      border-radius: 4px;
+    }
+
+    /* Mode Toggle Buttons */
+    .mode-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #b3c7e0;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+
+    .mode-btn.active {
+      background: #0a1c2f;
+      color: white;
+      border-color: #0a1c2f;
+    }
+
+    .mode-btn:not(.active):hover {
+      background: #e6efff;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Search Bar */
+    .search-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      background: white;
+      color: #0a1c2f;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.12);
+    }
+
+    /* Table Toggle */
+    .table-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .table-toggle-btn {
+      padding: 8px 20px;
+      border: 1px solid #b3c7e0;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .table-toggle-btn.active {
+      background: #0a1c2f;
+      color: white;
+      border-color: #0a1c2f;
+    }
+
+    .table-toggle-btn:not(.active):hover {
+      background: #e6efff;
+    }
+
+    /* Table */
+    .table-wrapper {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+      max-height: 500px;
+    }
+
+    .table-wrapper::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      min-width: 900px;
-      position: relative;
+      font-size: 0.75rem;
+      min-width: 1200px;
     }
-    th, td {
-      padding: 10px 8px;
-      text-align: left;
-      font-size: 15px;
-      background: inherit;
-    }
+
     th {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 0.65rem;
       font-weight: 700;
-      background: #666363;
-      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #9bb1cc;
+      border-bottom: 2px solid #1f3d62;
       position: sticky;
       top: 0;
-      z-index: 60;
+      z-index: 10;
     }
-    tr:nth-child(even) { background: #f7fafc; }
-    tr:hover { background: #eafaf1; }
-    .action-badge { border-radius: 3px; padding: 2px 8px; font-size: 14px; margin-right: 6px; font-weight: bold;}
-    .transfer-badge { background: #eafaf1; color: #16a085; border: 1px solid #b9f6ca; }
-    .issueout-badge { background: #fdeaea; color: #c0392b; border: 1px solid #fabcbc; }
-    .search-bar-container {
-      display: flex;
+
+    td {
+      padding: 10px;
+      border: 1px solid #c7d6ec;
+      color: #0a1c2f;
+      vertical-align: middle;
+      background: white;
+    }
+
+    tbody tr:hover td {
+      background: #e3ecf7;
+    }
+
+    /* Action Badges */
+    .action-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 30px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      border: 1px solid;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .transfer-badge {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      border-color: #1f3d62;
+    }
+
+    .issueout-badge {
+      background: #fed7d7;
+      color: #742a2a;
+      border-color: #742a2a;
+    }
+
+    /* Audit Log Link */
+    .audit-log-link {
+      display: inline-flex;
       align-items: center;
-      margin-bottom: 20px;
-      justify-content: flex-end;
       gap: 8px;
+      padding: 8px 20px;
+      margin-top: 20px;
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 30px;
+      color: #0a1c2f;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.15s;
     }
-    .search-input {
-      padding: 8px 12px;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      font-size: 15px;
-      width: 260px;
-      transition: border 0.2s;
-      outline: none;
+
+    .audit-log-link:hover {
+      background: #e6efff;
+      border-color: #2b4a73;
     }
-    .search-input:focus {
-      border: 1.5px solid #1abc9c;
-    }
-    .search-btn {
-      background: #16a085;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 14px;
-      cursor: pointer;
-      font-size: 15px;
-      transition: background 0.2s;
-      margin-left: 2px;
-    }
-    .search-btn:hover { background: #14806d; }
-    .clear-search-btn {
-      background: #eee;
-      color: #333;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 8px 10px;
-      cursor: pointer;
-      font-size: 15px;
-      transition: background 0.2s;
-    }
-    .clear-search-btn:hover { background: #e1e1e1; }
-    @media (max-width: 900px) {
-      .panel { padding: 5px;}
-      table { min-width: 700px;}
-      #transfer-form { max-width: 98vw; padding: 12px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        z-index: 1000;
+        height: 100vh;
+        transform: translateX(-100%);
+      }
+      
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
+      }
+      
+      .main-content.expanded {
+        margin-left: 0;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .sidebar-toggle-btn {
+        display: none;
+      }
+      
+      .app-header {
+        padding-left: 20px;
+      }
+      
+      .actions-panel {
+        flex-direction: column;
+        max-height: 300px;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .mode-toggle {
+        flex-direction: column;
+      }
+      
+      .table-toggle {
+        flex-direction: column;
+      }
+      
+      .search-container {
+        flex-direction: column;
+      }
+      
+      .search-input-wrapper {
+        width: 100%;
+      }
+      
+      .welcome-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="panel">
-    <div class="panel-heading">Transfer / Issue Out Fixed Inventory</div>
-    <button type="button" class="toggle-form-btn" id="toggleFormBtn">Show Transfer/Issue Out Form</button>
-    <form id="transfer-form" autocomplete="off">
-      <div class="action-btns">
-        <button type="button" class="btn-toggle active" id="btn-transfer">Transfer (Warehouse to Warehouse)</button>
-        <button type="button" class="btn-toggle" id="btn-issue">Issue Out (Remove for Good)</button>
-      </div>
-      <div class="form-group">
-        <label>Select Item:</label>
-        <select class="form-control" id="itemSelect" required></select>
-      </div>
-      <div id="item-info" class="readonly-info"></div>
-      <div class="form-group">
-        <label>Available Quantity:</label>
-        <input class="form-control" id="availableQty" readonly />
-      </div>
-      <div class="form-group">
-        <label>Item Code:</label>
-        <input class="form-control" id="selectedItemCode" readonly />
-      </div>
-      <div class="form-group">
-        <label>Came From (Original Source):</label>
-        <input class="form-control" id="selectedItemCameFrom" readonly />
-      </div>
-      <div class="form-group">
-        <label>Quantity to Move:</label>
-        <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
-      </div>
-      <div class="form-group" id="transfer-fields">
-        <label>Transfer To (Warehouse/Storage):</label>
-        <input class="form-control" name="transferTo" id="transferTo" placeholder="Destination location"/>
-        <label style="margin-top:7px;">Delivery Note Number (for Transfer):</label>
-        <input class="form-control" name="transferDNote" id="transferDNote" placeholder="Delivery note number for transfer"/>
-      </div>
-      <div class="hidden" id="issue-fields">
-        <div class="form-group">
-          <label>Person Issued To:</label>
-          <input class="form-control" name="issuedTo" id="issuedTo" placeholder="Name of recipient"/>
-        </div>
-        <div class="form-group">
-          <label>Location Issued To:</label>
-          <input class="form-control" name="issuedLocation" id="issuedLocation" placeholder="Where is it going?"/>
-        </div>
-        <div class="form-group">
-          <label>Delivery Note Number (for Issue Out):</label>
-          <input class="form-control" name="issueDNote" id="issueDNote" placeholder="Delivery note number"/>
-        </div>
-        <div class="form-group">
-          <label>Reason for Issue Out:</label>
-          <textarea class="form-control" name="issueReason" id="issueReason" rows="2" placeholder="e.g. Used on Project X, Scrapped, Donated"></textarea>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary" id="submitBtn">Submit</button>
-      <button type="reset" class="btn btn-primary">Reset</button>
-      <div id="form-message"></div>
-    </form>
-    <div class="log-section">
-      <div class="search-bar-container">
-        <input type="text" class="search-input" id="logSearchInput" placeholder="Search logs by Item, Code, Note, etc...">
-        <button type="button" class="search-btn" id="searchBtn"><i class="fa fa-search"></i></button>
-        <button type="button" class="clear-search-btn" id="clearSearchBtn"><i class="fa fa-times"></i></button>
-      </div>
-      <div class="toggle-bar">
-        <button type="button" class="toggle-btn active" id="showTransfersBtn">Show Transfers</button>
-        <button type="button" class="toggle-btn" id="showIssueOutBtn">Show Issue Outs</button>
-      </div>
-      <div class="table-responsive">
-        <table id="transfersTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Date/Time</th>
-              <th>Item Name</th>
-              <th>Item Code</th>
-              <th>Category</th>
-              <th>Action</th>
-              <th>Qty</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Delivery Note Number</th>
-            </tr>
-          </thead>
-          <tbody id="transfers-table-body"></tbody>
-        </table>
-        <table id="issueOutsTable" style="display:none;">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Date/Time</th>
-              <th>Item Name</th>
-              <th>Item Code</th>
-              <th>Category</th>
-              <th>Action</th>
-              <th>Qty</th>
-              <th>From</th>
-              <th>Issued To</th>
-              <th>Issued Location</th>
-              <th>Delivery Note Number</th>
-              <th>Reason</th>
-            </tr>
-          </thead>
-          <tbody id="issueouts-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-    <div id="table-message"></div>
-    <a href="fixedInventoryAuditLog.html" class="audit-log-link" >View Full Audit Log</a>
+  <!-- Sidebar Toggle Button - Always Visible -->
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+    <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
   </div>
+
+  <div class="main-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="logo-text">
+            <h2>PENTA</h2>
+            <span>Construction Pro</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div style="flex:1; overflow-y: auto; scrollbar-width: thin;">
+        <nav class="nav-section">
+          <h3>Dashboard</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link">
+                <i class="fas fa-gauge-high nav-icon"></i>
+                <span>Overview</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="projectdashboard.html" class="nav-link">
+                <i class="fas fa-diagram-project nav-icon"></i>
+                <span>Projects</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Employees.html" class="nav-link">
+                <i class="fas fa-user-tie nav-icon"></i>
+                <span>Team</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Resources</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Tool.html" class="nav-link">
+                <i class="fas fa-screwdriver-wrench nav-icon"></i>
+                <span>Equipment</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Fire-extinguishers.html" class="nav-link">
+                <i class="fas fa-fire-extinguisher nav-icon"></i>
+                <span>Fire extinguisher</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="material.html" class="nav-link">
+                <i class="fas fa-truck-ramp-box nav-icon"></i>
+                <span>Materials</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link active">
+                <i class="fas fa-warehouse nav-icon"></i>
+                <span>Inventory Transfer</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Management</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Accountsdash.html" class="nav-link">
+                <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                <span>Finances</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Table.html" class="nav-link">
+                <i class="fas fa-chart-column nav-icon"></i>
+                <span>Reports</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Header -->
+      <div class="app-header">
+        <div class="header-left">
+          <button class="mobile-toggle" id="mobileToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <i class="fas fa-warehouse"></i>
+            <h1>Inventory Transfer</h1>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="date-display" id="currentDate">
+            <i class="fas fa-calendar-alt"></i>
+            <span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Panel -->
+      <div class="actions-container">
+        <div class="actions-header" id="actionsHeader">
+          <h3><i class="fas fa-sliders-h"></i> Quick Actions</h3>
+          <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+          <button class="btn" id="toggleFormBtn">
+            <i class="fas fa-plus"></i> New Transfer
+          </button>
+          <a href="fixedInventoryAuditLog.html" class="btn">
+            <i class="fas fa-history"></i> Audit Log
+          </a>
+          <a href="dashboard.html" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Dashboard Container -->
+      <div class="dashboard-container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Transfer / Issue Out Inventory</h2>
+            <p>Move items between warehouses or issue them out permanently</p>
+          </div>
+          <div class="welcome-icon">
+            <i class="fas fa-truck"></i>
+          </div>
+        </div>
+
+        <!-- Transfer Form -->
+        <div class="form-container" id="transferForm">
+          <div class="form-header">
+            <h3><i class="fas fa-exchange-alt"></i> Transfer / Issue Out</h3>
+          </div>
+          <div class="form-body">
+            <form id="transfer-form" autocomplete="off">
+              <div class="mode-toggle">
+                <button type="button" class="mode-btn active" id="btn-transfer">
+                  <i class="fas fa-warehouse"></i> Transfer (Warehouse to Warehouse)
+                </button>
+                <button type="button" class="mode-btn" id="btn-issue">
+                  <i class="fas fa-sign-out-alt"></i> Issue Out (Remove for Good)
+                </button>
+              </div>
+
+              <div class="form-group">
+                <label>Select Item</label>
+                <select class="form-control" id="itemSelect" required></select>
+              </div>
+
+              <div id="item-info" class="readonly-info"></div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Available Quantity</label>
+                  <input class="form-control" id="availableQty" readonly />
+                </div>
+                <div class="form-group">
+                  <label>Item Code</label>
+                  <input class="form-control" id="selectedItemCode" readonly />
+                </div>
+                <div class="form-group">
+                  <label>Came From (Original Source)</label>
+                  <input class="form-control" id="selectedItemCameFrom" readonly />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Quantity to Move</label>
+                <input class="form-control" name="quantity" id="quantity" type="number" min="1" required/>
+              </div>
+
+              <!-- Transfer Fields -->
+              <div id="transfer-fields">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Transfer To (Warehouse/Storage)</label>
+                    <input class="form-control" name="transferTo" id="transferTo" placeholder="Destination location"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Delivery Note Number (for Transfer)</label>
+                    <input class="form-control" name="transferDNote" id="transferDNote" placeholder="Delivery note number"/>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Issue Out Fields -->
+              <div id="issue-fields" class="hidden">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Person Issued To</label>
+                    <input class="form-control" name="issuedTo" id="issuedTo" placeholder="Name of recipient"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Location Issued To</label>
+                    <input class="form-control" name="issuedLocation" id="issuedLocation" placeholder="Where is it going?"/>
+                  </div>
+                  <div class="form-group">
+                    <label>Delivery Note Number</label>
+                    <input class="form-control" name="issueDNote" id="issueDNote" placeholder="Delivery note number"/>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Reason for Issue Out</label>
+                  <textarea class="form-control" name="issueReason" id="issueReason" rows="2" placeholder="e.g. Used on Project X, Scrapped, Donated"></textarea>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="reset" class="btn">Reset</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Submit</button>
+              </div>
+              
+              <div id="form-message"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Logs Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-history"></i> Transfer Logs</h2>
+            <a href="fixedInventoryAuditLog.html" class="audit-log-link">
+              <i class="fas fa-external-link-alt"></i> Full Audit Log
+            </a>
+          </div>
+          <div class="panel-body">
+            <!-- Search -->
+            <div class="search-container">
+              <div class="search-input-wrapper">
+                <input type="text" class="search-input" id="logSearchInput" placeholder="Search by item, code, note, reason...">
+              </div>
+              <button type="button" class="btn" id="searchBtn">
+                <i class="fas fa-search"></i> Search
+              </button>
+              <button type="button" class="btn" id="clearSearchBtn">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
+
+            <!-- Table Toggle -->
+            <div class="table-toggle">
+              <button type="button" class="table-toggle-btn active" id="showTransfersBtn">
+                <i class="fas fa-exchange-alt"></i> Show Transfers
+              </button>
+              <button type="button" class="table-toggle-btn" id="showIssueOutBtn">
+                <i class="fas fa-sign-out-alt"></i> Show Issue Outs
+              </button>
+            </div>
+
+            <!-- Transfers Table -->
+            <div class="table-wrapper" id="transfersTable">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date/Time</th>
+                    <th>Item Name</th>
+                    <th>Item Code</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                    <th>Qty</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Delivery Note</th>
+                  </tr>
+                </thead>
+                <tbody id="transfers-table-body"></tbody>
+              </table>
+            </div>
+
+            <!-- Issue Outs Table -->
+            <div class="table-wrapper" id="issueOutsTable" style="display:none;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date/Time</th>
+                    <th>Item Name</th>
+                    <th>Item Code</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                    <th>Qty</th>
+                    <th>From</th>
+                    <th>Issued To</th>
+                    <th>Issued Location</th>
+                    <th>Delivery Note</th>
+                    <th>Reason</th>
+                  </tr>
+                </thead>
+                <tbody id="issueouts-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import { getFirestore, collection, doc, getDocs, updateDoc, serverTimestamp, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
       authDomain: "project-task-588c4.firebaseapp.com",
       projectId: "project-task-588c4",
       storageBucket: "project-task-588c4.appspot.com",
       messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const actionsHeader = document.getElementById('actionsHeader');
+    const actionsPanel = document.getElementById('actionsPanel');
+    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
+    const currentDate = document.getElementById('currentDate');
+    
     const toggleFormBtn = document.getElementById('toggleFormBtn');
-    const transferForm = document.getElementById('transfer-form');
-    let formVisible = false;
-    transferForm.classList.remove('visible');
-    transferForm.style.display = 'none';
-    toggleFormBtn.textContent = "Show Transfer/Issue Out Form";
-    toggleFormBtn.onclick = () => {
-      formVisible = !formVisible;
-      if(formVisible) {
-        transferForm.classList.add('visible');
-        transferForm.style.display = 'block';
-        toggleFormBtn.textContent = 'Hide Transfer/Issue Out Form';
-      } else {
-        transferForm.classList.remove('visible');
-        transferForm.style.display = 'none';
-        toggleFormBtn.textContent = 'Show Transfer/Issue Out Form';
-      }
-    };
-
+    const transferForm = document.getElementById('transferForm');
     const btnTransfer = document.getElementById('btn-transfer');
     const btnIssue = document.getElementById('btn-issue');
     const transferFields = document.getElementById('transfer-fields');
     const issueFields = document.getElementById('issue-fields');
+    const itemSelect = document.getElementById('itemSelect');
+    const availableQty = document.getElementById('availableQty');
+    const itemInfoDiv = document.getElementById('item-info');
+    const issueDNoteInput = document.getElementById('issueDNote');
+    const transferDNoteInput = document.getElementById('transferDNote');
+    const selectedItemCodeInput = document.getElementById('selectedItemCode');
+    const selectedItemCameFromInput = document.getElementById('selectedItemCameFrom');
+    const form = document.getElementById('transfer-form');
+    const messageDiv = document.getElementById('form-message');
+    const logSearchInput = document.getElementById('logSearchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const showTransfersBtn = document.getElementById('showTransfersBtn');
+    const showIssueOutBtn = document.getElementById('showIssueOutBtn');
+    const transfersTable = document.getElementById('transfersTable');
+    const issueOutsTable = document.getElementById('issueOutsTable');
+    const transfersTableBody = document.getElementById('transfers-table-body');
+    const issueoutsTableBody = document.getElementById('issueouts-table-body');
+
+    // State
+    let formVisible = false;
     let mode = "transfer";
-    btnTransfer.onclick = () => setMode("transfer");
-    btnIssue.onclick = () => setMode("issue");
+    let inventoryMap = {};
+    let auditData = [];
+    let searchTerm = "";
+
+    // Actions panel collapse
+    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
+    if (actionsCollapsed) {
+      actionsPanel.classList.add('collapsed');
+      actionsToggleIcon.style.transform = 'rotate(-90deg)';
+    }
+
+    actionsHeader.addEventListener('click', () => {
+      actionsPanel.classList.toggle('collapsed');
+      actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+      localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
+
+    // Sidebar functionality
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleBtnIcon.classList.remove('fa-chevron-left');
+      toggleBtnIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      if (sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
+
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      if (!sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+      }
+    });
+
+    // Update date
+    function updateDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      currentDate.querySelector('span').textContent = now.toLocaleDateString('en-US', options);
+    }
+    updateDate();
+
+    // Form toggle
+    transferForm.classList.remove('visible');
+    toggleFormBtn.textContent = "New Transfer";
+    
+    toggleFormBtn.addEventListener('click', () => {
+      formVisible = !formVisible;
+      if(formVisible) {
+        transferForm.classList.add('visible');
+        toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Form';
+      } else {
+        transferForm.classList.remove('visible');
+        toggleFormBtn.innerHTML = '<i class="fas fa-plus"></i> New Transfer';
+      }
+    });
+
+    // Mode toggle
     function setMode(newMode) {
       mode = newMode;
       if (mode === "transfer") {
@@ -314,18 +1306,14 @@
         document.getElementById('issueDNote').required = true;
         document.getElementById('issueReason').required = true;
       }
-      document.getElementById('form-message').innerHTML = '';
+      messageDiv.innerHTML = '';
     }
+
+    btnTransfer.addEventListener('click', () => setMode("transfer"));
+    btnIssue.addEventListener('click', () => setMode("issue"));
     setMode("transfer");
 
-    const itemSelect = document.getElementById('itemSelect');
-    const availableQty = document.getElementById('availableQty');
-    const itemInfoDiv = document.getElementById('item-info');
-    const issueDNoteInput = document.getElementById('issueDNote');
-    const transferDNoteInput = document.getElementById('transferDNote');
-    const selectedItemCodeInput = document.getElementById('selectedItemCode');
-    const selectedItemCameFromInput = document.getElementById('selectedItemCameFrom');
-    let inventoryMap = {};
+    // Load items
     async function loadItems() {
       inventoryMap = {};
       itemSelect.innerHTML = '<option value="">-- Select Item --</option>';
@@ -341,6 +1329,7 @@
     }
     loadItems();
 
+    // Item select change
     itemSelect.addEventListener('change', function() {
       const id = itemSelect.value;
       if (!id || !inventoryMap[id]) {
@@ -368,8 +1357,7 @@
       selectedItemCameFromInput.value = m.cameFrom || '';
     });
 
-    const form = document.getElementById('transfer-form');
-    const messageDiv = document.getElementById('form-message');
+    // Form submit
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
       const itemId = itemSelect.value;
@@ -483,10 +1471,7 @@
       selectedItemCameFromInput.value = "";
     });
 
-    const logSearchInput = document.getElementById('logSearchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    let searchTerm = "";
+    // Filter functions
     function filterLog(rawData, mode, searchTerm = "") {
       let filtered = rawData.filter(m => m.action === mode);
       if (searchTerm && searchTerm.length > 0) {
@@ -507,6 +1492,7 @@
       }
       return filtered;
     }
+
     function filterAndRender() {
       const showTransfers = showTransfersBtn.classList.contains('active');
       if (showTransfers) {
@@ -515,15 +1501,19 @@
         renderIssueOuts(filterLog(auditData, "issueOut", searchTerm));
       }
     }
-    searchBtn.onclick = function() {
+
+    // Search handlers
+    searchBtn.addEventListener('click', function() {
       searchTerm = logSearchInput.value.trim();
       filterAndRender();
-    };
-    clearSearchBtn.onclick = function() {
+    });
+
+    clearSearchBtn.addEventListener('click', function() {
       logSearchInput.value = "";
       searchTerm = "";
       filterAndRender();
-    };
+    });
+
     logSearchInput.addEventListener("keyup", function(e) {
       if (e.key === "Enter") {
         searchTerm = logSearchInput.value.trim();
@@ -531,56 +1521,48 @@
       }
     });
 
-    const showTransfersBtn = document.getElementById('showTransfersBtn');
-    const showIssueOutBtn = document.getElementById('showIssueOutBtn');
-    const transfersTable = document.getElementById('transfersTable');
-    const issueOutsTable = document.getElementById('issueOutsTable');
-    const transfersTableBody = document.getElementById('transfers-table-body');
-    const issueoutsTableBody = document.getElementById('issueouts-table-body');
-    let auditData = [];
+    // Render functions
     function renderTransfers(data) {
       transfersTableBody.innerHTML = "";
       let row = 1;
       if (data.length === 0) {
-        transfersTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#e74c3c;font-weight:bold;">No results found.</td></tr>`;
+        transfersTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 40px;"><div class="empty-state-content"><i class="fas fa-exchange-alt empty-state-icon" style="font-size: 2rem; color: #97adc9; margin-bottom: 10px;"></i><p style="color: #7f96b3;">No transfer logs found</p></div></td></tr>`;
         return;
       }
       data.forEach(m => {
-        let actionBadge = `<span class="action-badge transfer-badge">Transfer</span>`;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row++}</td>
           <td>${m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toLocaleString() : '-'}</td>
           <td>${m.itemName || '-'}</td>
           <td>${m.itemCode || '-'}</td>
-          <td>${m.category || '-'}</td>
-          <td>${actionBadge}</td>
+          <td><span class="category-badge" style="background:#ebf8ff; padding:2px 6px; border-radius:4px;">${m.category || '-'}</span></td>
+          <td><span class="action-badge transfer-badge">Transfer</span></td>
           <td>${m.movedQuantity || '-'}</td>
           <td>${m.fromLocation || '-'}</td>
           <td>${m.toLocation || '-'}</td>
           <td>${m.deliveryNoteNumber || '-'}</td>
         `;
-        tr.title = `Item Code: ${m.itemCode || '-'}\nCame From: ${m.cameFrom || '-'}`;
         transfersTableBody.appendChild(tr);
       });
     }
+
     function renderIssueOuts(data) {
       issueoutsTableBody.innerHTML = "";
       let row = 1;
       if (data.length === 0) {
-        issueoutsTableBody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:#e74c3c;font-weight:bold;">No results found.</td></tr>`;
+        issueoutsTableBody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding: 40px;"><div class="empty-state-content"><i class="fas fa-sign-out-alt empty-state-icon" style="font-size: 2rem; color: #97adc9; margin-bottom: 10px;"></i><p style="color: #7f96b3;">No issue out logs found</p></div></td></tr>`;
         return;
       }
       data.forEach(m => {
-        let actionBadge = `<span class="action-badge issueout-badge">Issue Out</span>`;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row++}</td>
           <td>${m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toLocaleString() : '-'}</td>
           <td>${m.itemName || '-'}</td>
           <td>${m.itemCode || '-'}</td>
-          <td>${m.category || '-'}</td>
-          <td>${actionBadge}</td>
+          <td><span class="category-badge" style="background:#ebf8ff; padding:2px 6px; border-radius:4px;">${m.category || '-'}</span></td>
+          <td><span class="action-badge issueout-badge">Issue Out</span></td>
           <td>${m.movedQuantity || '-'}</td>
           <td>${m.fromLocation || '-'}</td>
           <td>${m.issuedTo || '-'}</td>
@@ -588,24 +1570,28 @@
           <td>${m.issueDNote || m.deliveryNoteNumber || '-'}</td>
           <td>${m.issueReason || '-'}</td>
         `;
-        tr.title = `Item Code: ${m.itemCode || '-'}\nCame From: ${m.cameFrom || '-'}`;
         issueoutsTableBody.appendChild(tr);
       });
     }
-    showTransfersBtn.onclick = function() {
+
+    // Table toggle
+    showTransfersBtn.addEventListener('click', function() {
       showTransfersBtn.classList.add('active');
       showIssueOutBtn.classList.remove('active');
       transfersTable.style.display = '';
       issueOutsTable.style.display = 'none';
       filterAndRender();
-    };
-    showIssueOutBtn.onclick = function() {
+    });
+
+    showIssueOutBtn.addEventListener('click', function() {
       showIssueOutBtn.classList.add('active');
       showTransfersBtn.classList.remove('active');
       transfersTable.style.display = 'none';
       issueOutsTable.style.display = '';
       filterAndRender();
-    };
+    });
+
+    // Real-time audit log
     onSnapshot(query(collection(db, "fixedInventoryAuditLog"), orderBy("timestamp", "desc")), (snapshot) => {
       auditData = [];
       snapshot.forEach(doc => {
@@ -614,6 +1600,7 @@
       filterAndRender();
     });
 
+    // Prevent context menu and dev tools
     document.addEventListener('contextmenu', function (e) {
       e.preventDefault();
     });
@@ -622,7 +1609,6 @@
         e.preventDefault();
       }
     });
-
   </script>
 </body>
 </html>
