@@ -3,24 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PENTA · extinguisher tracker</title>
+  <title>PENTA | Fire Extinguisher Tracker</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <!-- Bootstrap 5 (light) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
   <!-- jsPDF and autoTable for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
   <style>
-    :root {
-      --primary: #1a365d;
-      --secondary: #ed8936;
-      --border-color: #e2e8f0;
-      --success: #48bb78;
-      --warning: #ed8936;
-      --danger: #e53e3e;
-    }
-
     * {
       margin: 0;
       padding: 0;
@@ -28,126 +17,30 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: white;
-      color: #171923;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #d3dfed;
+      color: #0a1c2f;
       line-height: 1.6;
       overflow-x: hidden;
-      transition: all 0.3s ease;
     }
 
-    /* Simple White Sidebar */
-    .sidebar {
-      width: 250px;
-      background: white;
-      color: #171923;
-      padding: 1rem 0;
-      position: fixed;
+    /* Main Layout */
+    .main-wrapper {
+      display: flex;
       height: 100vh;
-      z-index: 1000;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-      border-right: 1px solid var(--border-color);
-      left: 0;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
     }
 
-    .sidebar.collapsed {
-      transform: translateX(-100%);
-      box-shadow: none;
-    }
-
-    .sidebar-header {
-      padding: 0 1rem 1.5rem;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 1rem;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--primary);
-      border-radius: 0.375rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      color: white;
-    }
-
-    .logo-text h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin: 0;
-      color: var(--primary);
-    }
-
-    .logo-text span {
-      font-size: 0.75rem;
-      color: #718096;
-    }
-
-    .nav-section {
-      padding: 0 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .nav-section h3 {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #718096;
-      margin-bottom: 0.75rem;
-    }
-
-    .nav-links {
-      list-style: none;
-    }
-
-    .nav-item {
-      margin-bottom: 0.25rem;
-    }
-
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 0.75rem;
-      color: #4a5568;
-      text-decoration: none;
-      border-radius: 0.375rem;
-      transition: all 0.15s ease;
-    }
-
-    .nav-link:hover {
-      background: #f7fafc;
-      color: var(--primary);
-    }
-
-    .nav-link.active {
-      background: #ebf8ff;
-      color: var(--primary);
-      font-weight: 500;
-    }
-
-    .nav-icon {
-      font-size: 1rem;
-      width: 20px;
-      text-align: center;
-    }
-
-    .sidebar-toggle {
-      position: absolute;
-      top: 1rem;
-      right: -12px;
-      width: 24px;
-      height: 24px;
-      background: var(--primary);
+    /* Sidebar Toggle Button - Always Visible */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 32px;
+      height: 32px;
+      background: #0a1c2f;
       color: white;
       border-radius: 50%;
       display: flex;
@@ -155,214 +48,580 @@
       justify-content: center;
       cursor: pointer;
       border: 2px solid white;
-      font-size: 0.75rem;
-      z-index: 1001;
+      font-size: 0.8rem;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
     }
 
+    .sidebar-toggle-btn:hover {
+      background: #1f3d62;
+      transform: scale(1.1);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: white;
+      color: #0a1c2f;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      border-right: 2px solid #1f3d62;
+      transition: transform 0.28s ease;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      transform: translateX(0);
+    }
+
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header {
+      padding: 16px 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      background: #0a1c2f;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #b8cde0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #0a1c2f;
+    }
+
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      color: white;
+    }
+
+    .logo-text span {
+      font-size: 0.7rem;
+      color: #97adc9;
+    }
+
+    /* Navigation */
+    .nav-section {
+      padding: 20px 16px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .nav-section h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7f96b3;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      color: #0a1c2f;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: #e6efff;
+    }
+
+    .nav-link.active {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      font-weight: 600;
+      border-left: 3px solid #1f3d62;
+    }
+
+    .nav-icon {
+      font-size: 0.9rem;
+      width: 20px;
+      text-align: center;
+      color: #2b4a73;
+    }
+
+    /* Main Content Area */
     .main-content {
       flex: 1;
-      margin-left: 250px;
-      transition: all 0.3s ease;
-      padding: 2rem;
-      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       background: white;
-      width: calc(100% - 250px);
+      transition: margin-left 0.28s ease;
+      margin-left: 0;
     }
 
     .main-content.expanded {
-      margin-left: 0;
-      width: 100%;
+      margin-left: -260px;
     }
 
-    .dashboard-container {
-      max-width: 1400px;
-      margin: 0 auto;
+    /* Header */
+    .app-header {
+      background: #0a1c2f;
+      color: white;
+      padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      min-height: 56px;
     }
 
-    .welcome-section {
-      margin-bottom: 2rem;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
 
-    .welcome-section h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0;
-      color: var(--primary);
-    }
-
-    .welcome-section p {
-      color: #718096;
-      margin: 0.5rem 0 0;
+    .mobile-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
       font-size: 1rem;
     }
 
+    .mobile-toggle:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .page-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-title h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .page-title i {
+      color: #97adc9;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .date-display {
+      background: #1f3d62;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .date-display i {
+      color: #97adc9;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid #2b4a73;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+      color: #0b1f33;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0a1c2f;
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+    }
+
+    .btn-success {
+      background: #059669;
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background: #047857;
+    }
+
+    .btn-warning {
+      background: #d97706;
+      color: white;
+      border: none;
+    }
+
+    .btn-warning:hover {
+      background: #b85e00;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: white;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn:hover {
+      background: #e6efff;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+      color: white;
+    }
+
+    /* Actions Panel */
+    .actions-container {
+      padding: 4px 20px;
+      background: #f2f6fc;
+      border-bottom: 1px solid #b3c7e0;
+      flex-shrink: 0;
+    }
+
+    .actions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .actions-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .actions-header i {
+      font-size: 12px;
+      transition: transform 0.2s;
+      color: #1f3d62;
+    }
+
+    .actions-panel {
+      display: flex;
+      gap: 8px;
+      padding: 8px 0 12px;
+      transition: all 0.2s;
+      max-height: 100px;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .actions-panel.collapsed {
+      max-height: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Dashboard Container */
+    .dashboard-container {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+      background: #f2f6fc;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,20,40,0.2);
+    }
+
+    .welcome-text h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .welcome-text p {
+      color: #97adc9;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    .welcome-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b8cde0;
+      font-size: 1.8rem;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    /* Stats Grid */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .stat-card {
       background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      border: 1px solid var(--border-color);
-      transition: all 0.2s ease;
-    }
-
-    .stat-card:hover {
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-      transform: translateY(-2px);
-      border-color: var(--primary);
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 16px;
     }
 
     .stat-header {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
+      gap: 12px;
     }
 
     .stat-icon {
       width: 48px;
       height: 48px;
-      border-radius: 0.375rem;
-      background: #ebf8ff;
+      border-radius: 12px;
+      background: #d4e2f2;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--primary);
-      font-size: 1.25rem;
+      color: #0a1c2f;
+      font-size: 1.2rem;
     }
 
     .stat-value {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 0.25rem;
+      color: #0a1c2f;
+      line-height: 1.2;
     }
 
     .stat-label {
-      color: #718096;
-      font-size: 0.875rem;
+      font-size: 0.7rem;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
     }
 
-    /* filter bar – new location filter */
+    /* Filter Bar */
     .filter-bar {
       background: white;
-      border-radius: 0.5rem;
-      padding: 1rem 1.5rem;
-      border: 1px solid var(--border-color);
-      margin-bottom: 1.5rem;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       flex-wrap: wrap;
-      gap: 1.5rem;
+      gap: 16px;
     }
 
     .filter-group {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .filter-group label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #4a5568;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7f96b3;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
     }
 
-    .location-filter-select {
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
-      border: 1px solid var(--border-color);
-      border-radius: 2rem;
-      font-size: 0.9rem;
+    .filter-select {
+      padding: 8px 30px 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 30px;
+      font-size: 0.8rem;
       background: white;
-      min-width: 220px;
+      color: #0a1c2f;
       cursor: pointer;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.5rem center;
       appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230a1c2f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
     }
 
-    .location-filter-select:focus {
+    .filter-select:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+      border-color: #2b4a73;
     }
 
     .clear-filter-btn {
-      background: none;
-      border: 1px solid var(--border-color);
-      padding: 0.4rem 1rem;
-      border-radius: 2rem;
-      font-size: 0.8rem;
-      color: #4a5568;
-      transition: all 0.1s;
-    }
-
-    .clear-filter-btn:hover {
-      background: #f7fafc;
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .add-form-section {
+      padding: 6px 14px;
+      border: 1px solid #b3c7e0;
       background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      border: 1px solid var(--border-color);
-      margin-bottom: 2rem;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .section-header h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--primary);
-      margin: 0;
-    }
-
-    .toggle-form-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
+      border-radius: 30px;
+      font-size: 0.7rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
+      gap: 6px;
     }
 
-    .toggle-form-btn:hover {
-      background: #0d2b50;
+    .clear-filter-btn:hover {
+      background: #e6efff;
+    }
+
+    /* Service Bar */
+    .service-bar {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .service-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .selected-count {
+      background: #0a1c2f;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* Form Section */
+    .form-section {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .form-header {
+      background: #b8cde0;
+      padding: 12px 20px;
+      border-bottom: 2px solid #1f3d62;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-header h2 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-body {
+      padding: 20px;
+      transition: all 0.3s ease;
+      max-height: 500px;
+      overflow: hidden;
+    }
+
+    .form-body.collapsed {
+      max-height: 0;
+      padding: 0 20px;
+      opacity: 0;
     }
 
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
+      gap: 16px;
       align-items: end;
-      transition: all 0.3s ease;
-    }
-
-    .form-grid.hidden {
-      display: none;
     }
 
     .form-group {
@@ -371,113 +630,318 @@
 
     .form-group label {
       display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7f96b3;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #718096;
-      margin-bottom: 0.5rem;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
     }
 
     .form-group input,
     .form-group select {
       width: 100%;
-      padding: 0.625rem 0.875rem;
-      border: 1px solid var(--border-color);
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      transition: all 0.15s ease;
+      padding: 8px 12px;
+      border: 1px solid #b3c7e0;
+      border-radius: 6px;
+      font-size: 0.8rem;
       background: white;
+      color: #0a1c2f;
+      transition: border-color 0.15s;
     }
 
     .form-group input:focus,
     .form-group select:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+      border-color: #2b4a73;
+      box-shadow: 0 0 0 2px rgba(43,74,115,0.12);
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0.625rem 1.25rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
+    .toggle-form-btn {
+      padding: 6px 14px;
+      border: 1px solid #2b4a73;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      transition: background 0.2s ease;
-      height: fit-content;
+      gap: 6px;
     }
 
-    .btn-primary:hover {
-      background: #0d2b50;
+    /* Table Section */
+    .table-section {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      overflow: hidden;
     }
 
-    .btn-success {
-      background: var(--success);
-      color: white;
-      border: none;
-      padding: 0.625rem 1.25rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease;
+    .section-header {
+      background: #b8cde0;
+      padding: 12px 20px;
+      border-bottom: 2px solid #1f3d62;
     }
 
-    .btn-success:hover {
-      background: #38a169;
-    }
-
-    .btn-download {
-      background: var(--secondary);
-      color: white;
-      border: none;
-      padding: 0.625rem 1.25rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .btn-download:hover {
-      background: #dd6b20;
-    }
-
-    .service-bar {
-      background: #f7fafc;
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem;
-      padding: 1rem 1.5rem;
-      margin-bottom: 1.5rem;
+    .section-header h2 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      margin: 0;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
+      gap: 8px;
     }
 
-    .service-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
+    .table-wrapper {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+      max-height: 500px;
+      overflow-y: auto;
     }
 
-    .selected-count {
-      background: var(--primary);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 2rem;
-      font-size: 0.875rem;
+    .table-wrapper::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    .ext-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      min-width: 1400px;
+    }
+
+    .ext-table th {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #9bb1cc;
+      border-bottom: 2px solid #1f3d62;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .ext-table td {
+      padding: 10px;
+      border: 1px solid #c7d6ec;
+      color: #0a1c2f;
+      vertical-align: middle;
+      background: white;
+    }
+
+    .ext-table tbody tr:hover td {
+      background: #e3ecf7;
+    }
+
+    .ext-table tr.expired-row {
+      background: #fff5f5;
+    }
+
+    .ext-table tr.expired-row td {
+      background: #fff5f5;
+    }
+
+    .ext-table tr.expired-row:hover td {
+      background: #ffe5e5;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 30px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      border: 1px solid;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .badge-success {
+      background: #c6f6d5;
+      color: #22543d;
+      border-color: #22543d;
+    }
+
+    .badge-warning {
+      background: #feebc8;
+      color: #744210;
+      border-color: #744210;
+    }
+
+    .badge-danger {
+      background: #fed7d7;
+      color: #742a2a;
+      border-color: #742a2a;
+    }
+
+    .badge-info {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      border-color: #1f3d62;
+    }
+
+    .code-badge {
+      background: #e6efff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.7rem;
       font-weight: 600;
     }
 
+    .type-badge {
+      background: #e9d8fd;
+      color: #553c9a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    .next-service-badge {
+      background: #feebc8;
+      color: #744210;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    .expiration-badge {
+      background: #e6f7ff;
+      color: #0e5a8a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    .service-count {
+      background: #ebf8ff;
+      color: #0a1c2f;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+
+    /* Checkbox Cell */
+    .checkbox-cell {
+      width: 40px;
+      text-align: center;
+    }
+
+    .checkbox-cell input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #0a1c2f;
+    }
+
+    /* Location Cell */
+    .location-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .location-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: #d4e2f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0a1c2f;
+    }
+
+    /* Action Menu */
+    .menu-container {
+      position: relative;
+    }
+
+    .menu-button {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #b3c7e0;
+      background: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #1f3d62;
+      transition: all 0.15s;
+    }
+
+    .menu-button:hover {
+      background: #e6efff;
+      border-color: #2b4a73;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: white;
+      min-width: 140px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 6px;
+      z-index: 100;
+      border: 2px solid #1f3d62;
+    }
+
+    .dropdown-menu.active {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 11px;
+      color: #0a1c2f;
+      border-bottom: 1px solid #b3c7e0;
+      width: 100%;
+      border: none;
+      background: none;
+      text-align: left;
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+      background: #e6efff;
+    }
+
+    .dropdown-item.delete-item:hover {
+      color: #cc0000;
+    }
+
+    /* Modal Styles */
     .modal {
       display: none;
       position: fixed;
@@ -485,7 +949,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0,0,0,0.55);
       z-index: 2000;
       align-items: center;
       justify-content: center;
@@ -497,253 +961,584 @@
 
     .modal-content {
       background: white;
-      border-radius: 0.5rem;
-      padding: 2rem;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 24px 60px rgba(0,20,40,0.45);
+      overflow: hidden;
+    }
+
+    .modal-content.large {
       max-width: 1000px;
-      width: 100%;
       max-height: 85vh;
       overflow-y: auto;
     }
 
-    .modal-content.large {
-      max-width: 1500px;
-      max-height: 1000px;
-    }
-
     .modal-header {
+      padding: 16px 20px;
+      background: #0a1c2f;
+      color: white;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      justify-content: space-between;
       position: sticky;
       top: 0;
-      background: white;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-color);
-      z-index: 10;
+      z-index: 20;
     }
 
     .modal-header h3 {
-      font-size: 1.25rem;
+      font-size: 1rem;
       font-weight: 600;
-      color: var(--primary);
-      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .close-modal {
       background: none;
       border: none;
-      font-size: 1.5rem;
+      color: #97adc9;
+      font-size: 1.2rem;
       cursor: pointer;
-      color: #718096;
     }
 
     .close-modal:hover {
-      color: var(--danger);
-    }
-
-    /* Table */
-    .table-section {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      border: 1px solid var(--border-color);
-    }
-
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
-    .ext-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .ext-table th {
-      text-align: left;
-      padding: 1rem;
-      font-weight: 600;
-      background: #f7fafc;
-      color: var(--primary);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .ext-table td {
-      padding: 1rem;
-      color: #4a5568;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.875rem;
-      vertical-align: middle;
-    }
-
-    .ext-table tr:hover {
-      background: #f7fafc;
-    }
-
-    .ext-table tr.expired-row {
-      background: #fff5f5;
-    }
-
-    .ext-table tr.expired-row:hover {
-      background: #fee;
-    }
-
-    .location-cell {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .location-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 0.375rem;
-      background: #ebf8ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--primary);
-      font-size: 1rem;
-    }
-
-    .badge, .type-badge, .code-badge, .next-service-badge, .expiration-badge, .service-count {
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    .badge-success { background: #c6f6d5; color: #22543d; }
-    .badge-warning { background: #feebc8; color: #c05621; }
-    .badge-danger { background: #fed7d7; color: #9b2c2c; }
-    .badge-info { background: #e6f7ff; color: #0e5a8a; }
-    .type-badge { background: #e9d8fd; color: #553c9a; }
-    .code-badge { background: #e6fffa; color: #234e52; font-family: monospace; }
-    .next-service-badge { background: #feebc8; color: #c05621; }
-    .expiration-badge { background: #e6f7ff; color: #0e5a8a; }
-    .service-count { background: #ebf8ff; color: var(--primary); }
-
-    .checkbox-cell { width: 40px; text-align: center; }
-    .checkbox-cell input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-
-    .menu-container { position: relative; }
-    .menu-button { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #718096; padding: 0.25rem 0.5rem; border-radius: 0.375rem; }
-    .menu-button:hover { background: #e2e8f0; color: var(--primary); }
-    .dropdown-menu { position: absolute; right: 0; top: 100%; background: white; border: 1px solid var(--border-color); border-radius: 0.375rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 100; min-width: 180px; display: none; }
-    .dropdown-menu.active { display: block; }
-    .dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #4a5568; text-decoration: none; transition: background 0.15s ease; width: 100%; border: none; background: none; font-size: 0.875rem; cursor: pointer; }
-    .dropdown-item:hover { background: #f7fafc; color: var(--primary); }
-    .dropdown-item.delete-item:hover { color: var(--danger); }
-
-    .empty-state { padding: 3rem; text-align: center; color: #718096; }
-    .empty-state i { font-size: 2rem; margin-bottom: 1rem; display: block; }
-
-    .mobile-toggle {
-      display: none;
-      background: var(--primary);
       color: white;
-      border: none;
-      border-radius: 0.375rem;
-      padding: 0.5rem;
-      cursor: pointer;
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      z-index: 1100;
     }
 
+    .modal-body {
+      padding: 20px;
+    }
+
+    /* History Tabs */
+    .history-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 0 20px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .history-tab {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #7f96b3;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .history-tab.active {
+      color: #0a1c2f;
+      border-bottom-color: #0a1c2f;
+    }
+
+    .history-panel {
+      display: none;
+      padding: 16px;
+    }
+
+    .history-panel.active {
+      display: block;
+    }
+
+    .service-history-list {
+      list-style: none;
+    }
+
+    .service-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .service-date {
+      font-weight: 600;
+      color: #0a1c2f;
+    }
+
+    .bulk-service-group {
+      margin-bottom: 16px;
+    }
+
+    .bulk-service-date {
+      background: #f2f6fc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bulk-service-list {
+      list-style: none;
+      padding: 8px 0 8px 20px;
+    }
+
+    .bulk-service-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .bulk-service-code {
+      font-weight: 600;
+      min-width: 80px;
+    }
+
+    .bulk-service-location {
+      color: #7f96b3;
+      min-width: 120px;
+    }
+
+    .bulk-service-type {
+      background: #e9d8fd;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      min-width: 60px;
+    }
+
+    .service-info-badge {
+      background: #ebf8ff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+      padding: 40px !important;
+      text-align: center;
+      color: #7f96b3;
+    }
+
+    .empty-state i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #97adc9;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.active { transform: translateX(0); }
-      .main-content { margin-left: 0; width: 100%; padding: 1rem; }
-      .mobile-toggle { display: block; }
-      .sidebar-toggle { display: none; }
-      .stats-grid { grid-template-columns: 1fr; }
-      .filter-bar { flex-direction: column; align-items: flex-start; }
+      .sidebar {
+        position: fixed;
+        z-index: 1000;
+        height: 100vh;
+        transform: translateX(-100%);
+      }
+      
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
+      }
+      
+      .main-content.expanded {
+        margin-left: 0;
+      }
+      
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .sidebar-toggle-btn {
+        display: none;
+      }
+      
+      .app-header {
+        padding-left: 20px;
+      }
+      
+      .actions-panel {
+        flex-direction: column;
+        max-height: 300px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .service-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .welcome-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
+  <!-- Sidebar Toggle Button - Always Visible -->
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+    <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
+  </div>
 
-  <!-- sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-chevron-left" id="toggleIcon"></i></div>
-    <div class="sidebar-header"><div class="logo-container"><div class="logo-icon"><i class="fas fa-building"></i></div><div class="logo-text"><h2>PENTA</h2><span>Construction Pro</span></div></div></div>
-    <nav class="nav-section"><h3>Dashboard</h3><ul class="nav-links"><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-gauge-high nav-icon"></i><span>Overview</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-diagram-project nav-icon"></i><span>Projects</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-user-tie nav-icon"></i><span>Team</span></a></li></ul></nav>
-    <nav class="nav-section"><h3>Resources</h3><ul class="nav-links"><li class="nav-item"><a href="#" class="nav-link active"><i class="fas fa-fire-extinguisher nav-icon"></i><span>Fire Extinguishers</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-screwdriver-wrench nav-icon"></i><span>Equipment</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-truck-ramp-box nav-icon"></i><span>Materials</span></a></li></ul></nav>
-    <nav class="nav-section"><h3>Management</h3><ul class="nav-links"><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-file-invoice-dollar nav-icon"></i><span>Finances</span></a></li><li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-chart-column nav-icon"></i><span>Reports</span></a></li></ul></nav>
-  </aside>
-
-  <main class="main-content" id="mainContent">
-    <div class="dashboard-container">
-      <div class="welcome-section">
-        <h1>Fire Extinguisher Tracker</h1>
-        <p>Manage and monitor all fire extinguishers across site locations</p>
-      </div>
-
-      <!-- stats grid -->
-      <div class="stats-grid" id="statsGrid">
-        <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-fire-extinguisher"></i></div><div><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total</div></div></div></div>
-        <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div><div class="stat-value" id="goodCount">0</div><div class="stat-label">Good</div></div></div></div>
-        <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div><div><div class="stat-value" id="expiringCount">0</div><div class="stat-label">Expiring soon</div></div></div></div>
-        <div class="stat-card"><div class="stat-header"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div><div class="stat-value" id="expiredCount">0</div><div class="stat-label">Expired</div></div></div></div>
-      </div>
-
-      <!-- LOCATION FILTER -->
-      <div class="filter-bar">
-        <div class="filter-group">
-          <label for="locationFilter"><i class="fas fa-location-dot" style="margin-right: 4px;"></i> Filter by location</label>
-          <select id="locationFilter" class="location-filter-select">
-            <option value="all">All locations</option>
-          </select>
-          <button class="clear-filter-btn" id="clearFilterBtn"><i class="fas fa-times"></i> Clear</button>
-        </div>
-        <div style="font-size:0.85rem; color:#4a5568;" id="filterHint"></div>
-      </div>
-
-      <!-- service bar -->
-      <div class="service-bar">
-        <div class="service-info"><span class="selected-count" id="selectedCount">0 selected</span><span id="serviceInfo">Select extinguishers to service</span></div>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-          <button class="btn-success" id="serviceSelectedBtn"><i class="fas fa-tools"></i> Service Selected</button>
-          <button class="btn-primary" id="viewServiceHistoryBtn"><i class="fas fa-history"></i> View Service History</button>
-          <button class="btn-download" id="downloadPdfBtn"><i class="fas fa-download"></i> Download PDF Report</button>
+  <div class="main-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="logo-text">
+            <h2>PENTA</h2>
+            <span>Construction Pro</span>
+          </div>
         </div>
       </div>
 
-      <!-- add form (hidden by default) -->
-      <div class="add-form-section">
-        <div class="section-header"><h2>Add New Extinguisher</h2><button class="toggle-form-btn" id="toggleFormBtn"><i class="fas fa-eye" id="toggleFormIcon"></i> Show Form</button></div>
-        <div class="form-grid hidden" id="addForm">
-          <div class="form-group"><label>Code/Serial</label><input type="text" id="codeInput" placeholder="e.g. EXT-001"></div>
-          <div class="form-group"><label>Location</label><input type="text" id="locationInput" placeholder="e.g. Main Office"></div>
-          <div class="form-group"><label>Type</label><select id="typeInput"><option value="DCP">DCP</option><option value="CO2">CO2</option><option value="Foam">Foam</option><option value="Wet Chemical">Wet Chemical</option><option value="Water">Water</option></select></div>
-          <div class="form-group"><label>Capacity (kg)</label><input type="number" id="capacityInput" min="1" step="0.5" value="4"></div>
-          <div class="form-group"><label>Expiration</label><input type="date" id="expirationInput"></div>
-          <div class="form-group"><label>Last Service</label><input type="date" id="serviceInput"></div>
-          <div><button class="btn-primary" id="addBtn"><i class="fas fa-plus"></i> Add Extinguisher</button></div>
+      <!-- Navigation -->
+      <div style="flex:1; overflow-y: auto; scrollbar-width: thin;">
+        <nav class="nav-section">
+          <h3>Dashboard</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link">
+                <i class="fas fa-gauge-high nav-icon"></i>
+                <span>Overview</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="projectdashboard.html" class="nav-link">
+                <i class="fas fa-diagram-project nav-icon"></i>
+                <span>Projects</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Employees.html" class="nav-link">
+                <i class="fas fa-user-tie nav-icon"></i>
+                <span>Team</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Resources</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="#" class="nav-link active">
+                <i class="fas fa-fire-extinguisher nav-icon"></i>
+                <span>Fire Extinguishers</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Tool.html" class="nav-link">
+                <i class="fas fa-screwdriver-wrench nav-icon"></i>
+                <span>Equipment</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="material.html" class="nav-link">
+                <i class="fas fa-truck-ramp-box nav-icon"></i>
+                <span>Materials</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="inventory.html" class="nav-link">
+                <i class="fas fa-warehouse nav-icon"></i>
+                <span>Inventory</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Management</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Accountsdash.html" class="nav-link">
+                <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                <span>Finances</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Table.html" class="nav-link">
+                <i class="fas fa-chart-column nav-icon"></i>
+                <span>Reports</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Header -->
+      <div class="app-header">
+        <div class="header-left">
+          <button class="mobile-toggle" id="mobileToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <i class="fas fa-fire-extinguisher"></i>
+            <h1>Fire Extinguisher Tracker</h1>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="date-display" id="currentDate">
+            <i class="fas fa-calendar-alt"></i>
+            <span></span>
+          </div>
         </div>
       </div>
 
-      <!-- table section -->
-      <div class="table-section">
-        <div class="section-header"><h2>All Extinguishers</h2></div>
-        <div class="table-wrapper">
-          <table class="ext-table" id="extTable">
-            <thead><tr><th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox"></th><th>Code</th><th>Location</th><th>Type</th><th>Capacity</th><th>Expiration</th><th>Last Service</th><th>Next Service</th><th>Status</th><th>Service Count</th><th>Actions</th></tr></thead>
-            <tbody id="tableBody"><tr><td colspan="11" class="empty-state"><i class="fas fa-fire-extinguisher"></i> No extinguishers found.</td></tr></tbody>
-          </table>
+      <!-- Actions Panel -->
+      <div class="actions-container">
+        <div class="actions-header" id="actionsHeader">
+          <h3><i class="fas fa-sliders-h"></i> Quick Actions</h3>
+          <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+          <button class="btn" id="toggleFormBtn">
+            <i class="fas fa-plus"></i> Add New
+          </button>
+          <button class="btn" id="viewServiceHistoryBtn">
+            <i class="fas fa-history"></i> Service History
+          </button>
+          <button class="btn" id="downloadPdfBtn">
+            <i class="fas fa-download"></i> PDF Report
+          </button>
+          <a href="dashboard.html" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Dashboard Container -->
+      <div class="dashboard-container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Fire Extinguisher Management</h2>
+            <p>Track and monitor all fire extinguishers across site locations</p>
+          </div>
+          <div class="welcome-icon">
+            <i class="fas fa-fire-extinguisher"></i>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-fire-extinguisher"></i></div>
+              <div>
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Total</div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+              <div>
+                <div class="stat-value" id="goodCount">0</div>
+                <div class="stat-label">Good</div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+              <div>
+                <div class="stat-value" id="expiringCount">0</div>
+                <div class="stat-label">Expiring Soon</div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+              <div>
+                <div class="stat-value" id="expiredCount">0</div>
+                <div class="stat-label">Expired</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label for="locationFilter"><i class="fas fa-location-dot"></i> Filter by location</label>
+            <select id="locationFilter" class="filter-select">
+              <option value="all">All locations</option>
+            </select>
+            <button class="clear-filter-btn" id="clearFilterBtn">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+          <div style="font-size:0.7rem; color:#7f96b3;" id="filterHint"></div>
+        </div>
+
+        <!-- Service Bar -->
+        <div class="service-bar">
+          <div class="service-info">
+            <span class="selected-count" id="selectedCount">0 selected</span>
+            <span style="color:#7f96b3;">Select extinguishers to service</span>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-success" id="serviceSelectedBtn">
+              <i class="fas fa-tools"></i> Service Selected
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Form -->
+        <div class="form-section">
+          <div class="form-header">
+            <h2><i class="fas fa-plus-circle"></i> <span id="formTitle">Add New Extinguisher</span></h2>
+            <button class="toggle-form-btn" id="toggleFormBtn">
+              <i class="fas fa-eye" id="toggleFormIcon"></i> Show Form
+            </button>
+          </div>
+          <div class="form-body" id="addForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Code/Serial</label>
+                <input type="text" id="codeInput" placeholder="e.g. EXT-001">
+              </div>
+              <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="locationInput" placeholder="e.g. Main Office">
+              </div>
+              <div class="form-group">
+                <label>Type</label>
+                <select id="typeInput">
+                  <option value="DCP">DCP</option>
+                  <option value="CO2">CO2</option>
+                  <option value="Foam">Foam</option>
+                  <option value="Wet Chemical">Wet Chemical</option>
+                  <option value="Water">Water</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Capacity (kg)</label>
+                <input type="number" id="capacityInput" min="1" step="0.5" value="4">
+              </div>
+              <div class="form-group">
+                <label>Expiration</label>
+                <input type="date" id="expirationInput">
+              </div>
+              <div class="form-group">
+                <label>Last Service</label>
+                <input type="date" id="serviceInput">
+              </div>
+              <div>
+                <button class="btn-primary" id="addBtn">
+                  <i class="fas fa-plus"></i> Add Extinguisher
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-section">
+          <div class="section-header">
+            <h2><i class="fas fa-list"></i> All Extinguishers</h2>
+          </div>
+          <div class="table-wrapper">
+            <table class="ext-table" id="extTable">
+              <thead>
+                <tr>
+                  <th class="checkbox-cell"><input type="checkbox" id="selectAllCheckbox"></th>
+                  <th>Code</th>
+                  <th>Location</th>
+                  <th>Type</th>
+                  <th>Capacity</th>
+                  <th>Expiration</th>
+                  <th>Last Service</th>
+                  <th>Next Service</th>
+                  <th>Status</th>
+                  <th>Service Count</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <tr>
+                  <td colspan="11" class="empty-state">
+                    <i class="fas fa-fire-extinguisher"></i> No extinguishers found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal" id="historyModal">
+    <div class="modal-content large">
+      <div class="modal-header">
+        <h3><i class="fas fa-history"></i> Service History</h3>
+        <button class="close-modal" id="closeHistoryModal">&times;</button>
+      </div>
+      <div class="history-tabs">
+        <button class="history-tab active" data-tab="individual">Individual</button>
+        <button class="history-tab" data-tab="bulk">Bulk View</button>
+      </div>
+      <div class="modal-body">
+        <div id="individualHistory" class="history-panel active">
+          <ul class="service-history-list" id="serviceHistoryList"></ul>
+        </div>
+        <div id="bulkHistory" class="history-panel">
+          <div id="bulkServiceContent"></div>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 
-  <!-- modals - NO MORE PASSWORD MODAL! -->
-  <div class="modal" id="historyModal"><div class="modal-content large"><div class="modal-header"><h3 id="historyModalTitle">Service History</h3><button class="close-modal" id="closeHistoryModal">&times;</button></div><div class="history-tabs"><button class="history-tab active" data-tab="individual">Individual</button><button class="history-tab" data-tab="bulk">Bulk View</button></div><div id="individualHistory" class="history-panel active"><ul class="service-history-list" id="serviceHistoryList"></ul></div><div id="bulkHistory" class="history-panel"><div id="bulkServiceContent"></div></div></div></div>
-  <div class="modal" id="serviceModal"><div class="modal-content"><div class="modal-header"><h3>Service Extinguishers</h3><button class="close-modal" id="closeServiceModal">&times;</button></div><p>Selected: <span id="serviceSelectedCount">0</span></p><div class="form-group"><label>Service Date</label><input type="date" id="serviceDate" readonly></div><div class="form-group"><label>Next Service Date *</label><input type="date" id="nextServiceDate" required></div><div class="form-group"><label>New Expiration Date *</label><input type="date" id="newExpirationDate" required></div><div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn-success" id="confirmService">Confirm</button><button class="toggle-form-btn" id="cancelService">Cancel</button></div></div></div>
+  <div class="modal" id="serviceModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-tools"></i> Service Extinguishers</h3>
+        <button class="close-modal" id="closeServiceModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 16px;">Selected: <span id="serviceSelectedCount">0</span></p>
+        <div class="form-group">
+          <label>Service Date</label>
+          <input type="date" id="serviceDate" readonly>
+        </div>
+        <div class="form-group">
+          <label>Next Service Date *</label>
+          <input type="date" id="nextServiceDate" required>
+        </div>
+        <div class="form-group">
+          <label>New Expiration Date *</label>
+          <input type="date" id="newExpirationDate" required>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+          <button class="btn" id="cancelService">Cancel</button>
+          <button class="btn-success" id="confirmService">Confirm Service</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
@@ -755,34 +1550,134 @@
       projectId: "project-task-588c4",
       storageBucket: "project-task-588c4.appspot.com",
       messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- DOM elements ---
-    const sidebar = document.getElementById('sidebar'), sidebarToggle = document.getElementById('sidebarToggle'), toggleIcon = document.getElementById('toggleIcon'), mainContent = document.getElementById('mainContent'), mobileToggle = document.getElementById('mobileToggle');
-    const codeInput = document.getElementById('codeInput'), locationInput = document.getElementById('locationInput'), typeInput = document.getElementById('typeInput'), capacityInput = document.getElementById('capacityInput'), expirationInput = document.getElementById('expirationInput'), serviceInput = document.getElementById('serviceInput'), addBtn = document.getElementById('addBtn'), tableBody = document.getElementById('tableBody'), selectAllCheckbox = document.getElementById('selectAllCheckbox'), selectedCount = document.getElementById('selectedCount'), serviceSelectedBtn = document.getElementById('serviceSelectedBtn'), viewServiceHistoryBtn = document.getElementById('viewServiceHistoryBtn');
-    const totalCount = document.getElementById('totalCount'), goodCount = document.getElementById('goodCount'), expiringCount = document.getElementById('expiringCount'), expiredCount = document.getElementById('expiredCount');
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const actionsHeader = document.getElementById('actionsHeader');
+    const actionsPanel = document.getElementById('actionsPanel');
+    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
+    const currentDate = document.getElementById('currentDate');
+
+    // Actions panel collapse
+    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
+    if (actionsCollapsed) {
+      actionsPanel.classList.add('collapsed');
+      actionsToggleIcon.style.transform = 'rotate(-90deg)';
+    }
+
+    actionsHeader.addEventListener('click', () => {
+      actionsPanel.classList.toggle('collapsed');
+      actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+      localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
+
+    // Sidebar functionality
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleBtnIcon.classList.remove('fa-chevron-left');
+      toggleBtnIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      if (sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
+
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      if (!sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+      }
+    });
+
+    // Update date
+    function updateDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      currentDate.querySelector('span').textContent = now.toLocaleDateString('en-US', options);
+    }
+    updateDate();
+
+    // --- Existing code continues here ---
+    const codeInput = document.getElementById('codeInput');
+    const locationInput = document.getElementById('locationInput');
+    const typeInput = document.getElementById('typeInput');
+    const capacityInput = document.getElementById('capacityInput');
+    const expirationInput = document.getElementById('expirationInput');
+    const serviceInput = document.getElementById('serviceInput');
+    const addBtn = document.getElementById('addBtn');
+    const tableBody = document.getElementById('tableBody');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const serviceSelectedBtn = document.getElementById('serviceSelectedBtn');
+    const viewServiceHistoryBtn = document.getElementById('viewServiceHistoryBtn');
+    const totalCount = document.getElementById('totalCount');
+    const goodCount = document.getElementById('goodCount');
+    const expiringCount = document.getElementById('expiringCount');
+    const expiredCount = document.getElementById('expiredCount');
     
-    // modal elements - NO PASSWORD MODAL
-    const historyModal = document.getElementById('historyModal'), closeHistoryModal = document.getElementById('closeHistoryModal'), serviceHistoryList = document.getElementById('serviceHistoryList'), historyModalTitle = document.getElementById('historyModalTitle'), historyTabs = document.querySelectorAll('.history-tab'), individualHistory = document.getElementById('individualHistory'), bulkHistory = document.getElementById('bulkHistory'), bulkServiceContent = document.getElementById('bulkServiceContent');
-    const serviceModal = document.getElementById('serviceModal'), closeServiceModal = document.getElementById('closeServiceModal'), cancelService = document.getElementById('cancelService'), confirmService = document.getElementById('confirmService'), serviceSelectedCount = document.getElementById('serviceSelectedCount'), serviceDate = document.getElementById('serviceDate'), nextServiceDate = document.getElementById('nextServiceDate'), newExpirationDate = document.getElementById('newExpirationDate');
-    const toggleFormBtn = document.getElementById('toggleFormBtn'), toggleFormIcon = document.getElementById('toggleFormIcon'), addForm = document.getElementById('addForm');
+    // Modal elements
+    const historyModal = document.getElementById('historyModal');
+    const closeHistoryModal = document.getElementById('closeHistoryModal');
+    const serviceHistoryList = document.getElementById('serviceHistoryList');
+    const historyModalTitle = document.getElementById('historyModalTitle');
+    const historyTabs = document.querySelectorAll('.history-tab');
+    const individualHistory = document.getElementById('individualHistory');
+    const bulkHistory = document.getElementById('bulkHistory');
+    const bulkServiceContent = document.getElementById('bulkServiceContent');
+    
+    const serviceModal = document.getElementById('serviceModal');
+    const closeServiceModal = document.getElementById('closeServiceModal');
+    const cancelService = document.getElementById('cancelService');
+    const confirmService = document.getElementById('confirmService');
+    const serviceSelectedCount = document.getElementById('serviceSelectedCount');
+    const serviceDate = document.getElementById('serviceDate');
+    const nextServiceDate = document.getElementById('nextServiceDate');
+    const newExpirationDate = document.getElementById('newExpirationDate');
+    
+    const toggleFormBtn = document.getElementById('toggleFormBtn');
+    const toggleFormIcon = document.getElementById('toggleFormIcon');
+    const addForm = document.getElementById('addForm');
     const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
-    // --- FILTER elements ---
+    // Filter elements
     const locationFilter = document.getElementById('locationFilter');
     const clearFilterBtn = document.getElementById('clearFilterBtn');
     const filterHint = document.getElementById('filterHint');
 
-    // --- state ---
-    let selectedExtinguishers = new Set(), extinguishersData = [];
+    // State
+    let selectedExtinguishers = new Set();
+    let extinguishersData = [];
     let activeLocationFilter = 'all';
-    let editingId = null; // Track which extinguisher we're editing
+    let editingId = null;
+    let formVisible = false;
 
-    // set default dates
+    // Set default dates
     const today = new Date(); 
     const nextYear = new Date(); 
     nextYear.setFullYear(nextYear.getFullYear()+1);
@@ -795,26 +1690,27 @@
     newExpirationDate.valueAsDate = nextYear; 
     capacityInput.value = '4';
 
-    // --- sidebar / mobile ---
-    if (localStorage.getItem('sidebarCollapsed')==='true') { sidebar.classList.add('collapsed'); mainContent.classList.add('expanded'); toggleIcon.classList.replace('fa-chevron-left','fa-chevron-right'); }
-    sidebarToggle.addEventListener('click',()=>{ sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded'); if(sidebar.classList.contains('collapsed')){ toggleIcon.classList.replace('fa-chevron-left','fa-chevron-right'); localStorage.setItem('sidebarCollapsed','true'); } else { toggleIcon.classList.replace('fa-chevron-right','fa-chevron-left'); localStorage.setItem('sidebarCollapsed','false'); } });
-    mobileToggle.addEventListener('click',()=> sidebar.classList.toggle('active'));
-    document.addEventListener('click',(e)=>{ if(window.innerWidth<=768 && !sidebar.contains(e.target) && !mobileToggle.contains(e.target) && sidebar.classList.contains('active')) sidebar.classList.remove('active'); });
+    // Form toggle
+    addForm.classList.add('collapsed');
+    toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form';
 
-    // form toggle hidden by default
-    addForm.classList.add('hidden'); toggleFormIcon.classList.add('fa-eye'); toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form';
-    toggleFormBtn.addEventListener('click', ()=>{ 
-      addForm.classList.toggle('hidden'); 
-      addForm.classList.contains('hidden') ? toggleFormBtn.innerHTML = '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form' : toggleFormBtn.innerHTML = '<i class="fas fa-eye-slash" id="toggleFormIcon"></i> Hide Form'; 
+    toggleFormBtn.addEventListener('click', () => { 
+      addForm.classList.toggle('collapsed'); 
+      const isCollapsed = addForm.classList.contains('collapsed');
+      toggleFormBtn.innerHTML = isCollapsed 
+        ? '<i class="fas fa-eye" id="toggleFormIcon"></i> Show Form' 
+        : '<i class="fas fa-eye-slash" id="toggleFormIcon"></i> Hide Form'; 
     });
 
-    // --- filter functions ---
+    // Filter functions
     function renderFilteredTable() {
       let filtered = extinguishersData;
       if (activeLocationFilter !== 'all') {
         filtered = extinguishersData.filter(ext => ext.location === activeLocationFilter);
       }
-      filterHint.innerText = activeLocationFilter === 'all' ? `showing all ${extinguishersData.length} locations` : `filtered by "${activeLocationFilter}" (${filtered.length} items)`;
+      filterHint.innerText = activeLocationFilter === 'all' 
+        ? `showing all ${extinguishersData.length} locations` 
+        : `filtered by "${activeLocationFilter}" (${filtered.length} items)`;
       renderTable(filtered);
     }
 
@@ -846,58 +1742,97 @@
       renderFilteredTable();
     });
 
-    // --- MODALS (history and service only) ---
-    function showServiceModal(){ 
-      if(selectedExtinguishers.size===0) return; 
-      serviceSelectedCount.textContent=selectedExtinguishers.size; 
+    // Modal functions
+    function showServiceModal() { 
+      if (selectedExtinguishers.size === 0) return; 
+      serviceSelectedCount.textContent = selectedExtinguishers.size; 
       serviceModal.classList.add('active'); 
     }
     
-    function hideServiceModal(){ 
+    function hideServiceModal() { 
       serviceModal.classList.remove('active'); 
     }
     
-    function showHistoryModal(){ 
+    function showHistoryModal() { 
       historyModal.classList.add('active'); 
       loadIndividualHistory(null); 
       loadBulkHistory(); 
     }
     
-    function showIndividualHistory(id){ 
+    function showIndividualHistory(id) { 
       historyModal.classList.add('active'); 
-      historyTabs.forEach(t=>t.classList.toggle('active', t.dataset.tab==='individual')); 
+      historyTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'individual')); 
       individualHistory.classList.add('active'); 
       bulkHistory.classList.remove('active'); 
-      const ext = extinguishersData.find(e=>e.id===id); 
+      const ext = extinguishersData.find(e => e.id === id); 
       loadIndividualHistory(ext); 
     }
     
-    function loadIndividualHistory(ext){ 
-      if(!ext){ 
-        serviceHistoryList.innerHTML='<li class="service-history-item"><span>Select extinguisher from menu</span></li>'; 
-        historyModalTitle.textContent='Service History'; 
+    function loadIndividualHistory(ext) { 
+      if (!ext) { 
+        serviceHistoryList.innerHTML = '<li class="service-history-item"><span>Select extinguisher from menu</span></li>'; 
+        historyModalTitle.textContent = 'Service History'; 
         return; 
       } 
-      historyModalTitle.textContent=`History – ${ext.code||ext.location}`; 
-      const hist=ext.serviceHistory||[]; 
-      if(hist.length===0) serviceHistoryList.innerHTML='<li class="service-history-item"><span>No history</span></li>'; 
-      else serviceHistoryList.innerHTML=hist.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(e=>`<li class="service-history-item"><div><span class="service-date">${formatDate(e.date)}</span><div style="display:flex;gap:0.5rem;">${e.nextServiceDate?`<span class="next-service-badge">Next:${formatDate(e.nextServiceDate)}</span>`:''}${e.newExpirationDate?`<span class="expiration-badge">Exp:${formatDate(e.newExpirationDate)}</span>`:''}</div></div><span class="service-count">#${e.serviceNumber}</span></li>`).join(''); 
+      historyModalTitle.textContent = `History – ${ext.code || ext.location}`; 
+      const hist = ext.serviceHistory || []; 
+      if (hist.length === 0) {
+        serviceHistoryList.innerHTML = '<li class="service-history-item"><span>No history</span></li>'; 
+      } else {
+        serviceHistoryList.innerHTML = hist.sort((a,b) => new Date(b.date) - new Date(a.date))
+          .map(e => `<li class="service-history-item">
+            <div>
+              <span class="service-date">${formatDate(e.date)}</span>
+              <div style="display:flex;gap:0.5rem; margin-top:4px;">
+                ${e.nextServiceDate ? `<span class="next-service-badge">Next:${formatDate(e.nextServiceDate)}</span>` : ''}
+                ${e.newExpirationDate ? `<span class="expiration-badge">Exp:${formatDate(e.newExpirationDate)}</span>` : ''}
+              </div>
+            </div>
+            <span class="service-count">#${e.serviceNumber}</span>
+          </li>`).join(''); 
+      }
     }
     
-    function loadBulkHistory(){ 
-      const all=[]; 
-      extinguishersData.forEach(ext=>(ext.serviceHistory||[]).forEach(e=>all.push({...e,code:ext.code,loc:ext.location,type:ext.type}))); 
-      const grouped={}; 
-      all.forEach(s=>{ const d=s.date; if(!grouped[d]) grouped[d]=[]; grouped[d].push(s); }); 
-      const sorted=Object.keys(grouped).sort((a,b)=>new Date(b)-new Date(a)); 
-      if(sorted.length===0) bulkServiceContent.innerHTML='<div class="empty-state"><i class="fas fa-calendar"></i>No history</div>'; 
-      else bulkServiceContent.innerHTML=sorted.map(date=>`<div class="bulk-service-group"><div class="bulk-service-date"><i class="fas fa-calendar"></i> ${formatDate(date)}<span class="service-count">${grouped[date].length}</span></div><ul class="bulk-service-list">${grouped[date].map(s=>`<li class="bulk-service-item"><span class="bulk-service-code">${s.code||'N/A'}</span><span class="bulk-service-location">${s.loc}</span><span class="bulk-service-type">${s.type||''}</span><span class="service-info-badge">#${s.serviceNumber}</span>${s.nextServiceDate?`<span class="next-service-badge">Next:${formatDate(s.nextServiceDate)}</span>`:''}${s.newExpirationDate?`<span class="expiration-badge">Exp:${formatDate(s.newExpirationDate)}</span>`:''}</li>`).join('')}</ul></div>`).join(''); 
+    function loadBulkHistory() { 
+      const all = []; 
+      extinguishersData.forEach(ext => (ext.serviceHistory || []).forEach(e => all.push({...e, code: ext.code, loc: ext.location, type: ext.type}))); 
+      const grouped = {}; 
+      all.forEach(s => { 
+        const d = s.date; 
+        if (!grouped[d]) grouped[d] = []; 
+        grouped[d].push(s); 
+      }); 
+      const sorted = Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a)); 
+      if (sorted.length === 0) {
+        bulkServiceContent.innerHTML = '<div class="empty-state"><i class="fas fa-calendar"></i>No history</div>'; 
+      } else {
+        bulkServiceContent.innerHTML = sorted.map(date => `
+          <div class="bulk-service-group">
+            <div class="bulk-service-date">
+              <i class="fas fa-calendar"></i> ${formatDate(date)}
+              <span class="service-count">${grouped[date].length}</span>
+            </div>
+            <ul class="bulk-service-list">
+              ${grouped[date].map(s => `
+                <li class="bulk-service-item">
+                  <span class="bulk-service-code">${s.code || 'N/A'}</span>
+                  <span class="bulk-service-location">${s.loc}</span>
+                  <span class="bulk-service-type">${s.type || ''}</span>
+                  <span class="service-info-badge">#${s.serviceNumber}</span>
+                  ${s.nextServiceDate ? `<span class="next-service-badge">Next:${formatDate(s.nextServiceDate)}</span>` : ''}
+                  ${s.newExpirationDate ? `<span class="expiration-badge">Exp:${formatDate(s.newExpirationDate)}</span>` : ''}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        `).join(''); 
+      }
     }
 
-    historyTabs.forEach(t=>t.addEventListener('click',()=>{ 
-      historyTabs.forEach(x=>x.classList.remove('active')); 
+    historyTabs.forEach(t => t.addEventListener('click', () => { 
+      historyTabs.forEach(x => x.classList.remove('active')); 
       t.classList.add('active'); 
-      if(t.dataset.tab==='individual'){ 
+      if (t.dataset.tab === 'individual') { 
         individualHistory.classList.add('active'); 
         bulkHistory.classList.remove('active'); 
       } else { 
@@ -907,16 +1842,16 @@
       } 
     }));
     
-    closeHistoryModal.addEventListener('click',()=>historyModal.classList.remove('active')); 
-    closeServiceModal.addEventListener('click',hideServiceModal); 
-    cancelService.addEventListener('click',hideServiceModal);
+    closeHistoryModal.addEventListener('click', () => historyModal.classList.remove('active')); 
+    closeServiceModal.addEventListener('click', hideServiceModal); 
+    cancelService.addEventListener('click', hideServiceModal);
     
-    window.addEventListener('click',(e)=>{ 
-      if(e.target===historyModal)historyModal.classList.remove('active'); 
-      if(e.target===serviceModal)hideServiceModal(); 
+    window.addEventListener('click', (e) => { 
+      if (e.target === historyModal) historyModal.classList.remove('active'); 
+      if (e.target === serviceModal) hideServiceModal(); 
     });
-    
-    // --- EDIT FUNCTION - NO PASSWORD NEEDED! ---
+
+    // Edit function
     function startEdit(id) {
       const ext = extinguishersData.find(e => e.id === id);
       if (!ext) return;
@@ -929,20 +1864,17 @@
       expirationInput.value = ext.expiration;
       serviceInput.value = ext.lastService;
       
-      // Show the form if hidden
-      addForm.scrollIntoView({behavior:'smooth'});
-      if (addForm.classList.contains('hidden')) toggleFormBtn.click();
+      addForm.scrollIntoView({ behavior: 'smooth' });
+      if (addForm.classList.contains('collapsed')) toggleFormBtn.click();
       
-      // Change button to Update mode
       addBtn.innerHTML = '<i class="fas fa-save"></i> Update Extinguisher';
     }
 
-    // --- DELETE FUNCTION - NO PASSWORD NEEDED! ---
+    // Delete function
     async function deleteExtinguisher(id) {
       if (confirm('Are you sure you want to delete this extinguisher? This action cannot be undone.')) {
         try {
           await deleteDoc(doc(db, "fireExtinguishers", id));
-          // If we were editing this one, reset the form
           if (editingId === id) {
             resetForm();
           }
@@ -953,7 +1885,6 @@
       }
     }
 
-    // Reset form to "Add" mode
     function resetForm() {
       editingId = null;
       codeInput.value = '';
@@ -965,121 +1896,123 @@
       addBtn.innerHTML = '<i class="fas fa-plus"></i> Add Extinguisher';
     }
 
-    // --- SERVICE CONFIRMATION ---
-    confirmService.addEventListener('click', async()=>{ 
-      if(selectedExtinguishers.size===0){ 
+    // Service confirmation
+    confirmService.addEventListener('click', async() => { 
+      if (selectedExtinguishers.size === 0) { 
         hideServiceModal(); 
         return; 
       } 
-      const sDate=serviceDate.value, nxt=nextServiceDate.value, newExp=newExpirationDate.value; 
-      if(!nxt||!newExp){ 
+      const sDate = serviceDate.value;
+      const nxt = nextServiceDate.value;
+      const newExp = newExpirationDate.value; 
+      if (!nxt || !newExp) { 
         alert('Please select both Next Service Date and New Expiration Date'); 
         return; 
       } 
-      for(const id of selectedExtinguishers){ 
-        const ext=extinguishersData.find(e=>e.id===id); 
-        const cnt=(ext.serviceCount||0)+1; 
-        await updateDoc(doc(db,"fireExtinguishers",id),{
-          lastService:sDate,
-          nextServiceDate:nxt,
-          expiration:newExp,
-          serviceCount:cnt,
-          serviceHistory:arrayUnion({
-            date:sDate,
-            serviceNumber:cnt,
-            nextServiceDate:nxt,
-            newExpirationDate:newExp,
-            timestamp:new Date().toISOString()
+      for (const id of selectedExtinguishers) { 
+        const ext = extinguishersData.find(e => e.id === id); 
+        const cnt = (ext.serviceCount || 0) + 1; 
+        await updateDoc(doc(db, "fireExtinguishers", id), {
+          lastService: sDate,
+          nextServiceDate: nxt,
+          expiration: newExp,
+          serviceCount: cnt,
+          serviceHistory: arrayUnion({
+            date: sDate,
+            serviceNumber: cnt,
+            nextServiceDate: nxt,
+            newExpirationDate: newExp,
+            timestamp: new Date().toISOString()
           }),
-          updatedAt:serverTimestamp()
+          updatedAt: serverTimestamp()
         }); 
       } 
       selectedExtinguishers.clear(); 
-      selectAllCheckbox.checked=false; 
+      selectAllCheckbox.checked = false; 
       updateSelectedCount(); 
       hideServiceModal(); 
       alert('Service completed successfully!'); 
     });
 
     viewServiceHistoryBtn.addEventListener('click', showHistoryModal);
+    serviceSelectedBtn.addEventListener('click', showServiceModal);
 
-    // helpers
-    function calculateDaysLeft(d){ 
-      const t=new Date(); 
+    // Helpers
+    function calculateDaysLeft(d) { 
+      const t = new Date(); 
       t.setHours(0,0,0,0); 
-      const e=new Date(d); 
+      const e = new Date(d); 
       e.setHours(0,0,0,0); 
-      return Math.ceil((e-t)/(1000*60*60*24)); 
+      return Math.ceil((e - t) / (1000*60*60*24)); 
     }
     
-    function getStatusInfo(d){ 
-      if(d<0) return {class:'badge-danger',text:'Expired',icon:'fa-times-circle'}; 
-      if(d<=30) return {class:'badge-warning',text:'Expiring Soon',icon:'fa-exclamation-triangle'}; 
-      return {class:'badge-success',text:'Good',icon:'fa-check-circle'}; 
+    function getStatusInfo(d) { 
+      if (d < 0) return { class: 'badge-danger', text: 'Expired', icon: 'fa-times-circle' }; 
+      if (d <= 30) return { class: 'badge-warning', text: 'Expiring Soon', icon: 'fa-exclamation-triangle' }; 
+      return { class: 'badge-success', text: 'Good', icon: 'fa-check-circle' }; 
     }
     
-    function formatDate(d){ 
-      return new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); 
+    function formatDate(d) { 
+      return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); 
     }
     
-    function updateStats(exts){ 
-      let g=0,e30=0,ex=0; 
-      exts.forEach(ext=>{ 
-        const d=calculateDaysLeft(ext.expiration); 
-        if(d<0) ex++; 
-        else if(d<=30) e30++; 
+    function updateStats(exts) { 
+      let g = 0, e30 = 0, ex = 0; 
+      exts.forEach(ext => { 
+        const d = calculateDaysLeft(ext.expiration); 
+        if (d < 0) ex++; 
+        else if (d <= 30) e30++; 
         else g++; 
       }); 
-      totalCount.textContent=exts.length; 
-      goodCount.textContent=g; 
-      expiringCount.textContent=e30; 
-      expiredCount.textContent=ex; 
+      totalCount.textContent = exts.length; 
+      goodCount.textContent = g; 
+      expiringCount.textContent = e30; 
+      expiredCount.textContent = ex; 
     }
     
-    function updateSelectedCount(){ 
-      const sz=selectedExtinguishers.size; 
-      selectedCount.textContent=sz+' selected'; 
-      serviceSelectedBtn.disabled=sz===0; 
+    function updateSelectedCount() { 
+      const sz = selectedExtinguishers.size; 
+      selectedCount.textContent = sz + ' selected'; 
+      serviceSelectedBtn.disabled = sz === 0; 
     }
     
-    selectAllCheckbox.addEventListener('change',(e)=>{ 
-      if(e.target.checked) 
-        extinguishersData.forEach(ext=>selectedExtinguishers.add(ext.id)); 
-      else 
+    selectAllCheckbox.addEventListener('change', (e) => { 
+      if (e.target.checked) {
+        extinguishersData.forEach(ext => selectedExtinguishers.add(ext.id)); 
+      } else {
         selectedExtinguishers.clear(); 
+      }
       updateSelectedCount(); 
       renderFilteredTable(); 
     });
-    
-    serviceSelectedBtn.addEventListener('click', showServiceModal);
 
-    function renderTable(extinguishersToRender){
-      if(!extinguishersToRender.length) { 
-        tableBody.innerHTML='<tr><td colspan="11" class="empty-state"><i class="fas fa-fire-extinguisher"></i>No extinguishers</td></tr>'; 
+    function renderTable(extinguishersToRender) {
+      if (!extinguishersToRender.length) { 
+        tableBody.innerHTML = '<tr><td colspan="11" class="empty-state"><i class="fas fa-fire-extinguisher"></i>No extinguishers</td></tr>'; 
         return; 
       }
       
-      const sorted=[...extinguishersToRender].sort((a,b)=>calculateDaysLeft(a.expiration)-calculateDaysLeft(b.expiration));
-      let html='';
+      const sorted = [...extinguishersToRender].sort((a,b) => calculateDaysLeft(a.expiration) - calculateDaysLeft(b.expiration));
+      let html = '';
       
-      sorted.forEach(ext=>{
-        const dl=calculateDaysLeft(ext.expiration); 
-        const st=getStatusInfo(dl); 
-        const rc=dl<0?'expired-row':''; 
-        const chk=selectedExtinguishers.has(ext.id); 
-        const next=ext.nextServiceDate?formatDate(ext.nextServiceDate):'Not set';
+      sorted.forEach(ext => {
+        const dl = calculateDaysLeft(ext.expiration); 
+        const st = getStatusInfo(dl); 
+        const rc = dl < 0 ? 'expired-row' : ''; 
+        const chk = selectedExtinguishers.has(ext.id); 
+        const next = ext.nextServiceDate ? formatDate(ext.nextServiceDate) : 'Not set';
         
-        html+=`<tr class="${rc}">
-          <td class="checkbox-cell"><input type="checkbox" class="ext-checkbox" data-id="${ext.id}" ${chk?'checked':''}></td>
-          <td><span class="code-badge">${ext.code||'N/A'}</span></td>
+        html += `<tr class="${rc}">
+          <td class="checkbox-cell"><input type="checkbox" class="ext-checkbox" data-id="${ext.id}" ${chk ? 'checked' : ''}></td>
+          <td><span class="code-badge">${ext.code || 'N/A'}</span></td>
           <td><div class="location-cell"><div class="location-icon"><i class="fas fa-fire-extinguisher"></i></div>${ext.location}</div></td>
-          <td><span class="type-badge">${ext.type||'DCP'}</span></td>
-          <td>${ext.capacity||'4'} kg</td>
+          <td><span class="type-badge">${ext.type || 'DCP'}</span></td>
+          <td>${ext.capacity || '4'} kg</td>
           <td>${formatDate(ext.expiration)}</td>
           <td>${formatDate(ext.lastService)}</td>
           <td><span class="next-service-badge">${next}</span></td>
           <td><span class="badge ${st.class}"><i class="fas ${st.icon}"></i> ${st.text}</span></td>
-          <td><span class="service-count">${ext.serviceCount||0}</span></td>
+          <td><span class="service-count">${ext.serviceCount || 0}</span></td>
           <td><div class="menu-container">
             <button class="menu-button" onclick="toggleMenu('${ext.id}')"><i class="fas fa-ellipsis-vertical"></i></button>
             <div class="dropdown-menu" id="menu-${ext.id}">
@@ -1091,79 +2024,81 @@
         </tr>`;
       });
       
-      tableBody.innerHTML=html;
+      tableBody.innerHTML = html;
       
-      // attach checkbox events
-      document.querySelectorAll('.ext-checkbox').forEach(cb=>{
-        cb.addEventListener('change',(e)=>{ 
-          const id=e.target.dataset.id; 
-          e.target.checked?selectedExtinguishers.add(id):selectedExtinguishers.delete(id); 
-          selectAllCheckbox.checked=selectedExtinguishers.size===extinguishersData.length&&extinguishersData.length>0; 
+      document.querySelectorAll('.ext-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => { 
+          const id = e.target.dataset.id; 
+          e.target.checked ? selectedExtinguishers.add(id) : selectedExtinguishers.delete(id); 
+          selectAllCheckbox.checked = selectedExtinguishers.size === extinguishersData.length && extinguishersData.length > 0; 
           updateSelectedCount(); 
         });
       });
       
-      // attach action button events - DIRECTLY WITHOUT PASSWORD
-      document.querySelectorAll('.view-history').forEach(btn=>{
-        btn.addEventListener('click',(e)=>{ 
+      document.querySelectorAll('.view-history').forEach(btn => {
+        btn.addEventListener('click', (e) => { 
           showIndividualHistory(e.currentTarget.dataset.id); 
           closeAllMenus(); 
         });
       });
       
-      document.querySelectorAll('.edit-item').forEach(btn=>{
-        btn.addEventListener('click',(e)=>{ 
+      document.querySelectorAll('.edit-item').forEach(btn => {
+        btn.addEventListener('click', (e) => { 
           startEdit(e.currentTarget.dataset.id); 
           closeAllMenus(); 
         });
       });
       
-      document.querySelectorAll('.delete-item').forEach(btn=>{
-        btn.addEventListener('click',(e)=>{ 
+      document.querySelectorAll('.delete-item').forEach(btn => {
+        btn.addEventListener('click', (e) => { 
           deleteExtinguisher(e.currentTarget.dataset.id); 
           closeAllMenus(); 
         });
       });
     }
     
-    window.toggleMenu = function(id){ 
+    window.toggleMenu = function(id) { 
       closeAllMenus(); 
       document.getElementById(`menu-${id}`)?.classList.add('active'); 
     };
     
-    function closeAllMenus(){ 
-      document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('active')); 
+    function closeAllMenus() { 
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active')); 
     }
     
-    document.addEventListener('click',(e)=>{ 
-      if(!e.target.closest('.menu-container')) closeAllMenus(); 
+    document.addEventListener('click', (e) => { 
+      if (!e.target.closest('.menu-container')) closeAllMenus(); 
     });
 
     // Firestore realtime
-    const q = query(collection(db,"fireExtinguishers"), orderBy("createdAt","desc"));
-    onSnapshot(q, (snapshot)=>{
-      const exts = snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+    const q = query(collection(db, "fireExtinguishers"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+      const exts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       extinguishersData = exts;
       updateStats(exts);
       refreshLocationFilterOptions();
       renderFilteredTable();
-    }, (err)=>{ 
+    }, (err) => { 
       console.error(err); 
-      tableBody.innerHTML='<tr><td colspan="11" class="empty-state"><i class="fas fa-exclamation-triangle"></i>Error loading</td></tr>'; 
+      tableBody.innerHTML = '<tr><td colspan="11" class="empty-state"><i class="fas fa-exclamation-triangle"></i>Error loading</td></tr>'; 
     });
 
     // Add/Update extinguisher
-    addBtn.addEventListener('click', async()=>{
-      const code=codeInput.value.trim(), loc=locationInput.value.trim(), type=typeInput.value, cap=capacityInput.value, exp=expirationInput.value, last=serviceInput.value;
+    addBtn.addEventListener('click', async() => {
+      const code = codeInput.value.trim();
+      const loc = locationInput.value.trim();
+      const type = typeInput.value;
+      const cap = capacityInput.value;
+      const exp = expirationInput.value;
+      const last = serviceInput.value;
       
-      if(!code||!loc||!type||!cap||!exp||!last) {
+      if (!code || !loc || !type || !cap || !exp || !last) {
         alert('Please fill all fields');
         return;
       }
       
       try {
         if (editingId) {
-          // Update existing
           await updateDoc(doc(db, "fireExtinguishers", editingId), {
             code,
             location: loc,
@@ -1175,23 +2110,21 @@
           });
           alert('Extinguisher updated successfully!');
         } else {
-          // Add new
-          await addDoc(collection(db,"fireExtinguishers"),{
+          await addDoc(collection(db, "fireExtinguishers"), {
             code,
-            location:loc,
+            location: loc,
             type,
-            capacity:cap,
-            expiration:exp,
-            lastService:last,
-            serviceCount:0,
-            serviceHistory:[],
-            createdAt:serverTimestamp(),
-            updatedAt:serverTimestamp()
+            capacity: cap,
+            expiration: exp,
+            lastService: last,
+            serviceCount: 0,
+            serviceHistory: [],
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
           });
           alert('Extinguisher added successfully!');
         }
         
-        // Reset form
         resetForm();
         
       } catch (error) {
@@ -1201,16 +2134,16 @@
     });
 
     // Enter key
-    [codeInput,locationInput,typeInput,capacityInput,expirationInput,serviceInput].forEach(i=>{
-      i.addEventListener('keypress',e=>{ 
-        if(e.key==='Enter'){ 
+    [codeInput, locationInput, typeInput, capacityInput, expirationInput, serviceInput].forEach(i => {
+      i.addEventListener('keypress', e => { 
+        if (e.key === 'Enter') { 
           e.preventDefault(); 
           addBtn.click(); 
         } 
       });
     });
 
-    // Cancel edit with Escape key
+    // Cancel edit with Escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && editingId) {
         if (confirm('Cancel editing?')) {
@@ -1219,23 +2152,20 @@
       }
     });
 
-    // PDF Download Function - PORTRAIT MODE
+    // PDF Download
     downloadPdfBtn.addEventListener('click', () => {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('portrait'); // Changed from 'landscape' to 'portrait'
+      const doc = new jsPDF('portrait');
       
-      // Get filtered data
       let dataToExport = extinguishersData;
       if (activeLocationFilter !== 'all') {
         dataToExport = extinguishersData.filter(ext => ext.location === activeLocationFilter);
       }
       
-      // Title
       doc.setFontSize(16);
-      doc.setTextColor(26, 54, 93);
+      doc.setTextColor(10, 28, 47);
       doc.text('Fire Extinguisher Report', 14, 15);
       
-      // Subtitle with filter info
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       const filterText = activeLocationFilter === 'all' 
@@ -1243,11 +2173,9 @@
         : `Location: ${activeLocationFilter} (${dataToExport.length} extinguishers)`;
       doc.text(filterText, 14, 22);
       
-      // Date
       const todayStr = new Date().toLocaleDateString();
       doc.text(`Generated: ${todayStr}`, 14, 28);
       
-      // Stats summary
       let good = 0, expiring = 0, expired = 0;
       dataToExport.forEach(ext => {
         const days = calculateDaysLeft(ext.expiration);
@@ -1260,7 +2188,6 @@
       doc.setTextColor(0, 0, 0);
       doc.text(`Summary - Total: ${dataToExport.length} | Good: ${good} | Expiring Soon: ${expiring} | Expired: ${expired}`, 14, 35);
       
-      // Table data
       const tableData = dataToExport.map(ext => {
         const days = calculateDaysLeft(ext.expiration);
         const status = days < 0 ? 'Expired' : (days <= 30 ? 'Expiring Soon' : 'Good');
@@ -1277,19 +2204,17 @@
         ];
       });
       
-      // Sort by status (expired first, then expiring soon, then good)
       tableData.sort((a, b) => {
         const statusOrder = { 'Expired': 0, 'Expiring Soon': 1, 'Good': 2 };
         return (statusOrder[a[7]] || 3) - (statusOrder[b[7]] || 3);
       });
       
-      // Add table - adjusted column widths for portrait mode
       doc.autoTable({
         startY: 40,
         head: [['Code', 'Location', 'Type', 'Cap', 'Expiration', 'Last Svc', 'Next Svc', 'Status', 'Cnt']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [26, 54, 93], textColor: 255, fontSize: 8 },
+        headStyles: { fillColor: [10, 28, 47], textColor: 255, fontSize: 8 },
         alternateRowStyles: { fillColor: [245, 247, 250] },
         styles: { fontSize: 7, cellPadding: 1.5 },
         columnStyles: {
@@ -1306,7 +2231,6 @@
         margin: { left: 14, right: 14 }
       });
       
-      // Save PDF
       const filename = activeLocationFilter === 'all' 
         ? `fire-extinguishers-all-${todayStr.replace(/\//g, '-')}.pdf` 
         : `fire-extinguishers-${activeLocationFilter.toLowerCase().replace(/\s+/g, '-')}-${todayStr.replace(/\//g, '-')}.pdf`;
