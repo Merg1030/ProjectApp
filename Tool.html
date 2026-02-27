@@ -3,179 +3,479 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tools Management System</title>
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
-  <!-- FontAwesome CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>PENTA | Tools Management</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
-    :root {
-      --primary-color: #2A5C82;
-      --secondary-color: #5D8AA8;
-      --accent-color: #4CAF50;
-      --accent-hover: #45a049;
-      --danger-color: #E53935;
-      --danger-hover: #c62828;
-      --warning-color: #FF9800;
-      --dark-bg: #0F1A2A;
-      --card-bg: #1E2B3C;
-      --light-card: #263445;
-      --text-primary: #E8F1F5;
-      --text-secondary: #B0BEC5;
-      --border-color: #2D3E50;
-      --shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-      --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.15);
-      --gradient-primary: linear-gradient(135deg, #2A5C82 0%, #3A7CA5 100%);
-      --gradient-dark: linear-gradient(135deg, #1E2B3C 0%, #2D3E50 100%);
-      --penta-color: #2A5C82;
-      --techno-color: #8A2BE2;
-    }
-
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
-    html, body {
-      height: 100%;
-      font-family: 'Inter', Arial, sans-serif;
-      background: var(--dark-bg);
-      color: var(--text-primary);
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #d3dfed;
+      color: #0a1c2f;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    #wrapper {
-      min-height: 100vh;
+    /* Main Layout */
+    .main-wrapper {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar Toggle Button - Always Visible */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      width: 32px;
+      height: 32px;
+      background: #0a1c2f;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 2px solid white;
+      font-size: 0.8rem;
+      z-index: 2000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: #1f3d62;
+      transform: scale(1.1);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: white;
+      color: #0a1c2f;
       display: flex;
       flex-direction: column;
+      height: 100vh;
+      border-right: 2px solid #1f3d62;
+      transition: transform 0.28s ease;
+      position: relative;
+      flex-shrink: 0;
+      overflow: hidden;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+      transform: translateX(0);
     }
 
-    /* Enhanced Navbar */
-    .navbar {
-      background: var(--gradient-primary);
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .sidebar-header {
+      padding: 16px 16px 20px;
+      border-bottom: 2px solid #1f3d62;
+      background: #0a1c2f;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #b8cde0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #0a1c2f;
+    }
+
+    .logo-text h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
       color: white;
-      border: none;
-      min-height: 70px;
-      box-shadow: var(--shadow);
-      width: 100%;
-      position: fixed;
-      top: 0;
-      z-index: 1001;
-      padding: 0 30px;
     }
 
-    .navbar .navbar-header {
+    .logo-text span {
+      font-size: 0.7rem;
+      color: #97adc9;
+    }
+
+    /* Navigation */
+    .nav-section {
+      padding: 20px 16px;
+      border-bottom: 1px solid #e0e8f5;
+    }
+
+    .nav-section h3 {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #7f96b3;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .nav-links {
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      color: #0a1c2f;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: #e6efff;
+    }
+
+    .nav-link.active {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      font-weight: 600;
+      border-left: 3px solid #1f3d62;
+    }
+
+    .nav-icon {
+      font-size: 0.9rem;
+      width: 20px;
+      text-align: center;
+      color: #2b4a73;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: white;
+      transition: margin-left 0.28s ease;
+      margin-left: 0;
+    }
+
+    .main-content.expanded {
+      margin-left: -260px;
+    }
+
+    /* Header */
+    .app-header {
+      background: #0a1c2f;
+      color: white;
+      padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 70px;
-      width: 100%;
+      flex-shrink: 0;
+      min-height: 56px;
     }
 
-    .navbar .navbar-brand {
-      color: white;
-      font-weight: 700;
-      font-size: 1.6rem;
-      text-decoration: none;
-      font-family: 'Roboto Condensed', sans-serif;
-      letter-spacing: 0.5px;
+    .header-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
     }
 
-    .navbar .navbar-brand i {
-      color: #FFD166;
-    }
-
-    .btn-back {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 14px;
-      margin-right: 20px;
-      transition: all 0.3s ease;
+    .mobile-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
       color: white;
-      text-decoration: none;
-      display: inline-flex;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .mobile-toggle:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .page-title {
+      display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 500;
     }
 
-    .btn-back:hover {
-      background: rgba(255, 255, 255, 0.25);
-      text-decoration: none;
-      color: white;
-      transform: translateY(-2px);
+    .page-title h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
     }
 
-    .user-info {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 8px 16px;
-      border-radius: 50px;
-      font-size: 15px;
-      font-weight: 500;
+    .page-title i {
+      color: #97adc9;
+    }
+
+    .header-right {
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      gap: 12px;
     }
 
-    .user-info i {
-      color: #FFD166;
+    .date-display {
+      background: #1f3d62;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .date-display i {
+      color: #97adc9;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 6px 14px;
+      border: 1px solid #2b4a73;
+      background: white;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+      color: #0b1f33;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: #0a1c2f;
+      color: white;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: white;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn-success {
+      background: #059669;
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background: #047857;
+    }
+
+    .btn-danger {
+      background: #cc0000;
+      color: white;
+      border: none;
+    }
+
+    .btn-danger:hover {
+      background: #990000;
+    }
+
+    .btn:hover {
+      background: #e6efff;
+    }
+
+    .btn-primary:hover {
+      background: #1f3d62;
+      color: white;
+    }
+
+    /* Actions Panel */
+    .actions-container {
+      padding: 4px 20px;
+      background: #f2f6fc;
+      border-bottom: 1px solid #b3c7e0;
+      flex-shrink: 0;
+    }
+
+    .actions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .actions-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a1c2f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .actions-header i {
+      font-size: 12px;
+      transition: transform 0.2s;
+      color: #1f3d62;
+    }
+
+    .actions-panel {
+      display: flex;
+      gap: 8px;
+      padding: 8px 0 12px;
+      transition: all 0.2s;
+      max-height: 100px;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .actions-panel.collapsed {
+      max-height: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Dashboard Container */
+    .dashboard-container {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+      background: #f2f6fc;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      background: #ecf2fa;
+    }
+
+    .dashboard-container::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,20,40,0.2);
+    }
+
+    .welcome-text h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+
+    .welcome-text p {
+      color: #97adc9;
+      font-size: 0.8rem;
+      margin: 0;
+    }
+
+    .welcome-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b8cde0;
+      font-size: 1.8rem;
+      border: 2px solid rgba(255,255,255,0.2);
     }
 
     /* Warehouse Selector */
     .warehouse-selector {
       position: relative;
-      margin-right: 20px;
+      margin-bottom: 20px;
     }
 
     .warehouse-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.4);
+      background: white;
+      border: 2px solid #1f3d62;
       border-radius: 8px;
       padding: 10px 16px;
-      color: white;
+      color: #0a1c2f;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 10px;
-      min-width: 180px;
-      transition: all 0.3s ease;
+      min-width: 200px;
+      transition: all 0.2s;
     }
 
     .warehouse-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-2px);
+      background: #e6efff;
     }
 
     .warehouse-btn i {
-      font-size: 18px;
+      color: #2b4a73;
     }
 
     .warehouse-dropdown {
       position: absolute;
       top: 100%;
       left: 0;
-      background: var(--card-bg);
+      background: white;
+      border: 2px solid #1f3d62;
       border-radius: 8px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       width: 220px;
-      margin-top: 8px;
+      margin-top: 4px;
       display: none;
-      z-index: 1000;
+      z-index: 100;
       overflow: hidden;
-      border: 1px solid var(--border-color);
     }
 
     .warehouse-dropdown.show {
@@ -183,13 +483,13 @@
     }
 
     .warehouse-option {
-      padding: 14px 16px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
       cursor: pointer;
-      transition: all 0.2s ease;
-      border-bottom: 1px solid var(--border-color);
+      transition: all 0.2s;
+      border-bottom: 1px solid #e0e8f5;
     }
 
     .warehouse-option:last-child {
@@ -197,542 +497,228 @@
     }
 
     .warehouse-option:hover {
-      background: var(--light-card);
+      background: #e6efff;
     }
 
     .warehouse-option.active {
-      background: rgba(42, 92, 130, 0.3);
-      border-left: 4px solid var(--primary-color);
-    }
-
-    .warehouse-option.techno.active {
-      background: rgba(138, 43, 226, 0.3);
-      border-left: 4px solid var(--techno-color);
+      background: #d4e2f2;
+      border-left: 4px solid #1f3d62;
     }
 
     .warehouse-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 14px;
       color: white;
     }
 
     .warehouse-icon.penta {
-      background: linear-gradient(135deg, var(--penta-color) 0%, #3A7CA5 100%);
+      background: #0a1c2f;
     }
 
     .warehouse-icon.techno {
-      background: linear-gradient(135deg, var(--techno-color) 0%, #9b59b6 100%);
+      background: #d97706;
     }
 
     .warehouse-details h4 {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 2px;
+      margin: 0;
+      color: #0a1c2f;
     }
 
     .warehouse-details p {
-      font-size: 12px;
-      color: var(--text-secondary);
+      font-size: 11px;
+      color: #7f96b3;
+      margin: 0;
     }
 
     .warehouse-indicator {
-      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #059669;
+      margin-left: auto;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .stat-card h3 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #0a1c2f;
+      margin: 0 0 4px;
+    }
+
+    .stat-card p {
+      font-size: 0.7rem;
+      color: #7f96b3;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stat-card.assigned {
+      border-left: 4px solid #059669;
+    }
+
+    .stat-card.available {
+      border-left: 4px solid #2b4a73;
+    }
+
+    .stat-card.repair {
+      border-left: 4px solid #d97706;
+    }
+
+    /* Search Box */
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #b3c7e0;
+      border-radius: 30px;
+      padding: 0.2rem 0.8rem;
+      min-width: 250px;
+    }
+
+    .search-box i {
+      color: #7f96b3;
+    }
+
+    .search-box input {
+      border: none;
+      padding: 8px 8px;
+      width: 100%;
+      outline: none;
+      font-size: 12px;
+      background: transparent;
+      color: #0a1c2f;
+    }
+
+    .search-box input::placeholder {
+      color: #7f96b3;
+    }
+
+    /* Table Styles */
+    .table-wrapper {
+      background: white;
+      border: 2px solid #1f3d62;
+      border-radius: 12px;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #97adc9 #ecf2fa;
+      max-height: 500px;
+    }
+
+    .table-wrapper::-webkit-scrollbar {
       width: 10px;
       height: 10px;
-      border-radius: 50%;
-      margin-left: auto;
-      background: var(--accent-color);
+      background: #ecf2fa;
     }
 
-    /* Warehouse Stats Card */
-    .warehouse-stats {
-      background: var(--light-card);
-      border-radius: 10px;
-      padding: 15px 20px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-left: 4px solid var(--penta-color);
-      box-shadow: var(--shadow-light);
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background: #97adc9;
+      border-radius: 8px;
+      border: 2px solid #ecf2fa;
     }
 
-    .warehouse-stats.techno {
-      border-left-color: var(--techno-color);
-    }
-
-    .warehouse-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .warehouse-title {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .warehouse-badge {
-      background: var(--penta-color);
-      color: white;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .warehouse-badge.techno {
-      background: var(--techno-color);
-    }
-
-    .warehouse-total {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    /* Main Content Area */
-    #page-wrapper {
-      margin-left: 0 !important;
-      margin-top: 70px;
-      padding: 30px;
+    .tools-table {
       width: 100%;
-      background: var(--dark-bg);
-      min-height: calc(100vh - 70px);
-      transition: margin-left 0.2s;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      min-width: 1000px;
     }
 
-    /* Panel Styling */
-    .panel {
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      margin-bottom: 30px;
-      border: none;
-      overflow: hidden;
-    }
-
-    .panel-heading-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      background: var(--gradient-dark);
-      padding: 0 25px;
-      min-height: 80px;
-    }
-
-    .panel-heading {
-      background: transparent;
-      color: white;
-      font-size: 1.5rem;
+    .tools-table th {
+      background: #d4e2f2;
+      color: #0a1c2f;
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 0.65rem;
       font-weight: 700;
+      text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .panel-heading i {
-      color: #5D8AA8;
-    }
-
-    .search-bar-container {
-      position: relative;
-    }
-
-    .search-bar {
-      padding: 12px 16px 12px 45px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 15px;
-      width: 280px;
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary);
-      transition: all 0.3s ease;
-    }
-
-    .search-bar:focus {
-      border: 1.5px solid var(--secondary-color);
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(93, 138, 168, 0.2);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .search-bar-container i {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-secondary);
-    }
-
-    /* Panel Body */
-    .panel-body {
-      padding: 25px;
-    }
-
-    /* Button Styles */
-    .btn-primary {
-      background: var(--primary-color);
-      border: none;
-      color: white !important;
-      border-radius: 8px;
-      padding: 12px 24px;
-      margin-bottom: 10px;
-      font-weight: 600;
-      margin-right: 12px;
-      font-size: 15px;
-      box-shadow: var(--shadow-light);
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-    }
-
-    .btn-primary:hover {
-      background: #1f4a6e;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(42, 92, 130, 0.3);
-      color: white !important;
-      text-decoration: none;
-    }
-
-    .btn-success {
-      background: var(--accent-color);
-      border: none;
-      color: white;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
-    }
-
-    .btn-success:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-      color: white;
-      text-decoration: none;
-    }
-
-    .btn-danger {
-      background: var(--danger-color);
-      border: none;
-      color: white;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(229, 57, 53, 0.2);
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
-      color: white;
-    }
-
-    .btn-history {
-      background: var(--light-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      border-radius: 8px;
-      padding: 12px 24px;
-      margin-bottom: 10px;
-      font-weight: 600;
-      margin-left: 20px;
-      font-size: 15px;
-      box-shadow: var(--shadow-light);
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-    }
-
-    .btn-history:hover {
-      background: var(--secondary-color);
-      color: white;
-      text-decoration: none;
-      transform: translateY(-3px);
-      border-color: var(--secondary-color);
-    }
-
-    /* Table Styling */
-    .table-responsive {
-      overflow-x: auto;
-      margin-top: 25px;
-      border-radius: 10px;
-      box-shadow: var(--shadow-light);
-      background: var(--card-bg);
-      padding: 0;
-      max-height: 65vh;
-      overflow-y: auto;
-      border: 1px solid var(--border-color);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      background: var(--card-bg);
-      margin-bottom: 0;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    thead {
-      background: var(--gradient-primary);
-      color: white;
+      border: 1px solid #9bb1cc;
+      border-bottom: 2px solid #1f3d62;
       position: sticky;
       top: 0;
       z-index: 10;
     }
 
-    th, td {
-      padding: 16px 15px;
-      text-align: left;
-      font-size: 15px;
-      border-bottom: 1px solid var(--border-color);
+    .tools-table td {
+      padding: 10px;
+      border: 1px solid #c7d6ec;
+      color: #0a1c2f;
+      vertical-align: middle;
+      background: white;
     }
 
-    th {
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: white;
-      position: sticky;
-      top: 0;
-      z-index: 11;
+    .tools-table tbody tr:hover td {
+      background: #e3ecf7;
     }
 
-    th:first-child {
-      border-top-left-radius: 10px;
-    }
-
-    th:last-child {
-      border-top-right-radius: 10px;
-    }
-
-    tr {
-      transition: all 0.2s ease;
-    }
-
-    tr:nth-child(even) {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    tr:hover {
-      background: rgba(93, 138, 168, 0.15);
-      transform: scale(1.002);
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    }
-
+    /* Status Badges */
     .status-badge {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      padding: 4px 8px;
+      border-radius: 30px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      border: 1px solid;
+      min-width: 80px;
+      text-align: center;
     }
 
     .status-assigned {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4CAF50;
-      border: 1px solid rgba(76, 175, 80, 0.3);
+      background: #c6f6d5;
+      color: #22543d;
+      border-color: #22543d;
     }
 
     .status-available {
-      background: rgba(33, 150, 243, 0.2);
-      color: #2196F3;
-      border: 1px solid rgba(33, 150, 243, 0.3);
+      background: #d4e2f2;
+      color: #0a1c2f;
+      border-color: #1f3d62;
     }
 
     .status-repair {
-      background: rgba(255, 152, 0, 0.2);
-      color: #FF9800;
-      border: 1px solid rgba(255, 152, 0, 0.3);
+      background: #feebc8;
+      color: #744210;
+      border-color: #744210;
     }
 
-    /* Action buttons container */
+    /* Action Buttons */
     .action-buttons {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
-    /* Tool Stats */
-    .tool-stats {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .stat-card {
-      background: var(--light-card);
-      border-radius: 10px;
-      padding: 15px 20px;
-      flex: 1;
-      min-width: 180px;
-      box-shadow: var(--shadow-light);
-      border-left: 4px solid var(--secondary-color);
-    }
-
-    .stat-card h3 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 5px;
-      color: var(--text-primary);
-    }
-
-    .stat-card p {
-      font-size: 14px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .stat-card.repair {
-      border-left-color: var(--warning-color);
-    }
-
-    .stat-card.assigned {
-      border-left-color: var(--accent-color);
-    }
-
-    .stat-card.available {
-      border-left-color: #2196F3;
-    }
-
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-content {
-      background: var(--card-bg);
-      border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-      animation: modalFadeIn 0.3s ease;
-    }
-
-    @keyframes modalFadeIn {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal-header {
-      padding: 20px 25px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--gradient-dark);
-      border-radius: 12px 12px 0 0;
-    }
-
-    .modal-header h3 {
-      font-size: 1.3rem;
+    .btn-small {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
       font-weight: 600;
-      color: white;
-      display: flex;
+      text-decoration: none;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .modal-header h3 i {
-      color: var(--danger-color);
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 24px;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-
-    .modal-close:hover {
-      color: white;
-    }
-
-    .modal-body {
-      padding: 25px;
-    }
-
-    .modal-message {
-      font-size: 16px;
-      line-height: 1.6;
-      color: var(--text-primary);
-      margin-bottom: 25px;
-    }
-
-    .modal-message strong {
-      color: #FFD166;
-    }
-
-    .modal-footer {
-      padding: 20px 25px;
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: flex-end;
-      gap: 15px;
-    }
-
-    .btn-cancel {
-      background: var(--light-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .btn-cancel:hover {
-      background: var(--secondary-color);
-      color: white;
-      border-color: var(--secondary-color);
+      gap: 4px;
     }
 
     /* Delete Mode Toggle */
@@ -745,9 +731,9 @@
     .toggle-switch {
       position: relative;
       display: inline-block;
-      width: 50px;
-      height: 24px;
-      margin: 0 10px;
+      width: 44px;
+      height: 22px;
+      margin: 0 8px;
     }
 
     .toggle-switch input {
@@ -763,221 +749,357 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: var(--light-card);
+      background-color: #ccc;
       transition: .4s;
-      border-radius: 24px;
-      border: 1px solid var(--border-color);
+      border-radius: 22px;
     }
 
     .slider:before {
       position: absolute;
       content: "";
-      height: 16px;
-      width: 16px;
-      left: 4px;
-      bottom: 3px;
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
       background-color: white;
       transition: .4s;
       border-radius: 50%;
     }
 
     input:checked + .slider {
-      background-color: var(--danger-color);
+      background-color: #cc0000;
     }
 
     input:checked + .slider:before {
-      transform: translateX(26px);
+      transform: translateX(22px);
     }
 
     .mode-label {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: #7f96b3;
     }
 
     .mode-label.active {
-      color: var(--danger-color);
+      color: #cc0000;
     }
 
-    /* Responsive Design */
-    @media (max-width: 1200px) {
-      .navbar-header {
-        flex-wrap: wrap;
-        height: auto !important;
-        padding: 10px 0;
-      }
-      
-      .navbar-brand {
-        margin-bottom: 10px;
-      }
-      
-      .warehouse-selector {
-        order: 3;
-        width: 100%;
-        margin-top: 10px;
-      }
-      
-      .warehouse-btn {
-        width: 100%;
-      }
-      
-      .warehouse-dropdown {
-        width: 100%;
-      }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.55);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
     }
 
-    @media (max-width: 992px) {
-      .panel-heading-container {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 20px;
-      }
-      
-      .panel-heading {
-        margin-bottom: 15px;
-      }
-      
-      .search-bar-container {
-        width: 100%;
-      }
-      
-      .search-bar {
-        width: 100%;
-      }
-      
-      .warehouse-stats {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-      }
+    .modal.show {
+      display: flex;
     }
 
+    .modal-content {
+      background: white;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 24px 60px rgba(0,20,40,0.45);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: #0a1c2f;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #97adc9;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: white;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-message {
+      font-size: 0.9rem;
+      color: #0a1c2f;
+      margin-bottom: 20px;
+    }
+
+    .modal-message strong {
+      color: #cc0000;
+    }
+
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e8f5;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      border: 1px solid #b3c7e0;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      background: #e6efff;
+    }
+
+    /* Footer */
+    .footer-note {
+      margin-top: 20px;
+      padding: 16px;
+      text-align: center;
+      color: #7f96b3;
+      font-size: 0.7rem;
+      border-top: 1px solid #e0e8f5;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-      #page-wrapper {
-        padding: 15px;
+      .sidebar {
+        position: fixed;
+        z-index: 1000;
+        height: 100vh;
+        transform: translateX(-100%);
       }
       
-      .panel-body {
-        padding: 15px;
+      .sidebar:not(.collapsed) {
+        transform: translateX(0);
       }
       
-      .btn-primary, .btn-history {
-        margin-bottom: 10px;
-        margin-right: 0;
-        width: 100%;
-        justify-content: center;
+      .main-content.expanded {
+        margin-left: 0;
       }
       
-      .action-buttons {
+      .mobile-toggle {
+        display: block;
+      }
+      
+      .sidebar-toggle-btn {
+        display: none;
+      }
+      
+      .app-header {
+        padding-left: 20px;
+      }
+      
+      .actions-panel {
         flex-direction: column;
+        max-height: 300px;
       }
       
-      .navbar {
-        padding: 0 15px;
+      .stats-grid {
+        grid-template-columns: 1fr;
       }
       
-      .navbar .navbar-brand {
-        font-size: 1.3rem;
-      }
-      
-      .user-info {
-        font-size: 13px;
-        padding: 6px 12px;
-      }
-      
-      .tool-stats {
+      .welcome-banner {
         flex-direction: column;
-      }
-      
-      .stat-card {
-        min-width: 100%;
+        text-align: center;
+        gap: 16px;
       }
       
       .delete-mode-container {
         margin-left: 0;
-        margin-top: 15px;
+        margin-top: 10px;
         width: 100%;
         justify-content: center;
       }
     }
-
-    @media (max-width: 576px) {
-      .navbar {
-        min-height: 60px;
-      }
-      
-      .navbar .navbar-header {
-        height: 60px;
-      }
-      
-      #page-wrapper {
-        margin-top: 60px;
-        padding: 10px;
-      }
-      
-      th, td {
-        padding: 12px 8px;
-        font-size: 14px;
-      }
-      
-      .panel-heading {
-        font-size: 1.3rem;
-      }
-      
-      .warehouse-title {
-        font-size: 16px;
-      }
-      
-      .warehouse-total {
-        font-size: 22px;
-      }
-      
-      .modal-content {
-        width: 95%;
-      }
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--secondary-color);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #4a7492;
-    }
-
-    /* Footer Note */
-    .footer-note {
-      text-align: center;
-      margin-top: 30px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      padding: 15px;
-      border-top: 1px solid var(--border-color);
-    }
   </style>
 </head>
 <body>
-  <div id="wrapper">
-    <!-- Enhanced Navbar -->
-    <nav class="navbar" role="navigation">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="#">
-          <i class="fas fa-tools"></i>IMS Tools Portal
-        </a>
-        
-        <div class="warehouse-selector" id="warehouse-selector">
+  <!-- Sidebar Toggle Button - Always Visible -->
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+    <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
+  </div>
+
+  <div class="main-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="logo-text">
+            <h2>PENTA</h2>
+            <span>Construction Pro</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div style="flex:1; overflow-y: auto; scrollbar-width: thin;">
+        <nav class="nav-section">
+          <h3>Dashboard</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="dashboard.html" class="nav-link">
+                <i class="fas fa-gauge-high nav-icon"></i>
+                <span>Overview</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="projectdashboard.html" class="nav-link">
+                <i class="fas fa-diagram-project nav-icon"></i>
+                <span>Projects</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Employees.html" class="nav-link">
+                <i class="fas fa-user-tie nav-icon"></i>
+                <span>Team</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Resources</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="#" class="nav-link active">
+                <i class="fas fa-screwdriver-wrench nav-icon"></i>
+                <span>Equipment</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Fire-extinguishers.html" class="nav-link">
+                <i class="fas fa-fire-extinguisher nav-icon"></i>
+                <span>Fire extinguisher</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="material.html" class="nav-link">
+                <i class="fas fa-truck-ramp-box nav-icon"></i>
+                <span>Materials</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="inventory.html" class="nav-link">
+                <i class="fas fa-warehouse nav-icon"></i>
+                <span>Inventory</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <nav class="nav-section">
+          <h3>Management</h3>
+          <ul class="nav-links">
+            <li class="nav-item">
+              <a href="Accountsdash.html" class="nav-link">
+                <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                <span>Finances</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="Table.html" class="nav-link">
+                <i class="fas fa-chart-column nav-icon"></i>
+                <span>Reports</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <!-- Header -->
+      <div class="app-header">
+        <div class="header-left">
+          <button class="mobile-toggle" id="mobileToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <i class="fas fa-tools"></i>
+            <h1>Tools Management</h1>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="date-display" id="currentDate">
+            <i class="fas fa-calendar-alt"></i>
+            <span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Panel -->
+      <div class="actions-container">
+        <div class="actions-header" id="actionsHeader">
+          <h3><i class="fas fa-sliders-h"></i> Quick Actions</h3>
+          <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+          <a href="addtool.html" class="btn">
+            <i class="fas fa-plus"></i> Add Tool
+          </a>
+          <a href="selectBulkAssigTools.html" class="btn">
+            <i class="fas fa-clipboard-list"></i> Bulk Assign
+          </a>
+          <a href="toolshistory.html" class="btn">
+            <i class="fas fa-history"></i> History
+          </a>
+          <a href="repair.html" class="btn">
+            <i class="fas fa-wrench"></i> Repair
+          </a>
+          <button class="btn" onclick="downloadToolsPDF()">
+            <i class="fas fa-file-pdf"></i> PDF Report
+          </button>
+          <a href="dashboard.html" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Dashboard Container -->
+      <div class="dashboard-container">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Equipment Inventory</h2>
+            <p>Track and manage all tools and equipment</p>
+          </div>
+          <div class="welcome-icon">
+            <i class="fas fa-tools"></i>
+          </div>
+        </div>
+
+        <!-- Warehouse Selector -->
+        <div class="warehouse-selector">
           <div class="warehouse-btn" id="warehouse-btn">
             <i class="fas fa-warehouse"></i>
             <span id="current-warehouse-name">Penta Tools</span>
@@ -994,7 +1116,7 @@
               </div>
               <div class="warehouse-indicator"></div>
             </div>
-            <div class="warehouse-option techno" data-warehouse="techno">
+            <div class="warehouse-option" data-warehouse="techno">
               <div class="warehouse-icon techno">
                 <i class="fas fa-microchip"></i>
               </div>
@@ -1005,140 +1127,80 @@
             </div>
           </div>
         </div>
-        
-        <div style="display: flex; align-items: center;">
-          <a href="dashboard.html" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-          </a>
-          
-          <span class="user-info">
-            <i class="fas fa-user-circle"></i> Welcome Christopher Chishela
-          </span>
-        </div>
-      </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div id="page-wrapper">
-      <div id="page-inner">
-        <div class="row">
-          <div class="col-md-12">
-            <!-- Warehouse Stats -->
-            <div class="warehouse-stats" id="warehouse-stats">
-              <div class="warehouse-info">
-                <div>
-                  <span class="warehouse-title" id="warehouse-title">Penta Tools</span>
-                  <span class="warehouse-badge" id="warehouse-badge">Active Warehouse</span>
-                </div>
-                <div>
-                  <h3 class="warehouse-total" id="warehouse-total-tools">0</h3>
-                  <p>Total Tools in this Warehouse</p>
-                </div>
-              </div>
-              <div>
-                <button class="btn btn-primary" onclick="addToolToCurrentWarehouse()">
-                  <i class="fas fa-plus-circle"></i> Add Tool to This Warehouse
-                </button>
-              </div>
-            </div>
-            
-            <!-- Tool Stats -->
-            <div class="tool-stats">
-              <div class="stat-card">
-                <h3 id="total-tools">0</h3>
-                <p>Total Tools</p>
-              </div>
-              <div class="stat-card assigned">
-                <h3 id="assigned-tools">0</h3>
-                <p>Assigned Tools</p>
-              </div>
-              <div class="stat-card available">
-                <h3 id="available-tools">0</h3>
-                <p>Available Tools</p>
-              </div>
-              <div class="stat-card repair">
-                <h3 id="repair-tools">0</h3>
-                <p>In Repair</p>
-              </div>
-            </div>
-            
-            <!-- Main Panel -->
-            <div class="panel panel-default">
-              <div class="panel-heading-container">
-                <span class="panel-heading">
-                  <i class="fas fa-toolbox"></i> 
-                  <span id="panel-title">Penta Tools</span> Inventory
-                </span>
-                <div class="search-bar-container">
-                  <i class="fas fa-search"></i>
-                  <input type="text" class="search-bar" id="tool-search-bar" placeholder="Search by tool name, bin, holder...">
-                </div>
-              </div>
-              
-              <div class="panel-body">
-                <!-- Action Buttons -->
-                <div class="dataTables_length" id="dataTables-example_length">
-                  <a href="addtool.html" class="btn btn-primary" id="add-tool-btn">
-                    <i class="fas fa-plus-circle"></i> Add New Tool
-                  </a>
-                  <a href="selectBulkAssigTools.html" class="btn btn-primary">
-                    <i class="fas fa-clipboard-list"></i> Bulk Assign Tools
-                  </a>
-                  <a href="toolshistory.html" class="btn-history">
-                    <i class="fas fa-history"></i> Tools History
-                  </a>
-                  <a href="repair.html" class="btn-history" style="background: rgba(255, 152, 0, 0.1); border-color: rgba(255, 152, 0, 0.3);">
-                    <i class="fas fa-wrench"></i> Repair Tools
-                  </a>
-                  <button class="btn btn-primary" onclick="downloadToolsPDF()">
-                    <i class="fas fa-file-pdf"></i> Download PDF Report
-                  </button>
-                  
-                  <!-- Delete Mode Toggle -->
-                  <div class="delete-mode-container">
-                    <span class="mode-label">Delete Mode:</span>
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="delete-mode-toggle">
-                      <span class="slider"></span>
-                    </label>
-                    <span class="mode-label" id="delete-mode-status">Off</span>
-                  </div>
-                </div>
-                
-                <br><hr style="border-color: var(--border-color); margin: 20px 0;">
-                
-                <!-- Tools Table -->
-                <div class="table-responsive">
-                  <table class="table table-striped table-bordered table-hover" id="dataTables-example">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th><i class="fas fa-box"></i> Bin ID</th>
-                        <th><i class="fas fa-toolbox"></i> Tool Name</th>
-                        <th><i class="fas fa-user"></i> Current Holder</th>
-                        <th><i class="fas fa-map-marker-alt"></i> Location</th>
-                        <th><i class="fas fa-info-circle"></i> Status</th>
-                        <th><i class="fas fa-cogs"></i> Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tools-table-body">
-                      <!-- Dynamic Firestore data will appear here -->
-                    </tbody>
-                  </table>
-                </div>
-                
-                <!-- Footer Note -->
-                <div class="footer-note">
-                  <i class="fas fa-info-circle"></i> 
-                  <span id="current-warehouse-footer">Penta Tools</span> Management System • 
-                  Last updated: <span id="current-date"></span>
-                </div>
-              </div>
-            </div>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3 id="total-tools">0</h3>
+            <p>Total Tools</p>
+          </div>
+          <div class="stat-card assigned">
+            <h3 id="assigned-tools">0</h3>
+            <p>Assigned</p>
+          </div>
+          <div class="stat-card available">
+            <h3 id="available-tools">0</h3>
+            <p>Available</p>
+          </div>
+          <div class="stat-card repair">
+            <h3 id="repair-tools">0</h3>
+            <p>In Repair</p>
           </div>
         </div>
+
+        <!-- Search Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div class="search-box" style="flex: 1; max-width: 400px;">
+            <i class="fas fa-search"></i>
+            <input type="text" id="tool-search-bar" placeholder="Search by tool name, bin, holder...">
+          </div>
+
+          <!-- Delete Mode Toggle -->
+          <div class="delete-mode-container">
+            <span class="mode-label">Delete Mode:</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="delete-mode-toggle">
+              <span class="slider"></span>
+            </label>
+            <span class="mode-label" id="delete-mode-status">Off</span>
+          </div>
+        </div>
+
+        <!-- Tools Table -->
+        <div class="table-wrapper">
+          <table class="tools-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Bin ID</th>
+                <th>Tool Name</th>
+                <th>Current Holder</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tools-table-body">
+              <tr>
+                <td colspan="7" class="empty-state" style="padding: 40px; text-align: center;">
+                  <div class="empty-state-content">
+                    <i class="fas fa-spinner fa-spin empty-state-icon" style="font-size: 2rem; color: #97adc9; margin-bottom: 10px;"></i>
+                    <p class="empty-state-text" style="color: #7f96b3;">Loading tools...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer Note -->
+        <div class="footer-note">
+          <i class="fas fa-info-circle"></i> 
+          <span id="current-warehouse-footer">Penta Tools</span> Management System • 
+          Last updated: <span id="current-date-footer"></span>
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 
   <!-- Delete Confirmation Modal -->
@@ -1154,17 +1216,16 @@
           <br><br>
           This action <strong>cannot be undone</strong> and will permanently remove the tool from the system.
         </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-          <button class="btn-danger" id="confirm-delete-btn">
-            <i class="fas fa-trash"></i> Delete Tool
-          </button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-danger" id="confirm-delete-btn">
+          <i class="fas fa-trash"></i> Delete Tool
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- FIREBASE & REALTIME SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import { 
@@ -1175,167 +1236,176 @@
       doc 
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
     
-    // Use your EMPLOYEES PROJECT / TOOLS-2 COLLECTION config
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
       authDomain: "project-task-588c4.firebaseapp.com",
       projectId: "project-task-588c4",
       storageBucket: "project-task-588c4.appspot.com",
       messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
 
-    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Store original data for search filtering
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
+    const mainContent = document.getElementById('mainContent');
+    const mobileToggle = document.getElementById('mobileToggle');
+    const actionsHeader = document.getElementById('actionsHeader');
+    const actionsPanel = document.getElementById('actionsPanel');
+    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
+    const currentDate = document.getElementById('currentDate');
+    const currentDateFooter = document.getElementById('current-date-footer');
+    
+    // Warehouse elements
+    const warehouseBtn = document.getElementById('warehouse-btn');
+    const warehouseDropdown = document.getElementById('warehouse-dropdown');
+    const currentWarehouseName = document.getElementById('current-warehouse-name');
+    const currentWarehouseFooter = document.getElementById('current-warehouse-footer');
+    const warehouseOptions = document.querySelectorAll('.warehouse-option');
+    
+    // Stats elements
+    const totalToolsEl = document.getElementById('total-tools');
+    const assignedToolsEl = document.getElementById('assigned-tools');
+    const availableToolsEl = document.getElementById('available-tools');
+    const repairToolsEl = document.getElementById('repair-tools');
+    
+    // Table elements
+    const tableBody = document.getElementById('tools-table-body');
+    const searchInput = document.getElementById('tool-search-bar');
+    
+    // Delete mode elements
+    const deleteModeToggle = document.getElementById('delete-mode-toggle');
+    const deleteModeStatus = document.getElementById('delete-mode-status');
+    
+    // Modal elements
+    const deleteModal = document.getElementById('delete-modal');
+    const deleteToolName = document.getElementById('delete-tool-name');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+    // State
     let toolsData = [];
     let currentWarehouse = localStorage.getItem('selectedWarehouse') || 'penta';
     let deleteMode = false;
     let toolToDelete = null;
 
-    // Initialize UI
-    function initUI() {
-      updateWarehouseUI();
-      updateAddToolButton();
-      setupWarehouseSelector();
-      setupDeleteModeToggle();
+    // Actions panel collapse
+    let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
+    if (actionsCollapsed) {
+      actionsPanel.classList.add('collapsed');
+      actionsToggleIcon.style.transform = 'rotate(-90deg)';
     }
 
-    // Update warehouse UI based on current selection
+    actionsHeader.addEventListener('click', () => {
+      actionsPanel.classList.toggle('collapsed');
+      actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+      localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
+
+    // Sidebar functionality with always-visible button
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+      toggleBtnIcon.classList.remove('fa-chevron-left');
+      toggleBtnIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggleBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+      
+      if (sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+        localStorage.setItem('sidebarCollapsed', 'true');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+        localStorage.setItem('sidebarCollapsed', 'false');
+      }
+    });
+
+    mobileToggle.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      if (!sidebar.classList.contains('collapsed')) {
+        toggleBtnIcon.classList.remove('fa-chevron-right');
+        toggleBtnIcon.classList.add('fa-chevron-left');
+      } else {
+        toggleBtnIcon.classList.remove('fa-chevron-left');
+        toggleBtnIcon.classList.add('fa-chevron-right');
+      }
+    });
+
+    // Update date
+    function updateDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateString = now.toLocaleDateString('en-US', options);
+      currentDate.querySelector('span').textContent = dateString;
+      currentDateFooter.textContent = dateString;
+    }
+    updateDate();
+
+    // Warehouse selector
+    warehouseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      warehouseDropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', () => {
+      warehouseDropdown.classList.remove('show');
+    });
+
+    warehouseOptions.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const warehouse = option.dataset.warehouse;
+        if (warehouse !== currentWarehouse) {
+          currentWarehouse = warehouse;
+          localStorage.setItem('selectedWarehouse', currentWarehouse);
+          updateWarehouseUI();
+          filterToolsByWarehouse();
+        }
+        warehouseDropdown.classList.remove('show');
+      });
+    });
+
     function updateWarehouseUI() {
       const isPenta = currentWarehouse === 'penta';
-      const warehouseName = isPenta ? 'Penta Tools' : 'Techno Tools';
+      const name = isPenta ? 'Penta Tools' : 'Techno Tools';
       
-      // Update all UI elements
-      document.getElementById('current-warehouse-name').textContent = warehouseName;
-      document.getElementById('warehouse-title').textContent = warehouseName;
-      document.getElementById('panel-title').textContent = warehouseName;
-      document.getElementById('current-warehouse-footer').textContent = warehouseName;
+      currentWarehouseName.textContent = name;
+      currentWarehouseFooter.textContent = name;
       
-      // Update warehouse badge
-      const badge = document.getElementById('warehouse-badge');
-      badge.textContent = isPenta ? 'Main Warehouse' : 'New Warehouse';
-      badge.className = isPenta ? 'warehouse-badge' : 'warehouse-badge techno';
-      
-      // Update warehouse stats card
-      const statsCard = document.getElementById('warehouse-stats');
-      statsCard.className = isPenta ? 'warehouse-stats' : 'warehouse-stats techno';
-      
-      // Update active option in dropdown
-      document.querySelectorAll('.warehouse-option').forEach(option => {
-        option.classList.remove('active');
-        if (option.dataset.warehouse === currentWarehouse) {
-          option.classList.add('active');
-          if (!option.querySelector('.warehouse-indicator')) {
+      warehouseOptions.forEach(opt => {
+        opt.classList.remove('active');
+        if (opt.dataset.warehouse === currentWarehouse) {
+          opt.classList.add('active');
+          if (!opt.querySelector('.warehouse-indicator')) {
             const indicator = document.createElement('div');
             indicator.className = 'warehouse-indicator';
-            option.appendChild(indicator);
+            opt.appendChild(indicator);
           }
         } else {
-          const indicator = option.querySelector('.warehouse-indicator');
+          const indicator = opt.querySelector('.warehouse-indicator');
           if (indicator) indicator.remove();
         }
       });
     }
 
-    // Update Add Tool button link
-    function updateAddToolButton() {
-      const addToolBtn = document.getElementById('add-tool-btn');
-      addToolBtn.href = `addtool.html?warehouse=${currentWarehouse}`;
-    }
-
-    // Setup warehouse selector dropdown
-    function setupWarehouseSelector() {
-      const warehouseBtn = document.getElementById('warehouse-btn');
-      const dropdown = document.getElementById('warehouse-dropdown');
-      
-      // Toggle dropdown
-      warehouseBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-      });
-      
-      // Close dropdown when clicking outside
-      document.addEventListener('click', () => {
-        dropdown.classList.remove('show');
-      });
-      
-      // Handle warehouse selection
-      document.querySelectorAll('.warehouse-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const newWarehouse = option.dataset.warehouse;
-          if (newWarehouse !== currentWarehouse) {
-            currentWarehouse = newWarehouse;
-            localStorage.setItem('selectedWarehouse', currentWarehouse);
-            updateWarehouseUI();
-            updateAddToolButton();
-            filterToolsByWarehouse();
-            dropdown.classList.remove('show');
-          }
-        });
-      });
-    }
-
-    // Setup delete mode toggle
-    function setupDeleteModeToggle() {
-      const toggle = document.getElementById('delete-mode-toggle');
-      const status = document.getElementById('delete-mode-status');
-      
-      toggle.addEventListener('change', function() {
-        deleteMode = this.checked;
-        status.textContent = deleteMode ? 'On' : 'Off';
-        status.className = deleteMode ? 'mode-label active' : 'mode-label';
-        
-        // Update table to show/hide delete buttons
-        filterToolsByWarehouse();
-      });
-    }
-
-    // Function to add tool to current warehouse
-    function addToolToCurrentWarehouse() {
-      window.location.href = `addtool.html?warehouse=${currentWarehouse}`;
-    }
-
-    // Filter tools by current warehouse
-    function filterToolsByWarehouse() {
-      const filtered = toolsData.filter(tool => tool.warehouse === currentWarehouse);
-      updateWarehouseTotal(filtered.length);
-      renderTable(filtered);
-    }
-
-    // Update warehouse total count
-    function updateWarehouseTotal(count) {
-      document.getElementById('warehouse-total-tools').textContent = count;
-    }
-
-    // Set current date
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    // Delete mode toggle
+    deleteModeToggle.addEventListener('change', function() {
+      deleteMode = this.checked;
+      deleteModeStatus.textContent = deleteMode ? 'On' : 'Off';
+      deleteModeStatus.className = deleteMode ? 'mode-label active' : 'mode-label';
+      filterToolsByWarehouse();
     });
 
-    // Update stats for current warehouse
-    function updateStats(data) {
-      const warehouseData = data.filter(tool => tool.warehouse === currentWarehouse);
-      
-      document.getElementById('total-tools').textContent = warehouseData.length;
-      
-      const assigned = warehouseData.filter(t => t.currentHolder && t.currentHolder !== "Not Allocated").length;
-      document.getElementById('assigned-tools').textContent = assigned;
-      
-      const available = warehouseData.filter(t => !t.currentHolder || t.currentHolder === "Not Allocated").length;
-      document.getElementById('available-tools').textContent = available;
-      
-      const inRepair = warehouseData.filter(t => t.status === "repair" || t.name.toLowerCase().includes("repair")).length;
-      document.getElementById('repair-tools').textContent = inRepair;
-    }
-
-    // Determine tool status
+    // Get tool status
     function getToolStatus(tool) {
       if (tool.status === "repair") return "repair";
       if (tool.currentHolder && tool.currentHolder !== "Not Allocated") return "assigned";
@@ -1352,46 +1422,137 @@
       return `<span class="status-badge ${statusClass}">${statusText}</span>`;
     }
 
-    // Show delete confirmation modal
-    function showDeleteModal(tool) {
+    // Filter tools by current warehouse
+    function filterToolsByWarehouse() {
+      const filtered = toolsData.filter(tool => tool.warehouse === currentWarehouse);
+      updateStats(filtered);
+      renderTable(filtered);
+    }
+
+    // Update stats
+    function updateStats(data) {
+      totalToolsEl.textContent = data.length;
+      
+      const assigned = data.filter(t => t.currentHolder && t.currentHolder !== "Not Allocated").length;
+      assignedToolsEl.textContent = assigned;
+      
+      const available = data.filter(t => !t.currentHolder || t.currentHolder === "Not Allocated").length;
+      availableToolsEl.textContent = available;
+      
+      const repair = data.filter(t => t.status === "repair" || t.name?.toLowerCase().includes("repair")).length;
+      repairToolsEl.textContent = repair;
+    }
+
+    // Render table
+    function renderTable(data) {
+      if (data.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="padding: 40px; text-align: center;">
+              <i class="fas fa-warehouse" style="font-size: 48px; color: #97adc9; margin-bottom: 15px; display: block;"></i>
+              <h3 style="color: #7f96b3; font-weight: 500;">No tools found in this warehouse</h3>
+              <p style="color: #7f96b3; margin-top: 10px;">Try adding a new tool or switch to another warehouse</p>
+              <a href="addtool.html?warehouse=${currentWarehouse}" class="btn btn-primary" style="margin-top: 20px;">
+                <i class="fas fa-plus-circle"></i> Add Tool
+              </a>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      data.forEach((tool, index) => {
+        const status = getToolStatus(tool);
+        let actionButtons = '';
+        
+        if (deleteMode) {
+          actionButtons = `
+            <div class="action-buttons">
+              <button class="btn btn-danger btn-small" onclick='showDeleteModal(${JSON.stringify(tool).replace(/'/g, "\\'")})'>
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+          `;
+        } else {
+          actionButtons = `
+            <div class="action-buttons">
+              <a href="viewtool.html?id=${tool.id}" class="btn btn-success btn-small">
+                <i class="fas fa-eye"></i> View
+              </a>
+              <a href="assigntool.html?id=${tool.id}" class="btn btn-primary btn-small">
+                <i class="fas fa-user-check"></i> Assign
+              </a>
+            </div>
+          `;
+        }
+
+        html += `
+          <tr>
+            <td><strong>${index + 1}</strong></td>
+            <td><strong>${tool.bin || '-'}</strong></td>
+            <td>${tool.name || '-'}</td>
+            <td>${tool.currentHolder || 'Not Allocated'}</td>
+            <td>${tool.location || '-'}</td>
+            <td>${getStatusBadge(status)}</td>
+            <td>${actionButtons}</td>
+          </tr>
+        `;
+      });
+
+      tableBody.innerHTML = html;
+    }
+
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+      const val = this.value.toLowerCase();
+      const currentWarehouseData = toolsData.filter(tool => tool.warehouse === currentWarehouse);
+      const filtered = currentWarehouseData.filter(t =>
+        (t.bin?.toLowerCase() || '').includes(val) ||
+        (t.name?.toLowerCase() || '').includes(val) ||
+        (t.currentHolder?.toLowerCase() || '').includes(val) ||
+        (t.location?.toLowerCase() || '').includes(val)
+      );
+      renderTable(filtered);
+    });
+
+    // Modal functions
+    window.showDeleteModal = function(tool) {
       toolToDelete = tool;
-      document.getElementById('delete-tool-name').textContent = `"${tool.name}" (Bin: ${tool.bin})`;
-      document.getElementById('delete-modal').classList.add('show');
-    }
+      deleteToolName.textContent = `"${tool.name}" (Bin: ${tool.bin})`;
+      deleteModal.classList.add('show');
+    };
 
-    // Close delete modal
-    function closeDeleteModal() {
-      document.getElementById('delete-modal').classList.remove('show');
+    window.closeDeleteModal = function() {
+      deleteModal.classList.remove('show');
       toolToDelete = null;
-    }
+    };
 
-    // Delete tool from Firestore
-    async function deleteTool() {
+    // Delete tool
+    window.deleteTool = async function() {
       if (!toolToDelete) return;
       
       try {
         await deleteDoc(doc(db, "tools-2", toolToDelete.id));
-        console.log(`Tool ${toolToDelete.id} deleted successfully`);
         closeDeleteModal();
-        
-        // Show success message
         alert(`Tool "${toolToDelete.name}" has been deleted successfully.`);
       } catch (error) {
         console.error("Error deleting tool: ", error);
         alert("Error deleting tool. Please try again.");
       }
-    }
+    };
 
-    // Download PDF report - LANDSCAPE VERSION
-    function downloadToolsPDF() {
+    confirmDeleteBtn.addEventListener('click', deleteTool);
+
+    // PDF Download
+    window.downloadToolsPDF = function() {
       const { jsPDF } = window.jspdf;
-      // Create PDF in LANDSCAPE mode (297x210mm for A4 landscape)
       const doc = new jsPDF('landscape', 'mm', 'a4');
       
-      // Get current warehouse data
       const warehouseData = toolsData.filter(tool => tool.warehouse === currentWarehouse);
       const warehouseName = currentWarehouse === 'penta' ? 'Penta Tools' : 'Techno Tools';
-      const currentDate = new Date().toLocaleDateString('en-US', {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -1399,147 +1560,73 @@
         minute: '2-digit'
       });
       
-      // PDF dimensions for landscape
       const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
       
-      // HEADER SECTION - Full width
-      doc.setFillColor(42, 92, 130); // Primary color
+      // Header
+      doc.setFillColor(10, 28, 47); // #0a1c2f
       doc.rect(0, 0, pageWidth, 25, 'F');
       
-      // Logo/Icon
-      doc.setFontSize(28);
-      doc.setTextColor(255, 209, 102); // Gold color
-      doc.text('🔧', 15, 18);
-      
-      // Title
       doc.setFontSize(20);
       doc.setTextColor(255, 255, 255);
-      doc.text(`${warehouseName} - Inventory Report`, pageWidth / 2, 18, { align: 'center' });
+      doc.text(`${warehouseName} - Tools Inventory`, pageWidth / 2, 18, { align: 'center' });
       
-      // Subtitle
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setTextColor(200, 200, 200);
-      doc.text(`Generated: ${currentDate}`, pageWidth / 2, 25, { align: 'center' });
+      doc.text(`Generated: ${dateStr}`, pageWidth / 2, 25, { align: 'center' });
       
-      // STATS SECTION - Horizontal layout
+      // Stats
       const statsY = 35;
-      const statWidth = (pageWidth - 40) / 4;
+      const total = warehouseData.length;
+      const assigned = warehouseData.filter(t => t.currentHolder && t.currentHolder !== "Not Allocated").length;
+      const available = warehouseData.filter(t => !t.currentHolder || t.currentHolder === "Not Allocated").length;
+      const repair = warehouseData.filter(t => t.status === "repair" || t.name?.toLowerCase().includes("repair")).length;
       
-      // Stats background
-      doc.setFillColor(30, 43, 60); // Card background
+      doc.setFillColor(30, 30, 30);
       doc.roundedRect(20, statsY, pageWidth - 40, 25, 3, 3, 'F');
       
-      // Stats data
-      const totalTools = warehouseData.length;
-      const assignedTools = warehouseData.filter(t => t.currentHolder && t.currentHolder !== "Not Allocated").length;
-      const availableTools = warehouseData.filter(t => !t.currentHolder || t.currentHolder === "Not Allocated").length;
-      const repairTools = warehouseData.filter(t => t.status === "repair" || t.name.toLowerCase().includes("repair")).length;
+      doc.setFontSize(12);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Total: ${total}`, 30, statsY + 15);
+      doc.text(`Assigned: ${assigned}`, pageWidth / 3, statsY + 15);
+      doc.text(`Available: ${available}`, (pageWidth * 2) / 3, statsY + 15);
+      doc.text(`In Repair: ${repair}`, pageWidth - 40, statsY + 15, { align: 'right' });
       
-      // Draw stats boxes
-      const stats = [
-        { label: "TOTAL TOOLS", value: totalTools, color: [93, 138, 168] },
-        { label: "ASSIGNED", value: assignedTools, color: [76, 175, 80] },
-        { label: "AVAILABLE", value: availableTools, color: [33, 150, 243] },
-        { label: "IN REPAIR", value: repairTools, color: [255, 152, 0] }
-      ];
-      
-      stats.forEach((stat, index) => {
-        const x = 20 + (statWidth * index);
-        
-        // Stat value
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(stat.color[0], stat.color[1], stat.color[2]);
-        doc.text(stat.value.toString(), x + statWidth/2, statsY + 15, { align: 'center' });
-        
-        // Stat label
-        doc.setFontSize(9);
-        doc.setTextColor(180, 180, 180);
-        doc.text(stat.label, x + statWidth/2, statsY + 22, { align: 'center' });
-      });
-      
-      // TABLE SECTION - Full page width
-      const tableY = 70;
-      
-      // Table title
-      doc.setFontSize(16);
-      doc.setTextColor(42, 92, 130);
-      doc.setFont('helvetica', 'bold');
-      doc.text('TOOLS INVENTORY', 20, tableY - 5);
-      
-      // Prepare table data
+      // Table
       const tableData = warehouseData.map(tool => [
-        tool.bin,
-        tool.name,
-        tool.currentHolder || "Not Allocated",
-        tool.location || "-",
-        tool.status === "assigned" ? "Assigned" : 
-        tool.status === "repair" ? "In Repair" : "Available"
+        tool.bin || '-',
+        tool.name || '-',
+        tool.currentHolder || 'Not Allocated',
+        tool.location || '-',
+        getToolStatusText(tool)
       ]);
       
-      // Create table - using full width of landscape page
       doc.autoTable({
-        head: [['BIN ID', 'TOOL NAME', 'CURRENT HOLDER', 'LOCATION', 'STATUS']],
+        head: [['Bin ID', 'Tool Name', 'Current Holder', 'Location', 'Status']],
         body: tableData,
-        startY: tableY,
+        startY: 70,
         theme: 'striped',
         headStyles: { 
-          fillColor: [42, 92, 130], 
+          fillColor: [10, 28, 47],
           textColor: [255, 255, 255],
           fontSize: 10,
-          fontStyle: 'bold',
-          halign: 'center'
+          fontStyle: 'bold'
         },
-        bodyStyles: {
-          fontSize: 9,
-          cellPadding: 4,
-          overflow: 'linebreak',
-          lineWidth: 0.1
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245]
-        },
-        margin: { left: 20, right: 20 },
-        tableWidth: 'auto',
-        styles: { 
-          fontSize: 9,
-          cellPadding: 4,
-          overflow: 'linebreak',
-          lineWidth: 0.1
-        },
-        columnStyles: {
-          0: { cellWidth: 25, halign: 'center' }, // Bin ID
-          1: { cellWidth: 60, halign: 'left' },   // Tool Name
-          2: { cellWidth: 45, halign: 'left' },   // Current Holder
-          3: { cellWidth: 40, halign: 'left' },   // Location
-          4: { cellWidth: 30, halign: 'center' }  // Status
-        },
-        didDrawPage: function(data) {
-          // Footer on each page
-          doc.setFontSize(8);
-          doc.setTextColor(150, 150, 150);
-          doc.text(`Page ${data.pageNumber}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
-          doc.text('IMS Tools Management System', pageWidth / 2, pageHeight - 10, { align: 'center' });
-        }
+        styles: { fontSize: 9 },
+        margin: { left: 20, right: 20 }
       });
       
-      // If no data, show message
-      if (warehouseData.length === 0) {
-        doc.setFontSize(14);
-        doc.setTextColor(100, 100, 100);
-        doc.text('No tools found in this warehouse', pageWidth / 2, tableY + 30, { align: 'center' });
-      }
-      
-      // Save PDF with timestamp
-      const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
-      doc.save(`${warehouseName.replace(/\s+/g, '_')}_Inventory_${timestamp}.pdf`);
+      doc.save(`${warehouseName.replace(/\s+/g, '_')}_Inventory_${now.toISOString().split('T')[0]}.pdf`);
+    };
+
+    function getToolStatusText(tool) {
+      if (tool.status === "repair") return "In Repair";
+      if (tool.currentHolder && tool.currentHolder !== "Not Allocated") return "Assigned";
+      return "Available";
     }
 
-    // Real-time sync for tools-2 list
-    const tableBody = document.getElementById('tools-table-body');
+    // Firebase snapshot
     onSnapshot(collection(db, "tools-2"), (snapshot) => {
-      toolsData = []; // Reset data
+      toolsData = [];
       snapshot.forEach(doc => {
         const t = doc.data();
         toolsData.push({
@@ -1548,115 +1635,17 @@
           currentHolder: t.currentHolder || "Not Allocated",
           location: t.location || "-",
           status: t.status || (t.currentHolder && t.currentHolder !== "Not Allocated" ? "assigned" : "available"),
-          warehouse: t.warehouse || "penta", // Default to penta for existing tools
+          warehouse: t.warehouse || "penta",
           id: doc.id
         });
       });
 
-      // Sort ASCENDING by bin
       toolsData.sort((a, b) => (a.bin || "").localeCompare(b.bin || ""));
-
-      // Set correct row numbers after sort
-      toolsData.forEach((t, idx) => t.number = idx + 1);
-
-      updateStats(toolsData);
       filterToolsByWarehouse();
     });
 
-    // Render table rows for current warehouse
-    function renderTable(data) {
-      tableBody.innerHTML = "";
-      
-      if (data.length === 0) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td colspan="7" style="text-align: center; padding: 40px;">
-            <i class="fas fa-warehouse" style="font-size: 48px; color: var(--text-secondary); margin-bottom: 15px; display: block;"></i>
-            <h3 style="color: var(--text-secondary); font-weight: 500;">No tools found in this warehouse</h3>
-            <p style="color: var(--text-secondary); margin-top: 10px;">Try adding a new tool or switch to another warehouse</p>
-            <button onclick="addToolToCurrentWarehouse()" class="btn btn-primary" style="margin-top: 20px;">
-              <i class="fas fa-plus-circle"></i> Add Tool to ${currentWarehouse === 'penta' ? 'Penta Tools' : 'Techno Tools'}
-            </button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-        return;
-      }
-      
-      data.forEach(t => {
-        const status = getToolStatus(t);
-        const tr = document.createElement('tr');
-        
-        // Create action buttons based on delete mode
-        let actionButtons = '';
-        if (deleteMode) {
-          // Show delete button when delete mode is ON
-          actionButtons = `
-            <div class="action-buttons">
-              <button class="btn-danger" onclick="showDeleteModal(${JSON.stringify(t).replace(/"/g, '&quot;')})">
-                <i class="fas fa-trash"></i> Delete
-              </button>
-            </div>
-          `;
-        } else {
-          // Show normal action buttons when delete mode is OFF
-          actionButtons = `
-            <div class="action-buttons">
-              <a href="viewtool.html?id=${t.id}" class="btn btn-success">
-                <i class="fas fa-eye"></i> View
-              </a>
-              <a href="assigntool.html?id=${t.id}" class="btn btn-success" style="background: var(--primary-color);">
-                <i class="fas fa-user-check"></i> Assign
-              </a>
-            </div>
-          `;
-        }
-        
-        tr.innerHTML = `
-          <td><strong>${t.number}</strong></td>
-          <td><strong>${t.bin}</strong></td>
-          <td>${t.name}</td>
-          <td>${t.currentHolder}</td>
-          <td>${t.location}</td>
-          <td>${getStatusBadge(status)}</td>
-          <td>${actionButtons}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    }
-
-    // Search functionality (within current warehouse)
-    const searchInput = document.getElementById('tool-search-bar');
-    searchInput.addEventListener('input', function() {
-      const val = this.value.toLowerCase();
-      const currentWarehouseData = toolsData.filter(tool => tool.warehouse === currentWarehouse);
-      const filtered = currentWarehouseData.filter(t =>
-        t.bin.toLowerCase().includes(val) ||
-        t.name.toLowerCase().includes(val) ||
-        t.currentHolder.toLowerCase().includes(val) ||
-        t.location.toLowerCase().includes(val)
-      );
-      renderTable(filtered);
-    });
-
     // Initialize UI
-    initUI();
-
-    // Global functions for HTML onclick handlers
-    window.addToolToCurrentWarehouse = addToolToCurrentWarehouse;
-    window.downloadToolsPDF = downloadToolsPDF;
-    window.showDeleteModal = showDeleteModal;
-    window.closeDeleteModal = closeDeleteModal;
-    window.deleteTool = deleteTool;
-  </script>
-
-  <!-- Confirm delete button event listener -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('confirm-delete-btn').addEventListener('click', function() {
-        deleteTool();
-      });
-    });
+    updateWarehouseUI();
   </script>
 </body>
 </html>
