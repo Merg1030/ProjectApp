@@ -2,1118 +2,893 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>IMS | Material Usage History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PENTA | Material Usage History</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #d3dfed; color: #0a1c2f; line-height: 1.6; overflow-x: hidden; }
 
-    body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: white;
-    }
+    /* ═══════════════════ LAYOUT ═══════════════════ */
+    .main-wrapper { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
 
-    .panel {
-      height: 100vh; width: 100vw;
-      display: flex; flex-direction: column;
-      overflow: hidden; background: white;
+    /* ═══════════════════ SIDEBAR TOGGLE ═══════════════════ */
+    .sidebar-toggle-btn {
+      position: fixed; top: 70px; left: 10px; width: 32px; height: 32px;
+      background: #0a1c2f; color: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: 2px solid white; font-size: 0.8rem;
+      z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.2s;
     }
+    .sidebar-toggle-btn:hover { background: #1f3d62; transform: scale(1.1); }
 
-    .panel-heading {
-      background: #0a1c2f; color: white;
-      padding: 12px 20px; font-size: 1.1rem; font-weight: 600;
-      display: flex; align-items: center; gap: 12px;
-      flex-shrink: 0; min-height: 48px;
+    /* ═══════════════════ SIDEBAR ═══════════════════ */
+    .sidebar {
+      width: 260px; background: white; display: flex; flex-direction: column;
+      height: 100vh; border-right: 2px solid #1f3d62;
+      transition: transform 0.28s ease; flex-shrink: 0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
     }
+    .sidebar.collapsed { transform: translateX(-100%); }
+    .sidebar-header { padding: 16px; border-bottom: 2px solid #1f3d62; background: #0a1c2f; }
+    .logo-container { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 40px; height: 40px; background: #b8cde0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #0a1c2f; }
+    .logo-text h2 { font-size: 1.25rem; font-weight: 600; color: white; }
+    .logo-text span { font-size: 0.7rem; color: #97adc9; }
+    .nav-section { padding: 16px; border-bottom: 1px solid #e0e8f5; }
+    .nav-section h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: #7f96b3; margin-bottom: 10px; font-weight: 700; }
+    .nav-links { list-style: none; }
+    .nav-item { margin-bottom: 2px; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 8px 12px; color: #0a1c2f; text-decoration: none; border-radius: 6px; transition: all 0.15s; font-size: 0.8rem; font-weight: 500; }
+    .nav-link:hover { background: #e6efff; }
+    .nav-link.active { background: #d4e2f2; font-weight: 600; border-left: 3px solid #1f3d62; }
+    .nav-icon { font-size: 0.9rem; width: 20px; text-align: center; color: #2b4a73; }
 
-    .back-link {
-      color: white; text-decoration: none;
-      padding: 0.4rem 0.8rem;
-      border: 1px solid rgba(255,255,255,0.3); border-radius: 30px;
-      font-size: 0.8rem; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
-    }
-    .back-link:hover { background: rgba(255,255,255,0.1); border-color: white; }
+    /* ═══════════════════ MAIN CONTENT ═══════════════════ */
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; transition: margin-left 0.28s ease; }
+    .main-content.expanded { margin-left: -260px; }
 
-    /* ── SUMMARY STRIP ── */
-    .summary-strip {
-      display: flex; gap: 10px; padding: 8px 20px;
-      background: #f2f6fc; border-bottom: 1px solid #b3c7e0;
-      flex-shrink: 0; flex-wrap: wrap; align-items: center;
+    /* ═══════════════════ APP HEADER ═══════════════════ */
+    .app-header {
+      background: #0a1c2f; color: white; padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62; display: flex; align-items: center;
+      justify-content: space-between; min-height: 56px; flex-shrink: 0;
     }
-    .stat-pill {
-      background: white; border: 1px solid #b3c7e0; border-radius: 30px;
-      padding: 4px 14px; font-size: 0.72rem; font-weight: 600; color: #0a1c2f;
-      white-space: nowrap;
-    }
-    .stat-pill span { color: #059669; font-weight: 700; }
-    .stat-pill.mat span  { color: #2b6cb0; }
-    .stat-pill.count span { color: #c05621; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .mobile-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 1rem; }
+    .page-title { display: flex; align-items: center; gap: 8px; }
+    .page-title h1 { font-size: 1.1rem; font-weight: 500; }
+    .page-title i { color: #97adc9; }
+    .live-indicator { display: flex; align-items: center; gap: 4px; font-size: 0.7rem; color: #97adc9; background: #1f3d62; padding: 4px 10px; border-radius: 20px; }
+    .live-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-    /* ── FILTER BAR ── */
-    .filter-bar {
-      display: flex; flex-wrap: wrap; align-items: center;
-      justify-content: space-between; gap: 10px;
-      background: #f2f6fc; border-bottom: 1px solid #b3c7e0;
-      padding: 10px 20px; flex-shrink: 0;
-    }
-    .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    /* ═══════════════════ ACTIONS PANEL ═══════════════════ */
+    .actions-container { padding: 4px 20px; background: #f2f6fc; border-bottom: 1px solid #b3c7e0; flex-shrink: 0; }
+    .actions-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 8px 0; }
+    .actions-header h3 { font-size: 12px; font-weight: 600; color: #0a1c2f; display: flex; align-items: center; gap: 6px; }
+    .actions-header i { font-size: 12px; transition: transform 0.2s; color: #1f3d62; }
+    .actions-panel { display: flex; gap: 8px; padding: 8px 0 12px; max-height: 100px; overflow: hidden; flex-wrap: wrap; transition: all 0.2s; }
+    .actions-panel.collapsed { max-height: 0; padding: 0; opacity: 0; pointer-events: none; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 1px solid #b3c7e0; border-radius: 6px; font-size: 0.72rem; font-weight: 600; cursor: pointer; text-decoration: none; color: #0a1c2f; background: white; transition: all 0.15s; }
+    .btn:hover { background: #e6efff; }
+    .btn-primary { background: #0a1c2f; color: white; border-color: #0a1c2f; }
+    .btn-primary:hover { background: #1f3d62; }
 
-    .filter-label {
-      font-weight: 600; color: #1f3d62; font-size: 0.72rem;
-    }
+    /* ═══════════════════ DASHBOARD CONTAINER ═══════════════════ */
+    .dashboard-container { flex: 1; overflow: auto; padding: 20px; background: #f2f6fc; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
 
-    .filter-select, .filter-input {
-      padding: 0.38rem 0.8rem; font-size: 0.72rem; border-radius: 30px;
-      border: 1px solid #b3c7e0; background: white; color: #0a1c2f; font-weight: 500;
+    /* ═══════════════════ WELCOME BANNER ═══════════════════ */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      color: white; box-shadow: 0 4px 12px rgba(0,20,40,0.2);
     }
-    .filter-select:focus, .filter-input:focus {
-      outline: none; border-color: #2b4a73;
-      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
-    }
+    .welcome-text h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 3px; }
+    .welcome-text p { color: #97adc9; font-size: 0.78rem; }
+    .welcome-icon { width: 56px; height: 56px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #b8cde0; font-size: 1.6rem; border: 2px solid rgba(255,255,255,0.2); }
 
-    .search-bar {
-      padding: 0.38rem 0.8rem; font-size: 0.72rem; border-radius: 30px;
-      border: 1px solid #b3c7e0; background: white; color: #0a1c2f; min-width: 200px;
-    }
-    .search-bar::placeholder { color: #7f96b3; }
+    /* ═══════════════════ SUMMARY STRIP ═══════════════════ */
+    .summary-strip { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .stat-pill { background: white; border: 2px solid #1f3d62; border-radius: 30px; padding: 7px 16px; font-size: 0.75rem; font-weight: 600; color: #0a1c2f; display: flex; align-items: center; gap: 6px; }
+    .stat-pill i { color: #2b4a73; }
+    .stat-pill span { color: #059669; font-weight: 700; margin-left: 4px; }
+    .stat-pill.mat span { color: #2b6cb0; }
+    .stat-pill.rev span { color: #c05621; }
 
-    /* ── MATERIALS BUTTON ── */
-    .materials-btn {
-      padding: 0.38rem 1.2rem;
-      font-size: 0.72rem;
-      border-radius: 30px;
-      border: 1px solid #2b6cb0;
-      background: #2b6cb0;
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.15s;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
-    }
-    .materials-btn:hover {
-      background: #1f4f8a;
-      border-color: #1f4f8a;
-    }
+    /* ═══════════════════ TOP FILTER BAR (always visible) ═══════════════════ */
+    .top-filter-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+    .filter-group { display: flex; align-items: center; gap: 6px; background: white; border: 1px solid #b3c7e0; border-radius: 30px; padding: 4px 12px; }
+    .filter-label { font-size: 0.65rem; font-weight: 700; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+    .filter-select { border: none; outline: none; font-size: 0.7rem; background: transparent; cursor: pointer; color: #0a1c2f; padding: 4px 0; }
+    .search-box { display: flex; align-items: center; background: white; border: 1px solid #b3c7e0; border-radius: 30px; padding: 4px 12px; min-width: 220px; flex: 2; }
+    .search-box i { color: #7f96b3; font-size: 0.8rem; }
+    .search-box input { border: none; padding: 5px 8px; width: 100%; outline: none; font-size: 0.7rem; background: transparent; color: #0a1c2f; }
+    .search-box input::placeholder { color: #7f96b3; }
 
-    /* ── ACTIONS BUTTON ── */
-    .actions-container {
-      position: relative;
-      display: inline-block;
+    /* ═══════════════════ EXTRA FILTERS (collapsible) ═══════════════════ */
+    .extra-filters-toggle {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: white; border: 2px solid #1f3d62; border-radius: 8px;
+      padding: 7px 16px; font-size: 0.75rem; font-weight: 600; color: #0a1c2f;
+      cursor: pointer; margin-bottom: 10px; transition: all 0.15s; user-select: none;
     }
-    
-    .actions-btn {
-      padding: 0.38rem 1.2rem;
-      font-size: 0.72rem;
-      border-radius: 30px;
-      border: 1px solid #0a1c2f;
-      background: #0a1c2f;
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.15s;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .actions-btn:hover {
-      background: #1f3d62;
-      border-color: #1f3d62;
-    }
-    
-    .actions-dropdown {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      margin-top: 5px;
-      background: white;
-      border: 2px solid #0a1c2f;
-      border-radius: 10px;
-      min-width: 260px;
-      z-index: 1000;
-      display: none;
-      box-shadow: 0 8px 20px rgba(0,20,40,0.25);
-      padding: 15px;
-    }
-    .actions-dropdown.show {
-      display: block;
-    }
-    
-    .actions-section {
-      margin-bottom: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #e0e8f5;
-    }
-    .actions-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    
-    .actions-section-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #1f3d62;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .date-input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .date-input {
-      padding: 0.6rem;
-      font-size: 0.75rem;
-      border: 1px solid #b3c7e0;
-      border-radius: 8px;
-      background: white;
-      color: #0a1c2f;
-      width: 100%;
-    }
-    .date-input:focus {
-      outline: none;
-      border-color: #2b4a73;
-      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
-    }
-    
-    .week-select {
-      width: 100%;
-      padding: 0.6rem;
-      font-size: 0.75rem;
-      border: 1px solid #b3c7e0;
-      border-radius: 8px;
-      background: white;
-      color: #0a1c2f;
-      cursor: pointer;
-    }
-    .week-select:focus {
-      outline: none;
-      border-color: #2b4a73;
-      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
-    }
-    
-    .filter-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-    
-    .filter-action-btn {
-      flex: 1;
-      padding: 0.6rem;
-      font-size: 0.75rem;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.15s;
-    }
-    .apply-filters {
-      background: #059669;
-      color: white;
-    }
-    .apply-filters:hover {
-      background: #047857;
-    }
-    .clear-filters {
-      background: white;
-      border: 1px solid #b3c7e0 !important;
-      color: #0a1c2f;
-    }
-    .clear-filters:hover {
-      background: #e6efff;
-    }
-    
-    .active-filter-badge {
-      display: inline-block;
-      background: #059669;
-      color: white;
-      font-size: 0.6rem;
-      padding: 2px 6px;
-      border-radius: 20px;
-      margin-left: 5px;
-    }
+    .extra-filters-toggle:hover { background: #e6efff; }
+    .extra-filters-toggle i.arrow { transition: transform 0.25s; }
+    .extra-filters-toggle.open i.arrow { transform: rotate(180deg); }
 
-    .show-reversed-btn {
-      padding: 0.38rem 1rem; font-size: 0.72rem; border-radius: 30px;
-      border: 1px solid #b3c7e0; background: white; color: #0a1c2f;
-      cursor: pointer; font-weight: 600; transition: 0.15s; white-space: nowrap;
+    .extra-filters-body {
+      background: white; border: 2px solid #1f3d62; border-radius: 12px;
+      margin-bottom: 16px; overflow: hidden;
+      max-height: 0; opacity: 0; pointer-events: none;
+      transition: max-height 0.35s ease, opacity 0.25s ease;
     }
+    .extra-filters-body.open { max-height: 500px; opacity: 1; pointer-events: all; }
+    .extra-filters-inner { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+    .ef-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .filter-bar-inner { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .filter-bar-inner .filter-group { background: #f2f6fc; }
+
+    /* Date filter inside collapsible */
+    .date-filter-panel { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; padding-top: 4px; border-top: 1px solid #e0e8f5; }
+    .df-group { display: flex; flex-direction: column; gap: 5px; }
+    .df-label { font-size: 0.65rem; font-weight: 700; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.4px; display: flex; align-items: center; gap: 5px; }
+    .date-filter-panel input[type="date"], .date-filter-panel select { padding: 7px 10px; border: 1px solid #b3c7e0; border-radius: 6px; font-size: 0.75rem; color: #0a1c2f; background: white; outline: none; cursor: pointer; }
+    .date-filter-panel input[type="date"]:focus, .date-filter-panel select:focus { border-color: #2b4a73; box-shadow: 0 0 0 2px rgba(43,74,115,0.1); }
+    .week-row { display: flex; align-items: center; gap: 8px; }
+    .year-nav { display: flex; align-items: center; gap: 4px; }
+    .year-btn { width: 26px; height: 26px; border: 1px solid #b3c7e0; background: white; border-radius: 50%; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .year-btn:hover { background: #e6efff; border-color: #2b4a73; }
+    .year-display { font-size: 0.8rem; font-weight: 700; color: #0a1c2f; min-width: 38px; text-align: center; }
+    .df-actions { display: flex; gap: 8px; padding-top: 2px; }
+    .df-apply { padding: 7px 16px; background: #0a1c2f; color: white; border: none; border-radius: 6px; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+    .df-apply:hover { background: #1f3d62; }
+    .df-clear { padding: 7px 14px; background: white; border: 1px solid #b3c7e0; border-radius: 6px; font-size: 0.72rem; font-weight: 600; cursor: pointer; color: #0a1c2f; }
+    .df-clear:hover { background: #e6efff; }
+    .active-filter-tag { display: inline-flex; align-items: center; gap: 5px; background: #e6efff; border: 1px solid #2b4a73; border-radius: 20px; padding: 3px 10px; font-size: 0.65rem; font-weight: 600; color: #0a1c2f; }
+    .active-filter-tag button { background: none; border: none; cursor: pointer; color: #7f96b3; font-size: 0.75rem; padding: 0 0 0 2px; }
+    .active-filter-tag button:hover { color: #e53e3e; }
+
+    .show-reversed-btn { padding: 7px 14px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #b3c7e0; background: white; color: #0a1c2f; cursor: pointer; font-weight: 600; transition: 0.15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
     .show-reversed-btn.active { background: #0a1c2f; color: white; border-color: #0a1c2f; }
     .show-reversed-btn:hover:not(.active) { background: #e6efff; }
 
-    /* ── TABLE ── */
-    .table-responsive {
-      flex: 1; overflow: auto; background: white; position: relative;
-      scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa;
-    }
-    .table-responsive::-webkit-scrollbar { width: 10px; height: 10px; }
-    .table-responsive::-webkit-scrollbar-track { background: #ecf2fa; }
-    .table-responsive::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; }
+    /* ═══════════════════ TABLE ═══════════════════ */
+    .table-wrapper { background: white; border: 2px solid #1f3d62; border-radius: 12px; overflow: auto; max-height: 560px; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
+    .usage-table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1100px; }
+    .usage-table th { background: #d4e2f2; color: #0a1c2f; padding: 11px 10px; text-align: left; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #9bb1cc; border-bottom: 2px solid #1f3d62; position: sticky; top: 0; z-index: 10; white-space: nowrap; }
+    .usage-table td { padding: 9px 10px; border: 1px solid #c7d6ec; color: #0a1c2f; vertical-align: middle; background: white; }
+    .usage-table tbody tr:hover td { background: #e3ecf7; }
+    .usage-table tr.reversed-row td { opacity: 0.45; text-decoration: line-through; background: #fafafa; }
+    .usage-table tr.reversed-row td:last-child { opacity: 1; text-decoration: none; }
+    .usage-table tr.reversed-row:hover td { background: #f5f5f5; }
 
-    table {
-      width: 100%; border-collapse: collapse; background: white;
-      min-width: 1100px; color: #0a1c2f;
-    }
-
-    th, td { padding: 10px 12px; font-size: 0.72rem; text-align: left; border: 1px solid #c7d6ec; }
-
-    th {
-      font-weight: 700; background: #d4e2f2; color: #0a1c2f;
-      position: sticky; top: 0; z-index: 20; border-bottom: 2px solid #1f3d62;
-      white-space: nowrap;
-    }
-
-    tr:hover td { background: #e3ecf7; }
-    tr.reversed-row td { opacity: 0.45; text-decoration: line-through; background: #fafafa; }
-    tr.reversed-row td:last-child { opacity: 1; text-decoration: none; }
-    tr.reversed-row:hover td { background: #f5f5f5; }
-
-    .task-id-badge {
-      background: #e6efff; color: #0a1c2f;
-      padding: 2px 8px; border-radius: 20px;
-      font-weight: 600; font-size: 0.68rem; display: inline-block;
-    }
-
+    .task-id-badge { background: #e6efff; color: #0a1c2f; padding: 3px 8px; border-radius: 20px; font-size: 0.62rem; font-weight: 600; display: inline-block; }
+    .purchase-badge-inv  { background: #c6f6d5; color: #22543d; padding: 2px 7px; border-radius: 20px; font-size: 0.6rem; font-weight: 700; border: 1px solid #22543d; display: inline-block; }
+    .purchase-badge-dir  { background: #feebc8; color: #7b341e; padding: 2px 7px; border-radius: 20px; font-size: 0.6rem; font-weight: 700; border: 1px solid #c05621; display: inline-block; }
     .amount-cell { font-weight: 700; color: #059669; }
+    .empty-state { padding: 40px !important; text-align: center; color: #7f96b3; }
+    .empty-state i { font-size: 2rem; margin-bottom: 10px; display: block; color: #97adc9; }
+    .loading-row td { text-align: center; padding: 40px; color: #7f96b3; }
 
-    /* ── MENU ── */
+    /* ═══════════════════ MENU ═══════════════════ */
     .menu-container { position: relative; display: inline-block; }
-    .menu-trigger {
-      cursor: pointer; padding: 4px 8px; border: none;
-      background: transparent; font-size: 15px; font-weight: bold;
-      color: #2b4a73; border-radius: 4px; transition: all 0.2s;
-    }
-    .menu-trigger:hover { background: #e6efff; }
-    .menu-dropdown {
-      position: absolute; right: 0; top: 100%; background: white;
-      border: 2px solid #1f3d62; border-radius: 6px; min-width: 120px;
-      z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,20,40,0.2);
-    }
+    .menu-trigger { width: 26px; height: 26px; border: 1px solid #b3c7e0; background: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #1f3d62; font-size: 1rem; line-height: 1; transition: all 0.15s; }
+    .menu-trigger:hover { background: #e6efff; border-color: #2b4a73; }
+    .menu-dropdown { display: none; position: absolute; right: 0; top: 100%; background: white; min-width: 130px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); border-radius: 8px; z-index: 100; border: 2px solid #1f3d62; margin-top: 4px; overflow: hidden; }
     .menu-dropdown.show { display: block; }
-    .menu-item {
-      padding: 8px 12px; cursor: pointer; font-size: 0.72rem;
-      border-bottom: 1px solid #e0e8f5;
-      display: flex; align-items: center; gap: 6px;
-      color: #0a1c2f; font-weight: 500; transition: all 0.2s;
-    }
+    .menu-item { padding: 8px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; color: #0a1c2f; border-bottom: 1px solid #e0e8f5; }
     .menu-item:last-child { border-bottom: none; }
     .menu-item:hover { background: #e6efff; }
     .menu-item.danger { color: #cc0000; }
-    .menu-item.danger:hover { background: #ffe5e5; }
-    .menu-item.disabled { opacity: 0.45; cursor: not-allowed; }
-    .menu-item.disabled:hover { background: transparent; }
+    .menu-item.danger:hover { background: #fff0f0; }
 
-    /* ── MODAL ── */
-    .modal {
-      display: none; position: fixed; z-index: 2000;
-      left: 0; top: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.45);
-      align-items: center; justify-content: center;
-    }
+    /* ═══════════════════ MODAL ═══════════════════ */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
-
-    .modal-content {
-      background: white; border-radius: 14px;
-      min-width: 440px; max-width: 96vw; max-height: 90vh;
-      box-shadow: 0 24px 60px rgba(0,20,40,0.4);
-      display: flex; flex-direction: column; overflow: hidden;
-    }
-    .modal-header {
-      background: #0a1c2f; color: white; padding: 1rem 1.4rem;
-      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-    }
-    .modal-header h3 { font-size: 0.95rem; font-weight: 600; margin: 0; }
-    .modal-close {
-      background: none; border: none; font-size: 1.2rem;
-      color: #97adc9; cursor: pointer; transition: color 0.15s;
-    }
+    .modal-content { background: white; border-radius: 14px; width: 90%; max-width: 520px; box-shadow: 0 24px 60px rgba(0,20,40,0.4); overflow: hidden; }
+    .modal-header { padding: 16px 20px; background: #0a1c2f; color: white; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .modal-close { background: none; border: none; color: #97adc9; font-size: 1.3rem; cursor: pointer; line-height: 1; }
     .modal-close:hover { color: white; }
-
-    .modal-body { flex: 1; overflow-y: auto; padding: 1.4rem; }
-    .modal-body::-webkit-scrollbar { width: 6px; }
-    .modal-body::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 4px; }
-
-    /* Detail section in modal */
-    .detail-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-      background: #f4f8fd; border: 1px solid #d0dff0;
-      border-radius: 8px; padding: 12px; margin-bottom: 16px;
-      font-size: 0.75rem;
-    }
-    .detail-grid .dg-label { color: #7f96b3; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
-    .detail-grid .dg-value { font-weight: 600; color: #0a1c2f; }
-
+    .modal-body { padding: 20px; overflow-y: auto; max-height: 70vh; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f2f6fc; border: 1px solid #b3c7e0; border-radius: 8px; padding: 12px; margin-bottom: 18px; }
+    .dg-label { font-size: 0.58rem; font-weight: 700; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.4px; }
+    .dg-value { font-size: 0.75rem; font-weight: 600; color: #0a1c2f; }
     .form-group { margin-bottom: 14px; }
-    .form-group label {
-      font-size: 0.72rem; font-weight: 600; color: #1f3d62;
-      display: block; margin-bottom: 5px;
-    }
-    .form-group input[type="datetime-local"] {
-      width: 100%; padding: 8px; border: 1px solid #b3c7e0;
-      border-radius: 6px; font-size: 0.78rem; color: #0a1c2f; background: white;
-    }
-    .form-group input[type="datetime-local"]:focus {
-      outline: none; border-color: #2b4a73;
-      box-shadow: 0 0 0 2px rgba(43,74,115,0.1);
-    }
+    .form-group label { display: block; font-size: 0.65rem; font-weight: 700; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .form-group input[type="datetime-local"] { width: 100%; padding: 8px 12px; border: 1px solid #b3c7e0; border-radius: 6px; font-size: 0.8rem; background: white; color: #0a1c2f; }
+    .modal-error { color: #cc0000; font-size: 0.7rem; padding: 8px; background: #fff0f0; border-radius: 4px; margin-bottom: 14px; display: none; }
+    .modal-error.show { display: block; }
+    .modal-footer { padding: 14px 20px; border-top: 1px solid #e0e8f5; display: flex; justify-content: flex-end; gap: 10px; align-items: center; }
+    .btn-cancel-m { padding: 7px 16px; border: 1px solid #b3c7e0; background: white; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+    .btn-cancel-m:hover { background: #e6efff; }
+    .btn-save-m { padding: 7px 16px; background: #059669; color: white; border: none; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-save-m:hover { background: #047857; }
+    .btn-reverse-m { padding: 7px 16px; background: #cc0000; color: white; border: none; border-radius: 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; margin-right: auto; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-reverse-m:hover:not(:disabled) { background: #990000; }
+    .btn-reverse-m:disabled { background: #e0e8f5; color: #97adc9; cursor: not-allowed; }
 
-    #edit-modal-error {
-      color: #cc0000; font-size: 0.72rem; margin-bottom: 10px;
-      padding: 8px; background: #ffe5e5; border-left: 3px solid #cc0000;
-      border-radius: 4px; display: none;
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; z-index: 1000; transform: translateX(-100%); }
+      .sidebar:not(.collapsed) { transform: translateX(0); }
+      .main-content.expanded { margin-left: 0; }
+      .mobile-toggle { display: block; }
+      .sidebar-toggle-btn { display: none; }
+      .app-header { padding-left: 20px; }
     }
-    #edit-modal-error.show { display: block; }
-
-    .modal-actions {
-      display: flex; align-items: center; gap: 8px;
-      padding: 12px 1.4rem; border-top: 1px solid #e0e8f5; flex-shrink: 0;
-    }
-    .modal-actions button {
-      padding: 0.6rem 1rem; font-size: 0.72rem; border-radius: 8px;
-      border: none; cursor: pointer; font-weight: 600; transition: all 0.2s;
-    }
-    .btn-cancel  { background: white; border: 1px solid #b3c7e0 !important; color: #0a1c2f; }
-    .btn-cancel:hover  { background: #e6efff; }
-    .btn-save    { background: #059669; color: white; }
-    .btn-save:hover    { background: #047857; }
-    .btn-reverse { background: #cc0000; color: white; margin-right: auto; }
-    .btn-reverse:hover:not(:disabled) { background: #a60000; }
-    .btn-reverse:disabled { background: #e0e8f5; color: #97adc9; cursor: not-allowed; }
-
-    .empty-state {
-      text-align: center; padding: 60px; color: #7f96b3; font-size: 0.85rem;
-    }
-    .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 10px; }
-
-    .loading-row td { text-align: center; color: #2b4a73; padding: 40px; font-style: italic; }
   </style>
 </head>
 <body>
-<div class="panel">
+  <div class="sidebar-toggle-btn" id="sidebarToggleBtn"><i class="fas fa-chevron-left" id="toggleBtnIcon"></i></div>
 
-  <!-- ── HEADER ── -->
-  <div class="panel-heading">
-    <a href="javascript:history.back()" class="back-link">
-      <i class="fas fa-arrow-left"></i> Back
-    </a>
-    <span style="flex:1">📦 Material Usage / Assignment History</span>
-    <span id="liveIndicator" style="font-size:0.65rem; opacity:0.6; display:flex; align-items:center; gap:4px;">
-      <i class="fas fa-circle" style="color:#4ade80; font-size:0.55rem"></i> Live
-    </span>
-  </div>
+  <div class="main-wrapper">
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon"><i class="fas fa-building"></i></div>
+          <div class="logo-text"><h2>PENTA</h2><span>Construction Pro</span></div>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;scrollbar-width:thin;">
+        <nav class="nav-section">
+          <h3>Dashboard</h3>
+          <ul class="nav-links">
+            <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="fas fa-gauge-high nav-icon"></i><span>Overview</span></a></li>
+            <li class="nav-item"><a href="projectdashboard.html" class="nav-link"><i class="fas fa-diagram-project nav-icon"></i><span>Projects</span></a></li>
+            <li class="nav-item"><a href="Employees.html" class="nav-link"><i class="fas fa-user-tie nav-icon"></i><span>Team</span></a></li>
+          </ul>
+        </nav>
+        <nav class="nav-section">
+          <h3>Resources</h3>
+          <ul class="nav-links">
+            <li class="nav-item"><a href="Tool.html" class="nav-link"><i class="fas fa-screwdriver-wrench nav-icon"></i><span>Equipment</span></a></li>
+            <li class="nav-item"><a href="Fire-extinguishers.html" class="nav-link"><i class="fas fa-fire-extinguisher nav-icon"></i><span>Fire Extinguisher</span></a></li>
+            <li class="nav-item"><a href="mm.html" class="nav-link"><i class="fas fa-cubes nav-icon"></i><span>Materials</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link active"><i class="fas fa-boxes-stacked nav-icon"></i><span>Material History</span></a></li>
+            <li class="nav-item"><a href="assignment-history.html" class="nav-link"><i class="fas fa-history nav-icon"></i><span>Assignment History</span></a></li>
+          </ul>
+        </nav>
+        <nav class="nav-section">
+          <h3>Management</h3>
+          <ul class="nav-links">
+            <li class="nav-item"><a href="Accountsdash.html" class="nav-link"><i class="fas fa-file-invoice-dollar nav-icon"></i><span>Finances</span></a></li>
+            <li class="nav-item"><a href="Table.html" class="nav-link"><i class="fas fa-chart-column nav-icon"></i><span>Reports</span></a></li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
 
-  <!-- ── SUMMARY ── -->
-  <div class="summary-strip">
-    <div class="stat-pill mat">📦 Total Material Cost: <span id="statMatCost">—</span></div>
-    <div class="stat-pill count">📋 Records: <span id="statCount">—</span></div>
-    <div class="stat-pill">🔁 Reversed: <span id="statReversed">—</span></div>
-    <div class="stat-pill">📦 Materials Used: <span id="statMaterials">—</span></div>
-  </div>
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="main-content" id="mainContent">
+      <div class="app-header">
+        <div class="header-left">
+          <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
+          <div class="page-title"><i class="fas fa-boxes-stacked"></i><h1>Material Usage History</h1></div>
+        </div>
+        <div class="live-indicator"><span class="live-dot"></span><span>Live</span></div>
+      </div>
 
-  <!-- ── FILTER BAR ── -->
-  <div class="filter-bar">
-    <div class="filter-group">
-      <span class="filter-label">Material:</span>
-      <select id="materialFilter" class="filter-select">
-        <option value="">All</option>
-      </select>
-
-      <span class="filter-label">Project:</span>
-      <select id="projectFilter" class="filter-select">
-        <option value="">All</option>
-      </select>
-
-      <span class="filter-label">Task ID:</span>
-      <input id="taskIdFilter" class="filter-input" style="width:110px" placeholder="e.g. PRJ-1">
-
-      <input id="searchBar" class="search-bar" type="text" placeholder="Search anything..." autocomplete="off">
-
-      <button class="show-reversed-btn" id="toggleReversedBtn">
-        <i class="fas fa-eye"></i> Show Reversed
-      </button>
-      
-      <!-- ── MATERIALS BUTTON ── -->
-      <a href="mm.html" class="materials-btn">
-        <i class="fas fa-cubes"></i> Materials
-      </a>
-      
-      <!-- ── ACTIONS BUTTON WITH DROPDOWN ── -->
+      <!-- Quick Actions -->
       <div class="actions-container">
-        <button class="actions-btn" onclick="toggleActionsDropdown()">
-          <i class="fas fa-sliders-h"></i> Actions
-          <span id="activeFilterBadge" class="active-filter-badge" style="display: none;">!</span>
-        </button>
-        <div class="actions-dropdown" id="actionsDropdown">
-          <div class="actions-section">
-            <div class="actions-section-title">
-              <i class="fas fa-calendar-day"></i> Filter by Day
-            </div>
-            <div class="date-input-group">
-              <input type="date" id="dayFilter" class="date-input" placeholder="Select date">
-            </div>
+        <div class="actions-header" id="actionsHeader">
+          <h3><i class="fas fa-sliders-h"></i> Quick Actions</h3>
+          <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
+        </div>
+        <div class="actions-panel" id="actionsPanel">
+          <a href="javascript:history.back()" class="btn"><i class="fas fa-arrow-left"></i> Back</a>
+          <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-home"></i> Dashboard</a>
+          <a href="mm.html" class="btn"><i class="fas fa-cubes"></i> Materials Stock</a>
+        </div>
+      </div>
+
+      <div class="dashboard-container">
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Material Usage &amp; Assignment History</h2>
+            <p>Live-synced with task data — description, location and task details always up to date</p>
           </div>
-          
-          <div class="actions-section">
-            <div class="actions-section-title">
-              <i class="fas fa-calendar-week"></i> Filter by Week
-            </div>
-            <select id="weekFilter" class="week-select">
-              <option value="">All Weeks</option>
-              <option value="1">Week 1</option>
-              <option value="2">Week 2</option>
-              <option value="3">Week 3</option>
-              <option value="4">Week 4</option>
-              <option value="5">Week 5</option>
-            </select>
+          <div class="welcome-icon"><i class="fas fa-boxes-stacked"></i></div>
+        </div>
+
+        <!-- Always-visible: Material filter + search + toggle -->
+        <div class="top-filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Material:</span>
+            <select id="materialFilter" class="filter-select"><option value="">All</option></select>
           </div>
-          
-          <div class="filter-actions">
-            <button class="filter-action-btn apply-filters" onclick="applyAdvancedFilters()">
-              <i class="fas fa-check"></i> Apply
-            </button>
-            <button class="filter-action-btn clear-filters" onclick="clearAdvancedFilters()">
-              <i class="fas fa-times"></i> Clear
-            </button>
+          <div class="filter-group">
+            <span class="filter-label">Task ID:</span>
+            <input id="taskIdFilter" style="border:none;outline:none;font-size:0.7rem;background:transparent;width:90px;color:#0a1c2f;padding:4px 0" placeholder="e.g. PRJ-1">
+          </div>
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchBar" placeholder="Search material, task, location...">
+          </div>
+          <button class="show-reversed-btn" id="toggleReversedBtn">
+            <i class="fas fa-eye"></i> Show Reversed
+          </button>
+          <button class="extra-filters-toggle" id="extraFiltersToggle" onclick="toggleExtraFilters()">
+            <i class="fas fa-filter"></i>
+            <span id="extraFiltersLabel">Show Filters &amp; Stats</span>
+            <i class="fas fa-chevron-down arrow"></i>
+          </button>
+        </div>
+
+        <!-- Collapsible: Stats + Project filter + Date filter -->
+        <div class="extra-filters-body" id="extraFiltersBody">
+          <div class="extra-filters-inner">
+
+            <!-- Stats -->
+            <div class="ef-stats">
+              <div class="stat-pill mat"><i class="fas fa-boxes-stacked"></i> Total Cost: <span id="statMatCost">—</span></div>
+              <div class="stat-pill"><i class="fas fa-list"></i> Records: <span id="statCount">—</span></div>
+              <div class="stat-pill rev"><i class="fas fa-rotate-left"></i> Reversed: <span id="statReversed">—</span></div>
+              <div class="stat-pill"><i class="fas fa-layer-group"></i> Materials: <span id="statMaterials">—</span></div>
+            </div>
+
+            <!-- Project filter -->
+            <div class="filter-bar-inner">
+              <div class="filter-group">
+                <span class="filter-label">Project:</span>
+                <select id="projectFilter" class="filter-select"><option value="">All</option></select>
+              </div>
+              <div class="filter-group">
+                <span class="filter-label">Type:</span>
+                <select id="typeFilter" class="filter-select">
+                  <option value="">All</option>
+                  <option value="inventory">Inventory</option>
+                  <option value="direct">Direct Purchase</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Date / Week filter -->
+            <div class="date-filter-panel">
+              <div class="df-group">
+                <span class="df-label"><i class="fas fa-calendar-day"></i> Day</span>
+                <input type="date" id="dayFilter">
+              </div>
+              <div class="df-group">
+                <span class="df-label"><i class="fas fa-calendar-week"></i> Week</span>
+                <div class="week-row">
+                  <div class="year-nav">
+                    <button class="year-btn" onclick="changeYear(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <span class="year-display" id="currentYear">2026</span>
+                    <button class="year-btn" onclick="changeYear(1)"><i class="fas fa-chevron-right"></i></button>
+                  </div>
+                  <select id="weekFilter" style="min-width:160px;"><option value="">All Weeks</option></select>
+                </div>
+              </div>
+              <div class="df-actions">
+                <button class="df-apply" onclick="applyDateFilters()"><i class="fas fa-check"></i> Apply</button>
+                <button class="df-clear" onclick="clearDateFilters()"><i class="fas fa-times"></i> Clear</button>
+              </div>
+              <div id="activeFilterTags" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
+            </div>
           </div>
         </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+          <table class="usage-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Task ID</th>
+                <th>Description</th>
+                <th>Material</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+                <th>Location</th>
+                <th>Assigned At</th>
+                <th style="text-align:center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usageTableBody">
+              <tr class="loading-row"><td colspan="11"><i class="fas fa-circle-notch fa-spin"></i> Loading records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /dashboard-container -->
+    </main>
+  </div>
+
+  <!-- ═══ EDIT / REVERSE MODAL ═══ -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-edit"></i> Material Assignment</h3>
+        <button class="modal-close" onclick="hideModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid" id="modalDetailGrid"></div>
+        <div id="modalError" class="modal-error"></div>
+        <div class="form-group">
+          <label>Edit Assigned Date / Time</label>
+          <input type="datetime-local" id="editAssignedAt">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-reverse-m" id="btnReverse" onclick="doReverse()"><i class="fas fa-rotate-left"></i> Reverse</button>
+        <button class="btn-cancel-m" onclick="hideModal()">Cancel</button>
+        <button class="btn-save-m" onclick="saveDate()"><i class="fas fa-save"></i> Save Date</button>
       </div>
     </div>
   </div>
 
-  <!-- ── TABLE ── -->
-  <div class="table-responsive">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Task ID</th>
-          <th>Description</th>
-          <th>Material</th>
-          <th>Quantity</th>
-          <th>Unit Price</th>
-          <th>Amount</th>
-          <th>Location</th>
-          <th>Assigned At</th>
-          <th style="min-width:60px; text-align:center">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="usageTableBody">
-        <tr class="loading-row"><td colspan="10"><i class="fas fa-circle-notch fa-spin"></i> Loading records...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+  <script type="module">
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import {
+      getFirestore, collection, query, orderBy, where,
+      onSnapshot, getDocs, getDoc, doc,
+      updateDoc, runTransaction, Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-<!-- ── EDIT / REVERSE MODAL ── -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3 id="modalTitle">📦 Material Assignment</h3>
-      <button class="modal-close" onclick="hideModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <!-- Detail view -->
-      <div class="detail-grid" id="modalDetailGrid"></div>
-      <!-- Error -->
-      <div id="edit-modal-error"></div>
-      <!-- Edit date form -->
-      <form id="editForm">
-        <div class="form-group">
-          <label for="editAssignedAt">Edit Assigned Date / Time:</label>
-          <input type="datetime-local" id="editAssignedAt" required>
-        </div>
-      </form>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-reverse" id="btnReverse" onclick="doReverse()">
-        <i class="fas fa-undo"></i> Reverse
-      </button>
-      <button class="btn-cancel" onclick="hideModal()">Cancel</button>
-      <button class="btn-save" onclick="saveDate()">
-        <i class="fas fa-save"></i> Save Date
-      </button>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-import {
-    getFirestore,
-    collection, query, orderBy, where,
-    onSnapshot, getDoc, getDocs, doc,
-    updateDoc, runTransaction, Timestamp,
-    limit, startAfter
-} from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
-
-/* ── FIREBASE ── */
-const firebaseConfig = {
-    apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-    authDomain: "project-task-588c4.firebaseapp.com",
-    projectId: "project-task-588c4",
-    storageBucket: "project-task-588c4.appspot.com",
-    messagingSenderId: "411882772509",
-    appId: "1:411882772509:web:08d613186c101a99f38ef4"
-};
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-
-/* ── STATE ── */
-let allUsages       = [];      // raw records from Firestore
-let taskCache       = {};      // taskDocId → { taskId, taskDescription, location }
-let projectCache    = {};      // projectId → name
-let showReversed    = false;
-let taskTreeReady   = false;   // flag to indicate task tree is loaded
-
-// Advanced filter state
-let selectedDay = '';
-let selectedWeek = '';
-
-/* DOM */
-const tbody             = document.getElementById('usageTableBody');
-const materialFilter    = document.getElementById('materialFilter');
-const projectFilter     = document.getElementById('projectFilter');
-const taskIdFilterEl    = document.getElementById('taskIdFilter');
-const searchBarEl       = document.getElementById('searchBar');
-const toggleRevBtn      = document.getElementById('toggleReversedBtn');
-const dayFilterEl       = document.getElementById('dayFilter');
-const weekFilterEl      = document.getElementById('weekFilter');
-const activeFilterBadge = document.getElementById('activeFilterBadge');
-const editModal         = document.getElementById('editModal');
-const editAssignedAt    = document.getElementById('editAssignedAt');
-const editError         = document.getElementById('edit-modal-error');
-const btnReverse        = document.getElementById('btnReverse');
-const modalDetailGrid   = document.getElementById('modalDetailGrid');
-
-let currentDocId = null;
-let currentRecord = null;
-
-// Load saved filter state from localStorage
-function loadFilterState() {
-    const savedState = localStorage.getItem('materialUsageFilters');
-    if (savedState) {
-        try {
-            const state = JSON.parse(savedState);
-            materialFilter.value = state.material || '';
-            projectFilter.value = state.project || '';
-            taskIdFilterEl.value = state.taskId || '';
-            searchBarEl.value = state.search || '';
-            showReversed = state.showReversed || false;
-            dayFilterEl.value = state.day || '';
-            weekFilterEl.value = state.week || '';
-            selectedDay = state.day || '';
-            selectedWeek = state.week || '';
-            
-            toggleRevBtn.classList.toggle('active', showReversed);
-            toggleRevBtn.innerHTML = showReversed
-                ? '<i class="fas fa-eye-slash"></i> Hide Reversed'
-                : '<i class="fas fa-eye"></i> Show Reversed';
-        } catch (e) {
-            console.warn('Failed to load filter state:', e);
-        }
-    }
-}
-
-// Save filter state to localStorage
-function saveFilterState() {
-    const state = {
-        material: materialFilter.value,
-        project: projectFilter.value,
-        taskId: taskIdFilterEl.value,
-        search: searchBarEl.value,
-        showReversed: showReversed,
-        day: dayFilterEl.value,
-        week: weekFilterEl.value
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
-    localStorage.setItem('materialUsageFilters', JSON.stringify(state));
-    
-    // Update active filter badge
-    const hasActiveFilters = Object.values(state).some(v => v && v !== '');
-    activeFilterBadge.style.display = hasActiveFilters ? 'inline-block' : 'none';
-}
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
 
-/* ── HELPERS ── */
-const fmt = (n) => (+n||0).toFixed(2);
-const fmtNum = (n) => new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(+n||0);
+    // ── DOM refs ──
+    const sidebar           = document.getElementById('sidebar');
+    const sidebarToggleBtn  = document.getElementById('sidebarToggleBtn');
+    const toggleBtnIcon     = document.getElementById('toggleBtnIcon');
+    const mainContent       = document.getElementById('mainContent');
+    const mobileToggle      = document.getElementById('mobileToggle');
+    const actionsHeader     = document.getElementById('actionsHeader');
+    const actionsPanel      = document.getElementById('actionsPanel');
+    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
+    const tbody             = document.getElementById('usageTableBody');
+    const materialFilter    = document.getElementById('materialFilter');
+    const projectFilter     = document.getElementById('projectFilter');
+    const typeFilter        = document.getElementById('typeFilter');
+    const taskIdFilterEl    = document.getElementById('taskIdFilter');
+    const searchBarEl       = document.getElementById('searchBar');
+    const dayFilterEl       = document.getElementById('dayFilter');
+    const weekFilterEl      = document.getElementById('weekFilter');
+    const currentYearSpan   = document.getElementById('currentYear');
+    const activeFilterTagsEl= document.getElementById('activeFilterTags');
+    const editModal         = document.getElementById('editModal');
+    const editAssignedAt    = document.getElementById('editAssignedAt');
+    const modalError        = document.getElementById('modalError');
+    const btnReverse        = document.getElementById('btnReverse');
+    const modalDetailGrid   = document.getElementById('modalDetailGrid');
+    const extraFiltersBody  = document.getElementById('extraFiltersBody');
+    const extraFiltersToggle= document.getElementById('extraFiltersToggle');
+    const extraFiltersLabel = document.getElementById('extraFiltersLabel');
 
-function fmtDate(val) {
-    if (!val) return '—';
-    let d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
-    return isNaN(d) ? '—' : d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-function toInputDate(val) {
-    if (!val) return '';
-    let d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
-    if (isNaN(d)) return '';
-    return d.toISOString().slice(0,16);
-}
+    // ── State ──
+    let allUsages    = [];
+    // Live-synced task cache: taskDocId → { taskId, taskDescription, location }
+    // This is kept alive by onSnapshot listeners on projectTasks
+    let taskCache    = {};
+    let projectCache = {};
+    let showReversed = false;
+    let selectedDay  = '';
+    let selectedWeek = '';
+    let selectedYear = new Date().getFullYear();
+    let currentDocId = null;
+    let currentRecord= null;
+    let unsubTasks   = null; // task tree listener unsub
 
-// Get week number of month (1-5)
-function getWeekOfMonth(date) {
-    if (!date) return null;
-    const d = date?.toDate ? date.toDate() : date?.seconds ? new Date(date.seconds*1000) : new Date(date);
-    if (isNaN(d)) return null;
-    
-    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
-    const firstDayWeek = firstDay.getDay(); // 0 = Sunday
-    const dayOfMonth = d.getDate();
-    
-    return Math.ceil((dayOfMonth + firstDayWeek) / 7);
-}
-
-/* ── OPTIMIZED TASK TREE LOADER ── */
-async function loadTaskTree() {
-    if (taskTreeReady) return;
-    taskTreeReady = true;
-
-    try {
-        const mainSnap = await getDocs(collection(db, "projectTasks"));
-        
-        // Parallel processing: collect all sub/subsub fetches
-        const allFetches = [];
-
-        for (const mainDoc of mainSnap.docs) {
-            const md = mainDoc.data();
-            taskCache[mainDoc.id] = {
-                taskId:          md.taskId          || '',
-                taskDescription: md.taskDescription || '',
-                location:        md.location        || ''
-            };
-
-            // Queue subtask fetch (don't await yet)
-            allFetches.push(
-                getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks"))
-                    .then(subSnap => {
-                        for (const subDoc of subSnap.docs) {
-                            const sd = subDoc.data();
-                            taskCache[subDoc.id] = {
-                                taskId:          sd.taskId          || '',
-                                taskDescription: sd.taskDescription || '',
-                                location:        sd.location        || ''
-                            };
-
-                            // Sub-subtasks
-                            return getDocs(
-                                collection(db, "projectTasks", mainDoc.id, "subtasks", subDoc.id, "subsubtasks")
-                            ).then(ssSnap => {
-                                for (const ssDoc of ssSnap.docs) {
-                                    const ssd = ssDoc.data();
-                                    taskCache[ssDoc.id] = {
-                                        taskId:          ssd.taskId          || '',
-                                        taskDescription: ssd.taskDescription || '',
-                                        location:        ssd.location        || ''
-                                    };
-                                }
-                            }).catch(() => {});
-                        }
-                    })
-                    .catch(() => {})
-            );
-        }
-
-        // Wait for ALL fetches in parallel
-        await Promise.all(allFetches);
-    } catch(e) { 
-        console.warn("loadTaskTree failed:", e); 
+    // ── Sidebar ──
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      sidebar.classList.add('collapsed'); mainContent.classList.add('expanded');
+      toggleBtnIcon.classList.replace('fa-chevron-left','fa-chevron-right');
     }
-}
+    sidebarToggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded');
+      const c = sidebar.classList.contains('collapsed');
+      toggleBtnIcon.classList.replace(c?'fa-chevron-left':'fa-chevron-right', c?'fa-chevron-right':'fa-chevron-left');
+      localStorage.setItem('sidebarCollapsed', c);
+    });
+    mobileToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
 
-async function resolveTask(taskDocId) {
-    if (!taskDocId || taskCache[taskDocId]) return taskCache[taskDocId] || null;
+    // ── Actions collapse ──
+    if (localStorage.getItem('actionsCollapsed') === 'true') { actionsPanel.classList.add('collapsed'); actionsToggleIcon.style.transform = 'rotate(-90deg)'; }
+    actionsHeader.addEventListener('click', () => {
+      actionsPanel.classList.toggle('collapsed');
+      actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+      localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
+    });
 
-    // Fast path — top-level projectTasks (for new docs added after initial load)
-    try {
-        const snap = await getDoc(doc(db, "projectTasks", taskDocId));
-        if (snap.exists()) {
-            const d = snap.data();
-            taskCache[taskDocId] = {
-                taskId:          d.taskId          || '',
-                taskDescription: d.taskDescription || '',
-                location:        d.location        || ''
-            };
-            return taskCache[taskDocId];
+    // ── Extra filters toggle ──
+    window.toggleExtraFilters = function() {
+      const isOpen = extraFiltersBody.classList.toggle('open');
+      extraFiltersToggle.classList.toggle('open', isOpen);
+      extraFiltersLabel.textContent = isOpen ? 'Hide Filters & Stats' : 'Show Filters & Stats';
+      localStorage.setItem('matExtraFiltersOpen', isOpen);
+    };
+    if (localStorage.getItem('matExtraFiltersOpen') === 'true') {
+      extraFiltersBody.classList.add('open');
+      extraFiltersToggle.classList.add('open');
+      extraFiltersLabel.textContent = 'Hide Filters & Stats';
+    }
+
+    // ── Helpers ──
+    const fmtNum = n => new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(+n||0);
+    function fmtDate(val) {
+      if (!val) return '—';
+      const d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
+      return isNaN(d) ? '—' : d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    }
+    function toInputDate(val) {
+      if (!val) return '';
+      const d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : new Date(val);
+      return isNaN(d) ? '' : d.toISOString().slice(0,16);
+    }
+    function getISOWeek(val) {
+      const d = val?.toDate ? val.toDate() : val?.seconds ? new Date(val.seconds*1000) : val ? new Date(val) : null;
+      if (!d || isNaN(d)) return { week: null, year: null };
+      const t = new Date(d.valueOf()); t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));
+      const ys = new Date(Date.UTC(t.getUTCFullYear(),0,1));
+      return { week: Math.ceil((((t-ys)/86400000)+1)/7), year: t.getUTCFullYear() };
+    }
+    function getWeekKey(val) {
+      const {week,year} = getISOWeek(val);
+      return (week&&year) ? `${year}-${String(week).padStart(2,'0')}` : null;
+    }
+
+    // ── Week filter ──
+    function populateWeekFilter() {
+      weekFilterEl.innerHTML = '<option value="">All Weeks</option>' +
+        Array.from({length:52},(_,i)=>{
+          const wk=i+1, key=`${selectedYear}-${String(wk).padStart(2,'0')}`;
+          return `<option value="${key}" ${key===selectedWeek?'selected':''}>Week ${wk} — ${selectedYear}</option>`;
+        }).join('');
+      currentYearSpan.textContent = selectedYear;
+    }
+    window.changeYear = d => { selectedYear = Math.min(2100,Math.max(2000,selectedYear+d)); populateWeekFilter(); };
+
+    window.applyDateFilters = function() {
+      selectedDay = dayFilterEl.value; selectedWeek = weekFilterEl.value;
+      renderActiveTags(); applyAndRender();
+    };
+    window.clearDateFilters = function() {
+      dayFilterEl.value=''; weekFilterEl.value=''; selectedDay=''; selectedWeek='';
+      renderActiveTags(); applyAndRender();
+    };
+    function renderActiveTags() {
+      let html = '';
+      if (selectedDay) html += `<span class="active-filter-tag"><i class="fas fa-calendar-day"></i>&nbsp;${selectedDay} <button onclick="clearDay()">×</button></span>`;
+      if (selectedWeek) { const[y,w]=selectedWeek.split('-'); html += `<span class="active-filter-tag"><i class="fas fa-calendar-week"></i>&nbsp;Week ${+w}, ${y} <button onclick="clearWeek()">×</button></span>`; }
+      activeFilterTagsEl.innerHTML = html;
+    }
+    window.clearDay  = () => { selectedDay='';  dayFilterEl.value='';  renderActiveTags(); applyAndRender(); };
+    window.clearWeek = () => { selectedWeek=''; weekFilterEl.value=''; renderActiveTags(); applyAndRender(); };
+
+    // ══════════════════════════════════════════════════════
+    // LIVE TASK TREE SYNC
+    // Instead of one-shot getDocs, we use onSnapshot on projectTasks
+    // so whenever description/location changes in the tasks file,
+    // taskCache updates and we re-render the table automatically.
+    // ══════════════════════════════════════════════════════
+    function startTaskTreeListener() {
+      // Main tasks listener
+      onSnapshot(collection(db, "projectTasks"), async (mainSnap) => {
+        // Process each main task
+        for (const mainDoc of mainSnap.docs) {
+          const md = mainDoc.data();
+          taskCache[mainDoc.id] = {
+            taskId:          md.taskId          || '',
+            taskDescription: md.taskDescription || '',
+            location:        md.location        || ''
+          };
         }
-    } catch {}
 
-    taskCache[taskDocId] = { taskId: '', taskDescription: '', location: '' };
-    return taskCache[taskDocId];
-}
-
-/* ── LOAD PROJECT NAME ── */
-async function resolveProject(projectId) {
-    if (!projectId) return '—';
-    if (projectCache[projectId]) return projectCache[projectId];
-    try {
-        for (const col of ['projects','projectDashboard']) {
-            const snap = await getDoc(doc(db, col, projectId));
-            if (snap.exists()) {
-                projectCache[projectId] = snap.data().name || projectId;
-                return projectCache[projectId];
+        // For subtasks and sub-subtasks, set up listeners per main task
+        for (const mainDoc of mainSnap.docs) {
+          // Subtasks listener
+          onSnapshot(collection(db,"projectTasks",mainDoc.id,"subtasks"), (subSnap) => {
+            for (const subDoc of subSnap.docs) {
+              const sd = subDoc.data();
+              taskCache[subDoc.id] = {
+                taskId:          sd.taskId          || '',
+                taskDescription: sd.taskDescription || '',
+                location:        sd.location        || ''
+              };
+              // Sub-subtasks listener
+              onSnapshot(collection(db,"projectTasks",mainDoc.id,"subtasks",subDoc.id,"subsubtasks"), (ssSnap) => {
+                for (const ssDoc of ssSnap.docs) {
+                  const ssd = ssDoc.data();
+                  taskCache[ssDoc.id] = {
+                    taskId:          ssd.taskId          || '',
+                    taskDescription: ssd.taskDescription || '',
+                    location:        ssd.location        || ''
+                  };
+                }
+                // Re-render table with updated task data
+                if (allUsages.length > 0) applyAndRender();
+              });
             }
+            if (allUsages.length > 0) applyAndRender();
+          });
         }
-    } catch {}
-    projectCache[projectId] = projectId;
-    return projectId;
-}
+        if (allUsages.length > 0) applyAndRender();
+      });
+    }
 
-/* ── REAL-TIME LISTENER ── */
-let firstLoad = true;
+    // ── Project cache ──
+    async function resolveProject(projectId) {
+      if (!projectId) return '—';
+      if (projectCache[projectId]) return projectCache[projectId];
+      try {
+        for (const col of ['projects','projectDashboard']) {
+          const snap = await getDoc(doc(db, col, projectId));
+          if (snap.exists()) { projectCache[projectId] = snap.data().name || projectId; return projectCache[projectId]; }
+        }
+      } catch {}
+      projectCache[projectId] = projectId;
+      return projectId;
+    }
 
-onSnapshot(
-    query(collection(db, "materialsUsage"), orderBy("assignedAt", "desc")),
-    async (snapshot) => {
-        // On first load, pre-warm caches in parallel
+    // ── Main data listener ──
+    let firstLoad = true;
+    onSnapshot(
+      query(collection(db,"materialsUsage"), orderBy("assignedAt","desc")),
+      async (snapshot) => {
         if (firstLoad) {
-            firstLoad = false;
-            await loadTaskTree();
-            loadFilterState(); // Load saved filters after task tree is ready
+          firstLoad = false;
+          // Start live task tree sync
+          startTaskTreeListener();
+          populateWeekFilter();
         }
 
-        // Batch-resolve projects first (likely many are duplicates, so cache hits)
-        const projectIds = [...new Set(snapshot.docs.map(d => d.data().projectId).filter(Boolean))];
+        // Resolve projects in parallel
+        const projectIds = [...new Set(snapshot.docs.map(d=>d.data().projectId).filter(Boolean))];
         await Promise.all(projectIds.map(pid => resolveProject(pid)));
 
-        // Build records with cached task info
-        allUsages = snapshot.docs.map((docSnap) => {
-            const u = docSnap.data();
-            const taskInfo = taskCache[u.taskId];
-            // If taskInfo not in cache yet, queue it for resolution
-            if (!taskInfo) {
-                resolveTask(u.taskId); // Fire and forget on first load, cache on next fire
-            }
-            return { _docId: docSnap.id, ...u };
-        });
+        allUsages = snapshot.docs.map(docSnap => ({ _docId: docSnap.id, ...docSnap.data() }));
 
         refreshFilters();
         applyAndRender();
-    },
-    (err) => {
-        console.error('onSnapshot error:', err);
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:red;padding:30px">
-            Error loading data: ${err.message}</td></tr>`;
+      },
+      err => {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:red;padding:30px">Error: ${err.message}</td></tr>`;
+      }
+    );
+
+    // ── Refresh dropdown options ──
+    function refreshFilters() {
+      const selMat  = materialFilter.value;
+      const selProj = projectFilter.value;
+      const mats  = [...new Set(allUsages.map(u=>u.materialName).filter(Boolean))].sort();
+      const projs = [...new Set(allUsages.map(u=>projectCache[u.projectId]||u.projectId).filter(Boolean))].sort();
+      materialFilter.innerHTML = '<option value="">All</option>' + mats.map(m=>`<option value="${m}" ${m===selMat?'selected':''}>${m}</option>`).join('');
+      projectFilter.innerHTML  = '<option value="">All</option>' + projs.map(p=>`<option value="${p}" ${p===selProj?'selected':''}>${p}</option>`).join('');
     }
-);
 
-/* ── REFRESH DROPDOWN FILTERS ── */
-function refreshFilters() {
-    const selMat  = materialFilter.value;
-    const selProj = projectFilter.value;
+    // ── Filter + render ──
+    function applyAndRender() {
+      const selMat    = materialFilter.value;
+      const selProj   = projectFilter.value;
+      const selType   = typeFilter.value;
+      const taskIdVal = taskIdFilterEl.value.trim().toLowerCase();
+      const search    = searchBarEl.value.trim().toLowerCase();
 
-    // Materials
-    const mats = [...new Set(allUsages.map(u => u.materialName).filter(Boolean))].sort();
-    materialFilter.innerHTML = '<option value="">All</option>' +
-        mats.map(m => `<option value="${m}" ${m===selMat?'selected':''}>${m}</option>`).join('');
-
-    // Projects (use cached names)
-    const projs = [...new Set(allUsages.map(u => projectCache[u.projectId] || u.projectId).filter(Boolean))].sort();
-    projectFilter.innerHTML = '<option value="">All</option>' +
-        projs.map(p => `<option value="${p}" ${p===selProj?'selected':''}>${p}</option>`).join('');
-}
-
-/* ── FILTER + RENDER ── */
-function applyAndRender() {
-    const selMat    = materialFilter.value;
-    const selProj   = projectFilter.value;
-    const taskIdVal = taskIdFilterEl.value.trim().toLowerCase();
-    const search    = searchBarEl.value.trim().toLowerCase();
-    const day       = dayFilterEl.value;
-    const week      = weekFilterEl.value;
-
-    let filtered = allUsages.filter(u => {
+      const filtered = allUsages.filter(u => {
         if (!showReversed && u.reversed) return false;
 
-        const taskInfo = taskCache[u.taskId] || {};
+        // Pull LIVE task info from cache
+        const taskInfo = taskCache[u.taskId] || taskCache[u.taskDocId] || {};
         const projName = projectCache[u.projectId] || '';
 
-        if (selMat  && u.materialName !== selMat)   return false;
-        if (selProj && projName !== selProj)          return false;
-        if (taskIdVal && !(taskInfo.taskId || '').toLowerCase().includes(taskIdVal)) return false;
+        if (selMat  && u.materialName !== selMat)  return false;
+        if (selProj && projName !== selProj)         return false;
+        if (selType && (u.purchaseType||'inventory') !== selType) return false;
+        if (taskIdVal && !(taskInfo.taskId||'').toLowerCase().includes(taskIdVal)) return false;
 
-        // Day filter
-        if (day) {
-            const assignedDate = u.assignedAt?.toDate ? u.assignedAt.toDate() : 
-                                u.assignedAt?.seconds ? new Date(u.assignedAt.seconds * 1000) : null;
-            if (assignedDate) {
-                const assignedDateStr = assignedDate.toISOString().split('T')[0];
-                if (assignedDateStr !== day) return false;
-            }
+        if (selectedDay) {
+          const d = u.assignedAt?.toDate ? u.assignedAt.toDate() : u.assignedAt?.seconds ? new Date(u.assignedAt.seconds*1000) : null;
+          if (!d || d.toISOString().split('T')[0] !== selectedDay) return false;
         }
-
-        // Week filter
-        if (week) {
-            const weekNum = getWeekOfMonth(u.assignedAt);
-            if (weekNum !== parseInt(week)) return false;
-        }
+        if (selectedWeek && getWeekKey(u.assignedAt) !== selectedWeek) return false;
 
         if (search) {
-            const hay = [
-                taskInfo.taskId, taskInfo.taskDescription, taskInfo.location,
-                u.materialName, u.quantity, u.unitPrice, projName, fmtDate(u.assignedAt)
-            ].filter(Boolean).join(' ').toLowerCase();
-            return hay.includes(search);
+          const hay = [
+            taskInfo.taskId, taskInfo.taskDescription, taskInfo.location,
+            u.materialName, u.materialId, u.location, projName,
+            fmtDate(u.assignedAt), u.purchaseType
+          ].filter(Boolean).join(' ').toLowerCase();
+          return hay.includes(search);
         }
         return true;
-    });
+      });
 
-    renderTable(filtered);
-    updateStats(filtered);
-    saveFilterState();
-}
-
-/* ── RENDER TABLE ── */
-function renderTable(records) {
-    if (!records.length) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:50px; color:#7f96b3">
-            <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:10px"></i>
-            No records found.</td></tr>`;
-        return;
+      renderTable(filtered);
+      updateStats(filtered);
     }
 
-    tbody.innerHTML = '';
-    let row = 1;
-    for (const u of records) {
-        const taskInfo  = taskCache[u.taskId]          || {};
-        const projName  = projectCache[u.projectId]    || '—';
-        const qty       = parseFloat(u.quantity)       || 0;
-        const price     = parseFloat(u.unitPrice)      || 0;
-        const amount    = qty * price;
-        const isRev     = !!u.reversed;
+    // ── Render table ──
+    function renderTable(records) {
+      if (!records.length) {
+        tbody.innerHTML = `<tr><td colspan="11" class="empty-state"><i class="fas fa-inbox"></i> No records found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = '';
+      records.forEach((u, idx) => {
+        // Always pull live from taskCache — covers both taskId and taskDocId fields
+        const taskInfo = taskCache[u.taskId] || taskCache[u.taskDocId] || {};
+        const qty      = parseFloat(u.quantity)  || 0;
+        const price    = parseFloat(u.unitPrice) || 0;
+        const amount   = qty * price;
+        const isRev    = !!u.reversed;
+        const pType    = u.purchaseType || 'inventory';
 
         const tr = document.createElement('tr');
         if (isRev) tr.classList.add('reversed-row');
         tr.dataset.docId = u._docId;
 
+        // Description: prefer live taskInfo, fall back to stored taskDescription
+        const desc     = taskInfo.taskDescription || u.taskDescription || '—';
+        // Location: prefer live taskInfo, fall back to stored location
+        const location = taskInfo.location        || u.location        || '—';
+        // TaskId display
+        const taskIdDisplay = taskInfo.taskId || u.taskIdDisplay || u.taskId || '—';
+
         tr.innerHTML = `
-            <td>${row++}</td>
-            <td><span class="task-id-badge">${taskInfo.taskId || '—'}</span></td>
-            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap"
-                title="${taskInfo.taskDescription||''}">${taskInfo.taskDescription || '—'}</td>
-            <td style="font-weight:600">${u.materialName || '—'}</td>
-            <td>${qty || '—'}</td>
-            <td>${price ? fmtNum(price) : '—'}</td>
-            <td class="amount-cell">${amount > 0 ? fmtNum(amount) : '—'}</td>
-            <td>${taskInfo.location || u.location || '—'}</td>
-            <td style="white-space:nowrap">${fmtDate(u.assignedAt)}</td>
-            <td style="text-align:center">
-                ${isRev
-                    ? `<span style="font-size:0.62rem;background:#f5f5f5;color:#999;padding:2px 8px;border-radius:20px;border:1px solid #ddd">Reversed</span>`
-                    : `<div class="menu-container">
-                        <button class="menu-trigger" onclick="toggleMenu(this)">⋮</button>
-                        <div class="menu-dropdown">
-                            <div class="menu-item" onclick="openModal('${u._docId}')">
-                                <i class="fas fa-edit"></i> Edit / Details
-                            </div>
-                            <div class="menu-item danger" onclick="quickReverse('${u._docId}')">
-                                <i class="fas fa-undo"></i> Reverse
-                            </div>
-                        </div>
-                       </div>`
-                }
-            </td>`;
+          <td><strong>${idx+1}</strong></td>
+          <td><span class="task-id-badge">${taskIdDisplay}</span></td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${desc}">${desc}</td>
+          <td style="font-weight:600">${u.materialName||'—'}</td>
+          <td>${pType==='direct'
+            ? '<span class="purchase-badge-dir"><i class="fas fa-shopping-cart"></i> Direct</span>'
+            : '<span class="purchase-badge-inv"><i class="fas fa-warehouse"></i> Stock</span>'}</td>
+          <td>${qty||'—'}</td>
+          <td>${price ? fmtNum(price) : '—'}</td>
+          <td class="amount-cell">${amount>0 ? fmtNum(amount) : '—'}</td>
+          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${location}">${location}</td>
+          <td style="white-space:nowrap">${fmtDate(u.assignedAt)}</td>
+          <td style="text-align:center">
+            ${isRev
+              ? `<span style="font-size:0.6rem;background:#f5f5f5;color:#999;padding:2px 8px;border-radius:20px;border:1px solid #ddd">Reversed</span>`
+              : `<div class="menu-container">
+                  <button class="menu-trigger" onclick="toggleMenu(this)">⋮</button>
+                  <div class="menu-dropdown">
+                    <div class="menu-item" onclick="openModal('${u._docId}')"><i class="fas fa-edit"></i> Edit / Details</div>
+                    <div class="menu-item danger" onclick="quickReverse('${u._docId}')"><i class="fas fa-rotate-left"></i> Reverse</div>
+                  </div>
+                </div>`
+            }
+          </td>`;
         tbody.appendChild(tr);
+      });
     }
-}
 
-/* ── STATS ── */
-function updateStats(filtered) {
-    const active = filtered.filter(u => !u.reversed);
-    const matCost = active.reduce((s,u) => {
-        return s + (parseFloat(u.quantity)||0) * (parseFloat(u.unitPrice)||0);
-    }, 0);
-    const revCount = filtered.filter(u => u.reversed).length;
-    const matNames = new Set(active.map(u => u.materialName).filter(Boolean));
-
-    document.getElementById('statMatCost').textContent   = fmtNum(matCost);
-    document.getElementById('statCount').textContent     = active.length;
-    document.getElementById('statReversed').textContent  = revCount;
-    document.getElementById('statMaterials').textContent = matNames.size;
-}
-
-/* ── ACTIONS DROPDOWN FUNCTIONS ── */
-window.toggleActionsDropdown = function() {
-    const dropdown = document.getElementById('actionsDropdown');
-    dropdown.classList.toggle('show');
-    
-    // Close when clicking outside
-    if (dropdown.classList.contains('show')) {
-        setTimeout(() => {
-            document.addEventListener('click', closeActionsDropdown);
-        }, 0);
+    // ── Stats ──
+    function updateStats(filtered) {
+      const active  = filtered.filter(u=>!u.reversed);
+      const matCost = active.reduce((s,u)=>(s+(parseFloat(u.quantity)||0)*(parseFloat(u.unitPrice)||0)),0);
+      const revCount= filtered.filter(u=>u.reversed).length;
+      const matNames= new Set(active.map(u=>u.materialName).filter(Boolean));
+      document.getElementById('statMatCost').textContent   = fmtNum(matCost);
+      document.getElementById('statCount').textContent     = active.length;
+      document.getElementById('statReversed').textContent  = revCount;
+      document.getElementById('statMaterials').textContent = matNames.size;
     }
-};
 
-function closeActionsDropdown(e) {
-    const dropdown = document.getElementById('actionsDropdown');
-    const actionsBtn = document.querySelector('.actions-btn');
-    
-    if (!dropdown.contains(e.target) && !actionsBtn.contains(e.target)) {
-        dropdown.classList.remove('show');
-        document.removeEventListener('click', closeActionsDropdown);
-    }
-}
+    // ── Menu ──
+    window.toggleMenu = function(btn) {
+      const menu = btn.nextElementSibling;
+      document.querySelectorAll('.menu-dropdown.show').forEach(m=>{ if(m!==menu) m.classList.remove('show'); });
+      menu.classList.toggle('show');
+    };
+    document.addEventListener('click', e => { if (!e.target.closest('.menu-container')) document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show')); });
 
-window.applyAdvancedFilters = function() {
-    selectedDay = dayFilterEl.value;
-    selectedWeek = weekFilterEl.value;
-    applyAndRender();
-    document.getElementById('actionsDropdown').classList.remove('show');
-};
-
-window.clearAdvancedFilters = function() {
-    dayFilterEl.value = '';
-    weekFilterEl.value = '';
-    selectedDay = '';
-    selectedWeek = '';
-    applyAndRender();
-};
-
-/* ── MENU ── */
-window.toggleMenu = function(btn) {
-    const menu = btn.nextElementSibling;
-    document.querySelectorAll('.menu-dropdown.show').forEach(m => { if (m !== menu) m.classList.remove('show'); });
-    menu.classList.toggle('show');
-};
-document.addEventListener('click', e => {
-    if (!e.target.closest('.menu-container'))
-        document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
-});
-
-// Toggle reversed visibility
-document.getElementById('toggleReversedBtn').addEventListener('click', function() {
-    showReversed = !showReversed;
-    this.classList.toggle('active', showReversed);
-    this.innerHTML = showReversed
+    // ── Toggle reversed ──
+    document.getElementById('toggleReversedBtn').addEventListener('click', function() {
+      showReversed = !showReversed;
+      this.classList.toggle('active', showReversed);
+      this.innerHTML = showReversed
         ? '<i class="fas fa-eye-slash"></i> Hide Reversed'
         : '<i class="fas fa-eye"></i> Show Reversed';
-    applyAndRender();
-});
+      applyAndRender();
+    });
 
-/* ── MODAL ── */
-window.openModal = function(docId) {
-    currentDocId  = docId;
-    currentRecord = allUsages.find(u => u._docId === docId);
-    if (!currentRecord) return;
+    // ── Modal ──
+    window.openModal = function(docId) {
+      currentDocId   = docId;
+      currentRecord  = allUsages.find(u=>u._docId===docId);
+      if (!currentRecord) return;
 
-    const taskInfo = taskCache[currentRecord.taskId] || {};
-    const qty      = parseFloat(currentRecord.quantity)  || 0;
-    const price    = parseFloat(currentRecord.unitPrice) || 0;
+      const taskInfo = taskCache[currentRecord.taskId] || taskCache[currentRecord.taskDocId] || {};
+      const qty      = parseFloat(currentRecord.quantity)  || 0;
+      const price    = parseFloat(currentRecord.unitPrice) || 0;
+      const desc     = taskInfo.taskDescription || currentRecord.taskDescription || '—';
+      const location = taskInfo.location        || currentRecord.location        || '—';
+      const taskIdDisp = taskInfo.taskId || currentRecord.taskIdDisplay || currentRecord.taskId || '—';
 
-    // Populate detail grid
-    modalDetailGrid.innerHTML = `
-        <div><div class="dg-label">Task ID</div><div class="dg-value">${taskInfo.taskId || currentRecord.taskId || '—'}</div></div>
-        <div><div class="dg-label">Description</div><div class="dg-value">${taskInfo.taskDescription || '—'}</div></div>
-        <div><div class="dg-label">Material</div><div class="dg-value">${currentRecord.materialName || '—'}</div></div>
+      modalDetailGrid.innerHTML = `
+        <div><div class="dg-label">Task ID</div><div class="dg-value">${taskIdDisp}</div></div>
+        <div><div class="dg-label">Description</div><div class="dg-value">${desc}</div></div>
+        <div><div class="dg-label">Material</div><div class="dg-value">${currentRecord.materialName||'—'}</div></div>
         <div><div class="dg-label">Quantity</div><div class="dg-value">${qty}</div></div>
         <div><div class="dg-label">Unit Price</div><div class="dg-value">${fmtNum(price)}</div></div>
         <div><div class="dg-label">Amount</div><div class="dg-value" style="color:#059669;font-size:0.85rem">${fmtNum(qty*price)}</div></div>
-        <div><div class="dg-label">Location</div><div class="dg-value">${taskInfo.location || currentRecord.location || '—'}</div></div>
-        <div><div class="dg-label">Status</div><div class="dg-value">${currentRecord.reversed ? '🔁 Reversed' : '✅ Active'}</div></div>
-    `;
+        <div><div class="dg-label">Location</div><div class="dg-value">${location}</div></div>
+        <div><div class="dg-label">Status</div><div class="dg-value">${currentRecord.reversed?'🔁 Reversed':'✅ Active'}</div></div>
+        <div><div class="dg-label">Type</div><div class="dg-value">${(currentRecord.purchaseType||'inventory')==='direct'?'Direct Purchase':'From Inventory'}</div></div>
+        <div><div class="dg-label">Assigned At</div><div class="dg-value">${fmtDate(currentRecord.assignedAt)}</div></div>
+      `;
 
-    editAssignedAt.value = toInputDate(currentRecord.assignedAt);
-    editError.style.display = 'none';
-    editError.textContent = '';
-    btnReverse.disabled   = !!currentRecord.reversed;
-    btnReverse.textContent = currentRecord.reversed ? '✓ Already Reversed' : '↩ Reverse';
+      editAssignedAt.value        = toInputDate(currentRecord.assignedAt);
+      modalError.classList.remove('show');
+      btnReverse.disabled         = !!currentRecord.reversed;
+      btnReverse.textContent      = currentRecord.reversed ? '✓ Already Reversed' : '↩ Reverse';
 
-    document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
-    editModal.classList.add('active');
-};
+      document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show'));
+      editModal.classList.add('active');
+    };
+    window.hideModal = () => { editModal.classList.remove('active'); currentDocId=null; currentRecord=null; };
+    editModal.addEventListener('click', e => { if(e.target===editModal) hideModal(); });
 
-window.hideModal = function() {
-    editModal.classList.remove('active');
-    currentDocId  = null;
-    currentRecord = null;
-};
-editModal.addEventListener('click', e => { if (e.target === editModal) hideModal(); });
-
-/* ── SAVE DATE ── */
-window.saveDate = async function() {
-    if (!currentDocId) return;
-    const val = editAssignedAt.value;
-    if (!val) {
-        editError.textContent = 'Please pick a date/time.';
-        editError.style.display = 'block'; return;
-    }
-    try {
-        await updateDoc(doc(db, "materialsUsage", currentDocId), {
-            assignedAt: Timestamp.fromDate(new Date(val))
-        });
+    // ── Save date ──
+    window.saveDate = async function() {
+      if (!currentDocId) return;
+      const val = editAssignedAt.value;
+      if (!val) { modalError.textContent='Please pick a date/time.'; modalError.classList.add('show'); return; }
+      try {
+        await updateDoc(doc(db,"materialsUsage",currentDocId), { assignedAt: Timestamp.fromDate(new Date(val)) });
         hideModal();
-    } catch(e) {
-        editError.textContent = 'Save failed: ' + e.message;
-        editError.style.display = 'block';
-    }
-};
+      } catch(e) { modalError.textContent='Save failed: '+e.message; modalError.classList.add('show'); }
+    };
 
-/* ── REVERSE (from modal) ── */
-window.doReverse = async function() {
-    if (!currentDocId || !currentRecord || currentRecord.reversed) return;
-    if (!confirm(`Reverse this assignment?\n• ${currentRecord.materialName}\n• Qty: ${currentRecord.quantity}\n\nStock will be restored.`)) return;
-    await performReversal(currentDocId, currentRecord.materialId, parseFloat(currentRecord.quantity)||0);
-    hideModal();
-};
+    // ── Reverse (modal) ──
+    window.doReverse = async function() {
+      if (!currentDocId || !currentRecord || currentRecord.reversed) return;
+      if (!confirm(`Reverse this assignment?\n• ${currentRecord.materialName}\n• Qty: ${currentRecord.quantity}\n\nStock will be restored.`)) return;
+      await performReversal(currentDocId, currentRecord.materialId, parseFloat(currentRecord.quantity)||0, currentRecord.purchaseType);
+      hideModal();
+    };
 
-/* ── REVERSE (quick from table menu) ── */
-window.quickReverse = async function(docId) {
-    const u = allUsages.find(r => r._docId === docId);
-    if (!u || u.reversed) return;
-    if (!confirm(`Reverse this assignment?\n• ${u.materialName}\n• Qty: ${u.quantity}\n\nStock will be restored.`)) return;
-    await performReversal(docId, u.materialId, parseFloat(u.quantity)||0);
-};
+    // ── Reverse (quick) ──
+    window.quickReverse = async function(docId) {
+      const u = allUsages.find(r=>r._docId===docId);
+      if (!u || u.reversed) return;
+      if (!confirm(`Reverse this assignment?\n• ${u.materialName}\n• Qty: ${u.quantity}\n\nStock will be restored.`)) return;
+      await performReversal(docId, u.materialId, parseFloat(u.quantity)||0, u.purchaseType);
+    };
 
-async function performReversal(docId, materialId, qty) {
-    try {
+    async function performReversal(docId, materialId, qty, purchaseType) {
+      try {
         await runTransaction(db, async (tx) => {
-            const usageRef = doc(db, "materialsUsage", docId);
-            const usageSnap = await tx.get(usageRef);
-            if (!usageSnap.exists()) throw new Error("Record not found");
-            if (usageSnap.data().reversed) throw new Error("Already reversed");
-
-            // Restore stock if materialId is set
-            if (materialId) {
-                const matRef  = doc(db, "materials", materialId);
-                const matSnap = await tx.get(matRef);
-                if (matSnap.exists()) {
-                    tx.update(matRef, { quantity: (matSnap.data().quantity || 0) + qty });
-                }
-            }
-
-            tx.update(usageRef, { reversed: true, reversedAt: Timestamp.now() });
+          const usageRef  = doc(db,"materialsUsage",docId);
+          const usageSnap = await tx.get(usageRef);
+          if (!usageSnap.exists()) throw new Error("Record not found");
+          if (usageSnap.data().reversed) throw new Error("Already reversed");
+          // Restore stock only for inventory items
+          if (materialId && purchaseType !== 'direct') {
+            const matRef  = doc(db,"materials",materialId);
+            const matSnap = await tx.get(matRef);
+            if (matSnap.exists()) tx.update(matRef, { quantity: (matSnap.data().quantity||0) + qty });
+          }
+          tx.update(usageRef, { reversed: true, reversedAt: Timestamp.now() });
         });
-        alert('✅ Reversed successfully! Stock has been restored.');
-    } catch(e) {
-        alert('❌ Reversal failed: ' + (e.message || e));
+        alert('✅ Reversed successfully!' + (purchaseType !== 'direct' ? ' Stock has been restored.' : ''));
+      } catch(e) { alert('❌ Reversal failed: ' + (e.message||e)); }
     }
-}
 
-/* ── FILTER EVENTS ── */
-materialFilter.addEventListener('change', applyAndRender);
-projectFilter.addEventListener('change',  applyAndRender);
-taskIdFilterEl.addEventListener('input',  applyAndRender);
-searchBarEl.addEventListener('input',     applyAndRender);
+    // ── Filter event listeners ──
+    materialFilter.addEventListener('change', applyAndRender);
+    projectFilter.addEventListener('change',  applyAndRender);
+    typeFilter.addEventListener('change',     applyAndRender);
+    taskIdFilterEl.addEventListener('input',  applyAndRender);
+    searchBarEl.addEventListener('input',     applyAndRender);
 
-// Close actions dropdown when clicking outside
-document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById('actionsDropdown');
-    const actionsBtn = document.querySelector('.actions-btn');
-    if (dropdown && actionsBtn && !dropdown.contains(e.target) && !actionsBtn.contains(e.target)) {
-        dropdown.classList.remove('show');
-    }
-});
-</script>
+    populateWeekFilter();
+  </script>
 </body>
 </html>
