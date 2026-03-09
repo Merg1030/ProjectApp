@@ -1,648 +1,871 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>IMS Weekly & Monthly Stock & Man Hour Report</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body { font-family: Arial, sans-serif; background: #f7fafd; margin: 0; }
-    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(44,62,80,0.06); margin: 40px auto; padding: 30px;}
-    .panel-heading { background: #1976d2; color: #fff; padding: 18px 24px; font-size: 1.25rem; font-weight: bold; border-radius: 8px 8px 0 0; margin: -30px -30px 24px -30px; letter-spacing: 0.08em; }
-    .filter-bar { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;}
-    label { font-weight: 600; margin-right: 7px; }
-    input[type="number"], select { padding: 6px 14px; font-size: 1rem; border-radius: 4px; border: 1px solid #aaa; }
-    button { padding: 7px 18px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;}
-    button:hover { background: #125195;}
-    #download-pdf-btn { margin-left: 7px; background:  #1976d2;}
-    #download-pdf-btn:hover { background:  #3770a9; }
-    #report-output { margin-top: 0; margin-bottom: 30px; }
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 16px;
-      font-size: 0.80rem;
-      table-layout: fixed;
-      word-break: break-word;
-    }
-    .report-table th, .report-table td {
-      text-align: left;
-      padding: 4px 4px;
-      border-bottom: 1px solid #eee;
-      vertical-align: top;
-      max-width: 140px;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      white-space: normal;
-    }
-    .report-table th {
-      color: #222;
-      font-weight: bold;
-      background: #f1f7fe;
-    }
-    .report-table tr:nth-child(even) { background: #f9fbfd; }
-    .currency { font-weight: 500; color: #1976d2; }
-    .total-row td {
-      font-weight: bold;
-      border-top: 2px solid #d1e4fc;
-      color: #1976d2;
-      background: #f1f7fe;
-    }
-    .total-cost-incurred {
-      background: #eafbed;
-      color: #0a7b1c;
-      font-size: 1.10rem;
-      font-weight: bold;
-      padding: 10px 12px;
-      border: 2px solid #b5e7c1;
-      border-radius: 7px;
-      margin-bottom: 16px;
-      margin-top: 10px;
-      text-align: right;
-    }
-      .btn.btn-outline{color: white}
-    h3 { margin-top: 28px; }
-    table, tr, td, th { page-break-inside: avoid !important; }
-    .pdf-page-break { page-break-before: always; }
-    #report-export-section { overflow: visible !important; }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PENTA | Intelligence Report</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════
+   DASHBOARD COLOR SYSTEM — matches PENTA dashboard.html exactly
+   Primary bg:   #f2f6fc  (dashboard-container)
+   White:        #ffffff  (cards, panels)
+   Navy dark:    #0a1c2f  (header, sidebar)
+   Navy mid:     #1f3d62  (borders, active states)
+   Blue light:   #b8cde0  (section headers)
+   Blue softer:  #d4e2f2  (table headers, stat icons)
+   Blue faint:   #e3ecf7  (hover, alt rows)
+   Text primary: #0a1c2f
+   Text muted:   #7f96b3
+   Text sub:     #97adc9
+   Green:        #059669
+   Amber:        #d97706
+   Red:          #dc2626
+═══════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;width:100%;overflow:hidden;background:#f2f6fc;}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;color:#0a1c2f;line-height:1.5;}
+
+/* ── APP SHELL ── */
+.app-shell{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* ── HEADER ── */
+.app-header{background:#0a1c2f;color:white;padding:0 20px;min-height:54px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #1f3d62;flex-shrink:0;}
+.hd-left{display:flex;align-items:center;gap:14px;}
+.hd-logo{display:flex;align-items:center;gap:10px;}
+.hd-logo-icon{width:36px;height:36px;background:#b8cde0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0a1c2f;font-size:1rem;}
+.hd-logo-text{font-size:1rem;font-weight:700;color:white;}
+.hd-logo-sub{font-size:0.62rem;color:#97adc9;display:block;}
+.hd-divider{width:1px;height:28px;background:#1f3d62;}
+.hd-title{font-size:0.9rem;font-weight:600;color:white;}
+.hd-title-sub{font-size:0.62rem;color:#97adc9;}
+.hd-right{display:flex;align-items:center;gap:10px;}
+.live-badge{display:flex;align-items:center;gap:6px;background:#1f3d62;border:1px solid #2b4a73;border-radius:20px;padding:4px 12px;font-size:0.7rem;color:#97adc9;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── CONTROLS BAR ── */
+.controls{background:white;border-bottom:2px solid #1f3d62;padding:8px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-shrink:0;}
+.ctl-group{display:flex;align-items:center;gap:6px;}
+.ctl-label{font-size:0.65rem;font-weight:700;color:#7f96b3;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+.ctl-sel{background:white;border:2px solid #b8cde0;color:#0a1c2f;border-radius:6px;padding:5px 10px;font-size:0.72rem;cursor:pointer;outline:none;font-family:inherit;}
+.ctl-sel:focus{border-color:#1f3d62;}
+.ctl-sel option{background:white;color:#0a1c2f;}
+.ctl-inp{background:white;border:2px solid #b8cde0;color:#0a1c2f;border-radius:6px;padding:5px 8px;font-size:0.72rem;outline:none;font-family:inherit;width:76px;}
+.ctl-inp:focus{border-color:#1f3d62;}
+.wk-nav{display:flex;align-items:center;gap:2px;background:#f2f6fc;border:2px solid #b8cde0;border-radius:6px;padding:2px;}
+.wk-btn{background:none;border:none;color:#7f96b3;cursor:pointer;width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;transition:0.15s;}
+.wk-btn:hover{background:#d4e2f2;color:#0a1c2f;}
+.wk-lbl{font-size:0.65rem;font-weight:700;color:#1f3d62;min-width:160px;text-align:center;padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.ctl-hidden{display:none!important;}
+.tabs{display:flex;gap:2px;background:#f2f6fc;border:2px solid #b8cde0;border-radius:6px;padding:2px;}
+.tab{padding:4px 11px;border-radius:4px;border:none;background:none;color:#7f96b3;font-size:0.62rem;font-weight:700;cursor:pointer;transition:0.15s;white-space:nowrap;font-family:inherit;text-transform:uppercase;letter-spacing:0.3px;}
+.tab.active{background:#0a1c2f;color:white;}
+.tab:hover:not(.active){background:#d4e2f2;color:#0a1c2f;}
+.btn{padding:5px 14px;border-radius:6px;border:2px solid #0a1c2f;background:#0a1c2f;color:white;font-size:0.68rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;white-space:nowrap;transition:0.15s;}
+.btn:hover{background:#1f3d62;border-color:#1f3d62;}
+.btn.secondary{background:white;color:#0a1c2f;border-color:#b8cde0;}
+.btn.secondary:hover{border-color:#1f3d62;background:#f2f6fc;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.mt-pick{display:none;align-items:center;gap:6px;}
+.mt-pick.vis{display:flex;}
+.tog-lbl{display:flex;align-items:center;gap:5px;font-size:0.65rem;font-weight:700;color:#0a1c2f;cursor:pointer;user-select:none;white-space:nowrap;}
+.tog-lbl input[type=checkbox]{width:14px;height:14px;accent-color:#0a1c2f;cursor:pointer;}
+
+/* ── APP BODY ── */
+.app-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+
+/* ── SPLASH ── */
+.splash{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#f2f6fc;}
+.splash-icon{width:72px;height:72px;background:#d4e2f2;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#0a1c2f;border:2px solid #b8cde0;}
+.splash-title{font-size:1.3rem;font-weight:700;color:#0a1c2f;}
+.splash-sub{font-size:0.78rem;color:#7f96b3;text-align:center;max-width:340px;}
+.splash-btn{padding:8px 22px;background:#0a1c2f;color:white;border:none;border-radius:6px;font-size:0.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;transition:0.15s;}
+.splash-btn:hover{background:#1f3d62;}
+
+/* ── LOADING ── */
+.ldwrap{flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#f2f6fc;}
+.spinner{width:36px;height:36px;border:3px solid #d4e2f2;border-top-color:#1f3d62;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ldtxt{font-size:0.72rem;color:#7f96b3;font-weight:600;}
+
+/* ── REPORT SCROLL ── */
+.repscroll{flex:1;overflow-y:auto;background:#f2f6fc;padding:20px;display:none;scrollbar-width:thin;scrollbar-color:#97adc9 #ecf2fa;}
+.repscroll::-webkit-scrollbar{width:8px;}
+.repscroll::-webkit-scrollbar-thumb{background:#97adc9;border-radius:6px;border:2px solid #f2f6fc;}
+
+/* ── REPORT CARD ── */
+.rcard{background:white;border:2px solid #1f3d62;border-radius:12px;margin-bottom:20px;overflow:hidden;box-shadow:0 2px 8px rgba(0,20,40,0.06);}
+
+/* ── MASTHEAD ── */
+.masthead{background:linear-gradient(135deg,#0a1c2f 0%,#1f3d62 100%);padding:22px 28px 16px;border-bottom:3px solid #b8cde0;display:flex;justify-content:space-between;align-items:flex-start;}
+.mh-title{font-size:1.4rem;font-weight:700;color:white;line-height:1.15;}
+.mh-title small{display:block;font-size:0.62rem;color:#97adc9;margin-top:4px;font-weight:400;letter-spacing:0.4px;}
+.mh-right{text-align:right;font-size:0.62rem;color:#97adc9;line-height:2;}
+.mh-right b{color:#b8cde0;}
+
+/* ── KPI STRIP ── */
+.kstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));border-bottom:2px solid #e3ecf7;}
+.kcard{padding:12px 16px;border-right:1px solid #e3ecf7;background:white;}
+.kcard:last-child{border-right:none;}
+.klbl{font-size:0.52rem;text-transform:uppercase;letter-spacing:0.8px;color:#7f96b3;font-weight:700;margin-bottom:3px;}
+.kval{font-size:1.1rem;font-weight:700;color:#0a1c2f;line-height:1.2;}
+.kval.blu{color:#1f3d62;}.kval.grn{color:#059669;}.kval.amb{color:#d97706;}.kval.red{color:#dc2626;}
+.ksub{font-size:0.52rem;color:#97adc9;margin-top:2px;}
+
+/* ── SECTION HEADER ── */
+.sec{background:white;border-bottom:1px solid #e3ecf7;}
+.sec:last-child{border-bottom:none;}
+.sech{background:#b8cde0;border-bottom:2px solid #1f3d62;padding:10px 18px;display:flex;align-items:center;gap:8px;}
+.sico{width:26px;height:26px;border-radius:6px;background:#0a1c2f;color:white;display:flex;align-items:center;justify-content:center;font-size:0.68rem;flex-shrink:0;}
+.sico.grn{background:#059669;}.sico.amb{background:#d97706;}.sico.red{background:#dc2626;}.sico.blu{background:#2563eb;}
+.stit{font-size:0.85rem;font-weight:700;color:#0a1c2f;}
+.sbadge{margin-left:auto;font-size:0.6rem;color:#1f3d62;background:#d4e2f2;padding:2px 10px;border-radius:20px;font-weight:700;border:1px solid #b8cde0;}
+.secbody{padding:14px 18px;}
+
+/* ── TABLES ── */
+.rt{width:100%;border-collapse:collapse;font-size:0.72rem;}
+.rt th{background:#d4e2f2;color:#0a1c2f;font-weight:700;font-size:0.6rem;padding:7px 9px;border:1px solid #b8cde0;border-bottom:2px solid #1f3d62;white-space:nowrap;text-align:left;position:sticky;top:0;z-index:5;}
+.rt td{padding:7px 9px;border:1px solid #e3ecf7;vertical-align:middle;color:#0a1c2f;}
+.rt tbody tr:nth-child(even) td{background:#fafcff;}
+.rt tbody tr:hover td{background:#e3ecf7;}
+.rt tfoot td{background:#d4e2f2;font-weight:700;border-top:2px solid #1f3d62;color:#0a1c2f;}
+
+/* ── STATUS BADGES ── */
+.sb{padding:2px 8px;border-radius:20px;font-size:0.58rem;font-weight:700;display:inline-block;white-space:nowrap;border:1px solid transparent;}
+.sb-c{background:#d1fae5;color:#065f46;border-color:#6ee7b7;}
+.sb-o{background:#dbeafe;color:#1e40af;border-color:#93c5fd;}
+.sb-p{background:#fef3c7;color:#92400e;border-color:#fbbf24;}
+.idb{background:#e3ecf7;color:#1f3d62;padding:2px 7px;border-radius:4px;font-family:monospace;font-size:0.62rem;font-weight:700;border:1px solid #b8cde0;}
+.np{display:inline-block;background:#d4e2f2;border:1px solid #b8cde0;color:#1f3d62;border-radius:20px;padding:1px 7px;font-size:0.56rem;margin:1px;}
+.bdir{background:#fef3c7;color:#92400e;border:1px solid #fbbf24;border-radius:3px;font-size:0.52rem;padding:1px 5px;margin-left:3px;}
+
+/* ── VALUE COLORS ── */
+.cv{color:#059669;font-weight:700;}.cvr{color:#dc2626;font-weight:600;}
+.hv{color:#d97706;font-weight:700;}.mv{color:#1f3d62;font-weight:700;}
+
+/* ── PERSON CARDS ── */
+.pcards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px;margin-bottom:14px;}
+.pcard{background:white;border:2px solid #b8cde0;border-radius:10px;padding:12px;display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:start;transition:0.15s;}
+.pcard:hover{border-color:#1f3d62;box-shadow:0 2px 8px rgba(0,20,40,0.1);}
+.pav{width:40px;height:40px;border-radius:50%;background:#0a1c2f;color:white;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;cursor:pointer;border:2px solid #1f3d62;transition:0.15s;}
+.pav:hover{background:#1f3d62;transform:scale(1.05);}
+.pname{font-size:0.75rem;font-weight:700;color:#0a1c2f;}
+.peid{font-size:0.58rem;color:#7f96b3;font-family:monospace;}
+.ptl{font-size:0.6rem;color:#2563eb;margin-top:2px;font-weight:600;}
+.ptl2{font-size:0.6rem;color:#7f96b3;margin-top:1px;}
+.pst{min-width:200px;}
+.pbrow{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.pbwrap{flex:1;}
+.pblbl{font-size:0.56rem;color:#7f96b3;margin-bottom:2px;}
+.pbbg{height:6px;background:#e3ecf7;border-radius:3px;overflow:hidden;border:1px solid #b8cde0;}
+.pbw{height:100%;border-radius:3px;background:linear-gradient(90deg,#059669,#10b981);}
+.pbi{height:100%;border-radius:3px;background:linear-gradient(90deg,#dc2626,#f87171);}
+.pnw{font-size:0.7rem;color:#059669;font-weight:700;min-width:44px;text-align:right;}
+.pni{font-size:0.65rem;color:#dc2626;min-width:44px;text-align:right;}
+.psum{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:0.58rem;color:#7f96b3;}
+.psum b{color:#0a1c2f;}
+.perf-btn{font-size:0.6rem;color:#1f3d62;background:#d4e2f2;border:1px solid #b8cde0;border-radius:4px;padding:3px 8px;cursor:pointer;margin-top:5px;font-family:inherit;font-weight:700;transition:0.15s;display:inline-flex;align-items:center;gap:4px;}
+.perf-btn:hover{background:#0a1c2f;color:white;border-color:#0a1c2f;}
+
+/* ── ACCOUNT CARDS ── */
+.accgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:14px;}
+.accard{background:white;border:2px solid #b8cde0;border-radius:8px;padding:12px 14px;border-left:4px solid #1f3d62;}
+.accard.c1{border-left-color:#dc2626;}.accard.c2{border-left-color:#059669;}.accard.c3{border-left-color:#2563eb;}.accard.c4{border-left-color:#d97706;}
+.acnm{font-size:0.65rem;font-weight:700;color:#0a1c2f;margin-bottom:4px;}
+.acamt{font-size:1rem;font-weight:700;color:#1f3d62;}
+.accard.c1 .acamt{color:#dc2626;}.accard.c2 .acamt{color:#059669;}.accard.c3 .acamt{color:#2563eb;}.accard.c4 .acamt{color:#d97706;}
+.acsub{font-size:0.55rem;color:#7f96b3;margin-top:2px;}
+
+/* ── MATERIAL BAR ── */
+.mbar{width:65px;height:5px;background:#e3ecf7;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:5px;overflow:hidden;border:1px solid #b8cde0;}
+.mbarfill{height:100%;background:linear-gradient(90deg,#1f3d62,#2563eb);display:block;}
+
+/* ── MISC ── */
+.divider{height:1px;background:#e3ecf7;margin:10px 0;}
+.sublbl{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;color:#7f96b3;margin-bottom:8px;}
+.nodata{text-align:center;padding:28px;color:#97adc9;font-size:0.75rem;}
+.nodata i{display:block;font-size:1.4rem;margin-bottom:6px;opacity:.4;color:#b8cde0;}
+.totbanner{background:#d1fae5;border:2px solid #6ee7b7;border-radius:6px;padding:8px 16px;margin-bottom:12px;font-size:0.72rem;color:#065f46;font-weight:700;text-align:right;}
+.totbanner.red{background:#fee2e2;border-color:#fca5a5;color:#991b1b;}
+.totbanner.blue{background:#dbeafe;border-color:#93c5fd;color:#1e40af;}
+
+/* ── MAIN TASK REPORT CARDS ── */
+.mt-card{background:white;border:2px solid #b8cde0;border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.mt-card-head{background:#0a1c2f;color:white;padding:10px 16px;display:flex;align-items:center;gap:8px;justify-content:space-between;}
+.mt-card-id{font-family:monospace;font-size:0.65rem;background:#1f3d62;padding:2px 8px;border-radius:4px;color:#b8cde0;}
+.mt-card-title{font-size:0.8rem;font-weight:700;flex:1;margin:0 8px;}
+.mt-card-status{}
+.mt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));border-bottom:1px solid #e3ecf7;}
+.mt-kcard{padding:8px 12px;border-right:1px solid #e3ecf7;}
+.mt-kcard:last-child{border-right:none;}
+.mt-klbl{font-size:0.5rem;text-transform:uppercase;letter-spacing:0.6px;color:#7f96b3;font-weight:700;}
+.mt-kval{font-size:0.9rem;font-weight:700;color:#0a1c2f;margin-top:1px;}
+.mt-body{padding:12px 14px;}
+.mt-sub-tasks{background:#f2f6fc;border:1px solid #e3ecf7;border-radius:6px;padding:8px 10px;margin-top:8px;}
+.mt-sub-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #e3ecf7;font-size:0.65rem;}
+.mt-sub-row:last-child{border-bottom:none;}
+.mt-sub-indent{width:12px;border-left:2px solid #b8cde0;height:16px;margin-left:4px;}
+.mt-sub-indent2{width:20px;border-left:2px solid #d4e2f2;height:16px;margin-left:10px;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,28,47,.6);z-index:999;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:white;border:2px solid #1f3d62;border-radius:12px;width:100%;max-width:920px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,20,40,0.25);}
+.modal-head{background:#0a1c2f;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #b8cde0;flex-shrink:0;}
+.modal-title{font-size:0.9rem;font-weight:700;color:white;}
+.modal-close{background:none;border:1px solid #2b4a73;color:#97adc9;cursor:pointer;font-size:0.85rem;padding:4px 10px;border-radius:4px;transition:0.15s;}
+.modal-close:hover{background:#1f3d62;color:white;}
+.modal-body{overflow-y:auto;padding:20px;flex:1;background:#f2f6fc;}
+
+/* ── SECTION TOGGLES ── */
+.tog-lbl{display:flex;align-items:center;gap:4px;font-size:0.65rem;font-weight:600;color:#0a1c2f;cursor:pointer;padding:4px 8px;border-radius:5px;border:1px solid #b8cde0;background:white;transition:0.15s;white-space:nowrap;user-select:none;}
+.tog-lbl:hover{background:#e3ecf7;border-color:#1f3d62;}
+.tog-lbl input{accent-color:#1f3d62;width:13px;height:13px;cursor:pointer;}
+#sectionToggles{flex-wrap:wrap;}
+
+/* ── PRINT ── */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .app-header,.controls,.modal-overlay,.no-print{display:none!important;}
+  body,html{overflow:visible!important;height:auto!important;background:white!important;font-size:10px;}
+  .app-body,.repscroll{overflow:visible!important;display:block!important;height:auto!important;background:white!important;padding:0!important;}
+  .app-shell{height:auto!important;overflow:visible!important;}
+  .rcard{box-shadow:none!important;break-inside:avoid;margin-bottom:14px!important;border:1px solid #1f3d62!important;}
+  .masthead{background:linear-gradient(135deg,#0a1c2f 0%,#1f3d62 100%)!important;padding:14px 20px!important;}
+  .mh-title{font-size:1rem!important;}
+  .sech{background:#b8cde0!important;}
+  .rt th{background:#d4e2f2!important;font-size:0.55rem!important;padding:5px 7px!important;}
+  .rt td{padding:5px 7px!important;font-size:0.62rem!important;}
+  .kstrip{break-inside:avoid;}
+  /* Hide employee person cards & buttons on print — only show tracker table */
+  .pcards-grid,.pcard,.perf-btn,.pav{display:none!important;}
+  .mt-card{break-inside:avoid;}
+  .secbody{padding:10px 14px!important;}
+  /* Hide view-performance buttons */
+  .perf-btn{display:none!important;}
+}
+</style>
 </head>
 <body>
-  <div class="panel">
-    <div class="panel-heading">
-                <a href="dashboard.html" class="btn btn-outline">
-  <i class="fas fa-arrow-left"></i> Back
-</a>IMS Weekly & Monthly Stock & Man Hour Report</div>
-    <div class="filter-bar">
-      <label for="report-type-select">Report Type:</label>
-      <select id="report-type-select">
-        <option value="week">Weekly</option>
-        <option value="month">Monthly</option>
-      </select>
-      <div id="week-controls">
-        <label for="week-select">Week Number:</label>
-        <input type="number" id="week-select" min="1" max="53" value="">
-        <label for="week-year-select">Year:</label>
-        <input type="number" id="week-year-select" min="2020" max="2100" step="1" style="width:90px;" />
-      </div>
-      <div id="month-controls" style="display:none;">
-        <label for="month-select">Month:</label>
-        <select id="month-select">
-          <option value="0">January</option>
-          <option value="1">February</option>
-          <option value="2">March</option>
-          <option value="3">April</option>
-          <option value="4">May</option>
-          <option value="5">June</option>
-          <option value="6">July</option>
-          <option value="7">August</option>
-          <option value="8">September</option>
-          <option value="9">October</option>
-          <option value="10">November</option>
-          <option value="11">December</option>
-        </select>
-        <label for="year-select">Year:</label>
-        <input type="number" id="year-select" min="2020" max="2100" step="1" style="width:90px;" />
-      </div>
-      <button id="generate-report-btn">Generate Report</button>
-      <button id="download-pdf-btn" disabled>Download as PDF</button>
+<div class="app-shell">
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="hd-left">
+    <div class="hd-logo">
+      <div class="hd-logo-icon"><i class="fas fa-building"></i></div>
+      <div><div class="hd-logo-text">PENTA</div><span class="hd-logo-sub">Construction Pro</span></div>
     </div>
-    <div id="report-output"></div>
+    <div class="hd-divider"></div>
+    <div><div class="hd-title">Intelligence Report</div><div class="hd-title-sub">Weekly · Monthly · Yearly analytics</div></div>
   </div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      onSnapshot,
-      query,
-      orderBy,
-      getDoc,
-      doc,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  <div class="hd-right">
+    <div class="live-badge"><div class="live-dot"></div><span>LIVE</span></div>
+  </div>
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-      authDomain: "project-task-588c4.firebaseapp.com",
-      projectId: "project-task-588c4",
-      storageBucket: "project-task-588c4.appspot.com",
-      messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="ctl-group">
+    <span class="ctl-label">Period</span>
+    <select class="ctl-sel" id="periodType">
+      <option value="week">Weekly</option>
+      <option value="month">Monthly</option>
+      <option value="year">Yearly</option>
+    </select>
+  </div>
 
-    let allUsages = [];
-    let allTransfers = [];
-    let allTasks = [];
-    let materialCache = {};
-    let projectCache = {};
+  <!-- Week -->
+  <div class="ctl-group" id="wkCtrl">
+    <div class="wk-nav">
+      <button class="wk-btn" id="prevWk"><i class="fas fa-chevron-left"></i></button>
+      <span class="wk-lbl" id="wkLabel">—</span>
+      <button class="wk-btn" id="nextWk"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <select class="ctl-sel" id="jumpSel" style="min-width:155px"><option value="">Jump to week…</option></select>
+  </div>
 
-    function getWeekNumber(d) {
-      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-      return weekNo;
-    }
-    function getWeekNumberFromDate(date) {
-      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-      return { week: weekNo, year: d.getUTCFullYear() };
-    }
-    function isSameMonthYear(date, month, year) {
-      return date.getMonth() === month && date.getFullYear() === year;
-    }
-    function safeProjectName(row) {
-      return typeof row.projectName === "string"
-        ? row.projectName
-        : (row.projectName && row.projectName.name)
-          ? row.projectName.name
-          : (row.projectName && row.projectName.toString && row.projectName.toString() !== '[object Object]'
-              ? row.projectName.toString()
-              : '-');
-    }
+  <!-- Month -->
+  <div class="ctl-group ctl-hidden" id="moCtrl">
+    <select class="ctl-sel" id="moSel">
+      <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+      <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+      <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+      <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+    </select>
+    <input class="ctl-inp" type="number" id="moYr" min="2020" max="2100" value="">
+  </div>
 
-    onSnapshot(query(collection(db, "materialsUsage"), orderBy("assignedAt", "desc")), async (snapshot) => {
-      allUsages = [];
-      materialCache = {};
-      projectCache = {};
-      const usageDocs = snapshot.docs;
-      for (const docSnap of usageDocs) {
-        const u = docSnap.data();
-        if (u.projectId && !projectCache[u.projectId]) {
-          try {
-            const projSnap = await getDoc(doc(db, "projectDashboard", u.projectId));
-            if (projSnap.exists()) projectCache[u.projectId] = projSnap.data().name || "-";
-            else projectCache[u.projectId] = "-";
-          } catch { projectCache[u.projectId] = "-"; }
-        }
-        if (u.materialId && !materialCache[u.materialId]) {
-          try {
-            const matSnap = await getDoc(doc(db, "materials", u.materialId));
-            if (matSnap.exists()) materialCache[u.materialId] = matSnap.data().unitPrice !== undefined ? matSnap.data().unitPrice : "-";
-            else materialCache[u.materialId] = "-";
-          } catch { materialCache[u.materialId] = "-"; }
-        }
-      }
-      usageDocs.forEach(docSnap => {
-        const u = docSnap.data();
-        let usage = { ...u };
-        if (u.projectId && projectCache[u.projectId]) usage.projectName = projectCache[u.projectId];
-        else if (u.projectName) usage.projectName = u.projectName;
-        else usage.projectName = "-";
-        if (u.materialId) usage.unitPrice = materialCache[u.materialId] !== undefined ? materialCache[u.materialId] : "-";
-        if (u.assignedAt && u.assignedAt.toDate) {
-          usage._date = u.assignedAt.toDate();
-          usage._week = getWeekNumber(usage._date);
-        }
-        allUsages.push(usage);
-      });
-      updateDefaultWeekAndMonth();
-    });
+  <!-- Year -->
+  <div class="ctl-group ctl-hidden" id="yrCtrl">
+    <input class="ctl-inp" type="number" id="yrOnly" min="2020" max="2100" style="width:84px" value="">
+  </div>
 
-    onSnapshot(query(collection(db, "locationHistory"), orderBy("transferredAt", "desc")), async (snapshot) => {
-      allTransfers = [];
-      const projIds = [];
-      snapshot.docs.forEach(docSnap => {
-        const d = docSnap.data();
-        if (!d.reversed) {
-          if (d.transferredAt && d.transferredAt.toDate) {
-            d._date = d.transferredAt.toDate();
-            d._week = getWeekNumber(d._date);
-          }
-          d.id = docSnap.id;
-          allTransfers.push(d);
-          if (d.projectId) projIds.push(d.projectId);
-        }
-      });
-      await Promise.all([...new Set(projIds)].map(async id => {
-        if (!projectCache[id]) {
-          try {
-            const snap = await getDoc(doc(db, "projectDashboard", id));
-            if (snap.exists()) projectCache[id] = snap.data();
-          } catch {}
-        }
-      }));
-      updateDefaultWeekAndMonth();
-    });
+  <div class="ctl-group">
+    <span class="ctl-label">Project</span>
+    <select class="ctl-sel" id="projSel" style="min-width:160px"><option value="">All Projects</option></select>
+  </div>
 
-    onSnapshot(collection(db, "projectTasks"), async (snapshot) => {
-      allTasks = [];
-      for (const docSnap of snapshot.docs) {
-        const t = docSnap.data();
-        t._id = docSnap.id;
-        if (t.projectId && !projectCache[t.projectId]) {
-          try {
-            const projSnap = await getDoc(doc(db, "projectDashboard", t.projectId));
-            if (projSnap.exists()) projectCache[t.projectId] = projSnap.data().name || "-";
-            else projectCache[t.projectId] = "-";
-          } catch { projectCache[t.projectId] = "-"; }
-        }
-        t.projectName = t.projectId && projectCache[t.projectId]
-          ? (typeof projectCache[t.projectId] === 'string'
-              ? projectCache[t.projectId]
-              : (projectCache[t.projectId].name || '-'))
-          : (typeof t.projectName === 'string'
-              ? t.projectName
-              : (t.projectName && t.projectName.name) ? t.projectName.name : '-');
-        allTasks.push(t);
-      }
-    });
+  <!-- Main task picker — only shown on maintask tab -->
+  <div class="mt-pick" id="mtPick">
+    <span class="ctl-label">Main Task</span>
+    <select class="ctl-sel" id="mtSel" style="min-width:200px"><option value="">All Main Tasks</option></select>
+  </div>
 
-    function updateDefaultWeekAndMonth() {
-      let latestStockWeek = 0, latestMHWeek = 0, latestStockDate = null;
-      allUsages.forEach(u => {
-        if (u._week && u._week > latestStockWeek) latestStockWeek = u._week;
-        if (u._date && (!latestStockDate || u._date > latestStockDate)) latestStockDate = u._date;
-      });
-      allTransfers.forEach(d => {
-        if (d._week && d._week > latestMHWeek) latestMHWeek = d._week;
-        if (d._date && (!latestStockDate || d._date > latestStockDate)) latestStockDate = d._date;
-      });
-      let wk = Math.max(latestStockWeek, latestMHWeek) || 1;
-      const now = new Date();
-      document.getElementById("week-select").value = wk;
-      document.getElementById("week-year-select").value = latestStockDate ? latestStockDate.getFullYear() : now.getFullYear();
-      if (latestStockDate) {
-        document.getElementById("month-select").value = latestStockDate.getMonth();
-        document.getElementById("year-select").value = latestStockDate.getFullYear();
-      } else {
-        document.getElementById("month-select").value = now.getMonth();
-        document.getElementById("year-select").value = now.getFullYear();
-      }
-    }
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="tasks">Tasks</button>
+    <button class="tab" data-tab="materials">Materials</button>
+    <button class="tab" data-tab="labour">Labour</button>
+    <button class="tab" data-tab="cash">Cash</button>
+    <button class="tab" data-tab="maintask">Main Tasks</button>
+  </div>
 
-    let lastReportHTML = '';
-    let lastReportType = '';
-    let lastReportPeriod = '';
+  <!-- Section toggles -->
+  <div class="ctl-group" id="sectionToggles">
+    <span class="ctl-label">Show</span>
+    <label class="tog-lbl"><input type="checkbox" id="togActive" checked> Active Tasks</label>
+    <label class="tog-lbl"><input type="checkbox" id="togMat" checked> Materials</label>
+    <label class="tog-lbl"><input type="checkbox" id="togCash" checked> Cash</label>
+  </div>
 
-    const reportTypeSelect = document.getElementById("report-type-select");
-    const weekControls = document.getElementById("week-controls");
-    const monthControls = document.getElementById("month-controls");
-    reportTypeSelect.onchange = function() {
-      if (reportTypeSelect.value === "week") {
-        weekControls.style.display = "";
-        monthControls.style.display = "none";
-      } else {
-        weekControls.style.display = "none";
-        monthControls.style.display = "";
-      }
-    };
+  <button class="btn" id="genBtn"><i class="fas fa-bolt"></i> Generate</button>
+  <button class="btn secondary" id="pdfBtn" disabled><i class="fas fa-print"></i> Print / PDF</button>
+</div>
 
-    async function getAccountTotalsForCashReport(month, year, forMonth, week, forWeek, weekYear) {
-      const expensesCol = collection(db, "General expenses");
-      const snap = await getDocs(expensesCol);
+<!-- BODY -->
+<div class="app-body">
+  <div class="splash" id="splash">
+    <div class="splash-icon"><i class="fas fa-chart-bar"></i></div>
+    <div class="splash-title">Intelligence Report</div>
+    <div class="splash-sub">Select a period and project, then click Generate to build your report.</div>
+    <button class="splash-btn" id="splashGenBtn"><i class="fas fa-bolt"></i> Generate Report</button>
+  </div>
+  <div class="ldwrap" id="ldWrap">
+    <div class="spinner"></div>
+    <div class="ldtxt" id="ldTxt">Loading data…</div>
+  </div>
+  <div class="repscroll" id="repScroll">
+    <div id="docPage"></div>
+  </div>
+</div>
 
-      let expenses = snap.docs.map(doc => doc.data());
-      if (forMonth) {
-        expenses = expenses.filter(exp => {
-          if (!exp.date) return false;
-          const d = new Date(exp.date);
-          return d.getMonth() === month && d.getFullYear() === year;
+</div><!-- app-shell -->
+
+<!-- INDIVIDUAL PERFORMANCE MODAL -->
+<div class="modal-overlay" id="perfModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title" id="perfModalTitle"><i class="fas fa-chart-line"></i> Performance Report</span>
+      <button class="modal-close" id="closeModal"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="modal-body" id="perfModalBody"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+const fbApp = initializeApp({
+  apiKey:"AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+  authDomain:"project-task-588c4.firebaseapp.com",
+  projectId:"project-task-588c4",
+  storageBucket:"project-task-588c4.appspot.com",
+  messagingSenderId:"411882772509",
+  appId:"1:411882772509:web:08d613186c101a99f38ef4"
+});
+const db = getFirestore(fbApp);
+
+/* ═══ HELPERS ═══ */
+function isoWeek(dt){
+  const d=new Date(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate()));
+  const day=d.getUTCDay()||7; d.setUTCDate(d.getUTCDate()+4-day);
+  const y1=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return{week:Math.ceil((((d-y1)/86400000)+1)/7),year:d.getUTCFullYear()};
+}
+function weekBounds(year,week){
+  const j4=new Date(Date.UTC(year,0,4)); const dow=j4.getUTCDay()||7;
+  const mon=new Date(j4); mon.setUTCDate(j4.getUTCDate()-dow+1+(week-1)*7);
+  const sun=new Date(mon); sun.setUTCDate(mon.getUTCDate()+6); sun.setUTCHours(23,59,59,999);
+  return{start:mon,end:sun};
+}
+function toDate(v){ if(!v)return null; try{return v?.toDate?v.toDate():v?.seconds?new Date(v.seconds*1000):new Date(v);}catch{return null;} }
+function inWeek(v,w,y){ const d=toDate(v); if(!d)return false; const wd=isoWeek(d); return wd.week===w&&wd.year===y; }
+function inMonth(v,m,y){ const d=toDate(v); return d&&d.getMonth()===m&&d.getFullYear()===y; }
+function inYear(v,yr){ const d=toDate(v); return d&&d.getFullYear()===yr; }
+function inPeriod(v,p){ if(p.type==='week')return inWeek(v,p.week,p.year); if(p.type==='month')return inMonth(v,p.month,p.year); return inYear(v,p.year); }
+function labField(l){ return l.transferDate||l.transferredAt||null; }
+function fmtD(v,s=false){ const d=toDate(v); if(!d||isNaN(d))return'—'; return s?d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}):d.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtN(n){ return new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(+n||0); }
+function fmtNs(n){ return new Intl.NumberFormat('en-US',{minimumFractionDigits:0,maximumFractionDigits:1}).format(+n||0); }
+const WK_HRS=45, COST_HR=20;
+function workdays(mo,yr){ const days=new Date(yr,mo+1,0).getDate(); let w=0; for(let i=1;i<=days;i++){const dow=new Date(yr,mo,i).getDay();if(dow!==0)w+=(dow===6?.5:1);} return w; }
+function expHrs(p){ if(p.type==='week')return WK_HRS; if(p.type==='month')return workdays(p.month,p.year)*8; return workdays(0,p.year)*8*12; }
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function pLabel(p,pname){
+  let s='';
+  if(p.type==='week'){const{start,end}=weekBounds(p.year,p.week);s=`W${String(p.week).padStart(2,'0')} ${p.year} · ${start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}–${end.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;}
+  else if(p.type==='month') s=`${MONTHS[p.month]} ${p.year}`;
+  else s=`Year ${p.year}`;
+  return s+(pname?` — ${pname}`:'');
+}
+
+/* ═══ STATE ═══ */
+let {week:CW,year:CY}=isoWeek(new Date());
+let activeTab='overview', selPid='', selMtId='', DATA=null, generated=false;
+let PERF={labour:[],tasks:[],materials:[]};
+const now=new Date();
+
+/* ═══ DOM ═══ */
+const periodType=document.getElementById('periodType');
+const wkCtrl=document.getElementById('wkCtrl'); const moCtrl=document.getElementById('moCtrl'); const yrCtrl=document.getElementById('yrCtrl');
+const wkLabel=document.getElementById('wkLabel'); const jumpSel=document.getElementById('jumpSel');
+const moSel=document.getElementById('moSel'); const moYr=document.getElementById('moYr'); const yrOnly=document.getElementById('yrOnly');
+const projSel=document.getElementById('projSel'); const mtPick=document.getElementById('mtPick'); const mtSel=document.getElementById('mtSel');
+const togActive=document.getElementById('togActive');
+const togMat=document.getElementById('togMat');
+const togCash=document.getElementById('togCash');
+const splash=document.getElementById('splash'); const ldWrap=document.getElementById('ldWrap'); const ldTxt=document.getElementById('ldTxt');
+const repScroll=document.getElementById('repScroll'); const docPage=document.getElementById('docPage');
+const genBtn=document.getElementById('genBtn'); const pdfBtn=document.getElementById('pdfBtn');
+const perfModal=document.getElementById('perfModal'); const perfModalTitle=document.getElementById('perfModalTitle'); const perfModalBody=document.getElementById('perfModalBody');
+
+moSel.value=now.getMonth(); moYr.value=now.getFullYear(); yrOnly.value=now.getFullYear();
+
+/* ═══ WEEK LABEL ═══ */
+function updLabel(){
+  const{start,end}=weekBounds(CY,CW);
+  wkLabel.textContent=`W${String(CW).padStart(2,'0')} ${CY}  ·  ${start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;
+}
+updLabel();
+(function buildJump(){
+  const cur=isoWeek(new Date()); let o='<option value="">Jump to week…</option>';
+  for(let y=cur.year;y>=cur.year-1;y--){ const max=y===cur.year?cur.week:52;
+    for(let w=max;w>=1;w--){ const{start,end}=weekBounds(y,w);
+      o+=`<option value="${y}|${w}">W${String(w).padStart(2,'0')} ${y} · ${start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}–${end.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</option>`; } }
+  jumpSel.innerHTML=o;
+})();
+
+/* ═══ UI STATE ═══ */
+function showSplash(){ splash.style.display='flex'; ldWrap.style.display='none'; repScroll.style.display='none'; }
+function showLoad(m){ splash.style.display='none'; ldWrap.style.display='flex'; repScroll.style.display='none'; if(m)ldTxt.textContent=m; }
+function showReport(){ splash.style.display='none'; ldWrap.style.display='none'; repScroll.style.display='block'; }
+
+/* ═══ LOAD ALL DATA ═══ */
+async function loadAll(){
+  showLoad('Loading projects…'); genBtn.disabled=true;
+  try{
+    const projSnap=await getDocs(collection(db,'projectDashboard'));
+    const projects=projSnap.docs.map(d=>({id:d.id,name:d.data().name||d.id}));
+
+    showLoad('Loading tasks…');
+    const mainSnap=await getDocs(collection(db,'projectTasks')); const tasks=[];
+    await Promise.all(mainSnap.docs.map(async md=>{
+      const mt={id:md.id,level:'main',...md.data(),subtasks:[]};
+      const subSnap=await getDocs(collection(db,'projectTasks',md.id,'subtasks'));
+      await Promise.all(subSnap.docs.map(async sd=>{
+        // Spread first, then override with inherited values so undefined fields from parent fill in
+        const sdat=sd.data();
+        const st={id:sd.id,level:'sub',parentId:md.id,...sdat,subsubtasks:[],
+          projectId:sdat.projectId||mt.projectId,
+          projectName:sdat.projectName||mt.projectName,
+          location:sdat.location||mt.location};
+        const ssSnap=await getDocs(collection(db,'projectTasks',md.id,'subtasks',sd.id,'subsubtasks'));
+        ssSnap.docs.forEach(ssd=>{
+          const ssdat=ssd.data();
+          st.subsubtasks.push({id:ssd.id,level:'subsub',parentId:md.id,...ssdat,
+            projectId:ssdat.projectId||st.projectId||mt.projectId,
+            projectName:ssdat.projectName||st.projectName||mt.projectName,
+            location:ssdat.location||st.location||mt.location});
         });
-      } else if (forWeek && week && weekYear) {
-        expenses = expenses.filter(exp => {
-          if (!exp.date) return false;
-          const d = new Date(exp.date);
-          const { week: expWeek, year: expYear } = getWeekNumberFromDate(d);
-          return expWeek === week && expYear === weekYear;
-        });
-      }
-      const accounts = [
-        "Hazida Limited",
-        "Freight n Passengers",
-        "Hazida Motors",
-        "Hazida Ezone Limited"
-      ];
-      let accountTotals = {};
-      let grandTotal = 0;
-      accounts.forEach(acc => accountTotals[acc] = 0);
-      expenses.forEach(exp => {
-        const acc = accounts.find(a =>
-          (exp.account || "").trim().toLowerCase() === a.toLowerCase()
-        );
-        if (acc && typeof exp.amount === "number") {
-          accountTotals[acc] += exp.amount;
-          grandTotal += exp.amount;
-        }
-      });
-      return { accountTotals, grandTotal, accounts };
-    }
+        mt.subtasks.push(st);
+      })); tasks.push(mt);
+    }));
 
-    document.getElementById("generate-report-btn").onclick = async function() {
-      let stockTotals = {}, totalStockSpent = 0;
-      const COST_PER_HOUR = 20;
-      let manHourTotals = {}, totalMH = 0, totalMHCost = 0;
-      let periodLabel = "";
-      let filterUsages, filterTransfers;
+    showLoad('Loading materials…');
+    let materials=[];
+    try{ const ms=await getDocs(query(collection(db,'materialsUsage'),orderBy('assignedAt','desc'))); materials=ms.docs.map(d=>({id:d.id,...d.data()})); }catch(e){console.warn(e);}
 
-      let forMonth = reportTypeSelect.value === "month";
-      let forWeek = reportTypeSelect.value === "week";
-      let month = forMonth ? parseInt(document.getElementById("month-select").value) : null;
-      let year = forMonth ? parseInt(document.getElementById("year-select").value) : null;
-      let week = forWeek ? parseInt(document.getElementById("week-select").value) : null;
-      let weekYear = forWeek ? parseInt(document.getElementById("week-year-select").value) : null;
+    showLoad('Loading labour…');
+    let labour=[];
+    try{ const ls=await getDocs(query(collection(db,'locationHistory'),orderBy('transferDate','desc'))); labour=ls.docs.map(d=>({id:d.id,...d.data()})); }
+    catch(e){ try{ const ls2=await getDocs(query(collection(db,'locationHistory'),orderBy('transferredAt','desc'))); labour=ls2.docs.map(d=>({id:d.id,...d.data()})); }catch(e2){console.warn(e2);} }
 
-      if (forMonth) {
-        const monthVal = parseInt(document.getElementById("month-select").value);
-        const yearVal = parseInt(document.getElementById("year-select").value);
-        periodLabel = `Month: ${document.getElementById("month-select").options[monthVal].text} ${yearVal}`;
-        filterUsages = allUsages.filter(u => u._date && isSameMonthYear(u._date, monthVal, yearVal));
-        filterTransfers = allTransfers.filter(d => d._date && isSameMonthYear(d._date, monthVal, yearVal));
-      } else {
-        const weekToReport = week;
-        periodLabel = `Week ${weekToReport} (${weekYear})`;
-        filterUsages = allUsages.filter(u => {
-          if (!u._date) return false;
-          const { week: w, year: y } = getWeekNumberFromDate(u._date);
-          return w === weekToReport && y === weekYear;
-        });
-        filterTransfers = allTransfers.filter(d => {
-          if (!d._date) return false;
-          const { week: w, year: y } = getWeekNumberFromDate(d._date);
-          return w === weekToReport && y === weekYear;
-        });
-      }
+    showLoad('Loading expenses…');
+    let expenses=[];
+    try{ const es=await getDocs(collection(db,'General expenses')); expenses=es.docs.map(d=>({id:d.id,...d.data()})); }catch(e){console.warn(e);}
 
-      const {accountTotals, grandTotal, accounts} = await getAccountTotalsForCashReport(
-        month, year, forMonth, week, forWeek, weekYear
-      );
-      let cashReportHtml = `
-      <div id="cash-report-section">
-        <h2 style="color:#1976d2;">Cash Received Report</h2>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Account name</th>
-              <th>Total cost incurred</th>
-            </tr>
-          </thead>
-          <tbody>`;
-      accounts.forEach(acc => {
-        cashReportHtml += `
-          <tr>
-            <td>${acc}</td>
-            <td>${accountTotals[acc].toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-          </tr>`;
-      });
-      cashReportHtml += `
-          <tr class="total-row">
-            <td>Total</td>
-            <td>${grandTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-          </tr>
-        </tbody>
-        </table>
+    showLoad('Loading employees…');
+    let employees=[];
+    try{ const emp=await getDocs(collection(db,'employees')); employees=emp.docs.map(d=>{const dd=d.data();return{id:d.id,...dd,fullName:((dd.name||'')+(dd.surname?' '+dd.surname:'')).trim().toUpperCase()};});}catch(e){console.warn(e);}
+
+    DATA={projects,tasks,materials,labour,expenses,employees,_loaded:true};
+    projSel.innerHTML='<option value="">All Projects</option>'+projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    genBtn.disabled=false; showSplash();
+  }catch(err){ ldTxt.textContent='Error: '+err.message; console.error(err); genBtn.disabled=false; }
+}
+
+/* ═══ HELPERS ═══ */
+function getPeriod(){ const pt=periodType.value; if(pt==='week')return{type:'week',week:CW,year:CY}; if(pt==='month')return{type:'month',month:parseInt(moSel.value),year:parseInt(moYr.value)||now.getFullYear()}; return{type:'year',year:parseInt(yrOnly.value)||now.getFullYear()}; }
+function flatTasks(pid){ const out=[]; (DATA.tasks||[]).forEach(t=>{ if(pid&&t.projectId!==pid)return; out.push(t); (t.subtasks||[]).forEach(s=>{out.push(s);(s.subsubtasks||[]).forEach(ss=>out.push(ss));}); }); return out; }
+function projName(id,fallbackName){ return (id&&DATA.projects.find(p=>p.id===id)?.name)||fallbackName||'—'; }
+function mkAmap(){ const m={}; (DATA.labour||[]).forEach(l=>{ const tid=l.taskId; if(!tid)return; if(!m[tid])m[tid]=new Set(); const fn=(l.employeeName||'').trim().split(' ')[0]; if(fn)m[tid].add(fn); }); return m; }
+function mkCmap(){ const mat={},lab={}; (DATA.materials||[]).forEach(m=>{ if(m.reversed)return; const tid=m.taskId; if(!tid)return; mat[tid]=(mat[tid]||0)+(parseFloat(m.cost)||((parseFloat(m.quantity)||0)*(parseFloat(m.unitPrice)||0))); }); (DATA.labour||[]).forEach(l=>{ const tid=l.taskId; if(!tid)return; lab[tid]=(lab[tid]||0)+(parseFloat(l.cost)||0); }); return{mat,lab}; }
+function buildMtDrop(pid){ const mains=(DATA?.tasks||[]).filter(t=>!pid||t.projectId===pid); mtSel.innerHTML='<option value="">All Main Tasks</option>'+mains.map(t=>`<option value="${t.id}">${t.taskId||t.id} — ${(t.taskDescription||'').slice(0,55)}</option>`).join(''); }
+
+/* ═══ GENERATE ═══ */
+function generate(){
+  if(!DATA||!DATA._loaded){ loadAll().then(()=>{if(DATA&&DATA._loaded)generate();}); return; }
+  const p=getPeriod(); const pid=selPid;
+  const pname=pid?projName(pid,''):'';
+  const mats=(DATA.materials||[]).filter(m=>inPeriod(m.assignedAt,p)&&(!pid||m.projectId===pid));
+  const labs=(DATA.labour||[]).filter(l=>inPeriod(labField(l),p)&&(!pid||l.projectId===pid));
+  const exps=(DATA.expenses||[]).filter(e=>{ if(!e.date)return false; const d=new Date(e.date+'T00:00:00'); return!isNaN(d)&&inPeriod(d,p)&&(!pid||e.projectId===pid); });
+  PERF={labour:DATA.labour||[],tasks:DATA.tasks||[],materials:DATA.materials||[]};
+  const allFlat=flatTasks(pid);
+  const started=allFlat.filter(t=>inPeriod(t.startDate,p));
+  const completed=allFlat.filter(t=>t.status==='COMPLETED'&&inPeriod(t.endDate,p));
+  const active=allFlat.filter(t=>t.status==='ONGOING');
+  const amap=mkAmap(); const cmap=mkCmap();
+  const matTot=mats.filter(m=>!m.reversed).reduce((s,m)=>s+(parseFloat(m.cost)||((parseFloat(m.quantity)||0)*(parseFloat(m.unitPrice)||0))),0);
+  const labH=labs.reduce((s,l)=>s+(parseFloat(l.mh)||0),0);
+  const expTot=exps.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const manCost=labH*COST_HR;
+  const head=()=>renderHead(p,pname,started,completed,active,matTot,labH,expTot,manCost,mats,labs,exps);
+  const showActive=document.getElementById('togActive').checked;
+  const showMat=document.getElementById('togMat').checked;
+  const showCash=document.getElementById('togCash').checked;
+  let html='';
+  if(activeTab==='overview')       html=head()+secStarted(started,amap,cmap)+secCompleted(completed,amap,cmap)+(showActive?secActive(active,amap,cmap,pname):'')+(showMat?secMat(mats):'')+secLab(labs,p)+(showCash?secCash(exps)+secExpProj(exps):'');
+  else if(activeTab==='tasks')     html=head()+secStarted(started,amap,cmap)+secCompleted(completed,amap,cmap)+(showActive?secActive(active,amap,cmap,pname):'');
+  else if(activeTab==='materials') html=head()+(showMat?secMat(mats):`<div class="rcard"><div class="sech"><div class="sico"><i class="fas fa-boxes"></i></div><span class="stit">Material Breakdown</span></div><div class="secbody"><div class="nodata"><i class="fas fa-toggle-off"></i>Tick <b>"Material Breakdown"</b> in the toolbar to show this section</div></div></div>`);
+  else if(activeTab==='labour')    html=head()+secLab(labs,p);
+  else if(activeTab==='cash')      html=head()+(showCash?secCash(exps)+secExpProj(exps):`<div class="rcard"><div class="sech"><div class="sico red"><i class="fas fa-receipt"></i></div><span class="stit">Cash Breakdown</span></div><div class="secbody"><div class="nodata"><i class="fas fa-toggle-off"></i>Tick <b>"Cash Breakdown"</b> in the toolbar to show this section</div></div></div>`);
+  else if(activeTab==='maintask')  html=secMainTasks(p,selMtId,pid,amap,cmap);
+  docPage.innerHTML=html;
+  docPage.querySelectorAll('.perf-btn').forEach(btn=>btn.addEventListener('click',()=>openPerf(btn.dataset.name,btn.dataset.id,p)));
+  showReport(); pdfBtn.disabled=false; generated=true;
+}
+
+/* ═══ MASTHEAD ═══ */
+function renderHead(p,pname,started,completed,active,matCost,labH,expCost,manCost,mats,labs,exps){
+  const total=matCost+manCost+expCost;
+  return`<div class="rcard" style="margin-bottom:20px;">
+    <div class="masthead">
+      <div><div class="mh-title">Intelligence Report<small>${pLabel(p,pname||'All Projects')}</small></div></div>
+      <div class="mh-right"><div><b>Generated:</b> ${new Date().toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div><div><b>Period:</b> ${p.type.toUpperCase()}</div></div>
+    </div>
+    <div class="kstrip">
+      <div class="kcard"><div class="klbl">Tasks Started</div><div class="kval amb">${started.length}</div><div class="ksub">this period</div></div>
+      <div class="kcard"><div class="klbl">Tasks Completed</div><div class="kval grn">${completed.length}</div><div class="ksub">this period</div></div>
+      <div class="kcard"><div class="klbl">Active Tasks</div><div class="kval blu">${active.length}</div><div class="ksub">ongoing</div></div>
+      <div class="kcard"><div class="klbl">Material Cost</div><div class="kval blu">${fmtN(matCost)}</div><div class="ksub">${mats.filter(m=>!m.reversed).length} records</div></div>
+      <div class="kcard"><div class="klbl">Labour Hours</div><div class="kval amb">${fmtNs(labH)}</div><div class="ksub">${labs.length} records</div></div>
+      <div class="kcard"><div class="klbl">Labour Cost</div><div class="kval blu">${fmtN(manCost)}</div><div class="ksub">@ ZMW ${COST_HR}/hr</div></div>
+      <div class="kcard"><div class="klbl">Cash Out</div><div class="kval red">${fmtN(expCost)}</div><div class="ksub">${exps.length} transactions</div></div>
+      <div class="kcard"><div class="klbl">Total Spend</div><div class="kval blu" style="font-size:0.95rem">${fmtN(total)}</div><div class="ksub">mat + labour + cash</div></div>
+    </div>
+  </div>`;
+}
+
+/* ═══ TASK TABLE ═══ */
+function taskTbl(tasks,amap,cmap){
+  if(!tasks.length)return`<div class="nodata"><i class="fas fa-inbox"></i>No tasks found for this period</div>`;
+  const rows=tasks.map(t=>{
+    const matC=cmap.mat[t.id]||0, labC=cmap.lab[t.id]||0, tot=matC+labC;
+    const chips=(amap[t.id]&&amap[t.id].size)?[...amap[t.id]].map(n=>`<span class="np">${n}</span>`).join(''):'<span style="color:#97adc9;font-size:0.6rem">—</span>';
+    const scls=t.status==='COMPLETED'?'sb-c':t.status==='ONGOING'?'sb-o':'sb-p';
+    const pname=projName(t.projectId,t.projectName);
+    const loc=t.location||'—';
+    return`<tr>
+      <td style="font-size:0.62rem;color:#7f96b3;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pname}</td>
+      <td><span class="idb">${t.taskId||'—'}</span></td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.taskDescription||'—'}</td>
+      <td style="font-size:0.62rem;color:#1f3d62;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis"><i class="fas fa-map-marker-alt" style="color:#b8cde0;margin-right:3px;font-size:0.55rem"></i>${loc}</td>
+      <td><span class="sb ${scls}">${t.status||'PENDING'}</span></td>
+      <td>${fmtD(t.startDate,true)}</td><td>${fmtD(t.endDate,true)}</td>
+      <td>${chips}</td>
+      <td><span class="mv">${matC>0?fmtN(matC):''}</span></td>
+      <td><span class="cv">${labC>0?fmtN(labC):''}</span></td>
+      <td style="font-weight:700">${tot>0?fmtN(tot):''}</td>
+    </tr>`;
+  }).join('');
+  return`<table class="rt"><thead><tr><th>PROJECT</th><th>TASK ID</th><th>DESCRIPTION</th><th>LOCATION</th><th>STATUS</th><th>START</th><th>END</th><th>ASSIGNED</th><th>MAT COST</th><th>MAN COST</th><th>TOTAL</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function secStarted(t,a,c){return`<div class="rcard"><div class="sech"><div class="sico amb"><i class="fas fa-play-circle"></i></div><span class="stit">Tasks Started This Period</span><span class="sbadge">${t.length} tasks</span></div><div class="secbody">${taskTbl(t,a,c)}</div></div>`;}
+function secCompleted(t,a,c){return`<div class="rcard"><div class="sech"><div class="sico grn"><i class="fas fa-check-double"></i></div><span class="stit">Tasks Completed This Period</span><span class="sbadge">${t.length} tasks</span></div><div class="secbody">${taskTbl(t,a,c)}</div></div>`;}
+function secActive(t,a,c,pname){return`<div class="rcard"><div class="sech"><div class="sico blu"><i class="fas fa-spinner"></i></div><span class="stit">Currently Active Tasks${pname?` — ${pname}`:''}</span><span class="sbadge">${t.length} ongoing</span></div><div class="secbody">${taskTbl(t,a,c)}</div></div>`;}
+
+/* ═══ MATERIALS ═══ */
+function secMat(mats){
+  const active=mats.filter(m=>!m.reversed);
+  if(!active.length)return`<div class="rcard"><div class="sech"><div class="sico"><i class="fas fa-boxes"></i></div><span class="stit">Material Usage</span><span class="sbadge">0</span></div><div class="secbody"><div class="nodata"><i class="fas fa-inbox"></i>No material usage this period</div></div></div>`;
+  const total=active.reduce((s,m)=>s+(parseFloat(m.cost)||((parseFloat(m.quantity)||0)*(parseFloat(m.unitPrice)||0))),0);
+  const byM={}; active.forEach(m=>{ const n=m.materialName||'Unknown'; if(!byM[n])byM[n]={name:n,qty:0,cost:0,d:0,inv:0}; byM[n].qty+=parseFloat(m.quantity)||0; byM[n].cost+=parseFloat(m.cost)||((parseFloat(m.quantity)||0)*(parseFloat(m.unitPrice)||0)); m.purchaseType==='direct'?byM[n].d++:byM[n].inv++; });
+  const sumR=Object.values(byM).sort((a,b)=>b.cost-a.cost).map(m=>{ const pct=total>0?(m.cost/total*100):0; return`<tr><td style="font-weight:700">${m.name}${m.d>0?'<span class="bdir">DIRECT</span>':''}</td><td>${m.qty.toFixed(2)}</td><td><span class="mv">${fmtN(m.cost)}</span></td><td><span class="mbar"><span class="mbarfill" style="width:${pct.toFixed(1)}%"></span></span><span style="font-size:0.6rem;color:#7f96b3">${pct.toFixed(1)}%</span></td><td style="font-size:0.6rem;color:#7f96b3">${m.inv?`<i class="fas fa-warehouse"></i> ${m.inv} inv`:''}${m.d?` <i class="fas fa-shopping-cart"></i> ${m.d} dir`:''}</td></tr>`; }).join('');
+  const detR=active.slice().sort((a,b)=>(toDate(a.assignedAt)||0)-(toDate(b.assignedAt)||0)).map(m=>`<tr><td style="font-size:0.62rem;color:#7f96b3">${projName(m.projectId,m.projectName)}</td><td><span class="idb" style="font-size:0.6rem">${m.taskId||'—'}</span></td><td style="font-size:0.62rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.taskDescription||'—'}</td><td style="font-weight:600">${m.materialName||'—'}${m.purchaseType==='direct'?'<span class="bdir">DIRECT</span>':''}</td><td>${parseFloat(m.quantity)||0}</td><td><span class="mv">${fmtN(m.unitPrice)}</span></td><td><span class="mv">${fmtN(m.cost||((parseFloat(m.quantity||0))*(parseFloat(m.unitPrice||0))))}</span></td><td style="font-size:0.6rem;color:#7f96b3">${m.location||'—'}</td><td style="font-size:0.6rem;color:#7f96b3">${fmtD(m.assignedAt,true)}</td></tr>`).join('');
+  return`<div class="rcard"><div class="sech"><div class="sico"><i class="fas fa-boxes"></i></div><span class="stit">Material Usage Breakdown</span><span class="sbadge">${active.length} records · ZMW ${fmtN(total)}</span></div><div class="secbody">
+    <div class="totbanner">Total Material Cost Incurred: ZMW ${fmtN(total)}</div>
+    <div class="sublbl">Summary by Material</div>
+    <table class="rt"><thead><tr><th>MATERIAL</th><th>TOTAL QTY</th><th>TOTAL COST</th><th>SHARE</th><th>SOURCE</th></tr></thead><tbody>${sumR}</tbody></table>
+    <div class="divider"></div>
+    <div class="sublbl">Inventory Flow Detail</div>
+    <table class="rt"><thead><tr><th>PROJECT</th><th>TASK ID</th><th>DESCRIPTION</th><th>MATERIAL</th><th>QTY</th><th>UNIT PRICE</th><th>AMOUNT</th><th>LOCATION</th><th>DATE</th></tr></thead><tbody>${detR}</tbody>
+    <tfoot><tr><td colspan="6" style="text-align:right">Closing Balance</td><td colspan="3"><span class="mv">${fmtN(total)}</span></td></tr></tfoot></table>
+    ${mats.filter(m=>m.reversed).length?`<div style="font-size:0.62rem;color:#97adc9;margin-top:6px"><i class="fas fa-undo"></i> ${mats.filter(m=>m.reversed).length} reversed records excluded</div>`:''}
+  </div></div>`;
+}
+
+/* ═══ LABOUR ═══ */
+function secLab(labs,p){
+  if(!labs.length)return`<div class="rcard"><div class="sech"><div class="sico"><i class="fas fa-users"></i></div><span class="stit">Labour / Employee Tracker</span><span class="sbadge">0</span></div><div class="secbody"><div class="nodata"><i class="fas fa-user-slash"></i>No labour records this period</div></div></div>`;
+  const totalH=labs.reduce((s,l)=>s+(parseFloat(l.mh)||0),0);
+  const manCost=totalH*COST_HR;
+  const expH=expHrs(p);
+  const byP={};
+  labs.forEach(l=>{
+    const name=(l.employeeName||'Unknown').toUpperCase(); const eid=l.employeeId||l.employeeIdNumber||'—';
+    if(!byP[name])byP[name]={name,eid,mh:0,tset:new Set(),projH:{},recs:[],_att:{ab:new Set(),lv:new Set(),sk:new Set(),wd:new Set()}};
+    const mh=parseFloat(l.mh)||0; byP[name].mh+=mh; byP[name].recs.push(l);
+    const tt=l.taskIdDisplay||l.taskId||''; if(tt)byP[name].tset.add(tt);
+    const pn=projName(l.projectId,l.projectName); byP[name].projH[pn]=(byP[name].projH[pn]||0)+mh;
+    const desc=(l.taskDescription||'').toLowerCase(); const ds=fmtD(labField(l),true)||'?';
+    if(desc.includes('absent'))byP[name]._att.ab.add(ds);
+    else if(desc.includes('leave'))byP[name]._att.lv.add(ds);
+    else if(desc.includes('sick'))byP[name]._att.sk.add(ds);
+    else byP[name]._att.wd.add(ds);
+  });
+  (DATA.employees||[]).forEach(e=>{ const n=e.fullName||e.name||''; if(!n||n.includes('TECHNO')||n.includes('CHRISTOPHER CHISHELA'))return; if(!byP[n])byP[n]={name:n,eid:e.id,mh:0,tset:new Set(),projH:{},recs:[],_att:{ab:new Set(),lv:new Set(),sk:new Set(),wd:new Set()}}; });
+  const sorted=Object.values(byP).sort((a,b)=>b.mh-a.mh);
+  const byProj={}; labs.forEach(l=>{ const pn=projName(l.projectId,l.projectName); if(!byProj[pn])byProj[pn]=0; byProj[pn]+=parseFloat(l.mh)||0; });
+  const projRows=Object.entries(byProj).sort((a,b)=>b[1]-a[1]).map(([n,h])=>`<tr><td>${n}</td><td><span class="hv">${h.toFixed(1)}</span></td><td><span class="cv">${fmtN(h*COST_HR)}</span></td></tr>`).join('');
+  const cards=sorted.filter(p2=>p2.mh>0||p2.recs.length>0).map(p2=>{
+    const worked=p2.mh, idle=Math.max(0,expH-p2.mh);
+    const pctW=Math.min(100,(worked/expH)*100), pctI=Math.min(100,(idle/expH)*100);
+    const initials=p2.name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+    const projBreak=Object.entries(p2.projH).map(([n,h])=>`${n} (${h.toFixed(1)}h)`).join(' · ');
+    const att=p2._att;
+    return`<div class="pcard">
+      <div class="pav" title="View performance">${initials}</div>
+      <div>
+        <div class="pname">${p2.name}</div>
+        <div class="peid">ID: ${p2.eid}</div>
+        <div class="ptl">${projBreak||'No project data'}</div>
+        <div class="ptl2">Tasks: ${[...p2.tset].slice(0,3).join(' · ')}${p2.tset.size>3?` +${p2.tset.size-3} more`:''}</div>
       </div>
-      `;
+      <div class="pst">
+        <div class="pbrow"><div class="pbwrap"><div class="pblbl">Worked — ${worked.toFixed(1)}h</div><div class="pbbg"><div class="pbw" style="width:${pctW}%"></div></div></div><span class="pnw">${worked.toFixed(1)}h</span></div>
+        ${idle>0?`<div class="pbrow"><div class="pbwrap"><div class="pblbl">Unworked — ${idle.toFixed(1)}h of ${expH}h</div><div class="pbbg"><div class="pbi" style="width:${pctI}%"></div></div></div><span class="pni">${idle.toFixed(1)}h idle</span></div>`:`<div style="font-size:0.6rem;color:#059669;margin-top:3px;font-weight:600">✓ Full period logged</div>`}
+        <div class="psum">
+          <span>MH: <b>${worked.toFixed(1)}</b></span>
+          <span>Idle: <b style="color:#dc2626">${idle.toFixed(1)}h</b></span>
+          <span>Tasks: <b>${p2.tset.size}</b></span>
+          <span>W/D: <b>${att.wd.size}</b></span>
+          <span style="color:#dc2626">Abs: <b>${att.ab.size}</b></span>
+          <span style="color:#d97706">Lv: <b>${att.lv.size}</b></span>
+          <span style="color:#d97706">Sk: <b>${att.sk.size}</b></span>
+        </div>
+        <button class="perf-btn" data-name="${p2.name}" data-id="${p2.eid}"><i class="fas fa-chart-line"></i> View Performance</button>
+      </div>
+    </div>`;
+  }).join('');
+  const trackerRows=sorted.map(p2=>{ const att=p2._att; const idle=Math.max(0,expH-p2.mh); const pb=Object.entries(p2.projH).map(([n,h])=>`${n}(${h.toFixed(1)}h)`).join(' ');
+    return`<tr><td style="font-weight:700">${p2.name}</td><td style="font-size:0.6rem;color:#2563eb">${pb||'—'}</td><td><span class="hv">${p2.mh.toFixed(1)}</span></td><td><span class="${idle>0?'cvr':'cv'}">${idle>0?idle.toFixed(1):'0'}</span></td><td style="text-align:center">${att.wd.size}</td><td style="text-align:center;color:#dc2626">${att.ab.size}</td><td style="text-align:center;color:#d97706">${att.lv.size}</td><td style="text-align:center;color:#d97706">${att.sk.size}</td></tr>`;
+  }).join('');
+  const totI=Math.max(0,(expH*sorted.length)-totalH);
+  return`<div class="rcard"><div class="sech"><div class="sico"><i class="fas fa-users"></i></div><span class="stit">Labour / Employee Tracker</span><span class="sbadge">${labs.length} records · ${fmtNs(totalH)} MH · ZMW ${fmtN(manCost)}</span></div><div class="secbody">
+    <div class="sublbl">Man Hour Summary by Project</div>
+    <table class="rt" style="margin-bottom:14px"><thead><tr><th>PROJECT</th><th>MAN HOURS</th><th>LABOUR COST (@ ZMW ${COST_HR}/hr)</th></tr></thead><tbody>${projRows}</tbody><tfoot><tr><td>TOTAL</td><td><span class="hv">${fmtNs(totalH)}</span></td><td><span class="cv">${fmtN(manCost)}</span></td></tr></tfoot></table>
+    <div class="sublbl">Per Person — sorted by hours worked (Expected: ${expH}h)</div>
+    <div class="pcards-grid">${cards}</div>
+    <div class="divider"></div>
+    <div class="sublbl">Employee Tracker Summary</div>
+    <table class="rt"><thead><tr><th>NAME</th><th>PROJECT &amp; HOURS BREAKDOWN</th><th>MH</th><th>UNWORKED</th><th>W/DAYS</th><th>ABSENT</th><th>LEAVE</th><th>SICK</th></tr></thead><tbody>${trackerRows}</tbody>
+    <tfoot><tr><td>TOTAL</td><td></td><td><span class="hv">${totalH.toFixed(1)}</span></td><td><span class="cvr">${totI.toFixed(1)}</span></td><td></td><td></td><td></td><td></td></tr></tfoot></table>
+  </div></div>`;
+}
 
-      filterUsages.forEach(u => {
-        if (u.reversed) return;
-        let projectName = "-";
-        if (typeof u.projectName === "string") projectName = u.projectName;
-        else if (u.projectId && projectCache[u.projectId]) {
-          projectName = (typeof projectCache[u.projectId] === "string")
-            ? projectCache[u.projectId]
-            : (projectCache[u.projectId].name || "-");
-        }
-        const qty = parseFloat(u.quantity || 0);
-        const unitPrice = parseFloat(u.unitPrice || 0);
-        const assignedValue = qty * unitPrice;
-        if (!stockTotals[projectName]) stockTotals[projectName] = 0;
-        stockTotals[projectName] += assignedValue;
-        totalStockSpent += assignedValue;
-      });
+/* ═══ CASH ═══ */
+function secCash(exps){
+  const ACCS=["Hazida Limited","Freight n Passengers","Hazida Motors","Hazida Ezone Limited"];
+  const byAcc={}; let total=0; ACCS.forEach(a=>byAcc[a]=0);
+  exps.forEach(e=>{ const acc=ACCS.find(a=>(e.account||'').trim().toLowerCase()===a.toLowerCase()); if(acc&&typeof e.amount==='number'){byAcc[acc]+=e.amount;total+=e.amount;} });
+  const other={}; exps.forEach(e=>{ if(!ACCS.find(a=>(e.account||'').trim().toLowerCase()===a.toLowerCase())){ const k=e.account||'Other'; other[k]=(other[k]||0)+(parseFloat(e.amount)||0); } });
+  const cls=['','c1','c2','c3','c4'];
+  const cards=[...ACCS.map((a,i)=>`<div class="accard ${cls[i]}"><div class="acnm">${a}</div><div class="acamt">ZMW ${fmtN(byAcc[a])}</div><div class="acsub">Cash received</div></div>`), ...Object.entries(other).map(([n,v])=>`<div class="accard c4"><div class="acnm">${n}</div><div class="acamt">ZMW ${fmtN(v)}</div><div class="acsub">Other account</div></div>`)].join('');
+  if(!exps.length)return`<div class="rcard"><div class="sech"><div class="sico red"><i class="fas fa-receipt"></i></div><span class="stit">Cash Received / Account Breakdown</span><span class="sbadge">0</span></div><div class="secbody"><div class="nodata"><i class="fas fa-file-invoice-dollar"></i>No expenses this period</div></div></div>`;
+  const rows=exps.slice().sort((a,b)=>(a.date||'')>(b.date||'')?-1:1).map(e=>`<tr><td style="font-family:monospace;font-size:0.62rem">${e.date||'—'}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.description||'—'}</td><td style="font-size:0.62rem">${e.project||'—'}</td><td style="font-weight:700">${e.account||'—'}</td><td style="font-size:0.62rem">${e.supplier||'—'}</td><td><span class="cvr">${fmtN(e.amount)}</span></td></tr>`).join('');
+  return`<div class="rcard"><div class="sech"><div class="sico red"><i class="fas fa-receipt"></i></div><span class="stit">Cash Received / Account Breakdown</span><span class="sbadge">${exps.length} records · ZMW ${fmtN(total)}</span></div><div class="secbody">
+    <div class="accgrid">${cards}</div>
+    <div class="totbanner red">Grand Total: ZMW ${fmtN(total)}</div>
+    <div class="divider"></div>
+    <div class="sublbl">Transaction Detail</div>
+    <table class="rt"><thead><tr><th>DATE</th><th>DESCRIPTION</th><th>PROJECT</th><th>ACCOUNT</th><th>SUPPLIER</th><th>AMOUNT</th></tr></thead><tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="5" style="text-align:right">TOTAL</td><td><span class="cvr">ZMW ${fmtN(total)}</span></td></tr></tfoot></table>
+  </div></div>`;
+}
 
-      filterTransfers.forEach(d => {
-        let projectName = "-";
-        if (d.projectId && projectCache[d.projectId]) {
-          projectName = typeof projectCache[d.projectId] === "string"
-            ? projectCache[d.projectId]
-            : (projectCache[d.projectId].name || "-");
-        }
-        const mh = parseFloat(d.mh || 0);
-        if (!manHourTotals[projectName]) manHourTotals[projectName] = 0;
-        manHourTotals[projectName] += mh;
-        totalMH += mh;
-        totalMHCost += mh * COST_PER_HOUR;
-      });
+function secExpProj(exps){
+  if(!exps.length)return'';
+  const byP={}; exps.forEach(e=>{ const n=e.project||'—'; if(!byP[n])byP[n]=0; byP[n]+=parseFloat(e.amount)||0; });
+  const total=exps.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const rows=Object.entries(byP).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${n}</td><td><span class="cvr">${fmtN(v)}</span></td></tr>`).join('');
+  return`<div class="rcard"><div class="sech"><div class="sico red"><i class="fas fa-project-diagram"></i></div><span class="stit">Expenses by Project</span><span class="sbadge">ZMW ${fmtN(total)}</span></div><div class="secbody"><table class="rt"><thead><tr><th>PROJECT</th><th>AMOUNT</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td>TOTAL</td><td><span class="cvr">${fmtN(total)}</span></td></tr></tfoot></table></div></div>`;
+}
 
-      const totalCostIncurred = totalStockSpent + totalMHCost;
+/* ═══ MAIN TASKS — ALL AT ONCE ═══ */
+function secMainTasks(p,mtId,pid,amap,cmap){
+  // Filter to selected main task or show ALL main tasks
+  const mains=mtId ? (DATA.tasks||[]).filter(t=>t.id===mtId) : (DATA.tasks||[]).filter(t=>!pid||t.projectId===pid);
+  if(!mains.length)return`<div class="rcard"><div class="sech"><div class="sico"><i class="fas fa-tasks"></i></div><span class="stit">Main Task Reports</span></div><div class="secbody"><div class="nodata"><i class="fas fa-folder-open"></i>No main tasks found${pid?' for this project':''}</div></div></div>`;
 
-      let completedTasks = [], ongoingTasks = [], pendingTasks = [];
-      if (forMonth) {
-        completedTasks = allTasks.filter(t => {
-          if ((t.status || '').trim().toLowerCase() !== 'completed') return false;
-          let inMonth = false;
-          if (t.startDate) {
-            const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-            if (sd.getMonth() === month && sd.getFullYear() === year) inMonth = true;
-          }
-          if (t.endDate) {
-            const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
-            if (ed.getMonth() === month && ed.getFullYear() === year) inMonth = true;
-          }
-          return inMonth;
-        });
-        // SHOW ALL ongoing and pending tasks (do not filter by month)
-        ongoingTasks = allTasks.filter(t => (t.status || '').trim().toLowerCase() === 'ongoing');
-        pendingTasks = allTasks.filter(t => (t.status || '').trim().toLowerCase() === 'pending');
-      } else if (forWeek) {
-        completedTasks = allTasks.filter(t => {
-          if ((t.status || '').trim().toLowerCase() !== 'completed') return false;
-          let inWeek = false;
-          if (t.startDate) {
-            const sd = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate);
-            const { week: w, year: y } = getWeekNumberFromDate(sd);
-            if (w === week && y === weekYear) inWeek = true;
-          }
-          if (t.endDate) {
-            const ed = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);
-            const { week: w, year: y } = getWeekNumberFromDate(ed);
-            if (w === week && y === weekYear) inWeek = true;
-          }
-          return inWeek;
-        });
-        // SHOW ALL ongoing and pending tasks (do not filter by week)
-        ongoingTasks = allTasks.filter(t => (t.status || '').trim().toLowerCase() === 'ongoing');
-        pendingTasks = allTasks.filter(t => (t.status || '').trim().toLowerCase() === 'pending');
-      }
+  const header=`<div class="rcard" style="margin-bottom:20px;"><div class="masthead" style="padding:16px 24px;">
+    <div><div class="mh-title" style="font-size:1.1rem;">Main Task Reports<small>${pLabel(p,pid?projName(pid,''):'All Projects')} · ${mtId?'Single Task':'All '+mains.length+' main tasks'}</small></div></div>
+    <div class="mh-right"><div><b>Generated:</b> ${new Date().toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+  </div></div>`;
 
-      let mainHtml = `<div id="report-export-section">`;
-      mainHtml += cashReportHtml;
-      // INVENTORY FLOW REPORT (with heading, table, and total)
-      mainHtml += `
-<h2 style="color:#1976d2;">${periodLabel} Out Flow Inventory Report</h2>
-<div class="total-cost-incurred">Total Cost Incurred: ZMW ${totalCostIncurred.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
-<h3>Inventory Flow Report</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>Project Name</th>
-      <th>Cost Incurred</th>
-    </tr>
-  </thead>
-  <tbody>`;
-      Object.entries(stockTotals).forEach(([projectName, value]) => {
-        mainHtml += `<tr>
-          <td>${projectName}</td>
-          <td>${Number(value).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-        </tr>`;
-      });
-      mainHtml += `<tr class="total-row">
-        <td>Total Spent</td>
-        <td>${Number(totalStockSpent).toLocaleString(undefined, {maximumFractionDigits:2})}</td>
-      </tr>
-  </tbody>
-</table>
-<!-- MAN HOUR SUMMARY -->
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>Project</th>
-      <th>MAN HOUR</th>
-      <th>COST</th>
-    </tr>
-  </thead>
-  <tbody>`;
-      Object.entries(manHourTotals).forEach(([project, mh]) => {
-        mainHtml += `<tr><td>${project}</td><td>${mh}</td><td>${(mh*COST_PER_HOUR).toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`;
-      });
-      mainHtml += `</tbody>
-  <tfoot>
-    <tr class="total-row">
-      <td>Total Spent</td>
-      <td>${totalMH}</td>
-      <td>${totalMHCost.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-    </tr>
-  </tfoot>
-</table>
-<!-- COMPLETED TASKS -->
-<h3>COMPLETED TASKS</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>PROJECT</th>
-      <th>TASK ID</th>
-      <th>TASK DESCRIPTION</th>
-      <th>ASSIGNED</th>
-      <th>LOCATION</th>
-      <th>STATUS</th>
-      <th>START DATE</th>
-      <th>END DATE</th>
-      <th>DURATION</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${
-      completedTasks.length > 0
-        ? completedTasks.map(row => `
-      <tr>
-        <td>${safeProjectName(row)}</td>
-        <td>${row.taskId || '-'}</td>
-        <td>${row.taskDescription || '-'}</td>
-        <td>${row.assignedTo || '-'}</td>
-        <td>${row.location || '-'}</td>
-        <td>${row.status || '-'}</td>
-        <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-        <td>${row.endDate ? (row.endDate.toDate ? row.endDate.toDate().toLocaleDateString() : row.endDate) : '-'}</td>
-        <td>${row.duration || '-'}</td>
-      </tr>
-    `).join('')
-        : `<tr><td colspan="9" style="text-align:center;color:#888;">No completed tasks</td></tr>`
-    }
-  </tbody>
-</table>
-<!-- ONGOING TASKS -->
-<h3>ONGOING TASKS</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>PROJECT</th>
-      <th>TASK ID</th>
-      <th>TASK DESCRIPTION</th>
-      <th>ASSIGNED</th>
-      <th>LOCATION</th>
-      <th>STATUS</th>
-      <th>START DATE</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${
-      ongoingTasks.length > 0
-        ? ongoingTasks.map(row => `
-      <tr>
-        <td>${safeProjectName(row)}</td>
-        <td>${row.taskId || '-'}</td>
-        <td>${row.taskDescription || '-'}</td>
-        <td>${row.assignedTo || '-'}</td>
-        <td>${row.location || '-'}</td>
-        <td>${row.status || '-'}</td>
-        <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-      </tr>
-    `).join('')
-        : `<tr><td colspan="7" style="text-align:center;color:#888;">No ongoing tasks</td></tr>`
-    }
-  </tbody>
-</table>
-<!-- PENDING TASKS -->
-<h3>PENDING TASKS</h3>
-<table class="report-table">
-  <thead>
-    <tr>
-      <th>PROJECT</th>
-      <th>TASK ID</th>
-      <th>TASK DESCRIPTION</th>
-      <th>ASSIGNED</th>
-      <th>LOCATION</th>
-      <th>STATUS</th>
-      <th>START DATE</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${
-      pendingTasks.length > 0
-        ? pendingTasks.map(row => `
-      <tr>
-        <td>${safeProjectName(row)}</td>
-        <td>${row.taskId || '-'}</td>
-        <td>${row.taskDescription || '-'}</td>
-        <td>${row.assignedTo || '-'}</td>
-        <td>${row.location || '-'}</td>
-        <td>${row.status || '-'}</td>
-        <td>${row.startDate ? (row.startDate.toDate ? row.startDate.toDate().toLocaleDateString() : row.startDate) : '-'}</td>
-      </tr>
-    `).join('')
-        : `<tr><td colspan="7" style="text-align:center;color:#888;">No pending tasks</td></tr>`
-    }
-  </tbody>
-</table>
-</div>`;
+  const cards=mains.map(mt=>{
+    const allIn=[mt,...(mt.subtasks||[]).flatMap(s=>[s,...(s.subsubtasks||[])])];
+    const tids=new Set(allIn.map(t=>t.id));
+    const mtMats=(DATA.materials||[]).filter(m=>!m.reversed&&tids.has(m.taskId)&&inPeriod(m.assignedAt,p));
+    const mtLabs=(DATA.labour||[]).filter(l=>tids.has(l.taskId)&&inPeriod(labField(l),p));
+    const matT=mtMats.reduce((s,m)=>s+(parseFloat(m.cost)||((parseFloat(m.quantity)||0)*(parseFloat(m.unitPrice)||0))),0);
+    const labH=mtLabs.reduce((s,l)=>s+(parseFloat(l.mh)||0),0);
+    const manC=labH*COST_HR; const total=matT+manC;
+    const scls=mt.status==='COMPLETED'?'sb-c':mt.status==='ONGOING'?'sb-o':'sb-p';
+    const pn=projName(mt.projectId,mt.projectName);
+    // Sub-task tree
+    const subRows=(mt.subtasks||[]).map(s=>{
+      const ssRows=(s.subsubtasks||[]).map(ss=>{
+        const mC=cmap.mat[ss.id]||0, lC=cmap.lab[ss.id]||0;
+        const sc2=ss.status==='COMPLETED'?'sb-c':ss.status==='ONGOING'?'sb-o':'sb-p';
+        return`<div class="mt-sub-row"><div class="mt-sub-indent2"></div><span class="idb" style="font-size:0.58rem">${ss.taskId||'—'}</span><span style="flex:1;font-size:0.62rem;color:#0a1c2f">${ss.taskDescription||'—'}</span><span class="sb ${sc2}" style="font-size:0.52rem">${ss.status||'PENDING'}</span>${mC>0?`<span class="mv" style="font-size:0.6rem">${fmtN(mC)}</span>`:''}${lC>0?`<span class="cv" style="font-size:0.6rem">${fmtN(lC)}</span>`:''}`;
+      }).join('');
+      const sC=cmap.mat[s.id]||0, sL=cmap.lab[s.id]||0;
+      const sc=s.status==='COMPLETED'?'sb-c':s.status==='ONGOING'?'sb-o':'sb-p';
+      return`<div class="mt-sub-row"><div class="mt-sub-indent"></div><span class="idb" style="font-size:0.6rem">${s.taskId||'—'}</span><span style="flex:1;font-size:0.65rem;font-weight:600;color:#0a1c2f">${s.taskDescription||'—'}</span><span class="sb ${sc}" style="font-size:0.52rem">${s.status||'PENDING'}</span>${sC>0?`<span class="mv" style="font-size:0.6rem">${fmtN(sC)}</span>`:''}${sL>0?`<span class="cv" style="font-size:0.6rem">${fmtN(sL)}</span>`:''}${ssRows?`</div><div>${ssRows}`:''}</div>`;
+    }).join('');
+    return`<div class="mt-card">
+      <div class="mt-card-head">
+        <span class="mt-card-id">${mt.taskId||mt.id}</span>
+        <span class="mt-card-title">${mt.taskDescription||'—'}</span>
+        <span class="sb ${scls}">${mt.status||'PENDING'}</span>
+      </div>
+      <div class="mt-kpis">
+        <div class="mt-kcard"><div class="mt-klbl">Project</div><div class="mt-kval" style="font-size:0.7rem;color:#1f3d62">${pn}</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">Subtasks</div><div class="mt-kval">${(mt.subtasks||[]).length}</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">All Tasks</div><div class="mt-kval">${allIn.length}</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">Mat Cost</div><div class="mt-kval" style="color:#1f3d62">ZMW ${fmtN(matT)}</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">Labour Hrs</div><div class="mt-kval" style="color:#d97706">${fmtNs(labH)}h</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">Man Cost</div><div class="mt-kval" style="color:#059669">ZMW ${fmtN(manC)}</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">Total Spend</div><div class="mt-kval" style="color:#1f3d62">ZMW ${fmtN(total)}</div></div>
+        <div class="mt-kcard"><div class="mt-klbl">Location</div><div class="mt-kval" style="font-size:0.7rem">${mt.location||'—'}</div></div>
+      </div>
+      <div class="mt-body">
+        <div class="sublbl">Task Tree</div>
+        <div class="mt-sub-tasks">
+          <div class="mt-sub-row" style="background:#e3ecf7;border-radius:4px;margin-bottom:3px;padding:5px 8px;">
+            <span class="idb">${mt.taskId||'—'}</span>
+            <span style="flex:1;font-size:0.68rem;font-weight:700">${mt.taskDescription||'—'}</span>
+            <span style="font-size:0.6rem;color:#7f96b3">MAIN TASK</span>
+          </div>
+          ${subRows||'<div style="font-size:0.62rem;color:#97adc9;padding:6px">No subtasks</div>'}
+        </div>
+        ${mtMats.length?`<div class="sublbl" style="margin-top:10px">Materials Used This Period (${mtMats.length} records)</div>
+        <table class="rt"><thead><tr><th>MATERIAL</th><th>QTY</th><th>UNIT PRICE</th><th>AMOUNT</th><th>DATE</th></tr></thead><tbody>
+        ${mtMats.map(m=>`<tr><td style="font-weight:600">${m.materialName||'—'}</td><td>${parseFloat(m.quantity)||0}</td><td><span class="mv">${fmtN(m.unitPrice)}</span></td><td><span class="mv">${fmtN(m.cost||((parseFloat(m.quantity||0))*(parseFloat(m.unitPrice||0))))}</span></td><td style="font-size:0.6rem;color:#7f96b3">${fmtD(m.assignedAt,true)}</td></tr>`).join('')}
+        </tbody></table>`:''}
+        ${mtLabs.length?`<div class="sublbl" style="margin-top:10px">Labour This Period (${mtLabs.length} records · ${fmtNs(labH)} MH)</div>
+        <table class="rt"><thead><tr><th>EMPLOYEE</th><th>TASK ID</th><th>DESCRIPTION</th><th>LOCATION</th><th>STATUS</th><th>MH</th><th>DATE</th></tr></thead><tbody>
+        ${mtLabs.map(l=>`<tr><td style="font-weight:600">${l.employeeName||'—'}</td><td><span class="idb" style="font-size:0.6rem">${l.taskIdDisplay||l.taskId||'—'}</span></td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.62rem">${l.taskDescription||'—'}</td><td style="font-size:0.62rem;color:#1f3d62">${l.location||'—'}</td><td><span class="sb ${l.status==='COMPLETED'?'sb-c':l.status==='ONGOING'?'sb-o':'sb-p'}">${l.status||'—'}</span></td><td><span class="hv">${parseFloat(l.mh)||0}</span></td><td style="font-size:0.6rem;color:#7f96b3">${fmtD(labField(l),true)}</td></tr>`).join('')}
+        </tbody></table>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  return header+cards;
+}
 
-      document.getElementById("report-output").innerHTML = mainHtml;
-      lastReportHTML = mainHtml;
-      lastReportType = reportTypeSelect.value;
-      lastReportPeriod = periodLabel;
-      document.getElementById("download-pdf-btn").disabled = false;
-    };
+/* ═══ INDIVIDUAL PERFORMANCE MODAL ═══ */
+function openPerf(empName,empId,p){
+  perfModalTitle.textContent=`Performance Report — ${empName}`;
+  const allLabs=(PERF.labour||[]).filter(l=>(l.employeeName||'').toUpperCase()===empName.toUpperCase());
+  const periodLabs=allLabs.filter(l=>inPeriod(labField(l),p));
+  const periodH=periodLabs.reduce((s,l)=>s+(parseFloat(l.mh)||0),0);
+  const allTimeH=allLabs.reduce((s,l)=>s+(parseFloat(l.mh)||0),0);
+  const periodCost=periodH*COST_HR; const allTimeCost=allTimeH*COST_HR;
+  const expH=expHrs(p); const idle=Math.max(0,expH-periodH);
+  const taskIds=new Set(periodLabs.map(l=>l.taskId).filter(Boolean));
+  const projH={}; periodLabs.forEach(l=>{ const pn=projName(l.projectId,l.projectName); projH[pn]=(projH[pn]||0)+(parseFloat(l.mh)||0); });
+  const att={ab:new Set(),lv:new Set(),sk:new Set(),wd:new Set()};
+  periodLabs.forEach(l=>{ const desc=(l.taskDescription||'').toLowerCase(); const ds=fmtD(labField(l),true)||'?'; if(desc.includes('absent'))att.ab.add(ds); else if(desc.includes('leave'))att.lv.add(ds); else if(desc.includes('sick'))att.sk.add(ds); else att.wd.add(ds); });
+  const pctW=Math.min(100,(periodH/expH)*100);
+  const projRows=Object.entries(projH).sort((a,b)=>b[1]-a[1]).map(([n,h])=>`<tr><td>${n}</td><td><span class="hv">${h.toFixed(1)}</span></td><td><span class="cv">${fmtN(h*COST_HR)}</span></td></tr>`).join('');
+  const labRows=periodLabs.map(l=>`<tr><td style="font-size:0.62rem;color:#7f96b3">${fmtD(labField(l),true)}</td><td><span class="idb" style="font-size:0.6rem">${l.taskIdDisplay||l.taskId||'—'}</span></td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.62rem">${l.taskDescription||'—'}</td><td style="font-size:0.62rem;color:#2563eb">${projName(l.projectId,l.projectName)}</td><td style="font-size:0.62rem;color:#1f3d62">${l.location||'—'}</td><td><span class="sb ${l.status==='COMPLETED'?'sb-c':l.status==='ONGOING'?'sb-o':'sb-p'}">${l.status||'—'}</span></td><td><span class="hv">${parseFloat(l.mh)||0}</span></td><td><span class="cv">${fmtN((parseFloat(l.mh)||0)*COST_HR)}</span></td></tr>`).join('');
+  perfModalBody.innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px;">
+    <div class="accard"><div class="acnm">Period MH</div><div class="acamt" style="color:#d97706">${fmtNs(periodH)}h</div><div class="acsub">this period</div></div>
+    <div class="accard c2"><div class="acnm">Period Cost</div><div class="acamt">ZMW ${fmtN(periodCost)}</div><div class="acsub">@ ZMW ${COST_HR}/hr</div></div>
+    <div class="accard c1"><div class="acnm">Unworked</div><div class="acamt">${idle.toFixed(1)}h</div><div class="acsub">of ${expH}h expected</div></div>
+    <div class="accard c3"><div class="acnm">Tasks</div><div class="acamt">${taskIds.size}</div><div class="acsub">this period</div></div>
+    <div class="accard c4"><div class="acnm">Work Days</div><div class="acamt">${att.wd.size}</div><div class="acsub">days recorded</div></div>
+    <div class="accard"><div class="acnm">All-Time MH</div><div class="acamt" style="color:#7f96b3">${fmtNs(allTimeH)}h</div><div class="acsub">${allLabs.length} total records</div></div>
+  </div>
+  <div style="margin-bottom:14px;">
+    <div class="pblbl" style="margin-bottom:5px">Hours worked — ${periodH.toFixed(1)}h / ${expH}h expected</div>
+    <div class="pbbg" style="height:10px;border-radius:5px;"><div class="pbw" style="width:${pctW}%;height:100%;border-radius:5px;"></div></div>
+  </div>
+  <div style="display:flex;gap:14px;margin-bottom:16px;font-size:0.68rem;flex-wrap:wrap;">
+    <span style="color:#059669"><i class="fas fa-check"></i> Worked: <b>${att.wd.size} days</b></span>
+    <span style="color:#dc2626"><i class="fas fa-times"></i> Absent: <b>${att.ab.size} days</b></span>
+    <span style="color:#d97706"><i class="fas fa-umbrella-beach"></i> Leave: <b>${att.lv.size} days</b></span>
+    <span style="color:#d97706"><i class="fas fa-bed"></i> Sick: <b>${att.sk.size} days</b></span>
+  </div>
+  <div class="sublbl">Hours by Project</div>
+  <table class="rt" style="margin-bottom:16px"><thead><tr><th>PROJECT</th><th>MAN HOURS</th><th>LABOUR COST</th></tr></thead>
+  <tbody>${projRows||'<tr><td colspan="3" style="text-align:center;color:#97adc9">No project data</td></tr>'}</tbody>
+  <tfoot><tr><td>TOTAL</td><td><span class="hv">${fmtNs(periodH)}</span></td><td><span class="cv">ZMW ${fmtN(periodCost)}</span></td></tr></tfoot></table>
+  <div class="sublbl">Labour Records — This Period</div>
+  <table class="rt"><thead><tr><th>DATE</th><th>TASK ID</th><th>DESCRIPTION</th><th>PROJECT</th><th>LOCATION</th><th>STATUS</th><th>MH</th><th>COST</th></tr></thead>
+  <tbody>${labRows||'<tr><td colspan="8" style="text-align:center;color:#97adc9">No records this period</td></tr>'}</tbody></table>`;
+  perfModal.classList.add('open');
+}
 
-    document.getElementById("download-pdf-btn").onclick = function() {
-      if (!lastReportHTML) return;
-      const section = document.getElementById("report-export-section");
-      const opt = {
-        margin: 0.2,
-        filename: `${lastReportType}-${lastReportPeriod.replace(/[^a-zA-Z0-9]/g,"_")}-full-report.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, scrollY: 0, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-      html2pdf().from(section).set(opt).save();
-    };
-  </script>
+/* ═══ EVENTS ═══ */
+document.getElementById('prevWk').onclick=()=>{CW--;if(CW<1){CW=52;CY--;}updLabel();};
+document.getElementById('nextWk').onclick=()=>{CW++;if(CW>52){CW=1;CY++;}updLabel();};
+jumpSel.onchange=function(){ if(!this.value)return; const[y,w]=this.value.split('|').map(Number); CY=y;CW=w;updLabel();this.value=''; };
+periodType.onchange=function(){ const v=this.value; wkCtrl.classList.toggle('ctl-hidden',v!=='week'); moCtrl.classList.toggle('ctl-hidden',v!=='month'); yrCtrl.classList.toggle('ctl-hidden',v!=='year'); };
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=function(){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); this.classList.add('active');
+  activeTab=this.dataset.tab; mtPick.classList.toggle('vis',activeTab==='maintask'); if(!generated)showSplash();
+});
+projSel.onchange=function(){ selPid=this.value; if(DATA&&DATA._loaded)buildMtDrop(selPid); };
+mtSel.onchange=function(){ selMtId=this.value; };
+genBtn.onclick=generate;
+document.getElementById('splashGenBtn').onclick=generate;
+document.getElementById('closeModal').onclick=()=>perfModal.classList.remove('open');
+perfModal.onclick=function(e){if(e.target===this)this.classList.remove('open');};
+// Toggle checkboxes re-render immediately when report is already shown
+[togActive,togMat,togCash].forEach(cb=>cb.onchange=()=>{if(generated)generate();});
+
+pdfBtn.onclick=function(){
+  // Use browser's native print — instant, no freeze, clean output
+  window.print();
+};
+
+/* Pre-load projects */
+(async()=>{
+  try{
+    const snap=await getDocs(collection(db,'projectDashboard'));
+    const projects=snap.docs.map(d=>({id:d.id,name:d.data().name||d.id}));
+    projSel.innerHTML='<option value="">All Projects</option>'+projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    if(!DATA) DATA={projects,tasks:[],materials:[],labour:[],expenses:[],employees:[],_loaded:false};
+  }catch(e){console.warn(e);}
+})();
+</script>
 </body>
 </html>
