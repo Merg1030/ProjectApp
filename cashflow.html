@@ -2,255 +2,248 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Penta Construction · Cash Flow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PENTA · Cash Flow (weekly b/f · Ref)</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-      line-height: 1.6;
+    /* === IMS style – fresh dark header, blur, clean panels, three‑dots === */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #d3dfed; width: 100%; font-family: 'Open Sans', Arial, sans-serif; }
+    body { color: #0a1c2f; min-height: 100vh; overflow-x: hidden; line-height: 1.5; }
+    .panel {
+      background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(20,20,20,0.26);
+      min-height: 100vh; width: 100%; display: flex; flex-direction: column;
     }
-    .container { margin: 0 auto; padding: 20px; }
-    .header {
-      background: white; padding: 20px; border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px;
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+    .panel-top-sticky {
+      position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, 0.902);
+      backdrop-filter: blur(4px); border-radius: 8px 8px 0 0; box-shadow: 0 2px 10px 0 rgba(20,20,20,0.16);
+      width: 100%; margin: 0;
     }
-    .company-name h1 { color: #1976d2; font-size: 24px; margin-bottom: 5px; }
-    .company-name p { color: #666; font-size: 14px; }
-    .header-controls { display: flex; gap: 10px; align-items: center; }
-    .search-container {
-      display: flex; align-items: center; background: white; border-radius: 4px;
-      padding: 8px 12px; border: 1px solid #ddd; min-width: 300px;
+    .panel-heading {
+      background: #0a1c2f; color: white; padding: 10px 18px; font-size: 25px; font-weight: bold;
+      letter-spacing: 1px; border-bottom: 2px solid #1f3d62; height: 50px; display: flex; align-items: center;
     }
-    .search-container i { color: #666; margin-right: 8px; }
-    .search-container input { border: none; outline: none; width: 100%; font-size: 14px; background: transparent; }
-    .btn {
-      padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;
-      font-weight: 500; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;
+    .panel-controls {
+      display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; padding: 10px 18px; background: none;
     }
-    .btn-primary { background: #1976d2; color: white; }
-    .btn-primary:hover { background: #1565c0; }
-    .btn-secondary { background: #4CAF50; color: white; }
-    .btn-secondary:hover { background: #388E3C; }
-    .btn-download { background: #a5a5a5; color: white; }
-    .btn-download:hover { background: #666467; }
-    .filters {
-      background: white; padding: 15px; border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px;
-      display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+    #toggle-form-btn {
+      background: white; color: #0a1c2f; border: 1px solid #2b4a73; font-size: 13px; padding: 5px 14px;
+      border-radius: 30px; cursor: pointer; font-weight: bold; transition: background 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .filter-group { display: flex; align-items: center; gap: 10px; }
-    .filter-group label { font-weight: 600; font-size: 14px; min-width: 60px; }
-    select {
-      padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;
-      background: white; font-size: 14px; min-width: 150px;
+    #toggle-form-btn:hover { background: #e6efff; }
+    .dropdown {
+      position: relative; display: inline-block;
     }
-    .form-container {
-      background: white; padding: 20px; border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px;
+    .dropdown-btn {
+      background: white; color: #0a1c2f; border: 1px solid #2b4a73; font-size: 13px; padding: 5px 14px;
+      border-radius: 30px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .form-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #1976d2;
+    .dropdown-btn:hover { background: #e6efff; }
+    .dropdown-content {
+      display: none; position: absolute; right: 0; background-color: #fff; min-width: 240px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 30; border-radius: 4px; padding: 5px 0;
+      border: 2px solid #1f3d62; max-height: 400px; overflow-y: auto;
     }
-    .form-header h2 { color: #1976d2; font-size: 18px; }
-    .close-btn {
-      background: #f44336; color: white; border: none; width: 30px; height: 30px;
-      border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    .dropdown-content.show { display: block; }
+    .dropdown-item {
+      color: #0a1c2f; padding: 8px 16px; text-decoration: none; display: block; font-size: 13px;
+      cursor: pointer; transition: background 0.2s; border: none; background: none; width: 100%; text-align: left;
     }
-    .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
-    .form-group { flex: 1; min-width: 200px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #555; }
-    .form-group input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-    .form-group input:focus { outline: none; border-color: #1976d2; }
-    .form-actions {
-      display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;
+    .dropdown-item:hover { background-color: #e6efff; }
+    .dropdown-divider { height: 1px; background: #b3c7e0; margin: 5px 0; }
+    .filter-toggle {
+      display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; font-size: 13px;
+      color: #0a1c2f;
     }
-    .btn-submit { background: #9f9f9f; color: white; }
-    .btn-reset { background: #9e9e9e; color: white; }
-    .hide { display: none; }
-    .table-container {
-      background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      overflow: hidden; height: 600px; display: flex; flex-direction: column;
+    .toggle-switch {
+      position: relative; display: inline-block; width: 34px; height: 18px;
     }
-    .table-responsive { overflow-y: auto; overflow-x: auto; flex: 1; }
-    table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-    thead { background: #4c4c4c; position: sticky; top: 0; z-index: 10; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc;
+      transition: .4s; border-radius: 34px;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .toggle-slider { background-color: #0a1c2f; }
+    input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    /* search bar & filters */
+    .sticky-filters {
+      background: none; padding: 0 18px; box-sizing: border-box; position: sticky; top: 74px;
+      z-index: 15; width: 100%;
+    }
+    .account-filter-bar {
+      display: flex; align-items: center; gap: 15px; margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .search-bar {
+      margin-bottom: 0; display: flex; align-items: center; gap: 6px; flex: 1 1 250px;
+    }
+    .search-bar input[type="text"] {
+      padding: 6px 12px; border-radius: 30px; background: #ffffff; color: #0a1c2f; font-size:13px;
+      width: 100%; max-width: 500px; border: 1px solid #b3c7e0;
+    }
+    #week-filter-container, #month-filter-container {
+      display: flex; align-items: center; gap: 6px;
+    }
+    #week-filter, #month-filter, #month-year-select, #period-filter, #type-filter {
+      padding: 5px 10px; border-radius: 30px; border: 1px solid #b3c7e0; background: white; font-size:13px;
+    }
+    .project-filter-btns {
+      display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+    }
+    .hide { display: none !important; }
+
+    /* form – same IMS style, removed project, supplier → Ref */
+    #expense-form {
+      display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; margin: 12px 18px 10px 18px;
+      background: #ffffff; border-radius: 6px; padding: 12px 9px 1px 9px; font-size: 13px;
+      border: 2px solid #1f3d62;
+    }
+    #expense-form label { font-weight: bold; color: #1f3d62; }
+    #expense-form input, #expense-form select, #expense-form textarea, #expense-form button {
+      padding: 5px 10px; font-size: 13px; border-radius: 4px; border: 1px solid #b3c7e0;
+      background: #ffffff; color: #0a1c2f;
+    }
+    #expense-form button { background: #0a1c2f; color: #fff; border: none; cursor: pointer; font-weight: bold;}
+    #expense-form button:hover { background: #1f3d62;}
+    #cancel-edit-btn { background: #7f96b3; margin-left: 5px; }
+    #expense-form-error { color: #b52b2b; width: 100%; font-size: 12px; }
+
+    /* table area – columns: Date, Description, Ref, Debit, Credit, Balance, Actions */
+    .table-responsive {
+      flex: 1 1 auto; width: 100%; overflow-x: auto; background: none; margin: 0; padding: 0 18px 18px 18px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; background: #fff; color: #0a1c2f; font-size: 13px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    th, td { padding: 10px 6px; text-align: left; font-size: 13px; }
     th {
-      color: rgb(0,0,0); text-align: left; padding: 15px; font-weight: 600; font-size: 14px;
-      position: sticky; top: 0; background: #e5e5e5; z-index: 11;
+      font-weight: 700; background: #d4e2f2; position: sticky; top: 0; z-index: 10;
+      color: #0a1c2f; border-bottom: 2px solid #1f3d62;
     }
-    tbody tr { border-bottom: 1px solid #eee; transition: background 0.3s; }
-    tbody tr:hover { background: #f9f9f9; }
-    tbody tr:nth-child(even) { background: #fafafa; }
-    tbody tr:nth-child(even):hover { background: #f5f5f5; }
-    td { padding: 12px 15px; font-size: 14px; }
-    .text-right { text-align: right; font-family: monospace; font-weight: 500; }
-    .debit { color: #d32f2f; font-weight: 600; }
-    .credit { color: #388E3C; font-weight: 600; }
-    .balance { color: #1976d2; font-weight: 600; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    tr:hover { background: #e3ecf7; }
+    .action-cell { position: relative; width: 40px; text-align: center; }
+    .action-btn {
+      background: none; border: none; cursor: pointer; font-size: 16px; color: #2b4a73;
+      padding: 2px 6px; border-radius: 4px; transition: all 0.2s;
+    }
+    .action-btn:hover { background: #e6efff; color: #0a1c2f; }
+    .row-dropdown-content {
+      display: none; position: absolute; right: 25px; top: 0; background-color: white; min-width: 130px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 100; border: 2px solid #1f3d62;
+    }
+    .row-dropdown-content.show { display: block; }
+    .row-dropdown-item {
+      color: #0a1c2f; padding: 8px 12px; text-decoration: none; display: block; font-size: 13px;
+      cursor: pointer; transition: background 0.2s; border: none; background: none; width: 100%; text-align: left;
+    }
+    .row-dropdown-item:hover { background-color: #e6efff; }
+    .row-dropdown-item.edit:hover { background-color: #e6efff; color: #0a1c2f; }
+    .row-dropdown-item.delete:hover { background-color: #ffe5e5; color: #cc0000; }
+
+    .text-right { text-align: right; }
+    .balance-positive { color: #0a1c2f; font-weight: 600; }
     tfoot {
-      background: #f8f9fa; position: sticky; bottom: 0; z-index: 10;
+      background: #eef3f9; position: sticky; bottom: 0; z-index: 9; border-top: 2px solid #1f3d62;
     }
-    tfoot td {
-      font-weight: 600; padding: 15px; border-top: 2px solid #1976d2;
-      background: #f8f9fa; position: sticky; bottom: 0;
-    }
-    .empty-state { text-align: center; padding: 50px; color: #666; }
-    .empty-state i { font-size: 48px; color: #ddd; margin-bottom: 20px; }
-    .loading { text-align: center; padding: 40px; color: #666; }
-    .action-menu-container { position: relative; width: 40px; text-align: center; }
-    .three-dots-btn {
-      background: none; border: none; cursor: pointer; font-size: 18px;
-      color: #666; padding: 5px 10px; border-radius: 4px; transition: all 0.3s;
-    }
-    .three-dots-btn:hover { background-color: #f0f0f0; color: #1976d2; }
-    .action-menu {
-      position: absolute; top: 100%; right: 0; background: white; border-radius: 6px;
-      box-shadow: 0 2px 15px rgba(0,0,0,0.15); min-width: 160px; z-index: 1000; overflow: hidden; display: none;
-    }
-    .action-menu.show { display: block; }
-    .action-menu-item {
-      display: flex; align-items: center; gap: 10px; padding: 12px 15px;
-      text-decoration: none; color: #333; font-size: 14px; border-bottom: 1px solid #f0f0f0;
-      cursor: pointer; transition: all 0.2s; background: white; border: none; width: 100%; text-align: left;
-    }
-    .action-menu-item:hover { background-color: #f5f5f5; }
-    .action-menu-item:last-child { border-bottom: none; }
-    .action-menu-item i { width: 20px; text-align: center; }
-    .reverse { color: #1976d2; }
-    .edit { color: #4CAF50; }
-    .delete { color: #f44336; }
-    @media (max-width: 768px) {
-      .header { flex-direction: column; text-align: center; }
-      .header-controls { flex-direction: column; width: 100%; }
-      .search-container { min-width: 100%; }
-      .filters { flex-direction: column; }
-      .filter-group { flex-direction: column; align-items: flex-start; }
-      select { width: 100%; }
-      .form-row { flex-direction: column; }
-      .form-group { width: 100%; }
-      .action-menu { position: fixed; top: auto; right: 10px; left: 10px; bottom: 10px; min-width: auto; }
+    tfoot td { font-weight: 700; background: #eef3f9; padding: 10px 6px; }
+
+    @media (max-width: 700px) {
+      .panel { padding: 0; }
+      .account-filter-bar { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <div class="company-name">
-        <h1>Penta Construction Cash Flow</h1>
-      </div>
-      <div class="header-controls">
-        <div class="search-container">
-          <i class="fa fa-search"></i>
-          <input type="text" id="search-bar" placeholder="Search transactions...">
+  <div class="panel">
+    <div class="panel-top-sticky">
+      <div class="panel-heading">PENTA CONSTRUCTION · CASH FLOW (weekly b/f · Ref column)</div>
+      <div class="panel-controls">
+        <button id="toggle-form-btn" type="button"><i class="fa fa-plus"></i> Transaction</button>
+        <div class="dropdown">
+          <button class="dropdown-btn"><i class="fa fa-ellipsis-v"></i> Options</button>
+          <div class="dropdown-content" id="dropdown-menu">
+            <button class="dropdown-item" id="download-pdf-btn"><i class="fa fa-download"></i> Download PDF</button>
+            <button class="dropdown-item" id="toggle-week-bf-btn"><i class="fa fa-calendar"></i> Show/Hide week b/f</button>
+            <div class="dropdown-divider"></div>
+            <div class="filter-toggle">
+              <span>Week filter</span>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-week-filter"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="filter-toggle">
+              <span>Month filter</span>
+              <label class="toggle-switch"><input type="checkbox" id="toggle-month-filter"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
         </div>
-        <a href="Accountsdashboart.html" class="btn btn-secondary">
-          <i class="fa fa-book"></i> Journal
-        </a>
-        <button id="download-pdf-btn" class="btn btn-download">
-          <i class="fa fa-download"></i> Download PDF
-        </button>
-        <button id="show-form-btn" class="btn btn-primary">
-          <i class="fa fa-plus"></i> New Transaction
-        </button>
       </div>
-    </header>
-
-    <!-- FILTERS – WITH PERSISTENT STORAGE (remembers week/month until you change them) -->
-    <div class="filters">
-      <div class="filter-group">
-        <label>Period:</label>
-        <select id="period-filter">
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="week-number">By Week Number</option>
-          <option value="month">This Month</option>
-          <option value="specific-month">By Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="year">This Year</option>
-        </select>
-      </div>
-
-      <!-- Week Number Filter (hidden unless week-number selected) -->
-      <div class="filter-group" id="week-number-filter" style="display: none;">
-        <label>Week:</label>
-        <select id="week-select"></select>
-      </div>
-
-      <!-- Month Filter (hidden unless specific-month selected) -->
-      <div class="filter-group" id="month-filter" style="display: none;">
-        <label>Month:</label>
-        <select id="month-select">
-          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
-          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
-          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
-          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-        </select>
-      </div>
-      <div class="filter-group" id="month-year-filter" style="display: none;">
-        <label>Year:</label>
-        <select id="month-year-select"></select>
-      </div>
-
-      <div class="filter-group">
-        <label>Type:</label>
-        <select id="type-filter">
-          <option value="all">All Transactions</option>
-          <option value="debit">Debits Only</option>
-          <option value="credit">Credits Only</option>
-        </select>
+      <div class="sticky-filters">
+        <div class="account-filter-bar">
+          <div class="search-bar"><input type="text" id="search-filter" placeholder="Search description, ref..."></div>
+          <div id="week-filter-container" class="hide"><select id="week-filter"><option value="ALL">All weeks</option></select></div>
+          <div id="month-filter-container" class="hide">
+            <select id="month-filter"></select>
+            <select id="month-year-filter"></select>
+          </div>
+          <select id="period-filter" style="max-width:150px;">
+            <option value="all">All time</option>
+            <option value="week-number" selected>By week number</option>
+            <option value="specific-month">By month</option>
+          </select>
+          <select id="type-filter" style="max-width:130px;">
+            <option value="all">All types</option>
+            <option value="debit">Debits</option>
+            <option value="credit">Credits</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <!-- Add/Edit Form -->
-    <div class="form-container hide" id="form-section">
-      <div class="form-header">
-        <h2><i class="fa fa-plus-circle"></i> Add New Transaction</h2>
-        <button class="close-btn" id="close-form-btn"><i class="fa fa-times"></i></button>
+    <!-- Add/Edit form – removed project, supplier replaced with Ref -->
+    <form id="expense-form" autocomplete="off" class="hide">
+      <div><label>Date</label><br><input type="date" id="exp-date" required></div>
+      <div><label>Description</label><br><textarea id="exp-description" placeholder="Description"></textarea></div>
+      <div><label>Ref</label><br><input type="text" id="exp-ref" placeholder="Invoice / reference"></div>
+      <div><label>Debit</label><br><input type="number" min="0" id="exp-debit" value="0" step="0.01"></div>
+      <div><label>Credit</label><br><input type="number" min="0" id="exp-credit" value="0" step="0.01"></div>
+      <div style="align-self: flex-end;">
+        <button type="submit" id="submit-btn">Add</button>
+        <button type="button" id="cancel-edit-btn" class="hide">Cancel</button>
       </div>
-      <form id="cashflow-form">
-        <div class="form-row">
-          <div class="form-group"><label for="tx-date">Date</label><input type="date" id="tx-date" required></div>
-          <div class="form-group"><label for="tx-desc">Description</label><input type="text" id="tx-desc" placeholder="Enter description" required></div>
-          <div class="form-group"><label for="tx-supplier">Supplier / Category</label><input type="text" id="tx-supplier" placeholder="Supplier or category"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label for="tx-debit">Debit Amount</label><input type="number" id="tx-debit" step="0.01" min="0" value="0" placeholder="0.00"></div>
-          <div class="form-group"><label for="tx-credit">Credit Amount</label><input type="number" id="tx-credit" step="0.01" min="0" value="0" placeholder="0.00"></div>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-reset" id="reset-form"><i class="fa fa-refresh"></i> Reset</button>
-          <button type="submit" class="btn btn-submit"><i class="fa fa-check"></i> Add Transaction</button>
-        </div>
-      </form>
-    </div>
+      <div id="expense-form-error"></div>
+    </form>
 
-    <!-- Transactions Table -->
-    <div class="table-container">
-      <div class="table-responsive">
-        <table>
-          <thead><tr><th style="width:120px">Date</th><th>Description</th><th style="width:180px">Supplier / Category</th><th style="width:120px">Debit</th><th style="width:120px">Credit</th><th style="width:140px">Balance</th><th style="width:80px">Actions</th></tr></thead>
-          <tbody id="cashflow-body"><tr><td colspan="7" class="loading"><i class="fa fa-spinner fa-spin"></i> Loading transactions...</td></tr></tbody>
-          <tfoot><tr><td colspan="3" style="text-align:right; font-weight:600;">TOTALS:</td><td class="text-right" id="total-debit">0.00</td><td class="text-right" id="total-credit">0.00</td><td class="text-right" id="ending-balance">0.00</td><td></td></tr></tfoot>
-        </table>
-      </div>
+    <!-- Transactions table – columns: Date, Description, Ref, Debit, Credit, Balance, Actions -->
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Description</th><th>Ref</th>
+            <th class="text-right">Debit</th><th class="text-right">Credit</th>
+            <th class="text-right">Balance</th><th class="action-cell">Act.</th>
+          </tr>
+        </thead>
+        <tbody id="expenses-table-body">
+          <tr><td colspan="7" class="loading" style="text-align:center;">Loading…</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="3" style="text-align:right;">Totals / brought forward</td><td id="total-debit" class="text-right">0.00</td><td id="total-credit" class="text-right">0.00</td><td id="ending-balance" class="text-right">0.00</td><td></td></tr></tfoot>
+      </table>
     </div>
   </div>
 
   <script type="module">
-    // -------------------- 🔥 PERSISTENT FILTERS (week/month stored, only change when user picks new) ----------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, onSnapshot, Timestamp,
-      query, orderBy, serverTimestamp, deleteDoc, doc, updateDoc
+      getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, Timestamp, query, orderBy, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -259,514 +252,353 @@
       projectId: "project-task-588c4",
       storageBucket: "project-task-588c4.appspot.com",
       messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const COLLECTION = "cashflow";
+    const COLLECTION = "cashflow";   // using same collection
 
-    // ---------- DOM refs ----------
-    const showFormBtn = document.getElementById("show-form-btn");
-    const closeFormBtn = document.getElementById("close-form-btn");
-    const formSection = document.getElementById("form-section");
-    const cashflowForm = document.getElementById("cashflow-form");
-    const txDate = document.getElementById("tx-date");
-    const txDesc = document.getElementById("tx-desc");
-    const txSupplier = document.getElementById("tx-supplier");
-    const txDebit = document.getElementById("tx-debit");
-    const txCredit = document.getElementById("tx-credit");
-    const resetFormBtn = document.getElementById("reset-form");
-    const cashflowBody = document.getElementById("cashflow-body");
+    // ---------- DOM ----------
+    const expenseForm = document.getElementById("expense-form");
+    const tbody = document.getElementById("expenses-table-body");
+    const formError = document.getElementById("expense-form-error");
+    const toggleFormBtn = document.getElementById("toggle-form-btn");
+    const dateInput = document.getElementById("exp-date");
+    const descInput = document.getElementById("exp-description");
+    const refInput = document.getElementById("exp-ref");      // new Ref field
+    const debitInput = document.getElementById("exp-debit");
+    const creditInput = document.getElementById("exp-credit");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelEditBtn = document.getElementById("cancel-edit-btn");
+    const searchFilter = document.getElementById("search-filter");
+    const weekFilter = document.getElementById("week-filter");
+    const monthFilter = document.getElementById("month-filter");
+    const monthYearFilter = document.getElementById("month-year-filter");
+    const periodFilter = document.getElementById("period-filter");
+    const typeFilter = document.getElementById("type-filter");
+    const toggleWeekFilter = document.getElementById("toggle-week-filter");
+    const toggleMonthFilter = document.getElementById("toggle-month-filter");
+    const weekFilterContainer = document.getElementById("week-filter-container");
+    const monthFilterContainer = document.getElementById("month-filter-container");
     const totalDebitEl = document.getElementById("total-debit");
     const totalCreditEl = document.getElementById("total-credit");
     const endingBalanceEl = document.getElementById("ending-balance");
-    const periodFilter = document.getElementById("period-filter");
-    const typeFilter = document.getElementById("type-filter");
-    const searchBar = document.getElementById("search-bar");
-    const weekNumberFilterDiv = document.getElementById("week-number-filter");
-    const weekSelect = document.getElementById("week-select");
-    const monthFilterDiv = document.getElementById("month-filter");
-    const monthSelect = document.getElementById("month-select");
-    const monthYearFilterDiv = document.getElementById("month-year-filter");
-    const monthYearSelect = document.getElementById("month-year-select");
     const downloadPdfBtn = document.getElementById("download-pdf-btn");
+    const toggleWeekBfBtn = document.getElementById("toggle-week-bf-btn");
 
-    // ---------- STORAGE KEYS – persist filters like a boss ----------
-    const STORAGE_PERIOD = 'penta_cashflow_period';
-    const STORAGE_WEEK = 'penta_cashflow_week';        // e.g. "2025-14"
-    const STORAGE_MONTH = 'penta_cashflow_month';      // e.g. "3"
-    const STORAGE_MONTH_YEAR = 'penta_cashflow_month_year'; // e.g. "2025"
-    const STORAGE_TYPE = 'penta_cashflow_type';
-
-    // ---------- global state ----------
+    // ---------- state ----------
     let allTransactions = [];
     let filteredTransactions = [];
-    let searchTerm = '';
-    let activeMenu = null;
+    let editingId = null;
+    let formVisible = false;
+    let activeRowMenu = null;
+    let showWeekBroughtForward = true;   // weekly b/f toggle
 
-    // ---------- helper functions ----------
-    function closeAllMenus() { if (activeMenu) { activeMenu.classList.remove('show'); activeMenu = null; } }
-    document.addEventListener('click', (e) => { if (!e.target.closest('.action-menu-container')) closeAllMenus(); });
+    // filter visibility toggles
+    let weekFilterVisible = false, monthFilterVisible = false;
 
-    function getWeekNumber(date) {
-      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      const dayNum = d.getUTCDay() || 7;
-      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-      return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    // ---------- helper: week number ----------
+    function getWeekNumber(d) {
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     }
-    function getWeekRange(year, weekNumber) {
-      const firstDayOfYear = new Date(year, 0, 1);
-      const days = 2 + (weekNumber - 1) * 7 - firstDayOfYear.getDay();
+    function getWeekYear(date) {
+      let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+      return { week: getWeekNumber(date), year: d.getUTCFullYear() };
+    }
+    function getWeekRange(year, week) {
+      const first = new Date(year, 0, 1);
+      const days = (week - 1) * 7 - first.getDay() + 2;
       const start = new Date(year, 0, days); start.setHours(0,0,0,0);
-      const end = new Date(year, 0, days + 6); end.setHours(23,59,59,999);
-      return { start, end };
-    }
-    function getMonthRange(year, month) {
-      const start = new Date(year, month - 1, 1); start.setHours(0,0,0,0);
-      const end = new Date(year, month, 0); end.setHours(23,59,59,999);
+      const end = new Date(year, 0, days+6); end.setHours(23,59,59,999);
       return { start, end };
     }
 
-    // --- populate dropdowns based on actual transactions + keep stored values ---
+    // ---------- populate week & month dropdowns based on data ----------
     function populateWeekSelect() {
-      weekSelect.innerHTML = '';
-      const years = [...new Set(allTransactions.map(tx => tx.date.getFullYear()))].sort((a,b)=>b-a);
-      if (years.length === 0) {
-        const currentYear = new Date().getFullYear();
-        for (let i=1; i<=52; i++) {
-          const opt = document.createElement('option');
-          opt.value = `${currentYear}-${i}`;
-          opt.textContent = `${currentYear} - Week ${i}`;
-          weekSelect.appendChild(opt);
-        }
-      } else {
-        years.forEach(year => {
-          for (let week=1; week<=52; week++) {
-            const opt = document.createElement('option');
-            opt.value = `${year}-${week}`;
-            opt.textContent = `${year} - Week ${week}`;
-            weekSelect.appendChild(opt);
-          }
-        });
+      if (!allTransactions.length) {
+        weekFilter.innerHTML = '<option value="ALL">All weeks</option>';
+        return;
       }
-      // RESTORE stored week — this keeps user's selection until they manually change it
-      const savedWeek = localStorage.getItem(STORAGE_WEEK);
-      if (savedWeek && [...weekSelect.options].some(opt => opt.value === savedWeek)) {
-        weekSelect.value = savedWeek;
-      } else {
-        const currentWeek = getWeekNumber(new Date());
-        const currentYear = new Date().getFullYear();
-        weekSelect.value = `${currentYear}-${currentWeek}`;
-      }
+      const weeksSet = new Set();
+      allTransactions.forEach(tx => {
+        const d = new Date(tx.date);
+        const wy = getWeekYear(d);
+        weeksSet.add(`${wy.year}-${wy.week}`);
+      });
+      const weeks = Array.from(weeksSet).map(w => ({year: +w.split('-')[0], week: +w.split('-')[1]})).sort((a,b) => b.year - a.year || b.week - a.week);
+      let opts = '<option value="ALL">All weeks</option>';
+      weeks.forEach(w => opts += `<option value="${w.year}-${w.week}">Week ${w.week}, ${w.year}</option>`);
+      weekFilter.innerHTML = opts;
     }
 
-    function populateYearSelect() {
-      monthYearSelect.innerHTML = '';
-      const years = [...new Set(allTransactions.map(tx => tx.date.getFullYear()))].sort((a,b)=>b-a);
-      if (years.length === 0) {
-        const currentYear = new Date().getFullYear();
-        const opt = document.createElement('option');
-        opt.value = currentYear; opt.textContent = currentYear;
-        monthYearSelect.appendChild(opt);
-      } else {
-        years.forEach(year => {
-          const opt = document.createElement('option');
-          opt.value = year; opt.textContent = year;
-          monthYearSelect.appendChild(opt);
-        });
+    function populateMonthYear() {
+      if (!allTransactions.length) {
+        monthFilter.innerHTML = '<option value="all">All months</option>';
+        monthYearFilter.innerHTML = '<option value="">Year</option>';
+        return;
       }
-      // RESTORE stored month/year
-      const savedMonthYear = localStorage.getItem(STORAGE_MONTH_YEAR);
-      if (savedMonthYear && [...monthYearSelect.options].some(opt => opt.value === savedMonthYear)) {
-        monthYearSelect.value = savedMonthYear;
-      } else {
-        monthYearSelect.value = new Date().getFullYear();
-      }
+      const years = [...new Set(allTransactions.map(tx => new Date(tx.date).getFullYear()))].sort((a,b)=>b-a);
+      let monthOpts = '<option value="all">All months</option>';
+      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      for (let m=0; m<12; m++) monthOpts += `<option value="${m+1}">${monthNames[m]}</option>`;
+      monthFilter.innerHTML = monthOpts;
+      let yearOpts = '';
+      years.forEach(y => yearOpts += `<option value="${y}">${y}</option>`);
+      monthYearFilter.innerHTML = yearOpts;
     }
 
-    // --- RESTORE filter states from localStorage (persist until user changes) ---
-    function restoreFiltersFromStorage() {
-      const savedPeriod = localStorage.getItem(STORAGE_PERIOD);
-      if (savedPeriod) periodFilter.value = savedPeriod;
-      else periodFilter.value = 'month';  // default as per original
-
-      const savedType = localStorage.getItem(STORAGE_TYPE);
-      if (savedType) typeFilter.value = savedType;
-
-      // show/hide based on restored period
-      const val = periodFilter.value;
-      if (val === 'week-number') {
-        weekNumberFilterDiv.style.display = 'flex';
-        monthFilterDiv.style.display = 'none';
-        monthYearFilterDiv.style.display = 'none';
-        // weekSelect will be populated later with saved value
-      } else if (val === 'specific-month') {
-        weekNumberFilterDiv.style.display = 'none';
-        monthFilterDiv.style.display = 'flex';
-        monthYearFilterDiv.style.display = 'flex';
-        // restore month + year
-        const savedMonth = localStorage.getItem(STORAGE_MONTH);
-        if (savedMonth) monthSelect.value = savedMonth;
-        // year restored inside populateYearSelect later
-      } else {
-        weekNumberFilterDiv.style.display = 'none';
-        monthFilterDiv.style.display = 'none';
-        monthYearFilterDiv.style.display = 'none';
-      }
-    }
-
-    // --- STORE current filter choices to localStorage ---
-    function storeFilters() {
-      localStorage.setItem(STORAGE_PERIOD, periodFilter.value);
-      localStorage.setItem(STORAGE_TYPE, typeFilter.value);
-      
-      if (periodFilter.value === 'week-number') {
-        if (weekSelect.value) localStorage.setItem(STORAGE_WEEK, weekSelect.value);
-      } else if (periodFilter.value === 'specific-month') {
-        localStorage.setItem(STORAGE_MONTH, monthSelect.value);
-        localStorage.setItem(STORAGE_MONTH_YEAR, monthYearSelect.value);
-      }
-    }
-
-    // --- get date range based on period + stored week/month (always consistent) ---
-    function getDateRange(period) {
-      const now = new Date();
-      if (period === 'today') {
-        const start = new Date(); start.setHours(0,0,0,0);
-        const end = new Date(); end.setHours(23,59,59,999);
-        return { start, end };
-      }
-      if (period === 'week') {
-        const start = new Date(now); const day = now.getDay(); const diff = now.getDate() - day + (day===0?-6:1);
-        start.setDate(diff); start.setHours(0,0,0,0);
-        const end = new Date(start); end.setDate(diff+6); end.setHours(23,59,59,999);
-        return { start, end };
-      }
-      if (period === 'week-number') {
-        if (weekSelect.value) {
-          const [year, week] = weekSelect.value.split('-').map(Number);
-          return getWeekRange(year, week);
-        }
-      }
-      if (period === 'month') {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1); start.setHours(0,0,0,0);
-        const end = new Date(now.getFullYear(), now.getMonth()+1, 0); end.setHours(23,59,59,999);
-        return { start, end };
-      }
-      if (period === 'specific-month') {
-        if (monthSelect.value && monthYearSelect.value) {
-          return getMonthRange(parseInt(monthYearSelect.value), parseInt(monthSelect.value));
-        }
-      }
-      if (period === 'quarter') {
-        const quarter = Math.floor(now.getMonth() / 3);
-        const start = new Date(now.getFullYear(), quarter*3, 1); start.setHours(0,0,0,0);
-        const end = new Date(now.getFullYear(), quarter*3+3, 0); end.setHours(23,59,59,999);
-        return { start, end };
-      }
-      if (period === 'year') {
-        const start = new Date(now.getFullYear(), 0, 1); start.setHours(0,0,0,0);
-        const end = new Date(now.getFullYear(), 11, 31); end.setHours(23,59,59,999);
-        return { start, end };
-      }
-      return { start: null, end: null };
-    }
-
-    // --- filter transactions using stored state & search ---
+    // ---------- filter logic ----------
     function filterTransactions() {
-      const period = periodFilter.value;
-      const type = typeFilter.value;
-
       let filtered = [...allTransactions];
-      if (searchTerm) {
-        filtered = filtered.filter(tx => 
-          tx.description.toLowerCase().includes(searchTerm) ||
-          tx.supplier.toLowerCase().includes(searchTerm) ||
-          tx.date.toISOString().split('T')[0].includes(searchTerm)
-        );
+      // search (description + ref)
+      const term = searchFilter.value.trim().toLowerCase();
+      if (term) filtered = filtered.filter(tx => (tx.description+' '+ (tx.ref||'')).toLowerCase().includes(term));
+
+      // period filter (week / month / all)
+      const period = periodFilter.value;
+      if (period === 'week-number' && weekFilter.value !== 'ALL') {
+        const [year, week] = weekFilter.value.split('-').map(Number);
+        const { start, end } = getWeekRange(year, week);
+        filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
+      } else if (period === 'specific-month' && monthFilter.value !== 'all' && monthYearFilter.value) {
+        const y = parseInt(monthYearFilter.value), m = parseInt(monthFilter.value)-1;
+        const start = new Date(y, m, 1); start.setHours(0,0,0,0);
+        const end = new Date(y, m+1, 0); end.setHours(23,59,59,999);
+        filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
       }
 
-      if (period !== 'all') {
-        const { start, end } = getDateRange(period);
-        if (start && end) {
-          filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
-        }
-      }
-
+      // type filter
+      const type = typeFilter.value;
       if (type === 'debit') filtered = filtered.filter(tx => tx.debit > 0);
       else if (type === 'credit') filtered = filtered.filter(tx => tx.credit > 0);
 
-      filtered.sort((a,b) => a.date - b.date); // asc (oldest first)
+      filtered.sort((a,b) => a.date - b.date);
       filteredTransactions = filtered;
-      renderTransactions();
+      renderTable();
     }
 
-    // --- render ---
-    function formatMoney(amount) { return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-
-    function renderTransactions() {
-      if (filteredTransactions.length === 0) {
-        cashflowBody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fa fa-inbox"></i><div>No transactions found</div></td></tr>`;
-        totalDebitEl.textContent = "0.00"; totalCreditEl.textContent = "0.00"; endingBalanceEl.textContent = "0.00";
+    // ---------- render with weekly balance brought forward ----------
+    function renderTable() {
+      if (!filteredTransactions.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No transactions</td></tr>`;
+        totalDebitEl.innerText = totalCreditEl.innerText = endingBalanceEl.innerText = '0.00';
         return;
       }
 
-      let totalDebit = 0, totalCredit = 0, runningBalance = 0;
-      const rowsHtml = filteredTransactions.map(tx => {
-        runningBalance += tx.credit - tx.debit;
+      let rows = '';
+      let totalDebit = 0, totalCredit = 0, running = 0;
+      let currentWeek = -1, currentYear = -1;
+      let weekStartBalance = 0;
+
+      filteredTransactions.forEach((tx, idx) => {
+        const d = new Date(tx.date);
+        const wy = getWeekYear(d);
+        const week = wy.week, year = wy.year;
+
+        // if week changed, insert brought forward line
+        if (showWeekBroughtForward && (week !== currentWeek || year !== currentYear)) {
+          if (idx > 0) {  // not first row, we close previous week
+            rows += `<tr style="background:#f1f7fd; border-top:2px solid #1f3d62;"><td colspan="3"><strong>Week ${currentWeek}, ${currentYear} brought forward</strong></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${running.toFixed(2)}</strong></td><td></td></tr>`;
+          }
+          currentWeek = week; currentYear = year;
+          weekStartBalance = running;
+          rows += `<tr style="background:#e6efff;"><td colspan="3"><em>↳ Week ${week}, ${year} starting balance</em></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${weekStartBalance.toFixed(2)}</strong></td><td></td></tr>`;
+        }
+
+        // transaction row
+        running += (tx.credit - tx.debit);
         totalDebit += tx.debit;
         totalCredit += tx.credit;
-
-        return `<tr>
-          <td>${tx.date.toISOString().split('T')[0]}</td>
+        const dateStr = tx.date.toISOString().split('T')[0];
+        rows += `<tr>
+          <td>${dateStr}</td>
           <td>${escapeHtml(tx.description)}</td>
-          <td>${escapeHtml(tx.supplier || '-')}</td>
-          <td class="text-right">${tx.debit > 0 ? `<span class="debit">${formatMoney(tx.debit)}</span>` : ''}</td>
-          <td class="text-right">${tx.credit > 0 ? `<span class="credit">${formatMoney(tx.credit)}</span>` : ''}</td>
-          <td class="text-right"><span class="balance">${formatMoney(runningBalance)}</span></td>
-          <td class="action-menu-container">
-            <button class="three-dots-btn" data-id="${tx.id}">&#8942;</button>
-            <div class="action-menu" data-menu-id="${tx.id}">
-              <button class="action-menu-item reverse" data-action="reverse" data-txid="${tx.id}"><i class="fa fa-exchange"></i> Reverse</button>
-              <button class="action-menu-item edit" data-action="edit" data-txid="${tx.id}"><i class="fa fa-edit"></i> Edit</button>
-              <button class="action-menu-item delete" data-action="delete" data-txid="${tx.id}"><i class="fa fa-trash"></i> Delete</button>
+          <td>${escapeHtml(tx.ref || '-')}</td>
+          <td class="text-right">${tx.debit ? tx.debit.toFixed(2) : ''}</td>
+          <td class="text-right">${tx.credit ? tx.credit.toFixed(2) : ''}</td>
+          <td class="text-right">${running.toFixed(2)}</td>
+          <td class="action-cell">
+            <button class="action-btn" data-id="${tx.id}"><i class="fa fa-ellipsis-v"></i></button>
+            <div class="row-dropdown-content" data-menu-id="${tx.id}">
+              <button class="row-dropdown-item edit" data-id="${tx.id}"><i class="fa fa-edit"></i> Edit</button>
+              <button class="row-dropdown-item delete" data-id="${tx.id}"><i class="fa fa-trash"></i> Delete</button>
             </div>
           </td>
         </tr>`;
-      }).join('');
-
-      cashflowBody.innerHTML = rowsHtml;
-      totalDebitEl.textContent = formatMoney(totalDebit);
-      totalCreditEl.textContent = formatMoney(totalCredit);
-      endingBalanceEl.textContent = formatMoney(runningBalance);
-
-      // reattach event listeners for menus (since innerHTML replaced)
-      attachMenuListeners();
-    }
-
-    function escapeHtml(unsafe) {
-      if (!unsafe) return unsafe;
-      return unsafe.replace(/[&<>"]/g, function(m) {
-        if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
-        return m;
       });
-    }
 
-    function attachMenuListeners() {
-      document.querySelectorAll('.three-dots-btn').forEach(btn => {
-        btn.removeEventListener('click', menuToggleHandler);
-        btn.addEventListener('click', menuToggleHandler);
-      });
-    }
-    function menuToggleHandler(e) {
-      e.stopPropagation();
-      const menu = this.nextElementSibling;
-      if (!menu) return;
-      if (activeMenu === menu) {
-        menu.classList.remove('show');
-        activeMenu = null;
-      } else {
-        closeAllMenus();
-        menu.classList.add('show');
-        activeMenu = menu;
+      // final week brought forward line
+      if (showWeekBroughtForward && currentWeek !== -1) {
+        rows += `<tr style="background:#f1f7fd; border-top:2px solid #1f3d62;"><td colspan="3"><strong>Week ${currentWeek}, ${currentYear} carried forward</strong></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${running.toFixed(2)}</strong></td><td></td></tr>`;
       }
-    }
 
-    // --- actions (reverse, edit, delete) using delegated events ---
-    document.addEventListener('click', async (e) => {
-      const reverseBtn = e.target.closest('.reverse[data-action="reverse"]');
-      if (reverseBtn) {
-        e.preventDefault(); e.stopPropagation();
-        const txId = reverseBtn.dataset.txid;
-        const tx = allTransactions.find(t => t.id === txId);
-        if (tx) await reverseTransaction(tx);
-        closeAllMenus();
-        return;
-      }
-      const editBtn = e.target.closest('.edit[data-action="edit"]');
-      if (editBtn) {
-        e.preventDefault(); e.stopPropagation();
-        const txId = editBtn.dataset.txid;
-        const tx = allTransactions.find(t => t.id === txId);
-        if (tx) editTransaction(tx);
-        closeAllMenus();
-        return;
-      }
-      const deleteBtn = e.target.closest('.delete[data-action="delete"]');
-      if (deleteBtn) {
-        e.preventDefault(); e.stopPropagation();
-        const txId = deleteBtn.dataset.txid;
-        if (txId) await deleteTransaction(txId);
-        closeAllMenus();
-        return;
-      }
-    });
+      tbody.innerHTML = rows;
+      totalDebitEl.innerText = totalDebit.toFixed(2);
+      totalCreditEl.innerText = totalCredit.toFixed(2);
+      endingBalanceEl.innerText = running.toFixed(2);
 
-    async function reverseTransaction(tx) {
-      if (!confirm('Reverse this transaction? Opposite entry will be created.')) return;
-      try {
-        await addDoc(collection(db, COLLECTION), {
-          date: Timestamp.fromDate(new Date()),
-          description: `Reversal: ${tx.description}`,
-          supplier: tx.supplier,
-          debit: tx.credit,
-          credit: tx.debit,
-          createdAt: serverTimestamp(),
-          reversedFrom: tx.id
+      // attach row menu listeners
+      document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const menu = btn.nextElementSibling;
+          if (activeRowMenu === menu) {
+            menu.classList.remove('show'); activeRowMenu = null;
+          } else {
+            if (activeRowMenu) activeRowMenu.classList.remove('show');
+            menu.classList.add('show'); activeRowMenu = menu;
+          }
         });
-        alert('Transaction reversed.');
-      } catch (err) { console.error(err); alert('Error reversing'); }
-    }
-    async function deleteTransaction(id) {
-      if (!confirm('Delete permanently? This cannot be undone.')) return;
-      try { await deleteDoc(doc(db, COLLECTION, id)); alert('Deleted.'); } catch(err) { console.error(err); alert('Error'); }
-    }
-    function editTransaction(tx) {
-      txDate.value = tx.date.toISOString().split('T')[0];
-      txDesc.value = tx.description;
-      txSupplier.value = tx.supplier || '';
-      txDebit.value = tx.debit;
-      txCredit.value = tx.credit;
-      formSection.classList.remove('hide');
-      formSection.querySelector('.form-header h2').innerHTML = '<i class="fa fa-edit"></i> Edit Transaction';
-      cashflowForm.querySelector('.btn-submit').innerHTML = '<i class="fa fa-check"></i> Update Transaction';
-      cashflowForm.dataset.editId = tx.id;
+      });
+      document.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          const tx = allTransactions.find(t => t.id === id);
+          if (tx) editTransaction(tx);
+          if (activeRowMenu) activeRowMenu.classList.remove('show');
+        });
+      });
+      document.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          if (confirm('Delete?')) await deleteDoc(doc(db, COLLECTION, id));
+          if (activeRowMenu) activeRowMenu.classList.remove('show');
+        });
+      });
     }
 
-    // ---------- PERSISTENCE: store filters on ANY change ----------
-    periodFilter.addEventListener('change', function() {
-      const val = this.value;
-      if (val === 'week-number') {
-        weekNumberFilterDiv.style.display = 'flex'; monthFilterDiv.style.display = 'none'; monthYearFilterDiv.style.display = 'none';
-        populateWeekSelect();  // rebuild but keeps stored week
-      } else if (val === 'specific-month') {
-        weekNumberFilterDiv.style.display = 'none'; monthFilterDiv.style.display = 'flex'; monthYearFilterDiv.style.display = 'flex';
-        populateYearSelect();  // rebuild and restore saved month/year
-      } else {
-        weekNumberFilterDiv.style.display = 'none'; monthFilterDiv.style.display = 'none'; monthYearFilterDiv.style.display = 'none';
-      }
-      storeFilters();
-      filterTransactions();
+    function escapeHtml(s) { return s?.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m]) ?? s; }
+
+    // ---------- form handlers ----------
+    toggleFormBtn.addEventListener('click', () => {
+      formVisible = !formVisible;
+      expenseForm.classList.toggle('hide', !formVisible);
+      toggleFormBtn.innerHTML = formVisible ? '<i class="fa fa-minus"></i> Hide' : '<i class="fa fa-plus"></i> Transaction';
+      if (!formVisible) cancelEdit();
     });
 
-    weekSelect.addEventListener('change', () => { storeFilters(); filterTransactions(); });
-    monthSelect.addEventListener('change', () => { storeFilters(); filterTransactions(); });
-    monthYearSelect.addEventListener('change', () => { storeFilters(); filterTransactions(); });
-    typeFilter.addEventListener('change', () => { storeFilters(); filterTransactions(); });
-    searchBar.addEventListener('input', function(e) { searchTerm = e.target.value.toLowerCase().trim(); filterTransactions(); });
-
-    // --- also store when user manually picks week/month (extra safety) ---
-    weekSelect.addEventListener('change', storeFilters);
-    monthSelect.addEventListener('change', storeFilters);
-    monthYearSelect.addEventListener('change', storeFilters);
-
-    // ---------- FORM ----------
-    showFormBtn.addEventListener("click", () => { formSection.classList.remove("hide"); resetFormToAddMode(); });
-    closeFormBtn.addEventListener("click", () => { formSection.classList.add("hide"); resetFormToAddMode(); });
-    function resetFormToAddMode() {
-      cashflowForm.reset();
-      txDate.value = new Date().toISOString().split('T')[0];
-      txDebit.value = "0"; txCredit.value = "0";
-      formSection.querySelector('.form-header h2').innerHTML = '<i class="fa fa-plus-circle"></i> Add New Transaction';
-      cashflowForm.querySelector('.btn-submit').innerHTML = '<i class="fa fa-check"></i> Add Transaction';
-      delete cashflowForm.dataset.editId;
+    function cancelEdit() {
+      editingId = null;
+      expenseForm.reset();
+      dateInput.value = new Date().toISOString().split('T')[0];
+      submitBtn.innerText = 'Add';
+      cancelEditBtn.classList.add('hide');
     }
-    resetFormBtn.addEventListener("click", resetFormToAddMode);
+    cancelEditBtn.addEventListener('click', cancelEdit);
 
-    cashflowForm.addEventListener("submit", async (e) => {
+    function editTransaction(tx) {
+      editingId = tx.id;
+      dateInput.value = tx.date.toISOString().split('T')[0];
+      descInput.value = tx.description || '';
+      refInput.value = tx.ref || '';
+      debitInput.value = tx.debit;
+      creditInput.value = tx.credit;
+      submitBtn.innerText = 'Update';
+      cancelEditBtn.classList.remove('hide');
+      if (!formVisible) {
+        formVisible = true; expenseForm.classList.remove('hide');
+        toggleFormBtn.innerHTML = '<i class="fa fa-minus"></i> Hide';
+      }
+    }
+
+    expenseForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!txDate.value || !txDesc.value.trim()) { alert('Date & description required'); return; }
-      const debit = parseFloat(txDebit.value) || 0, credit = parseFloat(txCredit.value) || 0;
-      const transaction = {
-        date: Timestamp.fromDate(new Date(txDate.value)),
-        description: txDesc.value.trim(),
-        supplier: txSupplier.value.trim(),
-        debit: parseFloat(debit.toFixed(2)),
-        credit: parseFloat(credit.toFixed(2)),
-        createdAt: serverTimestamp()
+      const debit = parseFloat(debitInput.value) || 0;
+      const credit = parseFloat(creditInput.value) || 0;
+      if (!dateInput.value || !descInput.value.trim() || (debit === 0 && credit === 0)) {
+        formError.innerText = 'Complete fields (debit or credit)'; return;
+      }
+      const txData = {
+        date: Timestamp.fromDate(new Date(dateInput.value)),
+        description: descInput.value.trim(),
+        ref: refInput.value.trim() || '',
+        debit: debit,
+        credit: credit,
+        updatedAt: serverTimestamp()
       };
       try {
-        if (cashflowForm.dataset.editId) {
-          await updateDoc(doc(db, COLLECTION, cashflowForm.dataset.editId), { ...transaction, updatedAt: serverTimestamp() });
-          alert('Updated!');
+        if (editingId) {
+          await updateDoc(doc(db, COLLECTION, editingId), txData);
         } else {
-          await addDoc(collection(db, COLLECTION), transaction);
-          alert('Added!');
+          await addDoc(collection(db, COLLECTION), { ...txData, createdAt: serverTimestamp() });
         }
-        resetFormToAddMode();
-        formSection.classList.add('hide');
-      } catch (err) { console.error(err); alert('Error saving.'); }
+        cancelEdit();
+        if (formVisible) expenseForm.classList.add('hide'); 
+        formVisible = false; toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Transaction';
+      } catch (err) { formError.innerText = err.message; }
     });
 
-    // ---------- PDF ----------
-    downloadPdfBtn.addEventListener('click', downloadPDF);
-    function downloadPDF() {
-      if (filteredTransactions.length === 0) { alert('No transactions'); return; }
-      const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
-      doc.setFontSize(20); doc.setTextColor(25,118,210); doc.text('Penta Construction', 20, 20);
-      doc.setFontSize(14); doc.setTextColor(0,0,0); doc.text('Cash Flow Report', 20, 30);
-      const period = periodFilter.options[periodFilter.selectedIndex].text;
-      const type = typeFilter.options[typeFilter.selectedIndex].text;
-      doc.setFontSize(10); doc.setTextColor(100,100,100);
-      doc.text(`Period: ${period} | Type: ${type} | Total: ${filteredTransactions.length}`, 20, 40);
-      doc.text(`Generated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`, 20, 48);
-      
-      let totalDebit=0, totalCredit=0, runningBalance=0;
-      const bodyData = filteredTransactions.map(tx => {
-        runningBalance += tx.credit - tx.debit;
-        totalDebit += tx.debit; totalCredit += tx.credit;
-        return [
-          tx.date.toISOString().split('T')[0], tx.description, tx.supplier||"-",
-          tx.debit>0 ? formatMoney(tx.debit) : "", tx.credit>0 ? formatMoney(tx.credit) : "", formatMoney(runningBalance)
-        ];
-      });
-      bodyData.push(['','','TOTALS:', formatMoney(totalDebit), formatMoney(totalCredit), formatMoney(runningBalance)]);
-      doc.autoTable({
-        head: [['Date','Description','Supplier/Category','Debit','Credit','Balance']],
-        body: bodyData, startY: 60, theme: 'grid',
-        headStyles: { fillColor: [131,131,131] },
-        columnStyles: { 0: {cellWidth:30},1:{cellWidth:60},2:{cellWidth:40},3:{cellWidth:30,halign:'right'},4:{cellWidth:30,halign:'right'},5:{cellWidth:35,halign:'right'} }
-      });
-      doc.save(`Penta_CashFlow_${period.replace(/ /g,'_')}_${Date.now()}.pdf`);
-    }
-
-    // ---------- FIREBASE REAL-TIME: load data & then apply RESTORED filters ----------
+    // ---------- realtime data ----------
     const q = query(collection(db, COLLECTION), orderBy("date", "asc"));
-    onSnapshot(q, (snapshot) => {
-      allTransactions = snapshot.docs.map(doc => {
-        const data = doc.data();
+    onSnapshot(q, (snap) => {
+      allTransactions = snap.docs.map(d => {
+        const data = d.data();
         return {
-          id: doc.id,
+          id: d.id,
           date: data.date?.toDate() || new Date(),
           description: data.description || '',
-          supplier: data.supplier || '',
-          debit: parseFloat(data.debit || 0),
-          credit: parseFloat(data.credit || 0),
+          ref: data.ref || '',          // new Ref field
+          debit: data.debit || 0,
+          credit: data.credit || 0
         };
       });
-
-      // 1️⃣ populate dropdowns with fresh data, but keep stored values
       populateWeekSelect();
-      populateYearSelect();
-
-      // 2️⃣ restore saved filters (period, week, month, year) — overrides defaults
-      restoreFiltersFromStorage();
-
-      // 3️⃣ now apply filters and render
-      filterTransactions();
-    }, (error) => {
-      console.error("Firestore error:", error);
-      cashflowBody.innerHTML = `<tr><td colspan="7" style="color:#f44336; text-align:center;"><i class="fa fa-exclamation-triangle"></i> Error loading data</td></tr>`;
+      populateMonthYear();
+      filterTransactions(); // applies all current filters
     });
 
-    // set default date for new transaction
-    txDate.value = new Date().toISOString().split('T')[0];
+    // ---------- event listeners for filters ----------
+    searchFilter.addEventListener('input', filterTransactions);
+    periodFilter.addEventListener('change', filterTransactions);
+    weekFilter.addEventListener('change', filterTransactions);
+    monthFilter.addEventListener('change', filterTransactions);
+    monthYearFilter.addEventListener('change', filterTransactions);
+    typeFilter.addEventListener('change', filterTransactions);
 
-    // Extra: save month/year selections to storage immediately after they change
-    monthSelect.addEventListener('change', storeFilters);
-    monthYearSelect.addEventListener('change', storeFilters);
+    // filter visibility toggles
+    toggleWeekFilter.addEventListener('change', (e) => {
+      weekFilterVisible = e.target.checked;
+      weekFilterContainer.classList.toggle('hide', !weekFilterVisible);
+    });
+    toggleMonthFilter.addEventListener('change', (e) => {
+      monthFilterVisible = e.target.checked;
+      monthFilterContainer.classList.toggle('hide', !monthFilterVisible);
+    });
+
+    // weekly b/f toggle
+    toggleWeekBfBtn.addEventListener('click', () => {
+      showWeekBroughtForward = !showWeekBroughtForward;
+      toggleWeekBfBtn.innerHTML = showWeekBroughtForward ? '<i class="fa fa-calendar"></i> Hide week b/f' : '<i class="fa fa-calendar"></i> Show week b/f';
+      renderTable();
+    });
+
+    // PDF download
+    downloadPdfBtn.addEventListener('click', () => {
+      if (!filteredTransactions.length) return alert('No data');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape');
+      doc.setFontSize(16); doc.text('PENTA CASH FLOW', 20,20);
+      const body = filteredTransactions.map(t => [
+        t.date.toISOString().split('T')[0], t.description, t.ref||'-',
+        t.debit.toFixed(2), t.credit.toFixed(2)
+      ]);
+      doc.autoTable({ head: [['Date','Description','Ref','Debit','Credit']], body, startY: 30 });
+      doc.save('cashflow.pdf');
+    });
+
+    // close row dropdown on click outside
+    document.addEventListener('click', () => {
+      if (activeRowMenu) { activeRowMenu.classList.remove('show'); activeRowMenu = null; }
+    });
+
+    // default date
+    dateInput.value = new Date().toISOString().split('T')[0];
   </script>
 </body>
 </html>
