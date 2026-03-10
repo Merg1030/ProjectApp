@@ -152,10 +152,11 @@
 
     .text-right { text-align: right; }
     .balance-positive { color: #0a1c2f; font-weight: 600; }
+    
+    /* tfoot hidden – no totals row */
     tfoot {
-      background: #eef3f9; position: sticky; bottom: 0; z-index: 9; border-top: 2px solid #1f3d62;
+      display: none;
     }
-    tfoot td { font-weight: 700; background: #eef3f9; padding: 10px 6px; }
 
     @media (max-width: 700px) {
       .panel { padding: 0; }
@@ -235,7 +236,8 @@
         <tbody id="expenses-table-body">
           <tr><td colspan="7" class="loading" style="text-align:center;">Loading…</td></tr>
         </tbody>
-        <tfoot><tr><td colspan="3" style="text-align:right;">Totals / brought forward</td><td id="total-debit" class="text-right">0.00</td><td id="total-credit" class="text-right">0.00</td><td id="ending-balance" class="text-right">0.00</td><td></td></tr></tfoot>
+        <!-- tfoot completely removed from display via CSS display:none, but we keep structure empty -->
+        <tfoot style="display:none;"></tfoot>
       </table>
     </div>
   </div>
@@ -280,9 +282,6 @@
     const toggleMonthFilter = document.getElementById("toggle-month-filter");
     const weekFilterContainer = document.getElementById("week-filter-container");
     const monthFilterContainer = document.getElementById("month-filter-container");
-    const totalDebitEl = document.getElementById("total-debit");
-    const totalCreditEl = document.getElementById("total-credit");
-    const endingBalanceEl = document.getElementById("ending-balance");
     const downloadPdfBtn = document.getElementById("download-pdf-btn");
     const toggleWeekBfBtn = document.getElementById("toggle-week-bf-btn");
 
@@ -381,38 +380,33 @@
       renderTable();
     }
 
-    // ---------- render with weekly balance brought forward ----------
+    // ---------- render with weekly balance brought forward (if toggled) ----------
     function renderTable() {
       if (!filteredTransactions.length) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No transactions</td></tr>`;
-        totalDebitEl.innerText = totalCreditEl.innerText = endingBalanceEl.innerText = '0.00';
         return;
       }
 
       let rows = '';
-      let totalDebit = 0, totalCredit = 0, running = 0;
+      let running = 0;
       let currentWeek = -1, currentYear = -1;
-      let weekStartBalance = 0;
 
       filteredTransactions.forEach((tx, idx) => {
         const d = new Date(tx.date);
         const wy = getWeekYear(d);
         const week = wy.week, year = wy.year;
 
-        // if week changed, insert brought forward line
+        // if week changed, insert brought forward line (only if toggle on)
         if (showWeekBroughtForward && (week !== currentWeek || year !== currentYear)) {
           if (idx > 0) {  // not first row, we close previous week
             rows += `<tr style="background:#f1f7fd; border-top:2px solid #1f3d62;"><td colspan="3"><strong>Week ${currentWeek}, ${currentYear} brought forward</strong></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${running.toFixed(2)}</strong></td><td></td></tr>`;
           }
           currentWeek = week; currentYear = year;
-          weekStartBalance = running;
-          rows += `<tr style="background:#e6efff;"><td colspan="3"><em>↳ Week ${week}, ${year} starting balance</em></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${weekStartBalance.toFixed(2)}</strong></td><td></td></tr>`;
+          rows += `<tr style="background:#e6efff;"><td colspan="3"><em>↳ Week ${week}, ${year} starting balance</em></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${running.toFixed(2)}</strong></td><td></td></tr>`;
         }
 
         // transaction row
         running += (tx.credit - tx.debit);
-        totalDebit += tx.debit;
-        totalCredit += tx.credit;
         const dateStr = tx.date.toISOString().split('T')[0];
         rows += `<tr>
           <td>${dateStr}</td>
@@ -431,15 +425,12 @@
         </tr>`;
       });
 
-      // final week brought forward line
+      // final week brought forward line if toggle on
       if (showWeekBroughtForward && currentWeek !== -1) {
         rows += `<tr style="background:#f1f7fd; border-top:2px solid #1f3d62;"><td colspan="3"><strong>Week ${currentWeek}, ${currentYear} carried forward</strong></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${running.toFixed(2)}</strong></td><td></td></tr>`;
       }
 
       tbody.innerHTML = rows;
-      totalDebitEl.innerText = totalDebit.toFixed(2);
-      totalCreditEl.innerText = totalCredit.toFixed(2);
-      endingBalanceEl.innerText = running.toFixed(2);
 
       // attach row menu listeners
       document.querySelectorAll('.action-btn').forEach(btn => {
