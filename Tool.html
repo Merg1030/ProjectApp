@@ -4,943 +4,229 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PENTA | Tools Management</title>
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #d3dfed;
-      color: #0a1c2f;
-      line-height: 1.6;
-      overflow-x: hidden;
+      background: #d3dfed; color: #0a1c2f; line-height: 1.6; overflow-x: hidden;
     }
+    .main-wrapper { display: flex; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
 
-    /* Main Layout */
-    .main-wrapper {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Sidebar Toggle Button - Always Visible */
+    /* Sidebar Toggle */
     .sidebar-toggle-btn {
-      position: fixed;
-      top: 70px;
-      left: 10px;
-      width: 32px;
-      height: 32px;
-      background: #0a1c2f;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 2px solid white;
-      font-size: 0.8rem;
-      z-index: 2000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      transition: all 0.2s ease;
+      position: fixed; top: 70px; left: 10px; width: 32px; height: 32px;
+      background: #0a1c2f; color: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: 2px solid white; font-size: 0.8rem;
+      z-index: 2000; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.2s ease;
     }
-
-    .sidebar-toggle-btn:hover {
-      background: #1f3d62;
-      transform: scale(1.1);
-    }
+    .sidebar-toggle-btn:hover { background: #1f3d62; transform: scale(1.1); }
 
     /* Sidebar */
     .sidebar {
-      width: 260px;
-      background: white;
-      color: #0a1c2f;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      border-right: 2px solid #1f3d62;
-      transition: transform 0.28s ease;
-      position: relative;
-      flex-shrink: 0;
-      overflow: hidden;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-      transform: translateX(0);
+      width: 260px; background: white; color: #0a1c2f;
+      display: flex; flex-direction: column; height: 100vh;
+      border-right: 2px solid #1f3d62; transition: transform 0.28s ease;
+      position: relative; flex-shrink: 0; overflow: hidden;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05); transform: translateX(0);
     }
+    .sidebar.collapsed { transform: translateX(-100%); }
+    .sidebar-header { padding: 16px 16px 20px; border-bottom: 2px solid #1f3d62; background: #0a1c2f; }
+    .logo-container { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 40px; height: 40px; background: #b8cde0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #0a1c2f; }
+    .logo-text h2 { font-size: 1.25rem; font-weight: 600; margin: 0; color: white; }
+    .logo-text span { font-size: 0.7rem; color: #97adc9; }
+    .nav-section { padding: 20px 16px; border-bottom: 1px solid #e0e8f5; }
+    .nav-section h3 { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: #7f96b3; margin-bottom: 12px; font-weight: 700; }
+    .nav-links { list-style: none; }
+    .nav-item { margin-bottom: 2px; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 8px 12px; color: #0a1c2f; text-decoration: none; border-radius: 6px; transition: all 0.15s; font-size: 0.8rem; font-weight: 500; }
+    .nav-link:hover { background: #e6efff; }
+    .nav-link.active { background: #d4e2f2; color: #0a1c2f; font-weight: 600; border-left: 3px solid #1f3d62; }
+    .nav-icon { font-size: 0.9rem; width: 20px; text-align: center; color: #2b4a73; }
 
-    .sidebar.collapsed {
-      transform: translateX(-100%);
-    }
-
-    .sidebar-header {
-      padding: 16px 16px 20px;
-      border-bottom: 2px solid #1f3d62;
-      background: #0a1c2f;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      background: #b8cde0;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      color: #0a1c2f;
-    }
-
-    .logo-text h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0;
-      color: white;
-    }
-
-    .logo-text span {
-      font-size: 0.7rem;
-      color: #97adc9;
-    }
-
-    /* Navigation */
-    .nav-section {
-      padding: 20px 16px;
-      border-bottom: 1px solid #e0e8f5;
-    }
-
-    .nav-section h3 {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #7f96b3;
-      margin-bottom: 12px;
-      font-weight: 700;
-    }
-
-    .nav-links {
-      list-style: none;
-    }
-
-    .nav-item {
-      margin-bottom: 2px;
-    }
-
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 8px 12px;
-      color: #0a1c2f;
-      text-decoration: none;
-      border-radius: 6px;
-      transition: all 0.15s;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .nav-link:hover {
-      background: #e6efff;
-    }
-
-    .nav-link.active {
-      background: #d4e2f2;
-      color: #0a1c2f;
-      font-weight: 600;
-      border-left: 3px solid #1f3d62;
-    }
-
-    .nav-icon {
-      font-size: 0.9rem;
-      width: 20px;
-      text-align: center;
-      color: #2b4a73;
-    }
-
-    /* Main Content Area */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: white;
-      transition: margin-left 0.28s ease;
-      margin-left: 0;
-    }
-
-    .main-content.expanded {
-      margin-left: -260px;
-    }
+    /* Main Content */
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: white; transition: margin-left 0.28s ease; margin-left: 0; }
+    .main-content.expanded { margin-left: -260px; }
 
     /* Header */
     .app-header {
-      background: #0a1c2f;
-      color: white;
-      padding: 4px 20px 4px 50px;
-      border-bottom: 2px solid #1f3d62;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      min-height: 56px;
+      background: #0a1c2f; color: white; padding: 4px 20px 4px 50px;
+      border-bottom: 2px solid #1f3d62; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0; min-height: 56px;
     }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .mobile-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 1rem; }
+    .mobile-toggle:hover { background: rgba(255,255,255,0.1); }
+    .page-title { display: flex; align-items: center; gap: 8px; }
+    .page-title h1 { font-size: 1.1rem; font-weight: 500; margin: 0; }
+    .page-title i { color: #97adc9; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .date-display { background: #1f3d62; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; color: white; display: flex; align-items: center; gap: 6px; }
+    .date-display i { color: #97adc9; }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .mobile-toggle {
-      display: none;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-
-    .mobile-toggle:hover {
-      background: rgba(255,255,255,0.1);
-    }
-
-    .page-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .page-title h1 {
-      font-size: 1.1rem;
-      font-weight: 500;
-      margin: 0;
-    }
-
-    .page-title i {
-      color: #97adc9;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .date-display {
-      background: #1f3d62;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.7rem;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .date-display i {
-      color: #97adc9;
-    }
-
-    /* Button Styles */
-    .btn {
-      padding: 6px 14px;
-      border: 1px solid #2b4a73;
-      background: white;
-      border-radius: 30px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: 0.2s;
-      color: #0b1f33;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      text-decoration: none;
-    }
-
-    .btn-primary {
-      background: #0a1c2f;
-      color: white;
-      border: none;
-    }
-
-    .btn-primary:hover {
-      background: #1f3d62;
-    }
-
-    .btn-outline {
-      background: transparent;
-      color: white;
-      border-color: rgba(255,255,255,0.3);
-    }
-
-    .btn-outline:hover {
-      background: rgba(255,255,255,0.1);
-    }
-
-    .btn-success {
-      background: #059669;
-      color: white;
-      border: none;
-    }
-
-    .btn-success:hover {
-      background: #047857;
-    }
-
-    .btn-danger {
-      background: #cc0000;
-      color: white;
-      border: none;
-    }
-
-    .btn-danger:hover {
-      background: #990000;
-    }
-
-    .btn:hover {
-      background: #e6efff;
-    }
-
-    .btn-primary:hover {
-      background: #1f3d62;
-      color: white;
-    }
+    /* Buttons */
+    .btn { padding: 6px 14px; border: 1px solid #2b4a73; background: white; border-radius: 30px; font-size: 0.7rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; color: #0b1f33; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-decoration: none; }
+    .btn:hover { background: #e6efff; }
+    .btn-primary { background: #0a1c2f; color: white; border: none; }
+    .btn-primary:hover { background: #1f3d62; color: white; }
+    .btn-outline { background: transparent; color: white; border-color: rgba(255,255,255,0.3); }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); }
+    .btn-success { background: #059669; color: white; border: none; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: #cc0000; color: white; border: none; }
+    .btn-danger:hover { background: #990000; }
 
     /* Actions Panel */
-    .actions-container {
-      padding: 4px 20px;
-      background: #f2f6fc;
-      border-bottom: 1px solid #b3c7e0;
-      flex-shrink: 0;
-    }
+    .actions-container { padding: 4px 20px; background: #f2f6fc; border-bottom: 1px solid #b3c7e0; flex-shrink: 0; }
+    .actions-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 8px 0; }
+    .actions-header h3 { font-size: 12px; font-weight: 600; color: #0a1c2f; display: flex; align-items: center; gap: 6px; }
+    .actions-header i { font-size: 12px; transition: transform 0.2s; color: #1f3d62; }
+    .actions-panel { display: flex; gap: 8px; padding: 8px 0 12px; transition: all 0.2s; max-height: 100px; overflow: hidden; flex-wrap: wrap; }
+    .actions-panel.collapsed { max-height: 0; padding: 0; opacity: 0; pointer-events: none; }
 
-    .actions-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      padding: 8px 0;
-    }
-
-    .actions-header h3 {
-      font-size: 12px;
-      font-weight: 600;
-      color: #0a1c2f;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .actions-header i {
-      font-size: 12px;
-      transition: transform 0.2s;
-      color: #1f3d62;
-    }
-
-    .actions-panel {
-      display: flex;
-      gap: 8px;
-      padding: 8px 0 12px;
-      transition: all 0.2s;
-      max-height: 100px;
-      overflow: hidden;
-      flex-wrap: wrap;
-    }
-
-    .actions-panel.collapsed {
-      max-height: 0;
-      padding: 0;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* Dashboard Container */
-    .dashboard-container {
-      flex: 1;
-      overflow: auto;
-      padding: 24px;
-      background: #f2f6fc;
-      scrollbar-width: thin;
-      scrollbar-color: #97adc9 #ecf2fa;
-    }
-
-    .dashboard-container::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-      background: #ecf2fa;
-    }
-
-    .dashboard-container::-webkit-scrollbar-thumb {
-      background: #97adc9;
-      border-radius: 8px;
-      border: 2px solid #ecf2fa;
-    }
+    /* Dashboard */
+    .dashboard-container { flex: 1; overflow: auto; padding: 24px; background: #f2f6fc; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; }
+    .dashboard-container::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
+    .dashboard-container::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; border: 2px solid #ecf2fa; }
 
     /* Welcome Banner */
-    .welcome-banner {
-      background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%);
-      border: 2px solid #1f3d62;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0,20,40,0.2);
-    }
-
-    .welcome-text h2 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin: 0 0 4px;
-    }
-
-    .welcome-text p {
-      color: #97adc9;
-      font-size: 0.8rem;
-      margin: 0;
-    }
-
-    .welcome-icon {
-      width: 60px;
-      height: 60px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #b8cde0;
-      font-size: 1.8rem;
-      border: 2px solid rgba(255,255,255,0.2);
-    }
+    .welcome-banner { background: linear-gradient(135deg, #0a1c2f 0%, #1f3d62 100%); border: 2px solid #1f3d62; border-radius: 12px; padding: 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; color: white; box-shadow: 0 4px 12px rgba(0,20,40,0.2); }
+    .welcome-text h2 { font-size: 1.3rem; font-weight: 600; margin: 0 0 4px; }
+    .welcome-text p { color: #97adc9; font-size: 0.8rem; margin: 0; }
+    .welcome-icon { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 30px; display: flex; align-items: center; justify-content: center; color: #b8cde0; font-size: 1.8rem; border: 2px solid rgba(255,255,255,0.2); }
 
     /* Warehouse Selector */
-    .warehouse-selector {
-      position: relative;
-      margin-bottom: 20px;
-    }
+    .warehouse-selector { position: relative; margin-bottom: 20px; }
+    .warehouse-btn { background: white; border: 2px solid #1f3d62; border-radius: 8px; padding: 10px 16px; color: #0a1c2f; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; min-width: 200px; transition: all 0.2s; }
+    .warehouse-btn:hover { background: #e6efff; }
+    .warehouse-btn i { color: #2b4a73; }
+    .warehouse-dropdown { position: absolute; top: 100%; left: 0; background: white; border: 2px solid #1f3d62; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 220px; margin-top: 4px; display: none; z-index: 100; overflow: hidden; }
+    .warehouse-dropdown.show { display: block; }
+    .warehouse-option { padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; border-bottom: 1px solid #e0e8f5; }
+    .warehouse-option:last-child { border-bottom: none; }
+    .warehouse-option:hover { background: #e6efff; }
+    .warehouse-option.active { background: #d4e2f2; border-left: 4px solid #1f3d62; }
+    .warehouse-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; }
+    .warehouse-icon.penta { background: #0a1c2f; }
+    .warehouse-icon.techno { background: #d97706; }
+    .warehouse-details h4 { font-size: 13px; font-weight: 600; margin: 0; color: #0a1c2f; }
+    .warehouse-details p { font-size: 11px; color: #7f96b3; margin: 0; }
+    .warehouse-indicator { width: 8px; height: 8px; border-radius: 50%; background: #059669; margin-left: auto; }
 
-    .warehouse-btn {
-      background: white;
-      border: 2px solid #1f3d62;
-      border-radius: 8px;
-      padding: 10px 16px;
-      color: #0a1c2f;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 200px;
-      transition: all 0.2s;
-    }
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border: 2px solid #1f3d62; border-radius: 12px; padding: 16px; }
+    .stat-card h3 { font-size: 1.8rem; font-weight: 700; color: #0a1c2f; margin: 0 0 4px; }
+    .stat-card p { font-size: 0.7rem; color: #7f96b3; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .stat-card.assigned { border-left: 4px solid #059669; }
+    .stat-card.available { border-left: 4px solid #2b4a73; }
+    .stat-card.repair { border-left: 4px solid #d97706; }
 
-    .warehouse-btn:hover {
-      background: #e6efff;
-    }
+    /* Search */
+    .search-box { display: flex; align-items: center; background: white; border: 1px solid #b3c7e0; border-radius: 30px; padding: 0.2rem 0.8rem; min-width: 250px; }
+    .search-box i { color: #7f96b3; }
+    .search-box input { border: none; padding: 8px 8px; width: 100%; outline: none; font-size: 12px; background: transparent; color: #0a1c2f; }
+    .search-box input::placeholder { color: #7f96b3; }
 
-    .warehouse-btn i {
-      color: #2b4a73;
-    }
-
-    .warehouse-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background: white;
-      border: 2px solid #1f3d62;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      width: 220px;
-      margin-top: 4px;
-      display: none;
-      z-index: 100;
-      overflow: hidden;
-    }
-
-    .warehouse-dropdown.show {
-      display: block;
-    }
-
-    .warehouse-option {
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border-bottom: 1px solid #e0e8f5;
-    }
-
-    .warehouse-option:last-child {
-      border-bottom: none;
-    }
-
-    .warehouse-option:hover {
-      background: #e6efff;
-    }
-
-    .warehouse-option.active {
-      background: #d4e2f2;
-      border-left: 4px solid #1f3d62;
-    }
-
-    .warehouse-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      color: white;
-    }
-
-    .warehouse-icon.penta {
-      background: #0a1c2f;
-    }
-
-    .warehouse-icon.techno {
-      background: #d97706;
-    }
-
-    .warehouse-details h4 {
-      font-size: 13px;
-      font-weight: 600;
-      margin: 0;
-      color: #0a1c2f;
-    }
-
-    .warehouse-details p {
-      font-size: 11px;
-      color: #7f96b3;
-      margin: 0;
-    }
-
-    .warehouse-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #059669;
-      margin-left: auto;
-    }
-
-    /* Stats Cards */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: white;
-      border: 2px solid #1f3d62;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .stat-card h3 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: #0a1c2f;
-      margin: 0 0 4px;
-    }
-
-    .stat-card p {
-      font-size: 0.7rem;
-      color: #7f96b3;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
-
-    .stat-card.assigned {
-      border-left: 4px solid #059669;
-    }
-
-    .stat-card.available {
-      border-left: 4px solid #2b4a73;
-    }
-
-    .stat-card.repair {
-      border-left: 4px solid #d97706;
-    }
-
-    /* Search Box */
-    .search-box {
-      display: flex;
-      align-items: center;
-      background: white;
-      border: 1px solid #b3c7e0;
-      border-radius: 30px;
-      padding: 0.2rem 0.8rem;
-      min-width: 250px;
-    }
-
-    .search-box i {
-      color: #7f96b3;
-    }
-
-    .search-box input {
-      border: none;
-      padding: 8px 8px;
-      width: 100%;
-      outline: none;
-      font-size: 12px;
-      background: transparent;
-      color: #0a1c2f;
-    }
-
-    .search-box input::placeholder {
-      color: #7f96b3;
-    }
-
-    /* Table Styles */
-    .table-wrapper {
-      background: white;
-      border: 2px solid #1f3d62;
-      border-radius: 12px;
-      overflow: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #97adc9 #ecf2fa;
-      max-height: 500px;
-    }
-
-    .table-wrapper::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-      background: #ecf2fa;
-    }
-
-    .table-wrapper::-webkit-scrollbar-thumb {
-      background: #97adc9;
-      border-radius: 8px;
-      border: 2px solid #ecf2fa;
-    }
-
-    .tools-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.75rem;
-      min-width: 1000px;
-    }
-
-    .tools-table th {
-      background: #d4e2f2;
-      color: #0a1c2f;
-      padding: 12px 10px;
-      text-align: left;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border: 1px solid #9bb1cc;
-      border-bottom: 2px solid #1f3d62;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .tools-table td {
-      padding: 10px;
-      border: 1px solid #c7d6ec;
-      color: #0a1c2f;
-      vertical-align: middle;
-      background: white;
-    }
-
-    .tools-table tbody tr:hover td {
-      background: #e3ecf7;
-    }
+    /* Table */
+    .table-wrapper { background: white; border: 2px solid #1f3d62; border-radius: 12px; overflow: auto; scrollbar-width: thin; scrollbar-color: #97adc9 #ecf2fa; max-height: 500px; }
+    .table-wrapper::-webkit-scrollbar { width: 10px; height: 10px; background: #ecf2fa; }
+    .table-wrapper::-webkit-scrollbar-thumb { background: #97adc9; border-radius: 8px; border: 2px solid #ecf2fa; }
+    .tools-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 1000px; }
+    .tools-table th { background: #d4e2f2; color: #0a1c2f; padding: 12px 10px; text-align: left; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #9bb1cc; border-bottom: 2px solid #1f3d62; position: sticky; top: 0; z-index: 10; }
+    .tools-table td { padding: 10px; border: 1px solid #c7d6ec; color: #0a1c2f; vertical-align: middle; background: white; }
+    .tools-table tbody tr:hover td { background: #e3ecf7; }
+    /* returned row highlight */
+    .tools-table tbody tr.returned-row td { background: #f0fff4 !important; opacity: 0.7; }
 
     /* Status Badges */
-    .status-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 30px;
-      font-size: 0.6rem;
-      font-weight: 700;
-      border: 1px solid;
-      min-width: 80px;
-      text-align: center;
-    }
-
-    .status-assigned {
-      background: #c6f6d5;
-      color: #22543d;
-      border-color: #22543d;
-    }
-
-    .status-available {
-      background: #d4e2f2;
-      color: #0a1c2f;
-      border-color: #1f3d62;
-    }
-
-    .status-repair {
-      background: #feebc8;
-      color: #744210;
-      border-color: #744210;
-    }
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 30px; font-size: 0.6rem; font-weight: 700; border: 1px solid; min-width: 80px; text-align: center; }
+    .status-assigned { background: #c6f6d5; color: #22543d; border-color: #22543d; }
+    .status-available { background: #d4e2f2; color: #0a1c2f; border-color: #1f3d62; }
+    .status-repair { background: #feebc8; color: #744210; border-color: #744210; }
 
     /* Action Buttons */
-    .action-buttons {
-      display: flex;
-      gap: 6px;
-    }
+    .action-buttons { display: flex; gap: 6px; align-items: center; }
+    .btn-small { padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 
-    .btn-small {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.65rem;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+    /* ── RETURN CHECKBOX ── */
+    .return-wrap {
+      display: flex; align-items: center; gap: 7px;
     }
+    .return-checkbox {
+      appearance: none; -webkit-appearance: none;
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 2px solid #2b4a73; background: white;
+      cursor: pointer; position: relative; flex-shrink: 0;
+      transition: all 0.18s;
+    }
+    .return-checkbox:checked {
+      background: #059669; border-color: #059669;
+    }
+    .return-checkbox:checked::after {
+      content: '✓'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white; font-size: 11px; font-weight: 900;
+    }
+    .return-checkbox:disabled {
+      opacity: 0.45; cursor: not-allowed;
+    }
+    .return-label {
+      font-size: 0.65rem; color: #2b4a73; font-weight: 600; white-space: nowrap;
+    }
+    .return-label.done { color: #059669; }
 
     /* Delete Mode Toggle */
-    .delete-mode-container {
-      display: inline-flex;
-      align-items: center;
-      margin-left: 20px;
-    }
-
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 22px;
-      margin: 0 8px;
-    }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 22px;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 2px;
-      bottom: 2px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-
-    input:checked + .slider {
-      background-color: #cc0000;
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-
-    .mode-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #7f96b3;
-    }
-
-    .mode-label.active {
-      color: #cc0000;
-    }
+    .delete-mode-container { display: inline-flex; align-items: center; margin-left: 20px; }
+    .toggle-switch { position: relative; display: inline-block; width: 44px; height: 22px; margin: 0 8px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #cc0000; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .mode-label { font-size: 12px; font-weight: 600; color: #7f96b3; }
+    .mode-label.active { color: #cc0000; }
 
     /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.55);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-content {
-      background: white;
-      border-radius: 14px;
-      width: 90%;
-      max-width: 450px;
-      box-shadow: 0 24px 60px rgba(0,20,40,0.45);
-      overflow: hidden;
-    }
-
-    .modal-header {
-      padding: 16px 20px;
-      background: #0a1c2f;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .modal-header h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      color: #97adc9;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-
-    .modal-close:hover {
-      color: white;
-    }
-
-    .modal-body {
-      padding: 20px;
-    }
-
-    .modal-message {
-      font-size: 0.9rem;
-      color: #0a1c2f;
-      margin-bottom: 20px;
-    }
-
-    .modal-message strong {
-      color: #cc0000;
-    }
-
-    .modal-footer {
-      padding: 16px 20px;
-      border-top: 1px solid #e0e8f5;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .btn-cancel {
-      padding: 8px 16px;
-      border: 1px solid #b3c7e0;
-      background: white;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-cancel:hover {
-      background: #e6efff;
-    }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 2000; align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-content { background: white; border-radius: 14px; width: 90%; max-width: 450px; box-shadow: 0 24px 60px rgba(0,20,40,0.45); overflow: hidden; }
+    .modal-header { padding: 16px 20px; background: #0a1c2f; color: white; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .modal-header.return-header { background: #064e3b; }
+    .modal-close { background: none; border: none; color: #97adc9; font-size: 1.2rem; cursor: pointer; }
+    .modal-close:hover { color: white; }
+    .modal-body { padding: 20px; }
+    .modal-message { font-size: 0.9rem; color: #0a1c2f; margin-bottom: 20px; }
+    .modal-message strong { color: #cc0000; }
+    .modal-message strong.green { color: #059669; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid #e0e8f5; display: flex; justify-content: flex-end; gap: 10px; }
+    .btn-cancel { padding: 8px 16px; border: 1px solid #b3c7e0; background: white; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .btn-cancel:hover { background: #e6efff; }
 
     /* Footer */
-    .footer-note {
-      margin-top: 20px;
-      padding: 16px;
-      text-align: center;
-      color: #7f96b3;
-      font-size: 0.7rem;
-      border-top: 1px solid #e0e8f5;
-    }
+    .footer-note { margin-top: 20px; padding: 16px; text-align: center; color: #7f96b3; font-size: 0.7rem; border-top: 1px solid #e0e8f5; }
 
     /* Responsive */
     @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
-        z-index: 1000;
-        height: 100vh;
-        transform: translateX(-100%);
-      }
-      
-      .sidebar:not(.collapsed) {
-        transform: translateX(0);
-      }
-      
-      .main-content.expanded {
-        margin-left: 0;
-      }
-      
-      .mobile-toggle {
-        display: block;
-      }
-      
-      .sidebar-toggle-btn {
-        display: none;
-      }
-      
-      .app-header {
-        padding-left: 20px;
-      }
-      
-      .actions-panel {
-        flex-direction: column;
-        max-height: 300px;
-      }
-      
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .welcome-banner {
-        flex-direction: column;
-        text-align: center;
-        gap: 16px;
-      }
-      
-      .delete-mode-container {
-        margin-left: 0;
-        margin-top: 10px;
-        width: 100%;
-        justify-content: center;
-      }
+      .sidebar { position: fixed; z-index: 1000; height: 100vh; transform: translateX(-100%); }
+      .sidebar:not(.collapsed) { transform: translateX(0); }
+      .main-content.expanded { margin-left: 0; }
+      .mobile-toggle { display: block; }
+      .sidebar-toggle-btn { display: none; }
+      .app-header { padding-left: 20px; }
+      .actions-panel { flex-direction: column; max-height: 300px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .welcome-banner { flex-direction: column; text-align: center; gap: 16px; }
+      .delete-mode-container { margin-left: 0; margin-top: 10px; width: 100%; justify-content: center; }
     }
   </style>
 </head>
 <body>
-  <!-- Sidebar Toggle Button - Always Visible -->
   <div class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
     <i class="fas fa-chevron-left" id="toggleBtnIcon"></i>
   </div>
@@ -950,87 +236,33 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="logo-container">
-          <div class="logo-icon">
-            <i class="fas fa-building"></i>
-          </div>
-          <div class="logo-text">
-            <h2>PENTA</h2>
-            <span>Construction Pro</span>
-          </div>
+          <div class="logo-icon"><i class="fas fa-building"></i></div>
+          <div class="logo-text"><h2>PENTA</h2><span>Construction Pro</span></div>
         </div>
       </div>
-
-      <!-- Navigation -->
       <div style="flex:1; overflow-y: auto; scrollbar-width: thin;">
         <nav class="nav-section">
           <h3>Dashboard</h3>
           <ul class="nav-links">
-            <li class="nav-item">
-              <a href="dashboard.html" class="nav-link">
-                <i class="fas fa-gauge-high nav-icon"></i>
-                <span>Overview</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="projectdashboard.html" class="nav-link">
-                <i class="fas fa-diagram-project nav-icon"></i>
-                <span>Projects</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="Employees.html" class="nav-link">
-                <i class="fas fa-user-tie nav-icon"></i>
-                <span>Team</span>
-              </a>
-            </li>
+            <li class="nav-item"><a href="dashboard.html" class="nav-link"><i class="fas fa-gauge-high nav-icon"></i><span>Overview</span></a></li>
+            <li class="nav-item"><a href="projectdashboard.html" class="nav-link"><i class="fas fa-diagram-project nav-icon"></i><span>Projects</span></a></li>
+            <li class="nav-item"><a href="Employees.html" class="nav-link"><i class="fas fa-user-tie nav-icon"></i><span>Team</span></a></li>
           </ul>
         </nav>
-
         <nav class="nav-section">
           <h3>Resources</h3>
           <ul class="nav-links">
-            <li class="nav-item">
-              <a href="#" class="nav-link active">
-                <i class="fas fa-screwdriver-wrench nav-icon"></i>
-                <span>Equipment</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="Fire-extinguishers.html" class="nav-link">
-                <i class="fas fa-fire-extinguisher nav-icon"></i>
-                <span>Fire extinguisher</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="material.html" class="nav-link">
-                <i class="fas fa-truck-ramp-box nav-icon"></i>
-                <span>Materials</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="inventory.html" class="nav-link">
-                <i class="fas fa-warehouse nav-icon"></i>
-                <span>Inventory</span>
-              </a>
-            </li>
+            <li class="nav-item"><a href="#" class="nav-link active"><i class="fas fa-screwdriver-wrench nav-icon"></i><span>Equipment</span></a></li>
+            <li class="nav-item"><a href="Fire-extinguishers.html" class="nav-link"><i class="fas fa-fire-extinguisher nav-icon"></i><span>Fire extinguisher</span></a></li>
+            <li class="nav-item"><a href="material.html" class="nav-link"><i class="fas fa-truck-ramp-box nav-icon"></i><span>Materials</span></a></li>
+            <li class="nav-item"><a href="inventory.html" class="nav-link"><i class="fas fa-warehouse nav-icon"></i><span>Inventory</span></a></li>
           </ul>
         </nav>
-
         <nav class="nav-section">
           <h3>Management</h3>
           <ul class="nav-links">
-            <li class="nav-item">
-              <a href="Accountsdash.html" class="nav-link">
-                <i class="fas fa-file-invoice-dollar nav-icon"></i>
-                <span>Finances</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="Table.html" class="nav-link">
-                <i class="fas fa-chart-column nav-icon"></i>
-                <span>Reports</span>
-              </a>
-            </li>
+            <li class="nav-item"><a href="Accountsdash.html" class="nav-link"><i class="fas fa-file-invoice-dollar nav-icon"></i><span>Finances</span></a></li>
+            <li class="nav-item"><a href="Table.html" class="nav-link"><i class="fas fa-chart-column nav-icon"></i><span>Reports</span></a></li>
           </ul>
         </nav>
       </div>
@@ -1038,22 +270,13 @@
 
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
-      <!-- Header -->
       <div class="app-header">
         <div class="header-left">
-          <button class="mobile-toggle" id="mobileToggle">
-            <i class="fas fa-bars"></i>
-          </button>
-          <div class="page-title">
-            <i class="fas fa-tools"></i>
-            <h1>Tools Management</h1>
-          </div>
+          <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
+          <div class="page-title"><i class="fas fa-tools"></i><h1>Tools Management</h1></div>
         </div>
         <div class="header-right">
-          <div class="date-display" id="currentDate">
-            <i class="fas fa-calendar-alt"></i>
-            <span></span>
-          </div>
+          <div class="date-display" id="currentDate"><i class="fas fa-calendar-alt"></i><span></span></div>
         </div>
       </div>
 
@@ -1064,38 +287,20 @@
           <i class="fas fa-chevron-down" id="actionsToggleIcon"></i>
         </div>
         <div class="actions-panel" id="actionsPanel">
-          <a href="addtool.html" class="btn">
-            <i class="fas fa-plus"></i> Add Tool
-          </a>
-          <a href="selectBulkAssigTools.html" class="btn">
-            <i class="fas fa-clipboard-list"></i> Bulk Assign
-          </a>
-          <a href="toolshistory.html" class="btn">
-            <i class="fas fa-history"></i> History
-          </a>
-          <a href="repair.html" class="btn">
-            <i class="fas fa-wrench"></i> Repair
-          </a>
-          <button class="btn" onclick="downloadToolsPDF()">
-            <i class="fas fa-file-pdf"></i> PDF Report
-          </button>
-          <a href="dashboard.html" class="btn btn-primary">
-            <i class="fas fa-arrow-left"></i> Dashboard
-          </a>
+          <a href="addtool.html" class="btn"><i class="fas fa-plus"></i> Add Tool</a>
+          <a href="selectBulkAssigTools.html" class="btn"><i class="fas fa-clipboard-list"></i> Bulk Assign</a>
+          <a href="toolshistory.html" class="btn"><i class="fas fa-history"></i> History</a>
+          <a href="repair.html" class="btn"><i class="fas fa-wrench"></i> Repair</a>
+          <button class="btn" onclick="downloadToolsPDF()"><i class="fas fa-file-pdf"></i> PDF Report</button>
+          <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Dashboard</a>
         </div>
       </div>
 
-      <!-- Dashboard Container -->
+      <!-- Dashboard -->
       <div class="dashboard-container">
-        <!-- Welcome Banner -->
         <div class="welcome-banner">
-          <div class="welcome-text">
-            <h2>Equipment Inventory</h2>
-            <p>Track and manage all tools and equipment</p>
-          </div>
-          <div class="welcome-icon">
-            <i class="fas fa-tools"></i>
-          </div>
+          <div class="welcome-text"><h2>Equipment Inventory</h2><p>Track and manage all tools and equipment</p></div>
+          <div class="welcome-icon"><i class="fas fa-tools"></i></div>
         </div>
 
         <!-- Warehouse Selector -->
@@ -1107,63 +312,57 @@
           </div>
           <div class="warehouse-dropdown" id="warehouse-dropdown">
             <div class="warehouse-option active" data-warehouse="penta">
-              <div class="warehouse-icon penta">
-                <i class="fas fa-toolbox"></i>
-              </div>
-              <div class="warehouse-details">
-                <h4>Penta Tools</h4>
-                <p>Main warehouse</p>
-              </div>
+              <div class="warehouse-icon penta"><i class="fas fa-toolbox"></i></div>
+              <div class="warehouse-details"><h4>Penta Tools</h4><p>Main warehouse</p></div>
               <div class="warehouse-indicator"></div>
             </div>
             <div class="warehouse-option" data-warehouse="techno">
-              <div class="warehouse-icon techno">
-                <i class="fas fa-microchip"></i>
-              </div>
-              <div class="warehouse-details">
-                <h4>Techno Tools</h4>
-                <p>New warehouse</p>
-              </div>
+              <div class="warehouse-icon techno"><i class="fas fa-microchip"></i></div>
+              <div class="warehouse-details"><h4>Techno Tools</h4><p>New warehouse</p></div>
             </div>
           </div>
         </div>
 
-        <!-- Stats Grid -->
+        <!-- Stats -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <h3 id="total-tools">0</h3>
-            <p>Total Tools</p>
-          </div>
-          <div class="stat-card assigned">
-            <h3 id="assigned-tools">0</h3>
-            <p>Assigned</p>
-          </div>
-          <div class="stat-card available">
-            <h3 id="available-tools">0</h3>
-            <p>Available</p>
-          </div>
-          <div class="stat-card repair">
-            <h3 id="repair-tools">0</h3>
-            <p>In Repair</p>
-          </div>
+          <div class="stat-card"><h3 id="total-tools">0</h3><p>Total Tools</p></div>
+          <div class="stat-card assigned"><h3 id="assigned-tools">0</h3><p>Assigned</p></div>
+          <div class="stat-card available"><h3 id="available-tools">0</h3><p>Available</p></div>
+          <div class="stat-card repair"><h3 id="repair-tools">0</h3><p>In Repair</p></div>
         </div>
 
-        <!-- Search Bar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <div class="search-box" style="flex: 1; max-width: 400px;">
+        <!-- Search + toggles row -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+          <div class="search-box" style="flex:1; max-width:400px;">
             <i class="fas fa-search"></i>
             <input type="text" id="tool-search-bar" placeholder="Search by tool name, bin, holder...">
           </div>
-
-          <!-- Delete Mode Toggle -->
-          <div class="delete-mode-container">
-            <span class="mode-label">Delete Mode:</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="delete-mode-toggle">
-              <span class="slider"></span>
-            </label>
-            <span class="mode-label" id="delete-mode-status">Off</span>
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <!-- Return Mode Toggle -->
+            <div style="display:inline-flex; align-items:center; gap:6px;">
+              <span style="font-size:12px; font-weight:600; color:#7f96b3;">Return Mode:</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="return-mode-toggle">
+                <span class="slider" style=""></span>
+              </label>
+              <span class="mode-label" id="return-mode-status">Off</span>
+            </div>
+            <!-- Delete Mode Toggle -->
+            <div class="delete-mode-container" style="margin-left:0;">
+              <span class="mode-label">Delete Mode:</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="delete-mode-toggle">
+                <span class="slider"></span>
+              </label>
+              <span class="mode-label" id="delete-mode-status">Off</span>
+            </div>
           </div>
+        </div>
+
+        <!-- Return mode info banner -->
+        <div id="return-mode-banner" style="display:none; background:#ecfdf5; border:1.5px solid #6ee7b7; border-radius:8px; padding:10px 16px; margin-bottom:14px; font-size:12px; color:#064e3b; display:none; align-items:center; gap:8px;">
+          <i class="fas fa-info-circle" style="color:#059669;"></i>
+          <span>Return Mode is <strong>ON</strong> — tick the checkbox next to any assigned tool to mark it as returned to warehouse.</span>
         </div>
 
         <!-- Tools Table -->
@@ -1181,22 +380,17 @@
               </tr>
             </thead>
             <tbody id="tools-table-body">
-              <tr>
-                <td colspan="7" class="empty-state" style="padding: 40px; text-align: center;">
-                  <div class="empty-state-content">
-                    <i class="fas fa-spinner fa-spin empty-state-icon" style="font-size: 2rem; color: #97adc9; margin-bottom: 10px;"></i>
-                    <p class="empty-state-text" style="color: #7f96b3;">Loading tools...</p>
-                  </div>
-                </td>
-              </tr>
+              <tr><td colspan="7" style="padding:40px; text-align:center;">
+                <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:#97adc9; margin-bottom:10px;"></i>
+                <p style="color:#7f96b3;">Loading tools...</p>
+              </td></tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Footer Note -->
         <div class="footer-note">
-          <i class="fas fa-info-circle"></i> 
-          <span id="current-warehouse-footer">Penta Tools</span> Management System • 
+          <i class="fas fa-info-circle"></i>
+          <span id="current-warehouse-footer">Penta Tools</span> Management System •
           Last updated: <span id="current-date-footer"></span>
         </div>
       </div>
@@ -1212,30 +406,42 @@
       </div>
       <div class="modal-body">
         <div class="modal-message">
-          Are you sure you want to delete <strong id="delete-tool-name"></strong>?
-          <br><br>
+          Are you sure you want to delete <strong id="delete-tool-name"></strong>?<br><br>
           This action <strong>cannot be undone</strong> and will permanently remove the tool from the system.
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-        <button class="btn-danger" id="confirm-delete-btn">
-          <i class="fas fa-trash"></i> Delete Tool
-        </button>
+        <button class="btn btn-danger" id="confirm-delete-btn"><i class="fas fa-trash"></i> Delete Tool</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Return Confirmation Modal -->
+  <div class="modal" id="return-modal">
+    <div class="modal-content">
+      <div class="modal-header return-header">
+        <h3><i class="fas fa-undo-alt"></i> Confirm Return</h3>
+        <button class="modal-close" onclick="closeReturnModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          Mark <strong class="green" id="return-tool-name"></strong> as returned to warehouse?<br><br>
+          This will clear the current holder and set the tool status back to <strong class="green">Available</strong>.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeReturnModal()">Cancel</button>
+        <button class="btn btn-success" id="confirm-return-btn"><i class="fas fa-undo-alt"></i> Confirm Return</button>
       </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { 
-      getFirestore, 
-      collection, 
-      onSnapshot, 
-      deleteDoc, 
-      doc 
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
-    
+    import { getFirestore, collection, onSnapshot, deleteDoc, updateDoc, doc }
+      from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
       authDomain: "project-task-588c4.firebaseapp.com",
@@ -1244,408 +450,339 @@
       messagingSenderId: "411882772509",
       appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
-
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db  = getFirestore(app);
 
-    // DOM Elements
-    const sidebar = document.getElementById('sidebar');
+    // DOM
+    const sidebar          = document.getElementById('sidebar');
     const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
-    const toggleBtnIcon = document.getElementById('toggleBtnIcon');
-    const mainContent = document.getElementById('mainContent');
-    const mobileToggle = document.getElementById('mobileToggle');
-    const actionsHeader = document.getElementById('actionsHeader');
-    const actionsPanel = document.getElementById('actionsPanel');
-    const actionsToggleIcon = document.getElementById('actionsToggleIcon');
-    const currentDate = document.getElementById('currentDate');
-    const currentDateFooter = document.getElementById('current-date-footer');
-    
-    // Warehouse elements
-    const warehouseBtn = document.getElementById('warehouse-btn');
-    const warehouseDropdown = document.getElementById('warehouse-dropdown');
-    const currentWarehouseName = document.getElementById('current-warehouse-name');
+    const toggleBtnIcon    = document.getElementById('toggleBtnIcon');
+    const mainContent      = document.getElementById('mainContent');
+    const mobileToggle     = document.getElementById('mobileToggle');
+    const actionsHeader    = document.getElementById('actionsHeader');
+    const actionsPanel     = document.getElementById('actionsPanel');
+    const actionsToggleIcon= document.getElementById('actionsToggleIcon');
+    const warehouseBtn     = document.getElementById('warehouse-btn');
+    const warehouseDropdown= document.getElementById('warehouse-dropdown');
+    const currentWarehouseName   = document.getElementById('current-warehouse-name');
     const currentWarehouseFooter = document.getElementById('current-warehouse-footer');
     const warehouseOptions = document.querySelectorAll('.warehouse-option');
-    
-    // Stats elements
-    const totalToolsEl = document.getElementById('total-tools');
-    const assignedToolsEl = document.getElementById('assigned-tools');
+    const totalToolsEl     = document.getElementById('total-tools');
+    const assignedToolsEl  = document.getElementById('assigned-tools');
     const availableToolsEl = document.getElementById('available-tools');
-    const repairToolsEl = document.getElementById('repair-tools');
-    
-    // Table elements
-    const tableBody = document.getElementById('tools-table-body');
-    const searchInput = document.getElementById('tool-search-bar');
-    
-    // Delete mode elements
+    const repairToolsEl    = document.getElementById('repair-tools');
+    const tableBody        = document.getElementById('tools-table-body');
+    const searchInput      = document.getElementById('tool-search-bar');
     const deleteModeToggle = document.getElementById('delete-mode-toggle');
     const deleteModeStatus = document.getElementById('delete-mode-status');
-    
-    // Modal elements
-    const deleteModal = document.getElementById('delete-modal');
-    const deleteToolName = document.getElementById('delete-tool-name');
+    const returnModeToggle = document.getElementById('return-mode-toggle');
+    const returnModeStatus = document.getElementById('return-mode-status');
+    const returnModeBanner = document.getElementById('return-mode-banner');
+    const deleteModal      = document.getElementById('delete-modal');
+    const deleteToolName   = document.getElementById('delete-tool-name');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    const returnModal      = document.getElementById('return-modal');
+    const returnToolName   = document.getElementById('return-tool-name');
+    const confirmReturnBtn = document.getElementById('confirm-return-btn');
 
     // State
-    let toolsData = [];
+    let toolsData        = [];
     let currentWarehouse = localStorage.getItem('selectedWarehouse') || 'penta';
-    let deleteMode = false;
-    let toolToDelete = null;
+    let deleteMode       = false;
+    let returnMode       = false;
+    let toolToDelete     = null;
+    let toolToReturn     = null;
 
-    // Actions panel collapse
+    // Actions collapse
     let actionsCollapsed = localStorage.getItem('actionsCollapsed') === 'true';
-    if (actionsCollapsed) {
-      actionsPanel.classList.add('collapsed');
-      actionsToggleIcon.style.transform = 'rotate(-90deg)';
-    }
-
+    if (actionsCollapsed) { actionsPanel.classList.add('collapsed'); actionsToggleIcon.style.transform = 'rotate(-90deg)'; }
     actionsHeader.addEventListener('click', () => {
       actionsPanel.classList.toggle('collapsed');
       actionsToggleIcon.style.transform = actionsPanel.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
       localStorage.setItem('actionsCollapsed', actionsPanel.classList.contains('collapsed'));
     });
 
-    // Sidebar functionality with always-visible button
+    // Sidebar
     const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    if (isSidebarCollapsed) {
-      sidebar.classList.add('collapsed');
-      mainContent.classList.add('expanded');
-      toggleBtnIcon.classList.remove('fa-chevron-left');
-      toggleBtnIcon.classList.add('fa-chevron-right');
-    }
-
-    sidebarToggleBtn.addEventListener('click', function() {
+    if (isSidebarCollapsed) { sidebar.classList.add('collapsed'); mainContent.classList.add('expanded'); toggleBtnIcon.classList.replace('fa-chevron-left','fa-chevron-right'); }
+    sidebarToggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed'); mainContent.classList.toggle('expanded');
+      if (sidebar.classList.contains('collapsed')) { toggleBtnIcon.classList.replace('fa-chevron-left','fa-chevron-right'); localStorage.setItem('sidebarCollapsed','true'); }
+      else { toggleBtnIcon.classList.replace('fa-chevron-right','fa-chevron-left'); localStorage.setItem('sidebarCollapsed','false'); }
+    });
+    mobileToggle.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
-      mainContent.classList.toggle('expanded');
-      
-      if (sidebar.classList.contains('collapsed')) {
-        toggleBtnIcon.classList.remove('fa-chevron-left');
-        toggleBtnIcon.classList.add('fa-chevron-right');
-        localStorage.setItem('sidebarCollapsed', 'true');
-      } else {
-        toggleBtnIcon.classList.remove('fa-chevron-right');
-        toggleBtnIcon.classList.add('fa-chevron-left');
-        localStorage.setItem('sidebarCollapsed', 'false');
-      }
+      toggleBtnIcon.classList.toggle('fa-chevron-left', !sidebar.classList.contains('collapsed'));
+      toggleBtnIcon.classList.toggle('fa-chevron-right', sidebar.classList.contains('collapsed'));
     });
 
-    mobileToggle.addEventListener('click', function() {
-      sidebar.classList.toggle('collapsed');
-      if (!sidebar.classList.contains('collapsed')) {
-        toggleBtnIcon.classList.remove('fa-chevron-right');
-        toggleBtnIcon.classList.add('fa-chevron-left');
-      } else {
-        toggleBtnIcon.classList.remove('fa-chevron-left');
-        toggleBtnIcon.classList.add('fa-chevron-right');
-      }
-    });
-
-    // Update date
+    // Date
     function updateDate() {
-      const now = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateString = now.toLocaleDateString('en-US', options);
-      currentDate.querySelector('span').textContent = dateString;
-      currentDateFooter.textContent = dateString;
+      const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+      const ds = new Date().toLocaleDateString('en-US', opts);
+      document.getElementById('currentDate').querySelector('span').textContent = ds;
+      document.getElementById('current-date-footer').textContent = ds;
     }
     updateDate();
 
     // Warehouse selector
-    warehouseBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      warehouseDropdown.classList.toggle('show');
-    });
-
-    document.addEventListener('click', () => {
-      warehouseDropdown.classList.remove('show');
-    });
-
+    warehouseBtn.addEventListener('click', e => { e.stopPropagation(); warehouseDropdown.classList.toggle('show'); });
+    document.addEventListener('click', () => warehouseDropdown.classList.remove('show'));
     warehouseOptions.forEach(option => {
-      option.addEventListener('click', (e) => {
+      option.addEventListener('click', e => {
         e.stopPropagation();
-        const warehouse = option.dataset.warehouse;
-        if (warehouse !== currentWarehouse) {
-          currentWarehouse = warehouse;
-          localStorage.setItem('selectedWarehouse', currentWarehouse);
-          updateWarehouseUI();
-          filterToolsByWarehouse();
-        }
+        const wh = option.dataset.warehouse;
+        if (wh !== currentWarehouse) { currentWarehouse = wh; localStorage.setItem('selectedWarehouse', wh); updateWarehouseUI(); filterToolsByWarehouse(); }
         warehouseDropdown.classList.remove('show');
       });
     });
-
     function updateWarehouseUI() {
-      const isPenta = currentWarehouse === 'penta';
-      const name = isPenta ? 'Penta Tools' : 'Techno Tools';
-      
-      currentWarehouseName.textContent = name;
-      currentWarehouseFooter.textContent = name;
-      
+      const name = currentWarehouse === 'penta' ? 'Penta Tools' : 'Techno Tools';
+      currentWarehouseName.textContent = name; currentWarehouseFooter.textContent = name;
       warehouseOptions.forEach(opt => {
         opt.classList.remove('active');
+        const ind = opt.querySelector('.warehouse-indicator');
         if (opt.dataset.warehouse === currentWarehouse) {
           opt.classList.add('active');
-          if (!opt.querySelector('.warehouse-indicator')) {
-            const indicator = document.createElement('div');
-            indicator.className = 'warehouse-indicator';
-            opt.appendChild(indicator);
-          }
-        } else {
-          const indicator = opt.querySelector('.warehouse-indicator');
-          if (indicator) indicator.remove();
-        }
+          if (!ind) { const d = document.createElement('div'); d.className = 'warehouse-indicator'; opt.appendChild(d); }
+        } else { if (ind) ind.remove(); }
       });
     }
 
-    // Delete mode toggle
+    // Delete mode
     deleteModeToggle.addEventListener('change', function() {
       deleteMode = this.checked;
+      if (deleteMode) { returnMode = false; returnModeToggle.checked = false; returnModeStatus.textContent = 'Off'; returnModeStatus.className = 'mode-label'; returnModeBanner.style.display = 'none'; }
       deleteModeStatus.textContent = deleteMode ? 'On' : 'Off';
       deleteModeStatus.className = deleteMode ? 'mode-label active' : 'mode-label';
       filterToolsByWarehouse();
     });
 
-    // Get tool status
+    // Return mode
+    returnModeToggle.addEventListener('change', function() {
+      returnMode = this.checked;
+      if (returnMode) { deleteMode = false; deleteModeToggle.checked = false; deleteModeStatus.textContent = 'Off'; deleteModeStatus.className = 'mode-label'; }
+      returnModeStatus.textContent = returnMode ? 'On' : 'Off';
+      returnModeStatus.className = returnMode ? 'mode-label active' : 'mode-label';
+      // toggle return mode banner colour using inline display flex
+      returnModeBanner.style.display = returnMode ? 'flex' : 'none';
+      filterToolsByWarehouse();
+    });
+    // fix banner slider colour to green when return mode
+    document.querySelector('#return-mode-toggle + .slider').style.setProperty('--checked-bg','#059669');
+
+    // Helpers
     function getToolStatus(tool) {
-      if (tool.status === "repair") return "repair";
-      if (tool.currentHolder && tool.currentHolder !== "Not Allocated") return "assigned";
-      return "available";
+      if (tool.status === 'repair') return 'repair';
+      if (tool.currentHolder && tool.currentHolder !== 'Not Allocated') return 'assigned';
+      return 'available';
     }
-
-    // Get status badge HTML
     function getStatusBadge(status) {
-      const statusText = status === "assigned" ? "Assigned" : 
-                        status === "repair" ? "In Repair" : "Available";
-      const statusClass = status === "assigned" ? "status-assigned" : 
-                         status === "repair" ? "status-repair" : "status-available";
-      
-      return `<span class="status-badge ${statusClass}">${statusText}</span>`;
+      const map = { assigned:['status-assigned','Assigned'], repair:['status-repair','In Repair'], available:['status-available','Available'] };
+      const [cls, txt] = map[status] || map.available;
+      return `<span class="status-badge ${cls}">${txt}</span>`;
     }
 
-    // Filter tools by current warehouse
+    // Filter
     function filterToolsByWarehouse() {
-      const filtered = toolsData.filter(tool => tool.warehouse === currentWarehouse);
-      updateStats(filtered);
-      renderTable(filtered);
+      const q = searchInput.value.toLowerCase();
+      let data = toolsData.filter(t => t.warehouse === currentWarehouse);
+      if (q) data = data.filter(t =>
+        (t.bin||'').toLowerCase().includes(q) ||
+        (t.name||'').toLowerCase().includes(q) ||
+        (t.currentHolder||'').toLowerCase().includes(q) ||
+        (t.location||'').toLowerCase().includes(q)
+      );
+      updateStats(data);
+      renderTable(data);
     }
 
-    // Update stats
+    // Stats
     function updateStats(data) {
-      totalToolsEl.textContent = data.length;
-      
-      const assigned = data.filter(t => t.currentHolder && t.currentHolder !== "Not Allocated").length;
-      assignedToolsEl.textContent = assigned;
-      
-      const available = data.filter(t => !t.currentHolder || t.currentHolder === "Not Allocated").length;
-      availableToolsEl.textContent = available;
-      
-      const repair = data.filter(t => t.status === "repair" || t.name?.toLowerCase().includes("repair")).length;
-      repairToolsEl.textContent = repair;
+      totalToolsEl.textContent    = data.length;
+      assignedToolsEl.textContent = data.filter(t => t.currentHolder && t.currentHolder !== 'Not Allocated').length;
+      availableToolsEl.textContent= data.filter(t => !t.currentHolder || t.currentHolder === 'Not Allocated').length;
+      repairToolsEl.textContent   = data.filter(t => t.status === 'repair').length;
     }
 
-    // Render table
+    // Render
     function renderTable(data) {
-      if (data.length === 0) {
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="7" style="padding: 40px; text-align: center;">
-              <i class="fas fa-warehouse" style="font-size: 48px; color: #97adc9; margin-bottom: 15px; display: block;"></i>
-              <h3 style="color: #7f96b3; font-weight: 500;">No tools found in this warehouse</h3>
-              <p style="color: #7f96b3; margin-top: 10px;">Try adding a new tool or switch to another warehouse</p>
-              <a href="addtool.html?warehouse=${currentWarehouse}" class="btn btn-primary" style="margin-top: 20px;">
-                <i class="fas fa-plus-circle"></i> Add Tool
-              </a>
-            </td>
-          </tr>
-        `;
+      if (!data.length) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="padding:40px;text-align:center;">
+          <i class="fas fa-warehouse" style="font-size:48px;color:#97adc9;margin-bottom:15px;display:block;"></i>
+          <h3 style="color:#7f96b3;font-weight:500;">No tools found in this warehouse</h3>
+          <p style="color:#7f96b3;margin-top:10px;">Try adding a new tool or switch to another warehouse</p>
+          <a href="addtool.html?warehouse=${currentWarehouse}" class="btn btn-primary" style="margin-top:20px;"><i class="fas fa-plus-circle"></i> Add Tool</a>
+        </td></tr>`;
         return;
       }
 
       let html = '';
       data.forEach((tool, index) => {
-        const status = getToolStatus(tool);
-        let actionButtons = '';
-        
-        if (deleteMode) {
-          actionButtons = `
+        const status    = getToolStatus(tool);
+        const isAssigned = status === 'assigned';
+        const isReturned = tool._returned === true; // local flag
+
+        let actionsHtml = '';
+
+        if (returnMode) {
+          // show checkbox — only enabled for assigned tools
+          const checked   = isReturned ? 'checked' : '';
+          const disabled  = (!isAssigned && !isReturned) ? 'disabled' : '';
+          const lblClass  = isReturned ? 'return-label done' : 'return-label';
+          const lblText   = isReturned ? 'Returned ✓' : (isAssigned ? 'Return' : '—');
+          actionsHtml = `
+            <div class="return-wrap">
+              <input type="checkbox" class="return-checkbox" ${checked} ${disabled}
+                data-id="${tool.id}"
+                data-name="${(tool.name||'').replace(/"/g,'&quot;')}"
+                data-bin="${(tool.bin||'').replace(/"/g,'&quot;')}"
+                title="${isAssigned ? 'Tick to return to warehouse' : 'Tool not assigned'}">
+              <span class="${lblClass}">${lblText}</span>
+            </div>`;
+        } else if (deleteMode) {
+          actionsHtml = `
             <div class="action-buttons">
-              <button class="btn btn-danger btn-small" onclick='showDeleteModal(${JSON.stringify(tool).replace(/'/g, "\\'")})'>
+              <button class="btn btn-danger btn-small" onclick='showDeleteModal(${JSON.stringify(tool).replace(/'/g,"\\'")})'>
                 <i class="fas fa-trash"></i> Delete
               </button>
-            </div>
-          `;
+            </div>`;
         } else {
-          actionButtons = `
+          actionsHtml = `
             <div class="action-buttons">
-              <a href="viewtool.html?id=${tool.id}" class="btn btn-success btn-small">
-                <i class="fas fa-eye"></i> View
-              </a>
-              <a href="assigntool.html?id=${tool.id}" class="btn btn-primary btn-small">
-                <i class="fas fa-user-check"></i> Assign
-              </a>
-            </div>
-          `;
+              <a href="viewtool.html?id=${tool.id}" class="btn btn-success btn-small"><i class="fas fa-eye"></i> View</a>
+              <a href="assigntool.html?id=${tool.id}" class="btn btn-primary btn-small"><i class="fas fa-user-check"></i> Assign</a>
+            </div>`;
         }
 
-        html += `
-          <tr>
-            <td><strong>${index + 1}</strong></td>
-            <td><strong>${tool.bin || '-'}</strong></td>
-            <td>${tool.name || '-'}</td>
-            <td>${tool.currentHolder || 'Not Allocated'}</td>
-            <td>${tool.location || '-'}</td>
-            <td>${getStatusBadge(status)}</td>
-            <td>${actionButtons}</td>
-          </tr>
-        `;
+        const rowClass = isReturned ? 'returned-row' : '';
+        html += `<tr class="${rowClass}">
+          <td><strong>${index + 1}</strong></td>
+          <td><strong>${tool.bin || '-'}</strong></td>
+          <td>${tool.name || '-'}</td>
+          <td>${isReturned ? '<em style="color:#059669;">Returned to warehouse</em>' : (tool.currentHolder || 'Not Allocated')}</td>
+          <td>${tool.location || '-'}</td>
+          <td>${isReturned ? '<span class="status-badge status-available">Available</span>' : getStatusBadge(status)}</td>
+          <td>${actionsHtml}</td>
+        </tr>`;
       });
 
       tableBody.innerHTML = html;
+
+      // attach checkbox listeners
+      tableBody.querySelectorAll('.return-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+          if (this.checked) {
+            const tool = toolsData.find(t => t.id === this.dataset.id);
+            if (tool) showReturnModal(tool, this);
+          }
+        });
+      });
     }
 
-    // Search functionality
-    searchInput.addEventListener('input', function() {
-      const val = this.value.toLowerCase();
-      const currentWarehouseData = toolsData.filter(tool => tool.warehouse === currentWarehouse);
-      const filtered = currentWarehouseData.filter(t =>
-        (t.bin?.toLowerCase() || '').includes(val) ||
-        (t.name?.toLowerCase() || '').includes(val) ||
-        (t.currentHolder?.toLowerCase() || '').includes(val) ||
-        (t.location?.toLowerCase() || '').includes(val)
-      );
-      renderTable(filtered);
-    });
+    // Search
+    searchInput.addEventListener('input', filterToolsByWarehouse);
 
-    // Modal functions
+    // ── DELETE ──
     window.showDeleteModal = function(tool) {
       toolToDelete = tool;
       deleteToolName.textContent = `"${tool.name}" (Bin: ${tool.bin})`;
       deleteModal.classList.add('show');
     };
-
-    window.closeDeleteModal = function() {
-      deleteModal.classList.remove('show');
-      toolToDelete = null;
-    };
-
-    // Delete tool
+    window.closeDeleteModal = function() { deleteModal.classList.remove('show'); toolToDelete = null; };
     window.deleteTool = async function() {
       if (!toolToDelete) return;
-      
       try {
-        await deleteDoc(doc(db, "tools-2", toolToDelete.id));
+        await deleteDoc(doc(db, 'tools-2', toolToDelete.id));
         closeDeleteModal();
-        alert(`Tool "${toolToDelete.name}" has been deleted successfully.`);
-      } catch (error) {
-        console.error("Error deleting tool: ", error);
-        alert("Error deleting tool. Please try again.");
-      }
+      } catch (err) { alert('Error deleting tool. Please try again.'); }
     };
-
     confirmDeleteBtn.addEventListener('click', deleteTool);
 
-    // PDF Download
-    window.downloadToolsPDF = function() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('landscape', 'mm', 'a4');
-      
-      const warehouseData = toolsData.filter(tool => tool.warehouse === currentWarehouse);
-      const warehouseName = currentWarehouse === 'penta' ? 'Penta Tools' : 'Techno Tools';
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      const pageWidth = doc.internal.pageSize.getWidth();
-      
-      // Header
-      doc.setFillColor(10, 28, 47); // #0a1c2f
-      doc.rect(0, 0, pageWidth, 25, 'F');
-      
-      doc.setFontSize(20);
-      doc.setTextColor(255, 255, 255);
-      doc.text(`${warehouseName} - Tools Inventory`, pageWidth / 2, 18, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(200, 200, 200);
-      doc.text(`Generated: ${dateStr}`, pageWidth / 2, 25, { align: 'center' });
-      
-      // Stats
-      const statsY = 35;
-      const total = warehouseData.length;
-      const assigned = warehouseData.filter(t => t.currentHolder && t.currentHolder !== "Not Allocated").length;
-      const available = warehouseData.filter(t => !t.currentHolder || t.currentHolder === "Not Allocated").length;
-      const repair = warehouseData.filter(t => t.status === "repair" || t.name?.toLowerCase().includes("repair")).length;
-      
-      doc.setFillColor(30, 30, 30);
-      doc.roundedRect(20, statsY, pageWidth - 40, 25, 3, 3, 'F');
-      
-      doc.setFontSize(12);
-      doc.setTextColor(255, 255, 255);
-      doc.text(`Total: ${total}`, 30, statsY + 15);
-      doc.text(`Assigned: ${assigned}`, pageWidth / 3, statsY + 15);
-      doc.text(`Available: ${available}`, (pageWidth * 2) / 3, statsY + 15);
-      doc.text(`In Repair: ${repair}`, pageWidth - 40, statsY + 15, { align: 'right' });
-      
-      // Table
-      const tableData = warehouseData.map(tool => [
-        tool.bin || '-',
-        tool.name || '-',
-        tool.currentHolder || 'Not Allocated',
-        tool.location || '-',
-        getToolStatusText(tool)
-      ]);
-      
-      doc.autoTable({
-        head: [['Bin ID', 'Tool Name', 'Current Holder', 'Location', 'Status']],
-        body: tableData,
-        startY: 70,
-        theme: 'striped',
-        headStyles: { 
-          fillColor: [10, 28, 47],
-          textColor: [255, 255, 255],
-          fontSize: 10,
-          fontStyle: 'bold'
-        },
-        styles: { fontSize: 9 },
-        margin: { left: 20, right: 20 }
-      });
-      
-      doc.save(`${warehouseName.replace(/\s+/g, '_')}_Inventory_${now.toISOString().split('T')[0]}.pdf`);
+    // ── RETURN ──
+    let pendingCheckbox = null;
+    function showReturnModal(tool, checkbox) {
+      toolToReturn    = tool;
+      pendingCheckbox = checkbox;
+      returnToolName.textContent = `"${tool.name}" (Bin: ${tool.bin})`;
+      returnModal.classList.add('show');
+    }
+    window.closeReturnModal = function() {
+      // uncheck the checkbox if user cancels
+      if (pendingCheckbox) { pendingCheckbox.checked = false; pendingCheckbox = null; }
+      returnModal.classList.remove('show');
+      toolToReturn = null;
     };
 
-    function getToolStatusText(tool) {
-      if (tool.status === "repair") return "In Repair";
-      if (tool.currentHolder && tool.currentHolder !== "Not Allocated") return "Assigned";
-      return "Available";
-    }
-
-    // Firebase snapshot
-    onSnapshot(collection(db, "tools-2"), (snapshot) => {
-      toolsData = [];
-      snapshot.forEach(doc => {
-        const t = doc.data();
-        toolsData.push({
-          bin: t.bin || "-",
-          name: t.name || "-",
-          currentHolder: t.currentHolder || "Not Allocated",
-          location: t.location || "-",
-          status: t.status || (t.currentHolder && t.currentHolder !== "Not Allocated" ? "assigned" : "available"),
-          warehouse: t.warehouse || "penta",
-          id: doc.id
+    confirmReturnBtn.addEventListener('click', async () => {
+      if (!toolToReturn) return;
+      confirmReturnBtn.disabled = true;
+      confirmReturnBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Returning…';
+      try {
+        await updateDoc(doc(db, 'tools-2', toolToReturn.id), {
+          currentHolder: 'Not Allocated',
+          status: 'available'
         });
-      });
-
-      toolsData.sort((a, b) => (a.bin || "").localeCompare(b.bin || ""));
-      filterToolsByWarehouse();
+        // mark local flag so row stays green until snapshot refreshes
+        const t = toolsData.find(x => x.id === toolToReturn.id);
+        if (t) t._returned = true;
+        pendingCheckbox = null;
+        returnModal.classList.remove('show');
+        toolToReturn = null;
+      } catch (err) {
+        alert('Error updating tool. Please try again.');
+        if (pendingCheckbox) { pendingCheckbox.checked = false; }
+      }
+      confirmReturnBtn.disabled = false;
+      confirmReturnBtn.innerHTML = '<i class="fas fa-undo-alt"></i> Confirm Return';
     });
 
-    // Initialize UI
-    updateWarehouseUI();
+    // PDF
+    window.downloadToolsPDF = function() {
+      const { jsPDF } = window.jspdf;
+      const p = new jsPDF('landscape','mm','a4');
+      const warehouseData = toolsData.filter(t => t.warehouse === currentWarehouse);
+      const wName = currentWarehouse === 'penta' ? 'Penta Tools' : 'Techno Tools';
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const pw = p.internal.pageSize.getWidth();
+      p.setFillColor(10,28,47); p.rect(0,0,pw,25,'F');
+      p.setFontSize(20); p.setTextColor(255,255,255); p.text(`${wName} - Tools Inventory`,pw/2,18,{align:'center'});
+      p.setFontSize(10); p.setTextColor(200,200,200); p.text(`Generated: ${dateStr}`,pw/2,25,{align:'center'});
+      const sy=35, total=warehouseData.length;
+      const assigned=warehouseData.filter(t=>t.currentHolder&&t.currentHolder!=='Not Allocated').length;
+      const available=warehouseData.filter(t=>!t.currentHolder||t.currentHolder==='Not Allocated').length;
+      const repair=warehouseData.filter(t=>t.status==='repair').length;
+      p.setFillColor(30,30,30); p.roundedRect(20,sy,pw-40,25,3,3,'F');
+      p.setFontSize(12); p.setTextColor(255,255,255);
+      p.text(`Total: ${total}`,30,sy+15); p.text(`Assigned: ${assigned}`,pw/3,sy+15);
+      p.text(`Available: ${available}`,(pw*2)/3,sy+15); p.text(`In Repair: ${repair}`,pw-40,sy+15,{align:'right'});
+      p.autoTable({
+        head:[['Bin ID','Tool Name','Current Holder','Location','Status']],
+        body: warehouseData.map(t=>[t.bin||'-',t.name||'-',t.currentHolder||'Not Allocated',t.location||'-',t.status==='repair'?'In Repair':(t.currentHolder&&t.currentHolder!=='Not Allocated'?'Assigned':'Available')]),
+        startY:70, theme:'striped',
+        headStyles:{fillColor:[10,28,47],textColor:[255,255,255],fontSize:10,fontStyle:'bold'},
+        styles:{fontSize:9}, margin:{left:20,right:20}
+      });
+      p.save(`${wName.replace(/\s+/g,'_')}_Inventory_${now.toISOString().split('T')[0]}.pdf`);
+    };
+
+    // Firestore snapshot
+    onSnapshot(collection(db,'tools-2'), snap => {
+      toolsData = snap.docs.map(d => {
+        const t = d.data();
+        return {
+          bin: t.bin||'-', name: t.name||'-',
+          currentHolder: t.currentHolder||'Not Allocated',
+          location: t.location||'-',
+          status: t.status||(t.currentHolder&&t.currentHolder!=='Not Allocated'?'assigned':'available'),
+          warehouse: t.warehouse||'penta',
+          id: d.id
+        };
+      }).sort((a,b)=>(a.bin||'').localeCompare(b.bin||''));
+      updateWarehouseUI();
+      filterToolsByWarehouse();
+    });
   </script>
 </body>
 </html>
