@@ -69,21 +69,20 @@
     .entry-form button.cancel-btn { background: #7f96b3; color: #fff; border: none; cursor: pointer; font-weight: bold; margin-left: 5px; }
     .form-error { color: #b52b2b; width: 100%; font-size: 12px; }
 
-    /* ── TABLE WRAPPER — scrolls independently, header sticks ── */
+    /* ── TABLE WRAPPER ── */
     .table-responsive {
       flex: 1 1 auto;
       width: 100%;
       overflow-x: auto;
-      overflow-y: auto;
+      /* NO overflow-y — let the whole page scroll so sticky th works */
       padding: 0 18px 18px 18px;
-      /* height is whatever remains after sticky top */
     }
     table { width: 100%; border-collapse: collapse; background: #fff; color: #0a1c2f; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     th, td { padding: 10px 6px; text-align: left; font-size: 13px; }
     th {
       font-weight: 700; background: #d4e2f2;
-      /* sticky inside the scrolling table-responsive div */
-      position: sticky; top: 0; z-index: 5;
+      /* sticks relative to viewport; JS sets --thead-top dynamically */
+      position: sticky; top: var(--thead-top, 0px); z-index: 5;
       color: #0a1c2f; border-bottom: 2px solid #1f3d62;
     }
     tr:nth-child(even) { background: #f9f9f9; }
@@ -202,11 +201,6 @@
             <select id="month-filter"></select>
             <select id="month-year-filter"></select>
           </div>
-          <select id="period-filter" style="max-width:150px;">
-            <option value="all">All time</option>
-            <option value="week-number" selected>By week number</option>
-            <option value="specific-month">By month</option>
-          </select>
           <select id="type-filter" style="max-width:130px;">
             <option value="all">All types</option>
             <option value="debit">Debits</option>
@@ -415,7 +409,6 @@
   const weekFilter    = document.getElementById("week-filter");
   const monthFilter   = document.getElementById("month-filter");
   const monthYearFilter = document.getElementById("month-year-filter");
-  const periodFilter  = document.getElementById("period-filter");
   const typeFilter    = document.getElementById("type-filter");
   const toggleWeekFilter  = document.getElementById("toggle-week-filter");
   const toggleMonthFilter = document.getElementById("toggle-month-filter");
@@ -440,7 +433,6 @@
   function restoreFilterState() {
     const weekOn = LS.get('cf_weekFilterOn') === 'true';
     const monthOn = LS.get('cf_monthFilterOn') === 'true';
-    const period = LS.get('cf_period') || 'week-number';
     const type = LS.get('cf_type') || 'all';
 
     if (weekOn) {
@@ -451,7 +443,6 @@
       toggleMonthFilter.checked = true;
       monthFilterContainer.classList.remove('hide');
     }
-    periodFilter.value = period;
     typeFilter.value = type;
 
     const wkBfOff = LS.get('cf_weekBfOff') === 'true';
@@ -517,15 +508,15 @@
     const term = searchFilter.value.trim().toLowerCase();
     if (term) filtered = filtered.filter(tx => (tx.description + ' ' + (tx.ref || '')).toLowerCase().includes(term));
 
-    const period = periodFilter.value;
-    LS.set('cf_period', period);
-
-    if (period === 'week-number' && weekFilter.value !== 'ALL') {
+    // Week filter — active when toggle is on and a specific week chosen
+    if (toggleWeekFilter.checked && weekFilter.value !== 'ALL') {
       const [year, week] = weekFilter.value.split('-').map(Number);
       const start = getMondayOfIsoWeek(year, week);
       const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
       filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
-    } else if (period === 'specific-month' && monthFilter.value !== 'all' && monthYearFilter.value) {
+    }
+    // Month filter — active when toggle is on
+    if (toggleMonthFilter.checked && monthFilter.value !== 'all' && monthYearFilter.value) {
       const y = parseInt(monthYearFilter.value), m = parseInt(monthFilter.value) - 1;
       const start = new Date(y, m, 1); start.setHours(0, 0, 0, 0);
       const end = new Date(y, m + 1, 0); end.setHours(23, 59, 59, 999);
@@ -686,7 +677,6 @@
 
   // Filter listeners — all persist to localStorage
   searchFilter.addEventListener('input', filterTransactions);
-  periodFilter.addEventListener('change', filterTransactions);
 
   weekFilter.addEventListener('change', () => {
     LS.set('cf_selectedWeek', weekFilter.value);
@@ -735,6 +725,19 @@
   });
 
   dateInput.value = new Date().toISOString().split('T')[0];
+
+  // ── Set --thead-top so table <th> sticks just below the sticky header ──
+  function updateTheadTop() {
+    const h = document.querySelector('.panel-top-sticky');
+    if (h) {
+      const height = h.getBoundingClientRect().height;
+      document.documentElement.style.setProperty('--thead-top', height + 'px');
+    }
+  }
+  updateTheadTop();
+  window.addEventListener('resize', updateTheadTop);
+  // Also update when tab switches (cheque tab may have different height)
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => setTimeout(updateTheadTop, 50)));
 
 
   // ════════════════════════════════════
