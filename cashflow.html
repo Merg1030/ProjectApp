@@ -70,26 +70,38 @@
     .form-error { color: #b52b2b; width: 100%; font-size: 12px; }
 
     /* ── TABLE WRAPPER ── */
-    .table-responsive {
-      flex: 1 1 auto;
+    .table-outer {
+      /* horizontal scroll wrapper — must NOT have overflow-y so page scroll works */
       width: 100%;
       overflow-x: auto;
-      /* NO overflow-y — let the whole page scroll so sticky th works */
+      -webkit-overflow-scrolling: touch;
       padding: 0 18px 18px 18px;
     }
-    table { width: 100%; border-collapse: collapse; background: #fff; color: #0a1c2f; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; background: #fff; color: #0a1c2f; font-size: 13px; min-width: 560px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     th, td { padding: 10px 6px; text-align: left; font-size: 13px; }
+
+    /* ── STICKY COLUMN HEADERS ── */
     th {
       font-weight: 700; background: #d4e2f2;
-      /* sticks relative to viewport; JS sets --thead-top dynamically */
-      position: sticky; top: var(--thead-top, 0px); z-index: 5;
+      position: sticky; top: var(--thead-top, 0px); z-index: 6;
       color: #0a1c2f; border-bottom: 2px solid #1f3d62;
     }
+
+    /* ── STICKY WEEK-START ROW ──
+       position:sticky on <tr> is unreliable — apply it to each <td> inside instead */
+    tr.week-start-row td {
+      position: sticky;
+      top: var(--weekrow-top, 44px);
+      z-index: 5;
+      background: #e6efff;
+      font-style: italic; color: #1f3d62; font-size: 12px;
+      border-top: 2px solid #1f3d62;
+    }
+    tr.week-start-row td:last-child strong { color: #0a1c2f; font-size: 13px; }
+
     tr:nth-child(even) { background: #f9f9f9; }
     tr:hover { background: #e3ecf7; }
-    tr.week-start-row { background: #e6efff !important; border-top: 2px solid #1f3d62; }
-    tr.week-start-row td { font-style: italic; color: #1f3d62; font-size: 12px; }
-    tr.week-start-row td:last-child strong { color: #0a1c2f; font-size: 13px; }
+    tr.week-start-row { background: #e6efff !important; }
     .action-cell { position: relative; width: 40px; text-align: center; }
     .action-btn { background: none; border: none; cursor: pointer; font-size: 16px; color: #2b4a73; padding: 2px 6px; border-radius: 4px; transition: all 0.2s; }
     .action-btn:hover { background: #e6efff; color: #0a1c2f; }
@@ -256,7 +268,7 @@
       <div id="expense-form-error" class="form-error"></div>
     </form>
 
-    <div class="table-responsive">
+    <div class="table-outer">
       <table>
         <thead>
           <tr>
@@ -315,7 +327,7 @@
       </div>
     </div>
 
-    <div class="table-responsive" style="margin-top:12px;">
+    <div class="table-outer" style="margin-top:12px;">
       <table>
         <thead>
           <tr>
@@ -598,6 +610,8 @@
 
     tbody.innerHTML = rows;
     attachRowMenuListeners();
+    // recalc sticky offsets now th height is known
+    setTimeout(updateStickyTops, 0);
   }
 
   function buildTxRow(tx, balance, dateStr) {
@@ -726,18 +740,21 @@
 
   dateInput.value = new Date().toISOString().split('T')[0];
 
-  // ── Set --thead-top so table <th> sticks just below the sticky header ──
-  function updateTheadTop() {
-    const h = document.querySelector('.panel-top-sticky');
-    if (h) {
-      const height = h.getBoundingClientRect().height;
-      document.documentElement.style.setProperty('--thead-top', height + 'px');
-    }
+  // ── Set --thead-top and --weekrow-top dynamically ──
+  function updateStickyTops() {
+    const header = document.querySelector('.panel-top-sticky');
+    if (!header) return;
+    const headerH = header.getBoundingClientRect().height;
+    // thead row height — measure a th if available
+    const th = document.querySelector('th');
+    const thH = th ? th.getBoundingClientRect().height : 38;
+    document.documentElement.style.setProperty('--thead-top', headerH + 'px');
+    document.documentElement.style.setProperty('--weekrow-top', (headerH + thH) + 'px');
   }
-  updateTheadTop();
-  window.addEventListener('resize', updateTheadTop);
-  // Also update when tab switches (cheque tab may have different height)
-  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => setTimeout(updateTheadTop, 50)));
+  updateStickyTops();
+  window.addEventListener('resize', updateStickyTops);
+  // Recalculate after tab switch and after data renders
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => setTimeout(updateStickyTops, 60)));
 
 
   // ════════════════════════════════════
