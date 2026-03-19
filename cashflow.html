@@ -21,9 +21,17 @@
     .tab-panel.active { display: flex; flex-direction: column; }
 
     .panel { background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(20,20,20,0.26); min-height: 100vh; width: 100%; display: flex; flex-direction: column; }
-    .panel-top-sticky { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.902); backdrop-filter: blur(4px); border-radius: 8px 8px 0 0; box-shadow: 0 2px 10px 0 rgba(20,20,20,0.16); width: 100%; margin: 0; }
+
+    /* ── FULLY STICKY TOP BLOCK ── */
+    .panel-top-sticky {
+      position: sticky; top: 0; z-index: 20;
+      background: #fff;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 2px 10px 0 rgba(20,20,20,0.16);
+      width: 100%;
+    }
     .panel-heading { background: #0a1c2f; color: white; padding: 0 18px; font-size: 22px; font-weight: bold; letter-spacing: 1px; height: 50px; display: flex; align-items: center; justify-content: space-between; }
-    .panel-controls { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; padding: 10px 18px; background: none; }
+    .panel-controls { display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap; padding: 8px 18px; background: none; }
     .ctrl-btn { background: white; color: #0a1c2f; border: 1px solid #2b4a73; font-size: 13px; padding: 5px 14px; border-radius: 30px; cursor: pointer; font-weight: bold; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .ctrl-btn:hover { background: #e6efff; }
     .dropdown { position: relative; display: inline-block; }
@@ -41,10 +49,12 @@
     .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .toggle-slider { background-color: #0a1c2f; }
     input:checked + .toggle-slider:before { transform: translateX(16px); }
-    .sticky-filters { background: none; padding: 0 18px; box-sizing: border-box; position: sticky; top: 74px; z-index: 15; width: 100%; }
-    .account-filter-bar { display: flex; align-items: center; gap: 15px; margin-bottom: 8px; flex-wrap: wrap; }
-    .search-bar { margin-bottom: 0; display: flex; align-items: center; gap: 6px; flex: 1 1 250px; }
-    .search-bar input[type="text"] { padding: 6px 12px; border-radius: 30px; background: #ffffff; color: #0a1c2f; font-size:13px; width: 100%; max-width: 500px; border: 1px solid #b3c7e0; }
+
+    /* filter bar inside sticky top */
+    .cf-filters { padding: 0 18px 8px; }
+    .account-filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .search-bar { margin-bottom: 0; display: flex; align-items: center; gap: 6px; flex: 1 1 200px; }
+    .search-bar input[type="text"] { padding: 6px 12px; border-radius: 30px; background: #ffffff; color: #0a1c2f; font-size:13px; width: 100%; max-width: 400px; border: 1px solid #b3c7e0; }
     #week-filter-container, #month-filter-container { display: flex; align-items: center; gap: 6px; }
     #week-filter, #month-filter, #month-year-filter, #period-filter, #type-filter { padding: 5px 10px; border-radius: 30px; border: 1px solid #b3c7e0; background: white; font-size:13px; }
     .hide { display: none !important; }
@@ -59,11 +69,23 @@
     .entry-form button.cancel-btn { background: #7f96b3; color: #fff; border: none; cursor: pointer; font-weight: bold; margin-left: 5px; }
     .form-error { color: #b52b2b; width: 100%; font-size: 12px; }
 
-    /* ── TABLES ── */
-    .table-responsive { flex: 1 1 auto; width: 100%; overflow-x: auto; background: none; margin: 0; padding: 0 18px 18px 18px; }
+    /* ── TABLE WRAPPER — scrolls independently, header sticks ── */
+    .table-responsive {
+      flex: 1 1 auto;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+      padding: 0 18px 18px 18px;
+      /* height is whatever remains after sticky top */
+    }
     table { width: 100%; border-collapse: collapse; background: #fff; color: #0a1c2f; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     th, td { padding: 10px 6px; text-align: left; font-size: 13px; }
-    th { font-weight: 700; background: #d4e2f2; position: sticky; top: 0; z-index: 10; color: #0a1c2f; border-bottom: 2px solid #1f3d62; }
+    th {
+      font-weight: 700; background: #d4e2f2;
+      /* sticky inside the scrolling table-responsive div */
+      position: sticky; top: 0; z-index: 5;
+      color: #0a1c2f; border-bottom: 2px solid #1f3d62;
+    }
     tr:nth-child(even) { background: #f9f9f9; }
     tr:hover { background: #e3ecf7; }
     tr.week-start-row { background: #e6efff !important; border-top: 2px solid #1f3d62; }
@@ -80,38 +102,24 @@
     .text-right { text-align: right; }
 
     /* ── CHEQUE panel accent ── */
-    .cheque-heading { background: #1a3a1a; }
     .cheque-tab.active { border-bottom-color: #81c784 !important; }
 
     /* ── PAID STATUS BADGE ── */
-    .paid-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-      border: 1.5px solid; white-space: nowrap;
-    }
+    .paid-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1.5px solid; white-space: nowrap; }
     .paid-badge.unpaid { background: #fff3cd; color: #856404; border-color: #ffc107; }
     .paid-badge.paid   { background: #d1fae5; color: #065f46; border-color: #059669; }
 
     /* ── PAID CHECKBOX ── */
     .pay-check-wrap { display: flex; align-items: center; justify-content: center; }
-    .pay-checkbox {
-      appearance: none; -webkit-appearance: none;
-      width: 20px; height: 20px; border-radius: 5px;
-      border: 2px solid #2e7d32; background: white;
-      cursor: pointer; position: relative; transition: all 0.18s; flex-shrink: 0;
-    }
+    .pay-checkbox { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 5px; border: 2px solid #2e7d32; background: white; cursor: pointer; position: relative; transition: all 0.18s; flex-shrink: 0; }
     .pay-checkbox:checked { background: #059669; border-color: #059669; }
     .pay-checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: white; font-size: 13px; font-weight: 900; }
     .pay-checkbox:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── PAYMENT DETAILS (hidden by default, toggled by View button) ── */
+    /* ── PAYMENT DETAILS ── */
     tr.payment-detail-row { display: none; }
     tr.payment-detail-row.visible { display: table-row; }
-    tr.payment-detail-row td {
-      background: #f0fdf4 !important;
-      font-size: 11px; color: #065f46; padding: 6px 12px 10px 20px;
-      border-top: none;
-    }
+    tr.payment-detail-row td { background: #f0fdf4 !important; font-size: 11px; color: #065f46; padding: 6px 12px 10px 20px; border-top: none; }
     .pdet { display: flex; flex-wrap: wrap; gap: 6px 24px; align-items: center; }
     .pdet span { display: flex; align-items: center; gap: 4px; }
     .pdet .plabel { font-weight: 700; color: #1a3a1a; }
@@ -154,18 +162,17 @@
 <body>
 <div class="panel">
 
-  <!-- STICKY HEADER -->
+  <!-- ══ SINGLE STICKY TOP BLOCK — everything above the table ══ -->
   <div class="panel-top-sticky">
     <div class="panel-heading"><span>PENTA CONSTRUCTION</span></div>
+
     <div class="tab-nav">
       <button class="tab-btn active" data-tab="cashflow-tab"><i class="fa fa-exchange"></i> Cash Flow</button>
       <button class="tab-btn cheque-tab" data-tab="cheque-tab"><i class="fa fa-money"></i> Cheque Payments</button>
     </div>
-  </div>
 
-  <!-- ═══ TAB 1 — CASH FLOW ═══ -->
-  <div id="cashflow-tab" class="tab-panel active">
-    <div style="position:sticky;top:92px;z-index:19;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);box-shadow:0 1px 6px rgba(0,0,0,0.08);">
+    <!-- Cash flow controls + filters (only visible when cashflow tab active) -->
+    <div id="cf-sticky-controls">
       <div class="panel-controls">
         <button id="toggle-form-btn" class="ctrl-btn"><i class="fa fa-plus"></i> Transaction</button>
         <div class="dropdown">
@@ -185,10 +192,12 @@
           </div>
         </div>
       </div>
-      <div class="sticky-filters">
+      <div class="cf-filters">
         <div class="account-filter-bar">
           <div class="search-bar"><input type="text" id="search-filter" placeholder="Search description, ref..."></div>
-          <div id="week-filter-container" class="hide"><select id="week-filter"><option value="ALL">All weeks</option></select></div>
+          <div id="week-filter-container" class="hide">
+            <select id="week-filter"><option value="ALL">All weeks</option></select>
+          </div>
           <div id="month-filter-container" class="hide">
             <select id="month-filter"></select>
             <select id="month-year-filter"></select>
@@ -206,6 +215,39 @@
         </div>
       </div>
     </div>
+
+    <!-- Cheque controls + filters (only visible when cheque tab active) -->
+    <div id="chq-sticky-controls" class="hide">
+      <div class="panel-controls">
+        <button id="toggle-chq-form-btn" class="ctrl-btn" style="border-color:#2e7d32;color:#1a3a1a;"><i class="fa fa-plus"></i> Cheque Entry</button>
+        <div class="dropdown">
+          <button class="dropdown-btn" id="chq-dropdown-btn" style="border-color:#2e7d32;color:#1a3a1a;"><i class="fa fa-ellipsis-v"></i> Options</button>
+          <div class="dropdown-content" id="chq-dropdown-menu">
+            <button class="dropdown-item" id="chq-download-pdf-btn"><i class="fa fa-download"></i> Download PDF</button>
+          </div>
+        </div>
+      </div>
+      <div class="cf-filters">
+        <div class="account-filter-bar">
+          <div class="search-bar"><input type="text" id="chq-search" placeholder="Search description, supplier, account..."></div>
+          <select id="chq-account-filter" style="padding:5px 10px;border-radius:30px;border:1px solid #b3c7e0;background:white;font-size:13px;max-width:180px;"><option value="all">All accounts</option></select>
+          <select id="chq-period-filter" style="padding:5px 10px;border-radius:30px;border:1px solid #b3c7e0;background:white;font-size:13px;max-width:150px;">
+            <option value="all">All time</option>
+            <option value="this-month">This month</option>
+            <option value="last-month">Last month</option>
+          </select>
+          <select id="chq-paid-filter" style="padding:5px 10px;border-radius:30px;border:1px solid #b3c7e0;background:white;font-size:13px;max-width:140px;">
+            <option value="all">All statuses</option>
+            <option value="unpaid">Unpaid only</option>
+            <option value="paid">Paid only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div><!-- /panel-top-sticky -->
+
+  <!-- ══ TAB 1 — CASH FLOW ══ -->
+  <div id="cashflow-tab" class="tab-panel active">
 
     <form id="expense-form" class="entry-form hide" autocomplete="off">
       <div><label>Date</label><input type="date" id="exp-date" required></div>
@@ -229,41 +271,15 @@
             <th class="text-right">Balance</th><th class="action-cell">Act.</th>
           </tr>
         </thead>
-        <tbody id="expenses-table-body"><tr><td colspan="7" style="text-align:center;">Loading…</td></tr></tbody>
+        <tbody id="expenses-table-body">
+          <tr><td colspan="7" style="text-align:center;">Loading…</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
-  <!-- ═══ TAB 2 — CHEQUE PAYMENTS ═══ -->
+  <!-- ══ TAB 2 — CHEQUE PAYMENTS ══ -->
   <div id="cheque-tab" class="tab-panel">
-    <div style="position:sticky;top:92px;z-index:19;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);box-shadow:0 1px 6px rgba(0,0,0,0.08);">
-      <div class="panel-controls">
-        <button id="toggle-chq-form-btn" class="ctrl-btn" style="border-color:#2e7d32;color:#1a3a1a;"><i class="fa fa-plus"></i> Cheque Entry</button>
-        <div class="dropdown">
-          <button class="dropdown-btn" id="chq-dropdown-btn" style="border-color:#2e7d32;color:#1a3a1a;"><i class="fa fa-ellipsis-v"></i> Options</button>
-          <div class="dropdown-content" id="chq-dropdown-menu">
-            <button class="dropdown-item" id="chq-download-pdf-btn"><i class="fa fa-download"></i> Download PDF</button>
-          </div>
-        </div>
-      </div>
-      <div style="padding:0 18px 8px;">
-        <div class="account-filter-bar">
-          <div class="search-bar"><input type="text" id="chq-search" placeholder="Search description, supplier, account..."></div>
-          <select id="chq-account-filter" style="padding:5px 10px;border-radius:30px;border:1px solid #b3c7e0;background:white;font-size:13px;max-width:180px;"><option value="all">All accounts</option></select>
-          <select id="chq-period-filter" style="padding:5px 10px;border-radius:30px;border:1px solid #b3c7e0;background:white;font-size:13px;max-width:150px;">
-            <option value="all">All time</option>
-            <option value="this-month">This month</option>
-            <option value="last-month">Last month</option>
-          </select>
-          <!-- paid filter -->
-          <select id="chq-paid-filter" style="padding:5px 10px;border-radius:30px;border:1px solid #b3c7e0;background:white;font-size:13px;max-width:140px;">
-            <option value="all">All statuses</option>
-            <option value="unpaid">Unpaid only</option>
-            <option value="paid">Paid only</option>
-          </select>
-        </div>
-      </div>
-    </div>
 
     <form id="chq-form" class="entry-form hide" autocomplete="off" style="border-color:#2e7d32;">
       <div><label>Date</label><input type="date" id="chq-date" required></div>
@@ -286,7 +302,6 @@
       <div id="chq-form-error" class="form-error"></div>
     </form>
 
-    <!-- Summary cards -->
     <div style="display:flex;gap:12px;flex-wrap:wrap;padding:10px 18px 0;">
       <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 20px;font-size:13px;">
         <div style="color:#2e7d32;font-weight:bold;font-size:11px;letter-spacing:1px;text-transform:uppercase;">Total (filtered)</div>
@@ -310,25 +325,21 @@
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Account</th>
-            <th>Supplier</th>
-            <th class="text-right">Amount</th>
-            <th class="text-right">Balance</th>
-            <th>Status</th>
-            <th>Paid?</th>
-            <th class="action-cell">Act.</th>
+            <th>Date</th><th>Description</th><th>Account</th><th>Supplier</th>
+            <th class="text-right">Amount</th><th class="text-right">Balance</th>
+            <th>Status</th><th>Paid?</th><th class="action-cell">Act.</th>
           </tr>
         </thead>
-        <tbody id="chq-table-body"><tr><td colspan="9" style="text-align:center;">Loading…</td></tr></tbody>
+        <tbody id="chq-table-body">
+          <tr><td colspan="9" style="text-align:center;">Loading…</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
 </div><!-- /panel -->
 
-<!-- ═══ PAY MODAL ═══ -->
+<!-- PAY MODAL -->
 <div class="modal-overlay" id="pay-modal">
   <div class="modal-box">
     <div class="modal-head">
@@ -338,22 +349,10 @@
     <div class="modal-body">
       <div class="chq-ref" id="pay-modal-ref">—</div>
       <div class="modal-grid">
-        <div class="modal-field">
-          <label>Cheque Number</label>
-          <input type="text" id="pay-cheque-no" placeholder="e.g. CHQ-0042">
-        </div>
-        <div class="modal-field">
-          <label>Receipt Number</label>
-          <input type="text" id="pay-receipt-no" placeholder="e.g. RCP-0198">
-        </div>
-        <div class="modal-field">
-          <label>Payment Date</label>
-          <input type="date" id="pay-date">
-        </div>
-        <div class="modal-field">
-          <label>Amount Paid</label>
-          <input type="number" min="0" step="0.01" id="pay-amount" placeholder="0.00">
-        </div>
+        <div class="modal-field"><label>Cheque Number</label><input type="text" id="pay-cheque-no" placeholder="e.g. CHQ-0042"></div>
+        <div class="modal-field"><label>Receipt Number</label><input type="text" id="pay-receipt-no" placeholder="e.g. RCP-0198"></div>
+        <div class="modal-field"><label>Payment Date</label><input type="date" id="pay-date"></div>
+        <div class="modal-field"><label>Amount Paid</label><input type="number" min="0" step="0.01" id="pay-amount" placeholder="0.00"></div>
       </div>
     </div>
     <div class="modal-foot">
@@ -383,242 +382,389 @@
   const CF_COLLECTION  = "cashflow";
   const CHQ_COLLECTION = "cheque_payments";
 
-  // ── Tab switching ──
+  // ── Tab switching ── show/hide correct sticky controls
+  const cfControls  = document.getElementById('cf-sticky-controls');
+  const chqControls = document.getElementById('chq-sticky-controls');
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
+      const isCF = btn.dataset.tab === 'cashflow-tab';
+      cfControls.classList.toggle('hide', !isCF);
+      chqControls.classList.toggle('hide', isCF);
     });
   });
 
   // ════════════════════════════════════
-  //  CASH FLOW — untouched
+  //  CASH FLOW
   // ════════════════════════════════════
-  const expenseForm=document.getElementById("expense-form"),tbody=document.getElementById("expenses-table-body"),formError=document.getElementById("expense-form-error"),toggleFormBtn=document.getElementById("toggle-form-btn"),dateInput=document.getElementById("exp-date"),descInput=document.getElementById("exp-description"),refInput=document.getElementById("exp-ref"),debitInput=document.getElementById("exp-debit"),creditInput=document.getElementById("exp-credit"),submitBtn=document.getElementById("submit-btn"),cancelEditBtn=document.getElementById("cancel-edit-btn"),searchFilter=document.getElementById("search-filter"),weekFilter=document.getElementById("week-filter"),monthFilter=document.getElementById("month-filter"),monthYearFilter=document.getElementById("month-year-filter"),periodFilter=document.getElementById("period-filter"),typeFilter=document.getElementById("type-filter"),toggleWeekFilter=document.getElementById("toggle-week-filter"),toggleMonthFilter=document.getElementById("toggle-month-filter"),weekFilterContainer=document.getElementById("week-filter-container"),monthFilterContainer=document.getElementById("month-filter-container"),downloadPdfBtn=document.getElementById("download-pdf-btn"),toggleWeekBfBtn=document.getElementById("toggle-week-bf-btn"),cfDropdownMenu=document.getElementById("cf-dropdown-menu"),cfDropdownBtn=document.getElementById("cf-dropdown-btn");
-  let allTransactions=[],filteredTransactions=[],editingId=null,cfFormVisible=false,activeRowMenu=null,showWeekBroughtForward=true;
-  function getWeekNumber(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));const yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil((((d-yearStart)/86400000)+1)/7);}
-  function getWeekYear(date){let d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));return{week:getWeekNumber(date),year:d.getUTCFullYear()};}
-  function getMondayOfIsoWeek(year,week){const jan4=new Date(year,0,4);const dayOfWeek=jan4.getDay()||7;const week1Monday=new Date(jan4);week1Monday.setDate(jan4.getDate()-(dayOfWeek-1));const monday=new Date(week1Monday);monday.setDate(week1Monday.getDate()+(week-1)*7);monday.setHours(0,0,0,0);return monday;}
-  function weekKey(year,week){return`${year}-${String(week).padStart(2,'0')}`;}
-  function populateWeekSelect(){if(!allTransactions.length){weekFilter.innerHTML='<option value="ALL">All weeks</option>';return;}const weeksSet=new Set();allTransactions.forEach(tx=>{const wy=getWeekYear(new Date(tx.date));weeksSet.add(`${wy.year}-${wy.week}`);});const weeks=Array.from(weeksSet).map(w=>({year:+w.split('-')[0],week:+w.split('-')[1]})).sort((a,b)=>b.year-a.year||b.week-a.week);let opts='<option value="ALL">All weeks</option>';weeks.forEach(w=>opts+=`<option value="${w.year}-${w.week}">Week ${w.week}, ${w.year}</option>`);weekFilter.innerHTML=opts;}
-  function populateMonthYear(){if(!allTransactions.length){monthFilter.innerHTML='<option value="all">All months</option>';monthYearFilter.innerHTML='<option value="">Year</option>';return;}const years=[...new Set(allTransactions.map(tx=>new Date(tx.date).getFullYear()))].sort((a,b)=>b-a);const monthNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];let mo='<option value="all">All months</option>';for(let m=0;m<12;m++)mo+=`<option value="${m+1}">${monthNames[m]}</option>`;monthFilter.innerHTML=mo;monthYearFilter.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');}
-  function filterTransactions(){let filtered=[...allTransactions];const term=searchFilter.value.trim().toLowerCase();if(term)filtered=filtered.filter(tx=>(tx.description+' '+(tx.ref||'')).toLowerCase().includes(term));const period=periodFilter.value;if(period==='week-number'&&weekFilter.value!=='ALL'){const[year,week]=weekFilter.value.split('-').map(Number);const start=getMondayOfIsoWeek(year,week);const end=new Date(start);end.setDate(start.getDate()+6);end.setHours(23,59,59,999);filtered=filtered.filter(tx=>tx.date>=start&&tx.date<=end);}else if(period==='specific-month'&&monthFilter.value!=='all'&&monthYearFilter.value){const y=parseInt(monthYearFilter.value),m=parseInt(monthFilter.value)-1;const start=new Date(y,m,1);start.setHours(0,0,0,0);const end=new Date(y,m+1,0);end.setHours(23,59,59,999);filtered=filtered.filter(tx=>tx.date>=start&&tx.date<=end);}const type=typeFilter.value;if(type==='debit')filtered=filtered.filter(tx=>tx.debit>0);if(type==='credit')filtered=filtered.filter(tx=>tx.credit>0);filtered.sort((a,b)=>a.date-b.date);filteredTransactions=filtered;renderTable();}
-  function renderTable(){if(!filteredTransactions.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;">No transactions</td></tr>`;return;}let rows='';let runningBalance=0;if(!showWeekBroughtForward){filteredTransactions.forEach(tx=>{runningBalance+=(tx.credit-tx.debit);rows+=buildTxRow(tx,runningBalance,tx.date.toISOString().split('T')[0]);});tbody.innerHTML=rows;attachRowMenuListeners();return;}const weekMap=new Map();filteredTransactions.forEach(tx=>{const wy=getWeekYear(new Date(tx.date));const k=weekKey(wy.year,wy.week);if(!weekMap.has(k))weekMap.set(k,{year:wy.year,week:wy.week,txns:[]});weekMap.get(k).txns.push(tx);});[...weekMap.keys()].sort().forEach(k=>{const{year,week,txns}=weekMap.get(k);rows+=`<tr class="week-start-row"><td colspan="3">↳ <strong>Week ${week}, ${year} starting balance</strong></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${runningBalance.toFixed(2)}</strong></td><td></td></tr>`;txns.sort((a,b)=>a.date-b.date).forEach(tx=>{runningBalance+=(tx.credit-tx.debit);rows+=buildTxRow(tx,runningBalance,tx.date.toISOString().split('T')[0]);});});tbody.innerHTML=rows;attachRowMenuListeners();}
-  function buildTxRow(tx,balance,dateStr){return`<tr><td>${dateStr}</td><td>${escapeHtml(tx.description)}</td><td>${escapeHtml(tx.ref||'-')}</td><td class="text-right">${tx.debit?tx.debit.toFixed(2):''}</td><td class="text-right">${tx.credit?tx.credit.toFixed(2):''}</td><td class="text-right">${balance.toFixed(2)}</td><td class="action-cell"><button class="action-btn" data-id="${tx.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" data-menu-id="${tx.id}"><button class="row-dropdown-item edit" data-id="${tx.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete" data-id="${tx.id}"><i class="fa fa-trash"></i> Delete</button></div></td></tr>`;}
-  function attachRowMenuListeners(){document.querySelectorAll('#expenses-table-body .action-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const menu=btn.nextElementSibling;if(activeRowMenu===menu){menu.classList.remove('show');activeRowMenu=null;}else{if(activeRowMenu)activeRowMenu.classList.remove('show');menu.classList.add('show');activeRowMenu=menu;}});});document.querySelectorAll('#expenses-table-body .row-dropdown-item.edit').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const tx=allTransactions.find(t=>t.id===btn.dataset.id);if(tx)editTransaction(tx);if(activeRowMenu)activeRowMenu.classList.remove('show');});});document.querySelectorAll('#expenses-table-body .row-dropdown-item.delete').forEach(btn=>{btn.addEventListener('click',async(e)=>{e.stopPropagation();if(confirm('Delete this transaction?'))await deleteDoc(doc(db,CF_COLLECTION,btn.dataset.id));if(activeRowMenu)activeRowMenu.classList.remove('show');});});}
-  function escapeHtml(s){return s?.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m])??s;}
-  toggleFormBtn.addEventListener('click',()=>{cfFormVisible=!cfFormVisible;expenseForm.classList.toggle('hide',!cfFormVisible);toggleFormBtn.innerHTML=cfFormVisible?'<i class="fa fa-minus"></i> Hide':'<i class="fa fa-plus"></i> Transaction';if(!cfFormVisible)cancelEdit();});
-  function cancelEdit(){editingId=null;expenseForm.reset();dateInput.value=new Date().toISOString().split('T')[0];submitBtn.innerText='Add';cancelEditBtn.classList.add('hide');}
-  cancelEditBtn.addEventListener('click',cancelEdit);
-  function editTransaction(tx){editingId=tx.id;dateInput.value=tx.date.toISOString().split('T')[0];descInput.value=tx.description||'';refInput.value=tx.ref||'';debitInput.value=tx.debit;creditInput.value=tx.credit;submitBtn.innerText='Update';cancelEditBtn.classList.remove('hide');if(!cfFormVisible){cfFormVisible=true;expenseForm.classList.remove('hide');toggleFormBtn.innerHTML='<i class="fa fa-minus"></i> Hide';}}
-  expenseForm.addEventListener('submit',async(e)=>{e.preventDefault();const debit=parseFloat(debitInput.value)||0;const credit=parseFloat(creditInput.value)||0;if(!dateInput.value||!descInput.value.trim()||(debit===0&&credit===0)){formError.innerText='Complete fields (debit or credit)';return;}const txData={date:Timestamp.fromDate(new Date(dateInput.value)),description:descInput.value.trim(),ref:refInput.value.trim()||'',debit,credit,updatedAt:serverTimestamp()};try{if(editingId){await updateDoc(doc(db,CF_COLLECTION,editingId),txData);}else{await addDoc(collection(db,CF_COLLECTION),{...txData,createdAt:serverTimestamp()});}cancelEdit();cfFormVisible=false;expenseForm.classList.add('hide');toggleFormBtn.innerHTML='<i class="fa fa-plus"></i> Transaction';}catch(err){formError.innerText=err.message;}});
-  onSnapshot(query(collection(db,CF_COLLECTION),orderBy("date","asc")),(snap)=>{allTransactions=snap.docs.map(d=>{const data=d.data();return{id:d.id,date:data.date?.toDate()||new Date(),description:data.description||'',ref:data.ref||'',debit:data.debit||0,credit:data.credit||0};});populateWeekSelect();populateMonthYear();filterTransactions();});
-  searchFilter.addEventListener('input',filterTransactions);periodFilter.addEventListener('change',filterTransactions);weekFilter.addEventListener('change',filterTransactions);monthFilter.addEventListener('change',filterTransactions);monthYearFilter.addEventListener('change',filterTransactions);typeFilter.addEventListener('change',filterTransactions);
-  toggleWeekFilter.addEventListener('change',(e)=>{weekFilterContainer.classList.toggle('hide',!e.target.checked);});
-  toggleMonthFilter.addEventListener('change',(e)=>{monthFilterContainer.classList.toggle('hide',!e.target.checked);});
-  toggleWeekBfBtn.addEventListener('click',()=>{showWeekBroughtForward=!showWeekBroughtForward;toggleWeekBfBtn.innerHTML=showWeekBroughtForward?'<i class="fa fa-calendar"></i> Hide week b/f':'<i class="fa fa-calendar"></i> Show week b/f';renderTable();});
-  cfDropdownBtn.addEventListener('click',(e)=>{e.stopPropagation();cfDropdownMenu.classList.toggle('show');});
-  downloadPdfBtn.addEventListener('click',()=>{if(!filteredTransactions.length)return alert('No data');const{jsPDF}=window.jspdf;const docPdf=new jsPDF('landscape');docPdf.setFontSize(16);docPdf.text('PENTA CASH FLOW',20,20);const body=filteredTransactions.map(t=>[t.date.toISOString().split('T')[0],t.description,t.ref||'-',t.debit.toFixed(2),t.credit.toFixed(2)]);docPdf.autoTable({head:[['Date','Description','Ref','Debit','Credit']],body,startY:30});docPdf.save('cashflow.pdf');});
-  dateInput.value=new Date().toISOString().split('T')[0];
+  const expenseForm   = document.getElementById("expense-form");
+  const tbody         = document.getElementById("expenses-table-body");
+  const formError     = document.getElementById("expense-form-error");
+  const toggleFormBtn = document.getElementById("toggle-form-btn");
+  const dateInput     = document.getElementById("exp-date");
+  const descInput     = document.getElementById("exp-description");
+  const refInput      = document.getElementById("exp-ref");
+  const debitInput    = document.getElementById("exp-debit");
+  const creditInput   = document.getElementById("exp-credit");
+  const submitBtn     = document.getElementById("submit-btn");
+  const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  const searchFilter  = document.getElementById("search-filter");
+  const weekFilter    = document.getElementById("week-filter");
+  const monthFilter   = document.getElementById("month-filter");
+  const monthYearFilter = document.getElementById("month-year-filter");
+  const periodFilter  = document.getElementById("period-filter");
+  const typeFilter    = document.getElementById("type-filter");
+  const toggleWeekFilter  = document.getElementById("toggle-week-filter");
+  const toggleMonthFilter = document.getElementById("toggle-month-filter");
+  const weekFilterContainer  = document.getElementById("week-filter-container");
+  const monthFilterContainer = document.getElementById("month-filter-container");
+  const downloadPdfBtn  = document.getElementById("download-pdf-btn");
+  const toggleWeekBfBtn = document.getElementById("toggle-week-bf-btn");
+  const cfDropdownMenu  = document.getElementById("cf-dropdown-menu");
+  const cfDropdownBtn   = document.getElementById("cf-dropdown-btn");
+
+  let allTransactions = [], filteredTransactions = [];
+  let editingId = null, cfFormVisible = false, activeRowMenu = null;
+  let showWeekBroughtForward = true;
+
+  // ── Persist week filter state ──
+  const LS = {
+    get: k => localStorage.getItem(k),
+    set: (k,v) => localStorage.setItem(k, v)
+  };
+
+  // Restore persisted state
+  function restoreFilterState() {
+    const weekOn = LS.get('cf_weekFilterOn') === 'true';
+    const monthOn = LS.get('cf_monthFilterOn') === 'true';
+    const period = LS.get('cf_period') || 'week-number';
+    const type = LS.get('cf_type') || 'all';
+
+    if (weekOn) {
+      toggleWeekFilter.checked = true;
+      weekFilterContainer.classList.remove('hide');
+    }
+    if (monthOn) {
+      toggleMonthFilter.checked = true;
+      monthFilterContainer.classList.remove('hide');
+    }
+    periodFilter.value = period;
+    typeFilter.value = type;
+
+    const wkBfOff = LS.get('cf_weekBfOff') === 'true';
+    if (wkBfOff) {
+      showWeekBroughtForward = false;
+      toggleWeekBfBtn.innerHTML = '<i class="fa fa-calendar"></i> Show week b/f';
+    }
+  }
+  restoreFilterState();
+
+  // ── Week helpers ──
+  function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+  function getWeekYear(date) {
+    let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    return { week: getWeekNumber(date), year: d.getUTCFullYear() };
+  }
+  function getMondayOfIsoWeek(year, week) {
+    const jan4 = new Date(year, 0, 4);
+    const dow = jan4.getDay() || 7;
+    const w1m = new Date(jan4); w1m.setDate(jan4.getDate() - (dow - 1));
+    const mon = new Date(w1m); mon.setDate(w1m.getDate() + (week - 1) * 7);
+    mon.setHours(0, 0, 0, 0); return mon;
+  }
+  function weekKey(year, week) { return `${year}-${String(week).padStart(2, '0')}`; }
+
+  function populateWeekSelect() {
+    const savedWeek = LS.get('cf_selectedWeek');
+    if (!allTransactions.length) { weekFilter.innerHTML = '<option value="ALL">All weeks</option>'; return; }
+    const weeksSet = new Set();
+    allTransactions.forEach(tx => { const wy = getWeekYear(new Date(tx.date)); weeksSet.add(`${wy.year}-${wy.week}`); });
+    const weeks = Array.from(weeksSet).map(w => ({ year: +w.split('-')[0], week: +w.split('-')[1] })).sort((a, b) => b.year - a.year || b.week - a.week);
+    let opts = '<option value="ALL">All weeks</option>';
+    weeks.forEach(w => opts += `<option value="${w.year}-${w.week}">Week ${w.week}, ${w.year}</option>`);
+    weekFilter.innerHTML = opts;
+    // restore persisted selection
+    if (savedWeek && weekFilter.querySelector(`option[value="${savedWeek}"]`)) {
+      weekFilter.value = savedWeek;
+    }
+  }
+
+  function populateMonthYear() {
+    const savedMonth = LS.get('cf_selectedMonth');
+    const savedYear  = LS.get('cf_selectedYear');
+    if (!allTransactions.length) { monthFilter.innerHTML = '<option value="all">All months</option>'; monthYearFilter.innerHTML = '<option value="">Year</option>'; return; }
+    const years = [...new Set(allTransactions.map(tx => new Date(tx.date).getFullYear()))].sort((a, b) => b - a);
+    const mn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    let mo = '<option value="all">All months</option>';
+    for (let m = 0; m < 12; m++) mo += `<option value="${m+1}">${mn[m]}</option>`;
+    monthFilter.innerHTML = mo;
+    monthYearFilter.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    if (savedMonth) monthFilter.value = savedMonth;
+    if (savedYear && monthYearFilter.querySelector(`option[value="${savedYear}"]`)) monthYearFilter.value = savedYear;
+  }
+
+  function filterTransactions() {
+    let filtered = [...allTransactions];
+    const term = searchFilter.value.trim().toLowerCase();
+    if (term) filtered = filtered.filter(tx => (tx.description + ' ' + (tx.ref || '')).toLowerCase().includes(term));
+
+    const period = periodFilter.value;
+    LS.set('cf_period', period);
+
+    if (period === 'week-number' && weekFilter.value !== 'ALL') {
+      const [year, week] = weekFilter.value.split('-').map(Number);
+      const start = getMondayOfIsoWeek(year, week);
+      const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
+    } else if (period === 'specific-month' && monthFilter.value !== 'all' && monthYearFilter.value) {
+      const y = parseInt(monthYearFilter.value), m = parseInt(monthFilter.value) - 1;
+      const start = new Date(y, m, 1); start.setHours(0, 0, 0, 0);
+      const end = new Date(y, m + 1, 0); end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
+    }
+
+    const type = typeFilter.value;
+    LS.set('cf_type', type);
+    if (type === 'debit')  filtered = filtered.filter(tx => tx.debit > 0);
+    if (type === 'credit') filtered = filtered.filter(tx => tx.credit > 0);
+
+    filtered.sort((a, b) => a.date - b.date);
+    filteredTransactions = filtered;
+    renderTable();
+  }
+
+  function renderTable() {
+    if (!filteredTransactions.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No transactions</td></tr>`;
+      return;
+    }
+
+    let rows = '';
+
+    if (!showWeekBroughtForward) {
+      // No week rows — just running balance
+      let rb = 0;
+      filteredTransactions.forEach(tx => {
+        rb += (tx.credit - tx.debit);
+        rows += buildTxRow(tx, rb, tx.date.toISOString().split('T')[0]);
+      });
+      tbody.innerHTML = rows;
+      attachRowMenuListeners();
+      return;
+    }
+
+    // ── KEY FIX: compute the true starting balance for the filtered set ──
+    // All transactions sorted chronologically
+    const allSorted = [...allTransactions].sort((a, b) => a.date - b.date);
+
+    // Find the earliest date in the filtered set
+    const firstFilteredDate = filteredTransactions.length ? filteredTransactions[0].date : null;
+
+    // Sum everything BEFORE the first filtered transaction to get true opening balance
+    let openingBalance = 0;
+    if (firstFilteredDate) {
+      allSorted.forEach(tx => {
+        if (tx.date < firstFilteredDate) {
+          openingBalance += (tx.credit - tx.debit);
+        }
+      });
+    }
+
+    // Group filtered by ISO week
+    const weekMap = new Map();
+    filteredTransactions.forEach(tx => {
+      const wy = getWeekYear(new Date(tx.date));
+      const k = weekKey(wy.year, wy.week);
+      if (!weekMap.has(k)) weekMap.set(k, { year: wy.year, week: wy.week, txns: [] });
+      weekMap.get(k).txns.push(tx);
+    });
+
+    let runningBalance = openingBalance;
+    [...weekMap.keys()].sort().forEach(k => {
+      const { year, week, txns } = weekMap.get(k);
+      // The starting balance row shows balance BEFORE this week's transactions
+      rows += `<tr class="week-start-row">
+        <td colspan="3">↳ <strong>Week ${week}, ${year} starting balance</strong></td>
+        <td class="text-right">-</td>
+        <td class="text-right">-</td>
+        <td class="text-right"><strong>${runningBalance.toFixed(2)}</strong></td>
+        <td></td>
+      </tr>`;
+      txns.sort((a, b) => a.date - b.date).forEach(tx => {
+        runningBalance += (tx.credit - tx.debit);
+        rows += buildTxRow(tx, runningBalance, tx.date.toISOString().split('T')[0]);
+      });
+    });
+
+    tbody.innerHTML = rows;
+    attachRowMenuListeners();
+  }
+
+  function buildTxRow(tx, balance, dateStr) {
+    return `<tr>
+      <td>${dateStr}</td><td>${escapeHtml(tx.description)}</td><td>${escapeHtml(tx.ref || '-')}</td>
+      <td class="text-right">${tx.debit ? tx.debit.toFixed(2) : ''}</td>
+      <td class="text-right">${tx.credit ? tx.credit.toFixed(2) : ''}</td>
+      <td class="text-right">${balance.toFixed(2)}</td>
+      <td class="action-cell">
+        <button class="action-btn" data-id="${tx.id}"><i class="fa fa-ellipsis-v"></i></button>
+        <div class="row-dropdown-content" data-menu-id="${tx.id}">
+          <button class="row-dropdown-item edit" data-id="${tx.id}"><i class="fa fa-edit"></i> Edit</button>
+          <button class="row-dropdown-item delete" data-id="${tx.id}"><i class="fa fa-trash"></i> Delete</button>
+        </div>
+      </td>
+    </tr>`;
+  }
+
+  function attachRowMenuListeners() {
+    document.querySelectorAll('#expenses-table-body .action-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        if (activeRowMenu === menu) { menu.classList.remove('show'); activeRowMenu = null; }
+        else { if (activeRowMenu) activeRowMenu.classList.remove('show'); menu.classList.add('show'); activeRowMenu = menu; }
+      });
+    });
+    document.querySelectorAll('#expenses-table-body .row-dropdown-item.edit').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); const tx = allTransactions.find(t => t.id === btn.dataset.id); if (tx) editTransaction(tx); if (activeRowMenu) activeRowMenu.classList.remove('show'); });
+    });
+    document.querySelectorAll('#expenses-table-body .row-dropdown-item.delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => { e.stopPropagation(); if (confirm('Delete this transaction?')) await deleteDoc(doc(db, CF_COLLECTION, btn.dataset.id)); if (activeRowMenu) activeRowMenu.classList.remove('show'); });
+    });
+  }
+
+  function escapeHtml(s) { return s?.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m]) ?? s; }
+
+  // Form toggle
+  toggleFormBtn.addEventListener('click', () => {
+    cfFormVisible = !cfFormVisible;
+    expenseForm.classList.toggle('hide', !cfFormVisible);
+    toggleFormBtn.innerHTML = cfFormVisible ? '<i class="fa fa-minus"></i> Hide' : '<i class="fa fa-plus"></i> Transaction';
+    if (!cfFormVisible) cancelEdit();
+  });
+  function cancelEdit() { editingId = null; expenseForm.reset(); dateInput.value = new Date().toISOString().split('T')[0]; submitBtn.innerText = 'Add'; cancelEditBtn.classList.add('hide'); }
+  cancelEditBtn.addEventListener('click', cancelEdit);
+  function editTransaction(tx) {
+    editingId = tx.id;
+    dateInput.value = tx.date.toISOString().split('T')[0];
+    descInput.value = tx.description || ''; refInput.value = tx.ref || '';
+    debitInput.value = tx.debit; creditInput.value = tx.credit;
+    submitBtn.innerText = 'Update'; cancelEditBtn.classList.remove('hide');
+    if (!cfFormVisible) { cfFormVisible = true; expenseForm.classList.remove('hide'); toggleFormBtn.innerHTML = '<i class="fa fa-minus"></i> Hide'; }
+  }
+  expenseForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const debit = parseFloat(debitInput.value) || 0;
+    const credit = parseFloat(creditInput.value) || 0;
+    if (!dateInput.value || !descInput.value.trim() || (debit === 0 && credit === 0)) { formError.innerText = 'Complete fields (debit or credit)'; return; }
+    submitBtn.disabled = true; submitBtn.innerText = editingId ? 'Updating…' : 'Adding…';
+    const txData = { date: Timestamp.fromDate(new Date(dateInput.value)), description: descInput.value.trim(), ref: refInput.value.trim() || '', debit, credit, updatedAt: serverTimestamp() };
+    try {
+      if (editingId) await updateDoc(doc(db, CF_COLLECTION, editingId), txData);
+      else await addDoc(collection(db, CF_COLLECTION), { ...txData, createdAt: serverTimestamp() });
+      cancelEdit(); cfFormVisible = false; expenseForm.classList.add('hide'); toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Transaction';
+    } catch (err) { formError.innerText = err.message; }
+    submitBtn.disabled = false; submitBtn.innerText = editingId ? 'Update' : 'Add';
+  });
+
+  // Firestore
+  onSnapshot(query(collection(db, CF_COLLECTION), orderBy("date", "asc")), (snap) => {
+    allTransactions = snap.docs.map(d => { const data = d.data(); return { id: d.id, date: data.date?.toDate() || new Date(), description: data.description || '', ref: data.ref || '', debit: data.debit || 0, credit: data.credit || 0 }; });
+    populateWeekSelect();
+    populateMonthYear();
+    filterTransactions();
+  });
+
+  // Filter listeners — all persist to localStorage
+  searchFilter.addEventListener('input', filterTransactions);
+  periodFilter.addEventListener('change', filterTransactions);
+
+  weekFilter.addEventListener('change', () => {
+    LS.set('cf_selectedWeek', weekFilter.value);
+    filterTransactions();
+  });
+  monthFilter.addEventListener('change', () => {
+    LS.set('cf_selectedMonth', monthFilter.value);
+    filterTransactions();
+  });
+  monthYearFilter.addEventListener('change', () => {
+    LS.set('cf_selectedYear', monthYearFilter.value);
+    filterTransactions();
+  });
+  typeFilter.addEventListener('change', filterTransactions);
+
+  toggleWeekFilter.addEventListener('change', (e) => {
+    weekFilterContainer.classList.toggle('hide', !e.target.checked);
+    LS.set('cf_weekFilterOn', e.target.checked);
+  });
+  toggleMonthFilter.addEventListener('change', (e) => {
+    monthFilterContainer.classList.toggle('hide', !e.target.checked);
+    LS.set('cf_monthFilterOn', e.target.checked);
+  });
+
+  toggleWeekBfBtn.addEventListener('click', () => {
+    showWeekBroughtForward = !showWeekBroughtForward;
+    LS.set('cf_weekBfOff', !showWeekBroughtForward);
+    toggleWeekBfBtn.innerHTML = showWeekBroughtForward ? '<i class="fa fa-calendar"></i> Hide week b/f' : '<i class="fa fa-calendar"></i> Show week b/f';
+    renderTable();
+  });
+
+  cfDropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); cfDropdownMenu.classList.toggle('show'); });
+
+  downloadPdfBtn.addEventListener('click', () => {
+    if (!filteredTransactions.length) return alert('No data');
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF('landscape');
+    docPdf.setFontSize(16); docPdf.text('PENTA CASH FLOW', 20, 20);
+    let b = 0;
+    const body = filteredTransactions.map(t => {
+      b += (t.credit - t.debit);
+      return [t.date.toISOString().split('T')[0], t.description, t.ref || '-', t.debit.toFixed(2), t.credit.toFixed(2), b.toFixed(2)];
+    });
+    docPdf.autoTable({ head: [['Date', 'Description', 'Ref', 'Debit', 'Credit', 'Balance']], body, startY: 30 });
+    docPdf.save('cashflow.pdf');
+  });
+
+  dateInput.value = new Date().toISOString().split('T')[0];
 
 
   // ════════════════════════════════════
   //  CHEQUE PAYMENTS
   // ════════════════════════════════════
   const chqForm=document.getElementById("chq-form"),chqTbody=document.getElementById("chq-table-body"),chqFormError=document.getElementById("chq-form-error"),toggleChqBtn=document.getElementById("toggle-chq-form-btn"),chqDateInput=document.getElementById("chq-date"),chqDescInput=document.getElementById("chq-description"),chqAccountInput=document.getElementById("chq-account"),chqSupplierInput=document.getElementById("chq-supplier"),chqAmountInput=document.getElementById("chq-amount"),chqSubmitBtn=document.getElementById("chq-submit-btn"),chqCancelBtn=document.getElementById("chq-cancel-btn"),chqSearch=document.getElementById("chq-search"),chqAccountFilter=document.getElementById("chq-account-filter"),chqPeriodFilter=document.getElementById("chq-period-filter"),chqPaidFilter=document.getElementById("chq-paid-filter"),chqTotalDisplay=document.getElementById("chq-total-display"),chqCountDisplay=document.getElementById("chq-count-display"),chqUnpaidDisplay=document.getElementById("chq-unpaid-display"),chqPaidDisplay=document.getElementById("chq-paid-display"),chqDropdownBtn=document.getElementById("chq-dropdown-btn"),chqDropdownMenu=document.getElementById("chq-dropdown-menu"),chqDownloadPdf=document.getElementById("chq-download-pdf-btn");
-
   let allCheques=[],filteredCheques=[],chqEditingId=null,chqFormVisible=false,activeChqMenu=null;
-
-  // Pay modal state
-  let payTargetId = null;
-  let payTargetCheckbox = null;
-
+  let payTargetId=null,payTargetCheckbox=null;
   chqDateInput.value=new Date().toISOString().split('T')[0];
-
   toggleChqBtn.addEventListener('click',()=>{chqFormVisible=!chqFormVisible;chqForm.classList.toggle('hide',!chqFormVisible);toggleChqBtn.innerHTML=chqFormVisible?'<i class="fa fa-minus"></i> Hide':'<i class="fa fa-plus"></i> Cheque Entry';if(!chqFormVisible)cancelChqEdit();});
   function cancelChqEdit(){chqEditingId=null;chqForm.reset();chqDateInput.value=new Date().toISOString().split('T')[0];chqSubmitBtn.innerText='Add';chqCancelBtn.classList.add('hide');}
   chqCancelBtn.addEventListener('click',cancelChqEdit);
   function editCheque(chq){chqEditingId=chq.id;chqDateInput.value=chq.date.toISOString().split('T')[0];chqDescInput.value=chq.description||'';chqAccountInput.value=chq.account||'';chqSupplierInput.value=chq.supplier||'';chqAmountInput.value=chq.amount||0;chqSubmitBtn.innerText='Update';chqCancelBtn.classList.remove('hide');if(!chqFormVisible){chqFormVisible=true;chqForm.classList.remove('hide');toggleChqBtn.innerHTML='<i class="fa fa-minus"></i> Hide';}}
-  chqForm.addEventListener('submit',async(e)=>{e.preventDefault();const amount=parseFloat(chqAmountInput.value)||0;if(!chqDateInput.value||!chqDescInput.value.trim()||amount<=0){chqFormError.innerText='Date, description and amount are required.';return;}const data={date:Timestamp.fromDate(new Date(chqDateInput.value)),description:chqDescInput.value.trim(),account:chqAccountInput.value.trim()||'',supplier:chqSupplierInput.value.trim()||'',amount,paid:false,updatedAt:serverTimestamp()};try{if(chqEditingId){await updateDoc(doc(db,CHQ_COLLECTION,chqEditingId),data);}else{await addDoc(collection(db,CHQ_COLLECTION),{...data,createdAt:serverTimestamp()});}cancelChqEdit();chqFormVisible=false;chqForm.classList.add('hide');toggleChqBtn.innerHTML='<i class="fa fa-plus"></i> Cheque Entry';}catch(err){chqFormError.innerText=err.message;}});
-
+  chqForm.addEventListener('submit',async(e)=>{e.preventDefault();const amount=parseFloat(chqAmountInput.value)||0;if(!chqDateInput.value||!chqDescInput.value.trim()||amount<=0){chqFormError.innerText='Date, description and amount are required.';return;}chqSubmitBtn.disabled=true;chqSubmitBtn.innerText=chqEditingId?'Updating…':'Adding…';const data={date:Timestamp.fromDate(new Date(chqDateInput.value)),description:chqDescInput.value.trim(),account:chqAccountInput.value.trim()||'',supplier:chqSupplierInput.value.trim()||'',amount,paid:false,updatedAt:serverTimestamp()};try{if(chqEditingId)await updateDoc(doc(db,CHQ_COLLECTION,chqEditingId),data);else await addDoc(collection(db,CHQ_COLLECTION),{...data,createdAt:serverTimestamp()});cancelChqEdit();chqFormVisible=false;chqForm.classList.add('hide');toggleChqBtn.innerHTML='<i class="fa fa-plus"></i> Cheque Entry';}catch(err){chqFormError.innerText=err.message;}chqSubmitBtn.disabled=false;chqSubmitBtn.innerText=chqEditingId?'Update':'Add';});
   function populateChqAccountFilter(){const accounts=[...new Set(allCheques.map(c=>c.account).filter(Boolean))].sort();let opts='<option value="all">All accounts</option>';accounts.forEach(a=>opts+=`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);chqAccountFilter.innerHTML=opts;}
-
-  function filterCheques(){
-    let filtered=[...allCheques];
-    const term=chqSearch.value.trim().toLowerCase();
-    if(term)filtered=filtered.filter(c=>(c.description+' '+(c.account||'')+' '+(c.supplier||'')).toLowerCase().includes(term));
-    if(chqAccountFilter.value!=='all')filtered=filtered.filter(c=>c.account===chqAccountFilter.value);
-    const now=new Date();
-    if(chqPeriodFilter.value==='this-month'){const s=new Date(now.getFullYear(),now.getMonth(),1);const e=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);filtered=filtered.filter(c=>c.date>=s&&c.date<=e);}
-    if(chqPeriodFilter.value==='last-month'){const s=new Date(now.getFullYear(),now.getMonth()-1,1);const e=new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999);filtered=filtered.filter(c=>c.date>=s&&c.date<=e);}
-    if(chqPaidFilter.value==='paid')filtered=filtered.filter(c=>c.paid===true);
-    if(chqPaidFilter.value==='unpaid')filtered=filtered.filter(c=>!c.paid);
-    filtered.sort((a,b)=>a.date-b.date);
-    filteredCheques=filtered;
-    renderChqTable();
-  }
-
-  function renderChqTable(){
-    const total=filteredCheques.reduce((s,c)=>s+c.amount,0);
-    chqTotalDisplay.textContent=total.toFixed(2);
-    chqCountDisplay.textContent=filteredCheques.length;
-    chqUnpaidDisplay.textContent=allCheques.filter(c=>!c.paid).length;
-    chqPaidDisplay.textContent=allCheques.filter(c=>c.paid).length;
-
-    if(!filteredCheques.length){chqTbody.innerHTML=`<tr><td colspan="9" style="text-align:center;">No cheque payments recorded</td></tr>`;return;}
-    let rows='';let balance=0;
-    filteredCheques.forEach(chq=>{
-      balance+=chq.amount;
-      const dateStr=chq.date.toISOString().split('T')[0];
-      const isPaid=chq.paid===true;
-      const badgeHtml=isPaid
-        ?`<span class="paid-badge paid"><i class="fa fa-check-circle"></i> Paid</span>`
-        :`<span class="paid-badge unpaid"><i class="fa fa-clock-o"></i> Unpaid</span>`;
-      const checkHtml=`<div class="pay-check-wrap">
-        <input type="checkbox" class="pay-checkbox" data-id="${chq.id}"
-          ${isPaid?'checked disabled':''}
-          title="${isPaid?'Already paid':'Tick to mark as paid'}">
-      </div>`;
-
-      rows+=`<tr data-id="${chq.id}">
-        <td>${dateStr}</td>
-        <td>${escapeHtml(chq.description)}</td>
-        <td>${escapeHtml(chq.account||'-')}</td>
-        <td>${escapeHtml(chq.supplier||'-')}</td>
-        <td class="text-right">${chq.amount.toFixed(2)}</td>
-        <td class="text-right">${balance.toFixed(2)}</td>
-        <td>${badgeHtml}</td>
-        <td>${checkHtml}</td>
-        <td class="action-cell">
-          <button class="action-btn chq-action-btn" data-id="${chq.id}"><i class="fa fa-ellipsis-v"></i></button>
-          <div class="row-dropdown-content" data-menu-id="${chq.id}">
-            ${isPaid?`<button class="row-dropdown-item view-details chq-view-details" data-id="${chq.id}"><i class="fa fa-eye"></i> View Details</button>`:''}
-            <button class="row-dropdown-item edit chq-edit" data-id="${chq.id}"><i class="fa fa-edit"></i> Edit</button>
-            <button class="row-dropdown-item delete chq-delete" data-id="${chq.id}"><i class="fa fa-trash"></i> Delete</button>
-          </div>
-        </td>
-      </tr>`;
-
-      // if paid — render hidden detail row (toggled by View Details)
-      if(isPaid && chq.paymentDetails){
-        const pd=chq.paymentDetails;
-        rows+=`<tr class="payment-detail-row" id="pdet-${chq.id}">
-          <td colspan="9">
-            <div class="pdet">
-              <span><span class="plabel">Cheque #:</span> ${escapeHtml(pd.chequeNo||'—')}</span>
-              <span><span class="plabel">Receipt #:</span> ${escapeHtml(pd.receiptNo||'—')}</span>
-              <span><span class="plabel">Payment Date:</span> ${escapeHtml(pd.paymentDate||'—')}</span>
-              <span><span class="plabel">Amount Paid:</span> ${pd.amountPaid?Number(pd.amountPaid).toFixed(2):'—'}</span>
-            </div>
-          </td>
-        </tr>`;
-      }
-    });
-    chqTbody.innerHTML=rows;
-    attachChqMenuListeners();
-
-    // attach pay checkbox listeners
-    chqTbody.querySelectorAll('.pay-checkbox:not([disabled])').forEach(cb=>{
-      cb.addEventListener('change',function(){
-        if(this.checked){
-          const chq=allCheques.find(c=>c.id===this.dataset.id);
-          if(chq) openPayModal(chq,this);
-        }
-      });
-    });
-  }
-
-  // ── Pay Modal ──
-  function openPayModal(chq, checkbox){
-    payTargetId=chq.id;
-    payTargetCheckbox=checkbox;
-    document.getElementById('pay-modal-ref').textContent=`${chq.description} — ${chq.account||''} — K${chq.amount.toFixed(2)}`;
-    document.getElementById('pay-cheque-no').value='';
-    document.getElementById('pay-receipt-no').value='';
-    document.getElementById('pay-date').value=new Date().toISOString().split('T')[0];
-    document.getElementById('pay-amount').value=chq.amount.toFixed(2);
-    document.getElementById('pay-confirm-btn').disabled=false;
-    document.getElementById('pay-confirm-btn').innerHTML='<i class="fa fa-check"></i> Confirm Payment';
-    document.getElementById('pay-modal').classList.add('open');
-  }
-  window.closePayModal=function(){
-    // uncheck if modal closed without confirming
-    if(payTargetCheckbox){payTargetCheckbox.checked=false;}
-    document.getElementById('pay-modal').classList.remove('open');
-    payTargetId=null;payTargetCheckbox=null;
-  };
-  window.confirmPayment=async function(){
-    if(!payTargetId)return;
-    const chequeNo=document.getElementById('pay-cheque-no').value.trim();
-    const receiptNo=document.getElementById('pay-receipt-no').value.trim();
-    const paymentDate=document.getElementById('pay-date').value;
-    const amountPaid=parseFloat(document.getElementById('pay-amount').value)||0;
-    if(!chequeNo||!receiptNo||!paymentDate||amountPaid<=0){
-      alert('Please fill in all payment details.');return;
-    }
-    const btn=document.getElementById('pay-confirm-btn');
-    btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Saving…';
-    try{
-      await updateDoc(doc(db,CHQ_COLLECTION,payTargetId),{
-        paid:true,
-        paymentDetails:{chequeNo,receiptNo,paymentDate,amountPaid},
-        paidAt:serverTimestamp()
-      });
-      document.getElementById('pay-modal').classList.remove('open');
-      payTargetId=null;payTargetCheckbox=null;
-    }catch(err){
-      alert('Error saving payment: '+err.message);
-      btn.disabled=false;btn.innerHTML='<i class="fa fa-check"></i> Confirm Payment';
-    }
-  };
-
-  function attachChqMenuListeners(){
-    document.querySelectorAll('.chq-action-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const menu=btn.nextElementSibling;if(activeChqMenu===menu){menu.classList.remove('show');activeChqMenu=null;}else{if(activeChqMenu)activeChqMenu.classList.remove('show');menu.classList.add('show');activeChqMenu=menu;}});});
-    document.querySelectorAll('.chq-edit').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const chq=allCheques.find(c=>c.id===btn.dataset.id);if(chq)editCheque(chq);if(activeChqMenu)activeChqMenu.classList.remove('show');});});
-    document.querySelectorAll('.chq-delete').forEach(btn=>{btn.addEventListener('click',async(e)=>{e.stopPropagation();if(confirm('Delete this cheque payment?'))await deleteDoc(doc(db,CHQ_COLLECTION,btn.dataset.id));if(activeChqMenu)activeChqMenu.classList.remove('show');});});
-    document.querySelectorAll('.chq-view-details').forEach(btn=>{
-      btn.addEventListener('click',(e)=>{
-        e.stopPropagation();
-        const detRow=document.getElementById('pdet-'+btn.dataset.id);
-        if(detRow){
-          const isVisible=detRow.classList.contains('visible');
-          detRow.classList.toggle('visible',!isVisible);
-          btn.innerHTML=isVisible?'<i class="fa fa-eye"></i> View Details':'<i class="fa fa-eye-slash"></i> Hide Details';
-        }
-        if(activeChqMenu)activeChqMenu.classList.remove('show');
-      });
-    });
-  }
-
-  onSnapshot(query(collection(db,CHQ_COLLECTION),orderBy("date","asc")),(snap)=>{
-    allCheques=snap.docs.map(d=>{const data=d.data();return{id:d.id,date:data.date?.toDate()||new Date(),description:data.description||'',account:data.account||'',supplier:data.supplier||'',amount:data.amount||0,paid:data.paid||false,paymentDetails:data.paymentDetails||null};});
-    populateChqAccountFilter();filterCheques();
-  });
-
-  chqSearch.addEventListener('input',filterCheques);
-  chqAccountFilter.addEventListener('change',filterCheques);
-  chqPeriodFilter.addEventListener('change',filterCheques);
-  chqPaidFilter.addEventListener('change',filterCheques);
+  function filterCheques(){let filtered=[...allCheques];const term=chqSearch.value.trim().toLowerCase();if(term)filtered=filtered.filter(c=>(c.description+' '+(c.account||'')+' '+(c.supplier||'')).toLowerCase().includes(term));if(chqAccountFilter.value!=='all')filtered=filtered.filter(c=>c.account===chqAccountFilter.value);const now=new Date();if(chqPeriodFilter.value==='this-month'){const s=new Date(now.getFullYear(),now.getMonth(),1);const e=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59,999);filtered=filtered.filter(c=>c.date>=s&&c.date<=e);}if(chqPeriodFilter.value==='last-month'){const s=new Date(now.getFullYear(),now.getMonth()-1,1);const e=new Date(now.getFullYear(),now.getMonth(),0,23,59,59,999);filtered=filtered.filter(c=>c.date>=s&&c.date<=e);}if(chqPaidFilter.value==='paid')filtered=filtered.filter(c=>c.paid===true);if(chqPaidFilter.value==='unpaid')filtered=filtered.filter(c=>!c.paid);filtered.sort((a,b)=>a.date-b.date);filteredCheques=filtered;renderChqTable();}
+  function renderChqTable(){const total=filteredCheques.reduce((s,c)=>s+c.amount,0);chqTotalDisplay.textContent=total.toFixed(2);chqCountDisplay.textContent=filteredCheques.length;chqUnpaidDisplay.textContent=allCheques.filter(c=>!c.paid).length;chqPaidDisplay.textContent=allCheques.filter(c=>c.paid).length;if(!filteredCheques.length){chqTbody.innerHTML=`<tr><td colspan="9" style="text-align:center;">No cheque payments recorded</td></tr>`;return;}let rows='';let balance=0;filteredCheques.forEach(chq=>{balance+=chq.amount;const dateStr=chq.date.toISOString().split('T')[0];const isPaid=chq.paid===true;const badgeHtml=isPaid?`<span class="paid-badge paid"><i class="fa fa-check-circle"></i> Paid</span>`:`<span class="paid-badge unpaid"><i class="fa fa-clock-o"></i> Unpaid</span>`;const checkHtml=`<div class="pay-check-wrap"><input type="checkbox" class="pay-checkbox" data-id="${chq.id}" ${isPaid?'checked disabled':''} title="${isPaid?'Already paid':'Tick to mark as paid'}"></div>`;rows+=`<tr data-id="${chq.id}"><td>${dateStr}</td><td>${escapeHtml(chq.description)}</td><td>${escapeHtml(chq.account||'-')}</td><td>${escapeHtml(chq.supplier||'-')}</td><td class="text-right">${chq.amount.toFixed(2)}</td><td class="text-right">${balance.toFixed(2)}</td><td>${badgeHtml}</td><td>${checkHtml}</td><td class="action-cell"><button class="action-btn chq-action-btn" data-id="${chq.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" data-menu-id="${chq.id}">${isPaid?`<button class="row-dropdown-item view-details chq-view-details" data-id="${chq.id}"><i class="fa fa-eye"></i> View Details</button>`:''}<button class="row-dropdown-item edit chq-edit" data-id="${chq.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete chq-delete" data-id="${chq.id}"><i class="fa fa-trash"></i> Delete</button></div></td></tr>`;if(isPaid&&chq.paymentDetails){const pd=chq.paymentDetails;rows+=`<tr class="payment-detail-row" id="pdet-${chq.id}"><td colspan="9"><div class="pdet"><span><span class="plabel">Cheque #:</span> ${escapeHtml(pd.chequeNo||'—')}</span><span><span class="plabel">Receipt #:</span> ${escapeHtml(pd.receiptNo||'—')}</span><span><span class="plabel">Payment Date:</span> ${escapeHtml(pd.paymentDate||'—')}</span><span><span class="plabel">Amount Paid:</span> ${pd.amountPaid?Number(pd.amountPaid).toFixed(2):'—'}</span></div></td></tr>`;}});chqTbody.innerHTML=rows;attachChqMenuListeners();chqTbody.querySelectorAll('.pay-checkbox:not([disabled])').forEach(cb=>{cb.addEventListener('change',function(){if(this.checked){const chq=allCheques.find(c=>c.id===this.dataset.id);if(chq)openPayModal(chq,this);}});});}
+  function openPayModal(chq,checkbox){payTargetId=chq.id;payTargetCheckbox=checkbox;document.getElementById('pay-modal-ref').textContent=`${chq.description} — ${chq.account||''} — K${chq.amount.toFixed(2)}`;document.getElementById('pay-cheque-no').value='';document.getElementById('pay-receipt-no').value='';document.getElementById('pay-date').value=new Date().toISOString().split('T')[0];document.getElementById('pay-amount').value=chq.amount.toFixed(2);document.getElementById('pay-confirm-btn').disabled=false;document.getElementById('pay-confirm-btn').innerHTML='<i class="fa fa-check"></i> Confirm Payment';document.getElementById('pay-modal').classList.add('open');}
+  window.closePayModal=function(){if(payTargetCheckbox)payTargetCheckbox.checked=false;document.getElementById('pay-modal').classList.remove('open');payTargetId=null;payTargetCheckbox=null;};
+  window.confirmPayment=async function(){if(!payTargetId)return;const chequeNo=document.getElementById('pay-cheque-no').value.trim();const receiptNo=document.getElementById('pay-receipt-no').value.trim();const paymentDate=document.getElementById('pay-date').value;const amountPaid=parseFloat(document.getElementById('pay-amount').value)||0;if(!chequeNo||!receiptNo||!paymentDate||amountPaid<=0){alert('Please fill in all payment details.');return;}const btn=document.getElementById('pay-confirm-btn');btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Saving…';try{await updateDoc(doc(db,CHQ_COLLECTION,payTargetId),{paid:true,paymentDetails:{chequeNo,receiptNo,paymentDate,amountPaid},paidAt:serverTimestamp()});document.getElementById('pay-modal').classList.remove('open');payTargetId=null;payTargetCheckbox=null;}catch(err){alert('Error saving payment: '+err.message);btn.disabled=false;btn.innerHTML='<i class="fa fa-check"></i> Confirm Payment';}};
+  function attachChqMenuListeners(){document.querySelectorAll('.chq-action-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const menu=btn.nextElementSibling;if(activeChqMenu===menu){menu.classList.remove('show');activeChqMenu=null;}else{if(activeChqMenu)activeChqMenu.classList.remove('show');menu.classList.add('show');activeChqMenu=menu;}});});document.querySelectorAll('.chq-edit').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const chq=allCheques.find(c=>c.id===btn.dataset.id);if(chq)editCheque(chq);if(activeChqMenu)activeChqMenu.classList.remove('show');});});document.querySelectorAll('.chq-delete').forEach(btn=>{btn.addEventListener('click',async(e)=>{e.stopPropagation();if(confirm('Delete this cheque payment?'))await deleteDoc(doc(db,CHQ_COLLECTION,btn.dataset.id));if(activeChqMenu)activeChqMenu.classList.remove('show');});});document.querySelectorAll('.chq-view-details').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const detRow=document.getElementById('pdet-'+btn.dataset.id);if(detRow){const isVisible=detRow.classList.contains('visible');detRow.classList.toggle('visible',!isVisible);btn.innerHTML=isVisible?'<i class="fa fa-eye"></i> View Details':'<i class="fa fa-eye-slash"></i> Hide Details';}if(activeChqMenu)activeChqMenu.classList.remove('show');});});}
+  onSnapshot(query(collection(db,CHQ_COLLECTION),orderBy("date","asc")),(snap)=>{allCheques=snap.docs.map(d=>{const data=d.data();return{id:d.id,date:data.date?.toDate()||new Date(),description:data.description||'',account:data.account||'',supplier:data.supplier||'',amount:data.amount||0,paid:data.paid||false,paymentDetails:data.paymentDetails||null};});populateChqAccountFilter();filterCheques();});
+  chqSearch.addEventListener('input',filterCheques);chqAccountFilter.addEventListener('change',filterCheques);chqPeriodFilter.addEventListener('change',filterCheques);chqPaidFilter.addEventListener('change',filterCheques);
   chqDropdownBtn.addEventListener('click',(e)=>{e.stopPropagation();chqDropdownMenu.classList.toggle('show');});
-  chqDownloadPdf.addEventListener('click',()=>{
-    if(!filteredCheques.length)return alert('No data');
-    const{jsPDF}=window.jspdf;const docPdf=new jsPDF('landscape');
-    docPdf.setFontSize(16);docPdf.text('PENTA CHEQUE PAYMENTS',20,20);
-    const body=filteredCheques.map(c=>[
-      c.date.toISOString().split('T')[0],c.description,c.account||'-',c.supplier||'-',
-      c.amount.toFixed(2),c.paid?'PAID':'UNPAID',
-      c.paymentDetails?c.paymentDetails.chequeNo||'-':'-',
-      c.paymentDetails?c.paymentDetails.receiptNo||'-':'-'
-    ]);
-    docPdf.autoTable({head:[['Date','Description','Account','Supplier','Amount','Status','Cheque #','Receipt #']],body,startY:30});
-    docPdf.save('cheque_payments.pdf');
-  });
+  chqDownloadPdf.addEventListener('click',()=>{if(!filteredCheques.length)return alert('No data');const{jsPDF}=window.jspdf;const docPdf=new jsPDF('landscape');docPdf.setFontSize(16);docPdf.text('PENTA CHEQUE PAYMENTS',20,20);const body=filteredCheques.map(c=>[c.date.toISOString().split('T')[0],c.description,c.account||'-',c.supplier||'-',c.amount.toFixed(2),c.paid?'PAID':'UNPAID',c.paymentDetails?c.paymentDetails.chequeNo||'-':'-',c.paymentDetails?c.paymentDetails.receiptNo||'-':'-']);docPdf.autoTable({head:[['Date','Description','Account','Supplier','Amount','Status','Cheque #','Receipt #']],body,startY:30});docPdf.save('cheque_payments.pdf');});
 
-  document.addEventListener('click',()=>{
-    if(activeRowMenu){activeRowMenu.classList.remove('show');activeRowMenu=null;}
-    if(activeChqMenu){activeChqMenu.classList.remove('show');activeChqMenu=null;}
+  // close all menus on outside click
+  document.addEventListener('click', () => {
+    if (activeRowMenu) { activeRowMenu.classList.remove('show'); activeRowMenu = null; }
+    if (activeChqMenu) { activeChqMenu.classList.remove('show'); activeChqMenu = null; }
     cfDropdownMenu.classList.remove('show');
     chqDropdownMenu.classList.remove('show');
   });
