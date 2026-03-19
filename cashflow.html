@@ -104,15 +104,19 @@
     .pay-checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: white; font-size: 13px; font-weight: 900; }
     .pay-checkbox:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── PAYMENT DETAILS (shown under paid row) ── */
+    /* ── PAYMENT DETAILS (hidden by default, toggled by View button) ── */
+    tr.payment-detail-row { display: none; }
+    tr.payment-detail-row.visible { display: table-row; }
     tr.payment-detail-row td {
       background: #f0fdf4 !important;
-      font-size: 11px; color: #065f46; padding: 4px 10px 8px 30px;
+      font-size: 11px; color: #065f46; padding: 6px 12px 10px 20px;
       border-top: none;
     }
-    .pdet { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+    .pdet { display: flex; flex-wrap: wrap; gap: 6px 24px; align-items: center; }
     .pdet span { display: flex; align-items: center; gap: 4px; }
     .pdet .plabel { font-weight: 700; color: #1a3a1a; }
+    .row-dropdown-item.view-details { color: #065f46; }
+    .row-dropdown-item.view-details:hover { background-color: #f0fdf4; }
 
     /* ── PAY MODAL ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.52); z-index: 9999; align-items: center; justify-content: center; }
@@ -490,16 +494,17 @@
         <td class="action-cell">
           <button class="action-btn chq-action-btn" data-id="${chq.id}"><i class="fa fa-ellipsis-v"></i></button>
           <div class="row-dropdown-content" data-menu-id="${chq.id}">
+            ${isPaid?`<button class="row-dropdown-item view-details chq-view-details" data-id="${chq.id}"><i class="fa fa-eye"></i> View Details</button>`:''}
             <button class="row-dropdown-item edit chq-edit" data-id="${chq.id}"><i class="fa fa-edit"></i> Edit</button>
             <button class="row-dropdown-item delete chq-delete" data-id="${chq.id}"><i class="fa fa-trash"></i> Delete</button>
           </div>
         </td>
       </tr>`;
 
-      // if paid — show payment details row
+      // if paid — render hidden detail row (toggled by View Details)
       if(isPaid && chq.paymentDetails){
         const pd=chq.paymentDetails;
-        rows+=`<tr class="payment-detail-row">
+        rows+=`<tr class="payment-detail-row" id="pdet-${chq.id}">
           <td colspan="9">
             <div class="pdet">
               <span><span class="plabel">Cheque #:</span> ${escapeHtml(pd.chequeNo||'—')}</span>
@@ -573,6 +578,18 @@
     document.querySelectorAll('.chq-action-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const menu=btn.nextElementSibling;if(activeChqMenu===menu){menu.classList.remove('show');activeChqMenu=null;}else{if(activeChqMenu)activeChqMenu.classList.remove('show');menu.classList.add('show');activeChqMenu=menu;}});});
     document.querySelectorAll('.chq-edit').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();const chq=allCheques.find(c=>c.id===btn.dataset.id);if(chq)editCheque(chq);if(activeChqMenu)activeChqMenu.classList.remove('show');});});
     document.querySelectorAll('.chq-delete').forEach(btn=>{btn.addEventListener('click',async(e)=>{e.stopPropagation();if(confirm('Delete this cheque payment?'))await deleteDoc(doc(db,CHQ_COLLECTION,btn.dataset.id));if(activeChqMenu)activeChqMenu.classList.remove('show');});});
+    document.querySelectorAll('.chq-view-details').forEach(btn=>{
+      btn.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        const detRow=document.getElementById('pdet-'+btn.dataset.id);
+        if(detRow){
+          const isVisible=detRow.classList.contains('visible');
+          detRow.classList.toggle('visible',!isVisible);
+          btn.innerHTML=isVisible?'<i class="fa fa-eye"></i> View Details':'<i class="fa fa-eye-slash"></i> Hide Details';
+        }
+        if(activeChqMenu)activeChqMenu.classList.remove('show');
+      });
+    });
   }
 
   onSnapshot(query(collection(db,CHQ_COLLECTION),orderBy("date","asc")),(snap)=>{
