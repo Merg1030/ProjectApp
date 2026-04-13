@@ -161,7 +161,7 @@
     </div>
   </div>
 
-  <!-- TAB 1 — CASH FLOW with PROPER CONTINUOUS BALANCE -->
+  <!-- TAB 1 — CASH FLOW -->
   <div id="cashflow-tab" class="tab-panel active">
     <div style="position:sticky;top:92px;z-index:19;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);box-shadow:0 1px 6px rgba(0,0,0,0.08);">
       <div class="panel-controls">
@@ -215,7 +215,8 @@
     <div class="table-responsive">
       <table id="cashflow-table">
         <thead><tr><th>Date</th><th>Description</th><th>Ref</th><th class="text-right">Debit</th><th class="text-right">Credit</th><th class="text-right">Balance</th><th class="action-cell">Act.</th></tr></thead>
-        <tbody id="expenses-table-body"><tr><td colspan="7" style="text-align:center;">Loading…</td></tr></tbody>
+        <tbody id="expenses-table-body"><tr><td colspan="7" style="text-align:center;">Loading…</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -261,7 +262,10 @@
       <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 20px;"><div style="color:#2e7d32;font-weight:bold;font-size:11px;">Total Paid (filtered)</div><div id="chq-total-display" style="font-size:22px;font-weight:bold;">0.00</div></div>
       <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 20px;"><div style="color:#7a5c00;font-weight:bold;font-size:11px;">No. of Cheques</div><div id="chq-count-display" style="font-size:22px;font-weight:bold;">0</div></div>
     </div>
-    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Supplier</th><th class="text-right">Amount</th><th class="text-right">Balance</th><th class="action-cell">Act.</th></tr></thead><tbody id="chq-table-body"><tr><td colspan="7" style="text-align:center;">Loading…</td></tr></tbody></table></div>
+    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Supplier</th><th class="text-right">Amount</th><th class="text-right">Balance</th><th class="action-cell">Act.</th></tr></thead><tbody id="chq-table-body"><tr><td colspan="7" style="text-align:center;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -275,8 +279,24 @@
   const CF_COLLECTION = "cashflow";
   const CHQ_COLLECTION = "cheque_payments";
 
-  // ========== CASH FLOW WITH CONTINUOUS BALANCE ACROSS FILTERS ==========
-  let allTransactions = [], filteredTransactions = [], editingId = null, cfFormVisible = false, activeRowMenu = null, showWeekBroughtForward = true;
+  // ========== PERSISTENCE HELPERS ==========
+  function saveFilterState(key, value) {
+    localStorage.setItem(`penta_${key}`, JSON.stringify(value));
+  }
+  
+  function loadFilterState(key, defaultValue) {
+    const saved = localStorage.getItem(`penta_${key}`);
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved);
+      } catch(e) { return defaultValue; }
+    }
+    return defaultValue;
+  }
+
+  // ========== CASH FLOW WITH PERSISTENT FILTERS ==========
+  let allTransactions = [], filteredTransactions = [], editingId = null, cfFormVisible = false, activeRowMenu = null;
+  let showWeekBroughtForward = loadFilterState('showWeekBroughtForward', true);
   
   // Helper functions for week calculations
   function getWeekNumber(d) {
@@ -309,7 +329,14 @@
     let opts = '<option value="ALL">All weeks</option>';
     weeks.forEach(w => opts += `<option value="${w.year}-${w.week}">Week ${w.week}, ${w.year}</option>`);
     weekFilter.innerHTML = opts;
+    
+    // Restore saved week filter value
+    const savedWeek = loadFilterState('weekFilter', 'ALL');
+    if (savedWeek && weekFilter.querySelector(`option[value="${savedWeek}"]`)) {
+      weekFilter.value = savedWeek;
+    }
   }
+  
   function populateMonthYear() {
     if (!allTransactions.length) { monthFilter.innerHTML='<option value="all">All months</option>'; monthYearFilter.innerHTML='<option value="">Year</option>'; return; }
     const years = [...new Set(allTransactions.map(tx=>new Date(tx.date).getFullYear()))].sort((a,b)=>b-a);
@@ -318,10 +345,14 @@
     for (let m=0;m<12;m++) mo+=`<option value="${m+1}">${monthNames[m]}</option>`;
     monthFilter.innerHTML = mo;
     monthYearFilter.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
-    if (years.length) monthYearFilter.value = years[0];
+    
+    // Restore saved month/year values
+    const savedMonth = loadFilterState('monthFilter', 'all');
+    const savedYear = loadFilterState('monthYearFilter', years[0] || '');
+    if (savedMonth && monthFilter.querySelector(`option[value="${savedMonth}"]`)) monthFilter.value = savedMonth;
+    if (savedYear && monthYearFilter.querySelector(`option[value="${savedYear}"]`)) monthYearFilter.value = savedYear;
   }
 
-  // FILTER: returns which transactions to DISPLAY, but balance is calculated from ALL transactions up to that point
   function getDisplayFilter() {
     let filtered = [...allTransactions];
     const term = searchFilter.value.trim().toLowerCase();
@@ -348,10 +379,8 @@
     return filtered;
   }
 
-  // CRITICAL FIX: Balance calculated from ALL transactions (not just filtered ones)
   function getRunningBalanceUpToDate(targetDate, targetId) {
     let balance = 0;
-    // Sort all transactions by date, then by timestamp for consistency
     const sortedAll = [...allTransactions].sort((a,b) => {
       if (a.date.getTime() === b.date.getTime()) {
         return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
@@ -363,7 +392,6 @@
       if (tx.date < targetDate) {
         balance += (tx.credit - tx.debit);
       } else if (tx.date.getTime() === targetDate.getTime()) {
-        // If same date, include transactions that come before this specific one (by creation time)
         if (tx.id === targetId) break;
         balance += (tx.credit - tx.debit);
       } else {
@@ -389,7 +417,6 @@
     let rows = '';
     
     if (!showWeekBroughtForward) {
-      // Simple view: show only filtered rows with balance calculated from ALL transactions
       for (const tx of displayTransactions) {
         const balanceAtThisPoint = getRunningBalanceUpToDate(tx.date, tx.id);
         rows += buildTxRow(tx, balanceAtThisPoint, tx.date.toISOString().split('T')[0]);
@@ -399,9 +426,7 @@
       return;
     }
     
-    // Week-by-week view with "week starting balance" rows
     const weekMap = new Map();
-    // Group display transactions by week
     for (const tx of displayTransactions) {
       const wy = getWeekYear(new Date(tx.date));
       const k = `${wy.year}-${String(wy.week).padStart(2,'0')}`;
@@ -409,14 +434,11 @@
       weekMap.get(k).txns.push(tx);
     }
     
-    // Sort weeks chronologically
     const sortedWeeks = [...weekMap.keys()].sort();
     
     for (const weekKey of sortedWeeks) {
       const { year, week, txns } = weekMap.get(weekKey);
-      // Get the Monday of this week
       const weekStartDate = getMondayOfIsoWeek(year, week);
-      // Calculate balance BEFORE this week starts (using ALL transactions before Monday)
       let balanceBeforeWeek = 0;
       const sortedAllBeforeWeek = [...allTransactions].sort((a,b) => a.date - b.date);
       for (const tx of sortedAllBeforeWeek) {
@@ -523,6 +545,24 @@
   const toggleWeekBfBtn = document.getElementById("toggle-week-bf-btn"), cfDropdownMenu = document.getElementById("cf-dropdown-menu");
   const cfDropdownBtn = document.getElementById("cf-dropdown-btn");
 
+  // Restore saved filter states
+  const savedSearch = loadFilterState('searchFilter', '');
+  const savedPeriod = loadFilterState('periodFilter', 'week-number');
+  const savedType = loadFilterState('typeFilter', 'all');
+  const savedWeekVisible = loadFilterState('weekFilterVisible', false);
+  const savedMonthVisible = loadFilterState('monthFilterVisible', false);
+  
+  searchFilter.value = savedSearch;
+  periodFilter.value = savedPeriod;
+  typeFilter.value = savedType;
+  toggleWeekFilter.checked = savedWeekVisible;
+  toggleMonthFilter.checked = savedMonthVisible;
+  weekFilterContainer.classList.toggle('hide', !savedWeekVisible);
+  monthFilterContainer.classList.toggle('hide', !savedMonthVisible);
+  
+  // Restore week b/f toggle state
+  toggleWeekBfBtn.innerHTML = showWeekBroughtForward ? '<i class="fa fa-calendar"></i> Hide week b/f' : '<i class="fa fa-calendar"></i> Show week b/f';
+
   toggleFormBtn.addEventListener('click', () => {
     cfFormVisible = !cfFormVisible;
     expenseForm.classList.toggle('hide', !cfFormVisible);
@@ -603,19 +643,32 @@
     renderTable();
   });
   
-  searchFilter.addEventListener('input', () => renderTable());
-  periodFilter.addEventListener('change', () => renderTable());
-  weekFilter.addEventListener('change', () => renderTable());
-  monthFilter.addEventListener('change', () => renderTable());
-  monthYearFilter.addEventListener('change', () => renderTable());
-  typeFilter.addEventListener('change', () => renderTable());
-  toggleWeekFilter.addEventListener('change', (e) => weekFilterContainer.classList.toggle('hide', !e.target.checked));
-  toggleMonthFilter.addEventListener('change', (e) => monthFilterContainer.classList.toggle('hide', !e.target.checked));
+  // Save filters when they change
+  searchFilter.addEventListener('input', () => { saveFilterState('searchFilter', searchFilter.value); renderTable(); });
+  periodFilter.addEventListener('change', () => { saveFilterState('periodFilter', periodFilter.value); renderTable(); });
+  weekFilter.addEventListener('change', () => { saveFilterState('weekFilter', weekFilter.value); renderTable(); });
+  monthFilter.addEventListener('change', () => { saveFilterState('monthFilter', monthFilter.value); renderTable(); });
+  monthYearFilter.addEventListener('change', () => { saveFilterState('monthYearFilter', monthYearFilter.value); renderTable(); });
+  typeFilter.addEventListener('change', () => { saveFilterState('typeFilter', typeFilter.value); renderTable(); });
+  toggleWeekFilter.addEventListener('change', (e) => { 
+    const isVisible = e.target.checked;
+    saveFilterState('weekFilterVisible', isVisible);
+    weekFilterContainer.classList.toggle('hide', !isVisible);
+    renderTable();
+  });
+  toggleMonthFilter.addEventListener('change', (e) => {
+    const isVisible = e.target.checked;
+    saveFilterState('monthFilterVisible', isVisible);
+    monthFilterContainer.classList.toggle('hide', !isVisible);
+    renderTable();
+  });
   toggleWeekBfBtn.addEventListener('click', () => {
     showWeekBroughtForward = !showWeekBroughtForward;
+    saveFilterState('showWeekBroughtForward', showWeekBroughtForward);
     toggleWeekBfBtn.innerHTML = showWeekBroughtForward ? '<i class="fa fa-calendar"></i> Hide week b/f' : '<i class="fa fa-calendar"></i> Show week b/f';
     renderTable();
   });
+  
   cfDropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); cfDropdownMenu.classList.toggle('show'); });
   
   downloadPdfBtn.addEventListener('click', () => {
@@ -635,7 +688,7 @@
   
   dateInput.value = new Date().toISOString().split('T')[0];
 
-  // ========== CHEQUE PAYMENTS (similarly fixed for continuous balance) ==========
+  // ========== CHEQUE PAYMENTS WITH PERSISTENT FILTERS ==========
   let allCheques = [], filteredCheques = [], chqEditingId = null, chqFormVisible = false, activeChqMenu = null;
   
   const chqForm = document.getElementById("chq-form"), chqTbody = document.getElementById("chq-table-body");
@@ -649,6 +702,12 @@
   const chqDropdownBtn = document.getElementById("chq-dropdown-btn"), chqDropdownMenu = document.getElementById("chq-dropdown-menu");
   const chqDownloadPdf = document.getElementById("chq-download-pdf-btn");
   
+  // Restore cheque filter states
+  const savedChqSearch = loadFilterState('chqSearch', '');
+  const savedChqAccount = loadFilterState('chqAccountFilter', 'all');
+  const savedChqPeriod = loadFilterState('chqPeriodFilter', 'all');
+  
+  chqSearch.value = savedChqSearch;
   chqDateInput.value = new Date().toISOString().split('T')[0];
   
   toggleChqBtn.addEventListener('click', () => {
@@ -774,7 +833,7 @@
             <button class="row-dropdown-item delete chq-delete" data-id="${chq.id}"><i class="fa fa-trash"></i> Delete</button>
           </div>
         </td>
-      </tr>`;
+      </table>`;
     }
     chqTbody.innerHTML = rows;
     attachChqMenuListeners();
@@ -817,7 +876,20 @@
     let opts = '<option value="all">All accounts</option>';
     accounts.forEach(a => opts += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
     chqAccountFilter.innerHTML = opts;
+    
+    // Restore saved account filter
+    if (savedChqAccount && chqAccountFilter.querySelector(`option[value="${savedChqAccount}"]`)) {
+      chqAccountFilter.value = savedChqAccount;
+    }
+    if (savedChqPeriod && chqPeriodFilter.querySelector(`option[value="${savedChqPeriod}"]`)) {
+      chqPeriodFilter.value = savedChqPeriod;
+    }
   }
+  
+  // Save cheque filters when they change
+  chqSearch.addEventListener('input', () => { saveFilterState('chqSearch', chqSearch.value); filterCheques(); });
+  chqAccountFilter.addEventListener('change', () => { saveFilterState('chqAccountFilter', chqAccountFilter.value); filterCheques(); });
+  chqPeriodFilter.addEventListener('change', () => { saveFilterState('chqPeriodFilter', chqPeriodFilter.value); filterCheques(); });
   
   const chqQ = query(collection(db, CHQ_COLLECTION), orderBy("date", "asc"));
   onSnapshot(chqQ, (snap) => {
@@ -837,9 +909,6 @@
     filterCheques();
   });
   
-  chqSearch.addEventListener('input', filterCheques);
-  chqAccountFilter.addEventListener('change', filterCheques);
-  chqPeriodFilter.addEventListener('change', filterCheques);
   chqDropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); chqDropdownMenu.classList.toggle('show'); });
   
   chqDownloadPdf.addEventListener('click', () => {
