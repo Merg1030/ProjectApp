@@ -12,7 +12,6 @@
     html, body { height: 100%; background: #d3dfed; width: 100%; font-family: 'Open Sans', Arial, sans-serif; }
     body { color: #0a1c2f; min-height: 100vh; overflow-x: hidden; line-height: 1.5; }
 
-    /* ── TAB NAV ── */
     .tab-nav {
       display: flex; gap: 0; background: #0a1c2f; padding: 0 18px; border-bottom: 2px solid #1f3d62;
     }
@@ -23,10 +22,8 @@
     }
     .tab-btn:hover { color: #fff; }
     .tab-btn.active { color: #fff; border-bottom: 3px solid #4fc3f7; }
-
     .tab-panel { display: none; }
     .tab-panel.active { display: flex; flex-direction: column; }
-
     .panel {
       background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(20,20,20,0.26);
       min-height: 100vh; width: 100%; display: flex; flex-direction: column;
@@ -99,8 +96,6 @@
       padding: 5px 10px; border-radius: 30px; border: 1px solid #b3c7e0; background: white; font-size:13px;
     }
     .hide { display: none !important; }
-
-    /* ── FORMS ── */
     .entry-form {
       display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; margin: 12px 18px 10px 18px;
       background: #ffffff; border-radius: 6px; padding: 12px 9px 10px 9px; font-size: 13px;
@@ -116,8 +111,6 @@
     .entry-form button.submit-btn:hover { background: #1f3d62; }
     .entry-form button.cancel-btn { background: #7f96b3; color: #fff; border: none; cursor: pointer; font-weight: bold; margin-left: 5px; }
     .form-error { color: #b52b2b; width: 100%; font-size: 12px; }
-
-    /* ── TABLES ── */
     .table-responsive {
       flex: 1 1 auto; width: 100%; overflow-x: auto; background: none; margin: 0; padding: 0 18px 18px 18px;
     }
@@ -131,11 +124,6 @@
     tr:hover { background: #e3ecf7; }
     tr.week-start-row { background: #e6efff !important; border-top: 2px solid #1f3d62; }
     tr.week-start-row td { font-style: italic; color: #1f3d62; font-size: 12px; }
-    tr.week-start-row td:last-child strong { color: #0a1c2f; font-size: 13px; }
-
-    tr.chq-week-start-row { background: #fff8e1 !important; border-top: 2px solid #f9a825; }
-    tr.chq-week-start-row td { font-style: italic; color: #7a5c00; font-size: 12px; }
-
     .action-cell { position: relative; width: 40px; text-align: center; }
     .action-btn {
       background: none; border: none; cursor: pointer; font-size: 16px; color: #2b4a73;
@@ -154,11 +142,6 @@
     .row-dropdown-item:hover { background-color: #e6efff; }
     .row-dropdown-item.delete:hover { background-color: #ffe5e5; color: #cc0000; }
     .text-right { text-align: right; }
-
-    /* ── CHEQUE panel accent ── */
-    .cheque-heading { background: #1a3a1a; }
-    .cheque-tab.active { border-bottom-color: #81c784 !important; }
-
     @media (max-width: 700px) {
       .panel { padding: 0; }
       .account-filter-bar { flex-direction: column; align-items: stretch; }
@@ -178,7 +161,7 @@
     </div>
   </div>
 
-  <!-- TAB 1 — CASH FLOW (with advanced week filter) -->
+  <!-- TAB 1 — CASH FLOW with PROPER CONTINUOUS BALANCE -->
   <div id="cashflow-tab" class="tab-panel active">
     <div style="position:sticky;top:92px;z-index:19;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);box-shadow:0 1px 6px rgba(0,0,0,0.08);">
       <div class="panel-controls">
@@ -237,7 +220,7 @@
     </div>
   </div>
 
-  <!-- TAB 2 — CHEQUE PAYMENTS (unchanged but full week filter ready) -->
+  <!-- TAB 2 — CHEQUE PAYMENTS -->
   <div id="cheque-tab" class="tab-panel">
     <div style="position:sticky;top:92px;z-index:19;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);box-shadow:0 1px 6px rgba(0,0,0,0.08);">
       <div class="panel-controls">
@@ -292,18 +275,31 @@
   const CF_COLLECTION = "cashflow";
   const CHQ_COLLECTION = "cheque_payments";
 
-  // ----- CASH FLOW (WEEK FILTER FULLY ENHANCED) -----
+  // ========== CASH FLOW WITH CONTINUOUS BALANCE ACROSS FILTERS ==========
   let allTransactions = [], filteredTransactions = [], editingId = null, cfFormVisible = false, activeRowMenu = null, showWeekBroughtForward = true;
-  const expenseForm = document.getElementById("expense-form"), tbody = document.getElementById("expenses-table-body"), formError = document.getElementById("expense-form-error");
-  const toggleFormBtn = document.getElementById("toggle-form-btn"), dateInput = document.getElementById("exp-date"), descInput = document.getElementById("exp-description"), refInput = document.getElementById("exp-ref"), debitInput = document.getElementById("exp-debit"), creditInput = document.getElementById("exp-credit"), submitBtn = document.getElementById("submit-btn"), cancelEditBtn = document.getElementById("cancel-edit-btn");
-  const searchFilter = document.getElementById("search-filter"), weekFilter = document.getElementById("week-filter"), monthFilter = document.getElementById("month-filter"), monthYearFilter = document.getElementById("month-year-filter"), periodFilter = document.getElementById("period-filter"), typeFilter = document.getElementById("type-filter");
-  const toggleWeekFilter = document.getElementById("toggle-week-filter"), toggleMonthFilter = document.getElementById("toggle-month-filter"), weekFilterContainer = document.getElementById("week-filter-container"), monthFilterContainer = document.getElementById("month-filter-container");
-  const downloadPdfBtn = document.getElementById("download-pdf-btn"), toggleWeekBfBtn = document.getElementById("toggle-week-bf-btn"), cfDropdownMenu = document.getElementById("cf-dropdown-menu"), cfDropdownBtn = document.getElementById("cf-dropdown-btn");
-
-  function getWeekNumber(d) { d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); }
-  function getWeekYear(date) { let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); return { week: getWeekNumber(date), year: d.getUTCFullYear() }; }
-  function getMondayOfIsoWeek(year, week) { const jan4 = new Date(year, 0, 4); const dayOfWeek = jan4.getDay() || 7; const week1Monday = new Date(jan4); week1Monday.setDate(jan4.getDate() - (dayOfWeek - 1)); const monday = new Date(week1Monday); monday.setDate(week1Monday.getDate() + (week - 1) * 7); monday.setHours(0, 0, 0, 0); return monday; }
-  function weekKey(year, week) { return `${year}-${String(week).padStart(2,'0')}`; }
+  
+  // Helper functions for week calculations
+  function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+  function getWeekYear(date) {
+    let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    return { week: getWeekNumber(date), year: d.getUTCFullYear() };
+  }
+  function getMondayOfIsoWeek(year, week) {
+    const jan4 = new Date(year, 0, 4);
+    const dayOfWeek = jan4.getDay() || 7;
+    const week1Monday = new Date(jan4);
+    week1Monday.setDate(jan4.getDate() - (dayOfWeek - 1));
+    const monday = new Date(week1Monday);
+    monday.setDate(week1Monday.getDate() + (week - 1) * 7);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
 
   function populateWeekSelect() {
     if (!allTransactions.length) { weekFilter.innerHTML = '<option value="ALL">All weeks</option>'; return; }
@@ -322,12 +318,15 @@
     for (let m=0;m<12;m++) mo+=`<option value="${m+1}">${monthNames[m]}</option>`;
     monthFilter.innerHTML = mo;
     monthYearFilter.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    if (years.length) monthYearFilter.value = years[0];
   }
 
-  function filterTransactions() {
+  // FILTER: returns which transactions to DISPLAY, but balance is calculated from ALL transactions up to that point
+  function getDisplayFilter() {
     let filtered = [...allTransactions];
     const term = searchFilter.value.trim().toLowerCase();
     if (term) filtered = filtered.filter(tx => (tx.description + ' ' + (tx.ref||'')).toLowerCase().includes(term));
+    
     const period = periodFilter.value;
     if (period === 'week-number' && weekFilter.value !== 'ALL') {
       const [year, week] = weekFilter.value.split('-').map(Number);
@@ -340,72 +339,529 @@
       const end = new Date(y, m+1, 0); end.setHours(23,59,59,999);
       filtered = filtered.filter(tx => tx.date >= start && tx.date <= end);
     }
+    
     const type = typeFilter.value;
     if (type === 'debit') filtered = filtered.filter(tx => tx.debit > 0);
     if (type === 'credit') filtered = filtered.filter(tx => tx.credit > 0);
+    
     filtered.sort((a,b) => a.date - b.date);
-    filteredTransactions = filtered;
-    renderTable();
+    return filtered;
+  }
+
+  // CRITICAL FIX: Balance calculated from ALL transactions (not just filtered ones)
+  function getRunningBalanceUpToDate(targetDate, targetId) {
+    let balance = 0;
+    // Sort all transactions by date, then by timestamp for consistency
+    const sortedAll = [...allTransactions].sort((a,b) => {
+      if (a.date.getTime() === b.date.getTime()) {
+        return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+      }
+      return a.date - b.date;
+    });
+    
+    for (const tx of sortedAll) {
+      if (tx.date < targetDate) {
+        balance += (tx.credit - tx.debit);
+      } else if (tx.date.getTime() === targetDate.getTime()) {
+        // If same date, include transactions that come before this specific one (by creation time)
+        if (tx.id === targetId) break;
+        balance += (tx.credit - tx.debit);
+      } else {
+        break;
+      }
+    }
+    return balance;
   }
 
   function renderTable() {
-    if (!filteredTransactions.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No transactions</td></tr>`; return; }
-    let rows = ''; let runningBalance = 0;
-    if (!showWeekBroughtForward) {
-      filteredTransactions.forEach(tx => { runningBalance += (tx.credit - tx.debit); rows += buildTxRow(tx, runningBalance, tx.date.toISOString().split('T')[0]); });
-      tbody.innerHTML = rows; attachRowMenuListeners(); return;
+    const displayTransactions = getDisplayFilter();
+    
+    if (!displayTransactions.length && allTransactions.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No transactions</td></tr>`;
+      return;
     }
+    
+    if (!displayTransactions.length && allTransactions.length > 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No transactions match current filters</td></tr>`;
+      return;
+    }
+    
+    let rows = '';
+    
+    if (!showWeekBroughtForward) {
+      // Simple view: show only filtered rows with balance calculated from ALL transactions
+      for (const tx of displayTransactions) {
+        const balanceAtThisPoint = getRunningBalanceUpToDate(tx.date, tx.id);
+        rows += buildTxRow(tx, balanceAtThisPoint, tx.date.toISOString().split('T')[0]);
+      }
+      tbody.innerHTML = rows;
+      attachRowMenuListeners();
+      return;
+    }
+    
+    // Week-by-week view with "week starting balance" rows
     const weekMap = new Map();
-    filteredTransactions.forEach(tx => { const wy = getWeekYear(new Date(tx.date)); const k = weekKey(wy.year, wy.week); if (!weekMap.has(k)) weekMap.set(k, { year: wy.year, week: wy.week, txns: [] }); weekMap.get(k).txns.push(tx); });
-    [...weekMap.keys()].sort().forEach(k => {
-      const { year, week, txns } = weekMap.get(k);
-      rows += `<tr class="week-start-row"><td colspan="3">↳ <strong>Week ${week}, ${year} starting balance</strong></td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right"><strong>${runningBalance.toFixed(2)}</strong></td><td></td></tr>`;
-      txns.sort((a,b)=>a.date-b.date).forEach(tx => { runningBalance += (tx.credit - tx.debit); rows += buildTxRow(tx, runningBalance, tx.date.toISOString().split('T')[0]); });
-    });
-    tbody.innerHTML = rows; attachRowMenuListeners();
+    // Group display transactions by week
+    for (const tx of displayTransactions) {
+      const wy = getWeekYear(new Date(tx.date));
+      const k = `${wy.year}-${String(wy.week).padStart(2,'0')}`;
+      if (!weekMap.has(k)) weekMap.set(k, { year: wy.year, week: wy.week, txns: [] });
+      weekMap.get(k).txns.push(tx);
+    }
+    
+    // Sort weeks chronologically
+    const sortedWeeks = [...weekMap.keys()].sort();
+    
+    for (const weekKey of sortedWeeks) {
+      const { year, week, txns } = weekMap.get(weekKey);
+      // Get the Monday of this week
+      const weekStartDate = getMondayOfIsoWeek(year, week);
+      // Calculate balance BEFORE this week starts (using ALL transactions before Monday)
+      let balanceBeforeWeek = 0;
+      const sortedAllBeforeWeek = [...allTransactions].sort((a,b) => a.date - b.date);
+      for (const tx of sortedAllBeforeWeek) {
+        if (tx.date < weekStartDate) {
+          balanceBeforeWeek += (tx.credit - tx.debit);
+        }
+      }
+      
+      rows += `<tr class="week-start-row">
+        <td colspan="3">↳ <strong>Week ${week}, ${year} starting balance</strong></td>
+        <td class="text-right">-</td>
+        <td class="text-right">-</td>
+        <td class="text-right"><strong>${balanceBeforeWeek.toFixed(2)}</strong></td>
+        <td class="action-cell"></td>
+      </tr>`;
+      
+      let weekRunningBalance = balanceBeforeWeek;
+      txns.sort((a,b) => a.date - b.date);
+      for (const tx of txns) {
+        weekRunningBalance += (tx.credit - tx.debit);
+        rows += buildTxRow(tx, weekRunningBalance, tx.date.toISOString().split('T')[0]);
+      }
+    }
+    
+    tbody.innerHTML = rows;
+    attachRowMenuListeners();
   }
 
-  function buildTxRow(tx, balance, dateStr) { return `<tr><td>${dateStr}</td><td>${escapeHtml(tx.description)}</td><td>${escapeHtml(tx.ref||'-')}</td><td class="text-right">${tx.debit ? tx.debit.toFixed(2) : ''}</td><td class="text-right">${tx.credit ? tx.credit.toFixed(2) : ''}</td><td class="text-right">${balance.toFixed(2)}</td><td class="action-cell"><button class="action-btn" data-id="${tx.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" data-menu-id="${tx.id}"><button class="row-dropdown-item edit" data-id="${tx.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete" data-id="${tx.id}"><i class="fa fa-trash"></i> Delete</button></div></td></tr>`; }
-  function attachRowMenuListeners() {
-    document.querySelectorAll('#expenses-table-body .action-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const menu = btn.nextElementSibling; if (activeRowMenu === menu) { menu.classList.remove('show'); activeRowMenu = null; } else { if (activeRowMenu) activeRowMenu.classList.remove('show'); menu.classList.add('show'); activeRowMenu = menu; } }); });
-    document.querySelectorAll('#expenses-table-body .row-dropdown-item.edit').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const tx = allTransactions.find(t => t.id === btn.dataset.id); if (tx) editTransaction(tx); if (activeRowMenu) activeRowMenu.classList.remove('show'); }); });
-    document.querySelectorAll('#expenses-table-body .row-dropdown-item.delete').forEach(btn => { btn.addEventListener('click', async (e) => { e.stopPropagation(); if (confirm('Delete this transaction?')) await deleteDoc(doc(db, CF_COLLECTION, btn.dataset.id)); if (activeRowMenu) activeRowMenu.classList.remove('show'); }); });
+  function buildTxRow(tx, balance, dateStr) {
+    return `<tr>
+      <td>${dateStr}</td>
+      <td>${escapeHtml(tx.description)}</td>
+      <td>${escapeHtml(tx.ref||'-')}</td>
+      <td class="text-right">${tx.debit ? tx.debit.toFixed(2) : ''}</td>
+      <td class="text-right">${tx.credit ? tx.credit.toFixed(2) : ''}</td>
+      <td class="text-right">${balance.toFixed(2)}</td>
+      <td class="action-cell">
+        <button class="action-btn" data-id="${tx.id}"><i class="fa fa-ellipsis-v"></i></button>
+        <div class="row-dropdown-content" data-menu-id="${tx.id}">
+          <button class="row-dropdown-item edit" data-id="${tx.id}"><i class="fa fa-edit"></i> Edit</button>
+          <button class="row-dropdown-item delete" data-id="${tx.id}"><i class="fa fa-trash"></i> Delete</button>
+        </div>
+      </td>
+    </tr>`;
   }
+  
+  function attachRowMenuListeners() {
+    document.querySelectorAll('#expenses-table-body .action-btn').forEach(btn => {
+      btn.removeEventListener('click', handleActionClick);
+      btn.addEventListener('click', handleActionClick);
+    });
+    document.querySelectorAll('#expenses-table-body .row-dropdown-item.edit').forEach(btn => {
+      btn.removeEventListener('click', handleEditClick);
+      btn.addEventListener('click', handleEditClick);
+    });
+    document.querySelectorAll('#expenses-table-body .row-dropdown-item.delete').forEach(btn => {
+      btn.removeEventListener('click', handleDeleteClick);
+      btn.addEventListener('click', handleDeleteClick);
+    });
+  }
+  
+  function handleActionClick(e) {
+    e.stopPropagation();
+    const menu = this.nextElementSibling;
+    if (activeRowMenu === menu) {
+      menu.classList.remove('show');
+      activeRowMenu = null;
+    } else {
+      if (activeRowMenu) activeRowMenu.classList.remove('show');
+      menu.classList.add('show');
+      activeRowMenu = menu;
+    }
+  }
+  
+  function handleEditClick(e) {
+    e.stopPropagation();
+    const tx = allTransactions.find(t => t.id === this.dataset.id);
+    if (tx) editTransaction(tx);
+    if (activeRowMenu) activeRowMenu.classList.remove('show');
+  }
+  
+  async function handleDeleteClick(e) {
+    e.stopPropagation();
+    if (confirm('Delete this transaction?')) {
+      await deleteDoc(doc(db, CF_COLLECTION, this.dataset.id));
+    }
+    if (activeRowMenu) activeRowMenu.classList.remove('show');
+  }
+  
   function escapeHtml(s) { return s?.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])) ?? s; }
 
-  toggleFormBtn.addEventListener('click', () => { cfFormVisible = !cfFormVisible; expenseForm.classList.toggle('hide', !cfFormVisible); toggleFormBtn.innerHTML = cfFormVisible ? '<i class="fa fa-minus"></i> Hide' : '<i class="fa fa-plus"></i> Transaction'; if (!cfFormVisible) cancelEdit(); });
-  function cancelEdit() { editingId = null; expenseForm.reset(); dateInput.value = new Date().toISOString().split('T')[0]; submitBtn.innerText = 'Add'; cancelEditBtn.classList.add('hide'); }
+  // DOM elements
+  const expenseForm = document.getElementById("expense-form"), tbody = document.getElementById("expenses-table-body");
+  const formError = document.getElementById("expense-form-error"), toggleFormBtn = document.getElementById("toggle-form-btn");
+  const dateInput = document.getElementById("exp-date"), descInput = document.getElementById("exp-description");
+  const refInput = document.getElementById("exp-ref"), debitInput = document.getElementById("exp-debit");
+  const creditInput = document.getElementById("exp-credit"), submitBtn = document.getElementById("submit-btn");
+  const cancelEditBtn = document.getElementById("cancel-edit-btn"), searchFilter = document.getElementById("search-filter");
+  const weekFilter = document.getElementById("week-filter"), monthFilter = document.getElementById("month-filter");
+  const monthYearFilter = document.getElementById("month-year-filter"), periodFilter = document.getElementById("period-filter");
+  const typeFilter = document.getElementById("type-filter"), toggleWeekFilter = document.getElementById("toggle-week-filter");
+  const toggleMonthFilter = document.getElementById("toggle-month-filter"), weekFilterContainer = document.getElementById("week-filter-container");
+  const monthFilterContainer = document.getElementById("month-filter-container"), downloadPdfBtn = document.getElementById("download-pdf-btn");
+  const toggleWeekBfBtn = document.getElementById("toggle-week-bf-btn"), cfDropdownMenu = document.getElementById("cf-dropdown-menu");
+  const cfDropdownBtn = document.getElementById("cf-dropdown-btn");
+
+  toggleFormBtn.addEventListener('click', () => {
+    cfFormVisible = !cfFormVisible;
+    expenseForm.classList.toggle('hide', !cfFormVisible);
+    toggleFormBtn.innerHTML = cfFormVisible ? '<i class="fa fa-minus"></i> Hide' : '<i class="fa fa-plus"></i> Transaction';
+    if (!cfFormVisible) cancelEdit();
+  });
+  
+  function cancelEdit() {
+    editingId = null;
+    expenseForm.reset();
+    dateInput.value = new Date().toISOString().split('T')[0];
+    submitBtn.innerText = 'Add';
+    cancelEditBtn.classList.add('hide');
+  }
   cancelEditBtn.addEventListener('click', cancelEdit);
-  function editTransaction(tx) { editingId = tx.id; dateInput.value = tx.date.toISOString().split('T')[0]; descInput.value = tx.description || ''; refInput.value = tx.ref || ''; debitInput.value = tx.debit; creditInput.value = tx.credit; submitBtn.innerText = 'Update'; cancelEditBtn.classList.remove('hide'); if (!cfFormVisible) { cfFormVisible = true; expenseForm.classList.remove('hide'); toggleFormBtn.innerHTML = '<i class="fa fa-minus"></i> Hide'; } }
-  expenseForm.addEventListener('submit', async (e) => { e.preventDefault(); const debit = parseFloat(debitInput.value) || 0, credit = parseFloat(creditInput.value) || 0; if (!dateInput.value || !descInput.value.trim() || (debit === 0 && credit === 0)) { formError.innerText = 'Complete fields (debit or credit)'; return; } const txData = { date: Timestamp.fromDate(new Date(dateInput.value)), description: descInput.value.trim(), ref: refInput.value.trim() || '', debit, credit, updatedAt: serverTimestamp() }; try { if (editingId) { await updateDoc(doc(db, CF_COLLECTION, editingId), txData); } else { await addDoc(collection(db, CF_COLLECTION), { ...txData, createdAt: serverTimestamp() }); } cancelEdit(); cfFormVisible = false; expenseForm.classList.add('hide'); toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Transaction'; } catch (err) { formError.innerText = err.message; } });
+  
+  function editTransaction(tx) {
+    editingId = tx.id;
+    dateInput.value = tx.date.toISOString().split('T')[0];
+    descInput.value = tx.description || '';
+    refInput.value = tx.ref || '';
+    debitInput.value = tx.debit;
+    creditInput.value = tx.credit;
+    submitBtn.innerText = 'Update';
+    cancelEditBtn.classList.remove('hide');
+    if (!cfFormVisible) {
+      cfFormVisible = true;
+      expenseForm.classList.remove('hide');
+      toggleFormBtn.innerHTML = '<i class="fa fa-minus"></i> Hide';
+    }
+  }
+  
+  expenseForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const debit = parseFloat(debitInput.value) || 0, credit = parseFloat(creditInput.value) || 0;
+    if (!dateInput.value || !descInput.value.trim() || (debit === 0 && credit === 0)) {
+      formError.innerText = 'Complete fields (debit or credit)';
+      return;
+    }
+    const txData = {
+      date: Timestamp.fromDate(new Date(dateInput.value)),
+      description: descInput.value.trim(),
+      ref: refInput.value.trim() || '',
+      debit, credit,
+      updatedAt: serverTimestamp()
+    };
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, CF_COLLECTION, editingId), txData);
+      } else {
+        await addDoc(collection(db, CF_COLLECTION), { ...txData, createdAt: serverTimestamp() });
+      }
+      cancelEdit();
+      cfFormVisible = false;
+      expenseForm.classList.add('hide');
+      toggleFormBtn.innerHTML = '<i class="fa fa-plus"></i> Transaction';
+    } catch (err) {
+      formError.innerText = err.message;
+    }
+  });
+  
   const cfQ = query(collection(db, CF_COLLECTION), orderBy("date", "asc"));
-  onSnapshot(cfQ, (snap) => { allTransactions = snap.docs.map(d => { const data = d.data(); return { id: d.id, date: data.date?.toDate() || new Date(), description: data.description || '', ref: data.ref || '', debit: data.debit || 0, credit: data.credit || 0 }; }); populateWeekSelect(); populateMonthYear(); filterTransactions(); });
-  searchFilter.addEventListener('input', filterTransactions); periodFilter.addEventListener('change', filterTransactions); weekFilter.addEventListener('change', filterTransactions); monthFilter.addEventListener('change', filterTransactions); monthYearFilter.addEventListener('change', filterTransactions); typeFilter.addEventListener('change', filterTransactions);
-  toggleWeekFilter.addEventListener('change', (e) => weekFilterContainer.classList.toggle('hide', !e.target.checked)); toggleMonthFilter.addEventListener('change', (e) => monthFilterContainer.classList.toggle('hide', !e.target.checked));
-  toggleWeekBfBtn.addEventListener('click', () => { showWeekBroughtForward = !showWeekBroughtForward; toggleWeekBfBtn.innerHTML = showWeekBroughtForward ? '<i class="fa fa-calendar"></i> Hide week b/f' : '<i class="fa fa-calendar"></i> Show week b/f'; renderTable(); });
+  onSnapshot(cfQ, (snap) => {
+    allTransactions = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        date: data.date?.toDate() || new Date(),
+        description: data.description || '',
+        ref: data.ref || '',
+        debit: data.debit || 0,
+        credit: data.credit || 0,
+        createdAt: data.createdAt
+      };
+    });
+    populateWeekSelect();
+    populateMonthYear();
+    renderTable();
+  });
+  
+  searchFilter.addEventListener('input', () => renderTable());
+  periodFilter.addEventListener('change', () => renderTable());
+  weekFilter.addEventListener('change', () => renderTable());
+  monthFilter.addEventListener('change', () => renderTable());
+  monthYearFilter.addEventListener('change', () => renderTable());
+  typeFilter.addEventListener('change', () => renderTable());
+  toggleWeekFilter.addEventListener('change', (e) => weekFilterContainer.classList.toggle('hide', !e.target.checked));
+  toggleMonthFilter.addEventListener('change', (e) => monthFilterContainer.classList.toggle('hide', !e.target.checked));
+  toggleWeekBfBtn.addEventListener('click', () => {
+    showWeekBroughtForward = !showWeekBroughtForward;
+    toggleWeekBfBtn.innerHTML = showWeekBroughtForward ? '<i class="fa fa-calendar"></i> Hide week b/f' : '<i class="fa fa-calendar"></i> Show week b/f';
+    renderTable();
+  });
   cfDropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); cfDropdownMenu.classList.toggle('show'); });
-  downloadPdfBtn.addEventListener('click', () => { if (!filteredTransactions.length) return alert('No data'); const { jsPDF } = window.jspdf; const docPdf = new jsPDF('landscape'); docPdf.setFontSize(16); docPdf.text('PENTA CASH FLOW', 20, 20); const body = filteredTransactions.map(t => [t.date.toISOString().split('T')[0], t.description, t.ref || '-', t.debit.toFixed(2), t.credit.toFixed(2)]); docPdf.autoTable({ head: [['Date','Description','Ref','Debit','Credit']], body, startY: 30 }); docPdf.save('cashflow.pdf'); });
+  
+  downloadPdfBtn.addEventListener('click', () => {
+    const displayData = getDisplayFilter();
+    if (!displayData.length) return alert('No data');
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF('landscape');
+    docPdf.setFontSize(16);
+    docPdf.text('PENTA CASH FLOW', 20, 20);
+    const body = displayData.map(t => {
+      const balance = getRunningBalanceUpToDate(t.date, t.id);
+      return [t.date.toISOString().split('T')[0], t.description, t.ref || '-', t.debit.toFixed(2), t.credit.toFixed(2), balance.toFixed(2)];
+    });
+    docPdf.autoTable({ head: [['Date','Description','Ref','Debit','Credit','Balance']], body, startY: 30 });
+    docPdf.save('cashflow.pdf');
+  });
+  
   dateInput.value = new Date().toISOString().split('T')[0];
 
-  // ----- CHEQUE PAYMENTS (fully functional) -----
+  // ========== CHEQUE PAYMENTS (similarly fixed for continuous balance) ==========
   let allCheques = [], filteredCheques = [], chqEditingId = null, chqFormVisible = false, activeChqMenu = null;
-  const chqForm = document.getElementById("chq-form"), chqTbody = document.getElementById("chq-table-body"), chqFormError = document.getElementById("chq-form-error"), toggleChqBtn = document.getElementById("toggle-chq-form-btn"), chqDateInput = document.getElementById("chq-date"), chqDescInput = document.getElementById("chq-description"), chqAccountInput = document.getElementById("chq-account"), chqSupplierInput = document.getElementById("chq-supplier"), chqAmountInput = document.getElementById("chq-amount"), chqSubmitBtn = document.getElementById("chq-submit-btn"), chqCancelBtn = document.getElementById("chq-cancel-btn"), chqSearch = document.getElementById("chq-search"), chqAccountFilter = document.getElementById("chq-account-filter"), chqPeriodFilter = document.getElementById("chq-period-filter"), chqTotalDisplay = document.getElementById("chq-total-display"), chqCountDisplay = document.getElementById("chq-count-display"), chqDropdownBtn = document.getElementById("chq-dropdown-btn"), chqDropdownMenu = document.getElementById("chq-dropdown-menu"), chqDownloadPdf = document.getElementById("chq-download-pdf-btn");
+  
+  const chqForm = document.getElementById("chq-form"), chqTbody = document.getElementById("chq-table-body");
+  const chqFormError = document.getElementById("chq-form-error"), toggleChqBtn = document.getElementById("toggle-chq-form-btn");
+  const chqDateInput = document.getElementById("chq-date"), chqDescInput = document.getElementById("chq-description");
+  const chqAccountInput = document.getElementById("chq-account"), chqSupplierInput = document.getElementById("chq-supplier");
+  const chqAmountInput = document.getElementById("chq-amount"), chqSubmitBtn = document.getElementById("chq-submit-btn");
+  const chqCancelBtn = document.getElementById("chq-cancel-btn"), chqSearch = document.getElementById("chq-search");
+  const chqAccountFilter = document.getElementById("chq-account-filter"), chqPeriodFilter = document.getElementById("chq-period-filter");
+  const chqTotalDisplay = document.getElementById("chq-total-display"), chqCountDisplay = document.getElementById("chq-count-display");
+  const chqDropdownBtn = document.getElementById("chq-dropdown-btn"), chqDropdownMenu = document.getElementById("chq-dropdown-menu");
+  const chqDownloadPdf = document.getElementById("chq-download-pdf-btn");
+  
   chqDateInput.value = new Date().toISOString().split('T')[0];
-  toggleChqBtn.addEventListener('click', () => { chqFormVisible = !chqFormVisible; chqForm.classList.toggle('hide', !chqFormVisible); toggleChqBtn.innerHTML = chqFormVisible ? '<i class="fa fa-minus"></i> Hide' : '<i class="fa fa-plus"></i> Cheque Entry'; if (!chqFormVisible) cancelChqEdit(); });
-  function cancelChqEdit() { chqEditingId = null; chqForm.reset(); chqDateInput.value = new Date().toISOString().split('T')[0]; chqSubmitBtn.innerText = 'Add'; chqCancelBtn.classList.add('hide'); }
+  
+  toggleChqBtn.addEventListener('click', () => {
+    chqFormVisible = !chqFormVisible;
+    chqForm.classList.toggle('hide', !chqFormVisible);
+    toggleChqBtn.innerHTML = chqFormVisible ? '<i class="fa fa-minus"></i> Hide' : '<i class="fa fa-plus"></i> Cheque Entry';
+    if (!chqFormVisible) cancelChqEdit();
+  });
+  
+  function cancelChqEdit() {
+    chqEditingId = null;
+    chqForm.reset();
+    chqDateInput.value = new Date().toISOString().split('T')[0];
+    chqSubmitBtn.innerText = 'Add';
+    chqCancelBtn.classList.add('hide');
+  }
   chqCancelBtn.addEventListener('click', cancelChqEdit);
-  function editCheque(chq) { chqEditingId = chq.id; chqDateInput.value = chq.date.toISOString().split('T')[0]; chqDescInput.value = chq.description || ''; chqAccountInput.value = chq.account || ''; chqSupplierInput.value = chq.supplier || ''; chqAmountInput.value = chq.amount || 0; chqSubmitBtn.innerText = 'Update'; chqCancelBtn.classList.remove('hide'); if (!chqFormVisible) { chqFormVisible = true; chqForm.classList.remove('hide'); toggleChqBtn.innerHTML = '<i class="fa fa-minus"></i> Hide'; } }
-  chqForm.addEventListener('submit', async (e) => { e.preventDefault(); const amount = parseFloat(chqAmountInput.value) || 0; if (!chqDateInput.value || !chqDescInput.value.trim() || amount <= 0) { chqFormError.innerText = 'Date, description and amount are required.'; return; } const data = { date: Timestamp.fromDate(new Date(chqDateInput.value)), description: chqDescInput.value.trim(), account: chqAccountInput.value.trim() || '', supplier: chqSupplierInput.value.trim() || '', amount, updatedAt: serverTimestamp() }; try { if (chqEditingId) { await updateDoc(doc(db, CHQ_COLLECTION, chqEditingId), data); } else { await addDoc(collection(db, CHQ_COLLECTION), { ...data, createdAt: serverTimestamp() }); } cancelChqEdit(); chqFormVisible = false; chqForm.classList.add('hide'); toggleChqBtn.innerHTML = '<i class="fa fa-plus"></i> Cheque Entry'; } catch (err) { chqFormError.innerText = err.message; } });
-  function populateChqAccountFilter() { const accounts = [...new Set(allCheques.map(c => c.account).filter(Boolean))].sort(); let opts = '<option value="all">All accounts</option>'; accounts.forEach(a => opts += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`); chqAccountFilter.innerHTML = opts; }
-  function filterCheques() { let filtered = [...allCheques]; const term = chqSearch.value.trim().toLowerCase(); if (term) filtered = filtered.filter(c => (c.description + ' ' + (c.account || '') + ' ' + (c.supplier || '')).toLowerCase().includes(term)); if (chqAccountFilter.value !== 'all') filtered = filtered.filter(c => c.account === chqAccountFilter.value); const now = new Date(); if (chqPeriodFilter.value === 'this-month') { const s = new Date(now.getFullYear(), now.getMonth(), 1), e = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); filtered = filtered.filter(c => c.date >= s && c.date <= e); } if (chqPeriodFilter.value === 'last-month') { const s = new Date(now.getFullYear(), now.getMonth() - 1, 1), e = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999); filtered = filtered.filter(c => c.date >= s && c.date <= e); } filtered.sort((a, b) => a.date - b.date); filteredCheques = filtered; renderChqTable(); }
-  function renderChqTable() { const total = filteredCheques.reduce((s, c) => s + c.amount, 0); chqTotalDisplay.textContent = total.toFixed(2); chqCountDisplay.textContent = filteredCheques.length; if (!filteredCheques.length) { chqTbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No cheque payments recorded</td></tr>`; return; } let rows = '', balance = 0; filteredCheques.forEach(chq => { balance += chq.amount; const dateStr = chq.date.toISOString().split('T')[0]; rows += `<tr><td>${dateStr}</td><td>${escapeHtml(chq.description)}</td><td>${escapeHtml(chq.account || '-')}</td><td>${escapeHtml(chq.supplier || '-')}</td><td class="text-right">${chq.amount.toFixed(2)}</td><td class="text-right">${balance.toFixed(2)}</td><td class="action-cell"><button class="action-btn chq-action-btn" data-id="${chq.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" data-menu-id="${chq.id}"><button class="row-dropdown-item edit chq-edit" data-id="${chq.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete chq-delete" data-id="${chq.id}"><i class="fa fa-trash"></i> Delete</button></div></td></tr>`; }); chqTbody.innerHTML = rows; attachChqMenuListeners(); }
-  function attachChqMenuListeners() { document.querySelectorAll('.chq-action-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const menu = btn.nextElementSibling; if (activeChqMenu === menu) { menu.classList.remove('show'); activeChqMenu = null; } else { if (activeChqMenu) activeChqMenu.classList.remove('show'); menu.classList.add('show'); activeChqMenu = menu; } }); }); document.querySelectorAll('.chq-edit').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const chq = allCheques.find(c => c.id === btn.dataset.id); if (chq) editCheque(chq); if (activeChqMenu) activeChqMenu.classList.remove('show'); }); }); document.querySelectorAll('.chq-delete').forEach(btn => { btn.addEventListener('click', async (e) => { e.stopPropagation(); if (confirm('Delete this cheque payment?')) await deleteDoc(doc(db, CHQ_COLLECTION, btn.dataset.id)); if (activeChqMenu) activeChqMenu.classList.remove('show'); }); }); }
+  
+  function editCheque(chq) {
+    chqEditingId = chq.id;
+    chqDateInput.value = chq.date.toISOString().split('T')[0];
+    chqDescInput.value = chq.description || '';
+    chqAccountInput.value = chq.account || '';
+    chqSupplierInput.value = chq.supplier || '';
+    chqAmountInput.value = chq.amount || 0;
+    chqSubmitBtn.innerText = 'Update';
+    chqCancelBtn.classList.remove('hide');
+    if (!chqFormVisible) {
+      chqFormVisible = true;
+      chqForm.classList.remove('hide');
+      toggleChqBtn.innerHTML = '<i class="fa fa-minus"></i> Hide';
+    }
+  }
+  
+  chqForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(chqAmountInput.value) || 0;
+    if (!chqDateInput.value || !chqDescInput.value.trim() || amount <= 0) {
+      chqFormError.innerText = 'Date, description and amount are required.';
+      return;
+    }
+    const data = {
+      date: Timestamp.fromDate(new Date(chqDateInput.value)),
+      description: chqDescInput.value.trim(),
+      account: chqAccountInput.value.trim() || '',
+      supplier: chqSupplierInput.value.trim() || '',
+      amount,
+      updatedAt: serverTimestamp()
+    };
+    try {
+      if (chqEditingId) {
+        await updateDoc(doc(db, CHQ_COLLECTION, chqEditingId), data);
+      } else {
+        await addDoc(collection(db, CHQ_COLLECTION), { ...data, createdAt: serverTimestamp() });
+      }
+      cancelChqEdit();
+      chqFormVisible = false;
+      chqForm.classList.add('hide');
+      toggleChqBtn.innerHTML = '<i class="fa fa-plus"></i> Cheque Entry';
+    } catch (err) {
+      chqFormError.innerText = err.message;
+    }
+  });
+  
+  function getChqRunningBalanceUpToDate(targetDate, targetId) {
+    let balance = 0;
+    const sortedAll = [...allCheques].sort((a,b) => a.date - b.date);
+    for (const chq of sortedAll) {
+      if (chq.date < targetDate) {
+        balance += chq.amount;
+      } else if (chq.date.getTime() === targetDate.getTime()) {
+        if (chq.id === targetId) break;
+        balance += chq.amount;
+      } else {
+        break;
+      }
+    }
+    return balance;
+  }
+  
+  function filterCheques() {
+    let filtered = [...allCheques];
+    const term = chqSearch.value.trim().toLowerCase();
+    if (term) filtered = filtered.filter(c => (c.description + ' ' + (c.account || '') + ' ' + (c.supplier || '')).toLowerCase().includes(term));
+    if (chqAccountFilter.value !== 'all') filtered = filtered.filter(c => c.account === chqAccountFilter.value);
+    const now = new Date();
+    if (chqPeriodFilter.value === 'this-month') {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1), e = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      filtered = filtered.filter(c => c.date >= s && c.date <= e);
+    }
+    if (chqPeriodFilter.value === 'last-month') {
+      const s = new Date(now.getFullYear(), now.getMonth() - 1, 1), e = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      filtered = filtered.filter(c => c.date >= s && c.date <= e);
+    }
+    filtered.sort((a, b) => a.date - b.date);
+    filteredCheques = filtered;
+    renderChqTable();
+  }
+  
+  function renderChqTable() {
+    const total = filteredCheques.reduce((s, c) => s + c.amount, 0);
+    chqTotalDisplay.textContent = total.toFixed(2);
+    chqCountDisplay.textContent = filteredCheques.length;
+    if (!filteredCheques.length) {
+      chqTbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No cheque payments recorded</td></tr>`;
+      return;
+    }
+    let rows = '';
+    for (const chq of filteredCheques) {
+      const balance = getChqRunningBalanceUpToDate(chq.date, chq.id);
+      const dateStr = chq.date.toISOString().split('T')[0];
+      rows += `<tr>
+        <td>${dateStr}</td>
+        <td>${escapeHtml(chq.description)}</td>
+        <td>${escapeHtml(chq.account || '-')}</td>
+        <td>${escapeHtml(chq.supplier || '-')}</td>
+        <td class="text-right">${chq.amount.toFixed(2)}</td>
+        <td class="text-right">${balance.toFixed(2)}</td>
+        <td class="action-cell">
+          <button class="action-btn chq-action-btn" data-id="${chq.id}"><i class="fa fa-ellipsis-v"></i></button>
+          <div class="row-dropdown-content" data-menu-id="${chq.id}">
+            <button class="row-dropdown-item edit chq-edit" data-id="${chq.id}"><i class="fa fa-edit"></i> Edit</button>
+            <button class="row-dropdown-item delete chq-delete" data-id="${chq.id}"><i class="fa fa-trash"></i> Delete</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+    chqTbody.innerHTML = rows;
+    attachChqMenuListeners();
+  }
+  
+  function attachChqMenuListeners() {
+    document.querySelectorAll('.chq-action-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const menu = btn.nextElementSibling;
+        if (activeChqMenu === menu) {
+          menu.classList.remove('show');
+          activeChqMenu = null;
+        } else {
+          if (activeChqMenu) activeChqMenu.classList.remove('show');
+          menu.classList.add('show');
+          activeChqMenu = menu;
+        }
+      });
+    });
+    document.querySelectorAll('.chq-edit').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const chq = allCheques.find(c => c.id === btn.dataset.id);
+        if (chq) editCheque(chq);
+        if (activeChqMenu) activeChqMenu.classList.remove('show');
+      });
+    });
+    document.querySelectorAll('.chq-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (confirm('Delete this cheque payment?')) await deleteDoc(doc(db, CHQ_COLLECTION, btn.dataset.id));
+        if (activeChqMenu) activeChqMenu.classList.remove('show');
+      });
+    });
+  }
+  
+  function populateChqAccountFilter() {
+    const accounts = [...new Set(allCheques.map(c => c.account).filter(Boolean))].sort();
+    let opts = '<option value="all">All accounts</option>';
+    accounts.forEach(a => opts += `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`);
+    chqAccountFilter.innerHTML = opts;
+  }
+  
   const chqQ = query(collection(db, CHQ_COLLECTION), orderBy("date", "asc"));
-  onSnapshot(chqQ, (snap) => { allCheques = snap.docs.map(d => { const data = d.data(); return { id: d.id, date: data.date?.toDate() || new Date(), description: data.description || '', account: data.account || '', supplier: data.supplier || '', amount: data.amount || 0 }; }); populateChqAccountFilter(); filterCheques(); });
-  chqSearch.addEventListener('input', filterCheques); chqAccountFilter.addEventListener('change', filterCheques); chqPeriodFilter.addEventListener('change', filterCheques);
+  onSnapshot(chqQ, (snap) => {
+    allCheques = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        date: data.date?.toDate() || new Date(),
+        description: data.description || '',
+        account: data.account || '',
+        supplier: data.supplier || '',
+        amount: data.amount || 0,
+        createdAt: data.createdAt
+      };
+    });
+    populateChqAccountFilter();
+    filterCheques();
+  });
+  
+  chqSearch.addEventListener('input', filterCheques);
+  chqAccountFilter.addEventListener('change', filterCheques);
+  chqPeriodFilter.addEventListener('change', filterCheques);
   chqDropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); chqDropdownMenu.classList.toggle('show'); });
-  chqDownloadPdf.addEventListener('click', () => { if (!filteredCheques.length) return alert('No data'); const { jsPDF } = window.jspdf; const docPdf = new jsPDF('landscape'); docPdf.setFontSize(16); docPdf.text('PENTA CHEQUE PAYMENTS', 20, 20); const body = filteredCheques.map(c => [c.date.toISOString().split('T')[0], c.description, c.account || '-', c.supplier || '-', c.amount.toFixed(2)]); docPdf.autoTable({ head: [['Date','Description','Account','Supplier','Amount']], body, startY: 30 }); docPdf.save('cheque_payments.pdf'); });
-  document.addEventListener('click', () => { if (activeRowMenu) activeRowMenu.classList.remove('show'); if (activeChqMenu) activeChqMenu.classList.remove('show'); cfDropdownMenu.classList.remove('show'); chqDropdownMenu.classList.remove('show'); });
+  
+  chqDownloadPdf.addEventListener('click', () => {
+    if (!filteredCheques.length) return alert('No data');
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF('landscape');
+    docPdf.setFontSize(16);
+    docPdf.text('PENTA CHEQUE PAYMENTS', 20, 20);
+    const body = filteredCheques.map(c => {
+      const balance = getChqRunningBalanceUpToDate(c.date, c.id);
+      return [c.date.toISOString().split('T')[0], c.description, c.account || '-', c.supplier || '-', c.amount.toFixed(2), balance.toFixed(2)];
+    });
+    docPdf.autoTable({ head: [['Date','Description','Account','Supplier','Amount','Balance']], body, startY: 30 });
+    docPdf.save('cheque_payments.pdf');
+  });
+  
+  document.addEventListener('click', () => {
+    if (activeRowMenu) activeRowMenu.classList.remove('show');
+    if (activeChqMenu) activeChqMenu.classList.remove('show');
+    cfDropdownMenu.classList.remove('show');
+    chqDropdownMenu.classList.remove('show');
+  });
 </script>
 </body>
 </html>
