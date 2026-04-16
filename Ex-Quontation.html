@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Penta Construction · Quotation System</title>
-  <!-- jsPDF & html2canvas for potential future PDF enhancements, keep core PDF generation aligned -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
@@ -36,7 +35,7 @@
     .main-header h2 span { font-size: 14px; color: #666; font-weight: normal; margin-left: 10px; }
     .quote-number { background: #f1f3f5; padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: bold; color: #1a2b3c; }
     
-    /* Company Info - updated */
+    /* Company Info */
     .company-info { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 15px 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
     .company-details h3 { color: #1a2b3c; font-size: 18px; margin-bottom: 5px; }
     .company-details p { font-size: 12px; color: #666; line-height: 1.5; }
@@ -84,13 +83,12 @@
     .lm-item input { width: 120px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; }
     .grand-total { font-size: 22px; font-weight: bold; color: #1a2b3c; background: white; padding: 8px 25px; border-radius: 30px; border: 1px solid #ddd; }
     
-    /* Terms and Conditions - updated (removed specific lines) */
+    /* Terms and Conditions */
     .terms-section { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 20px; margin: 25px 0; }
     .terms-section h3 { font-size: 16px; color: #1a2b3c; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
     .terms-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
     .term-item { display: flex; gap: 10px; font-size: 12px; color: #333; line-height: 1.5; }
     .term-item i { font-weight: bold; color: #1a2b3c; min-width: 20px; }
-    .vat-note { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; font-size: 13px; font-weight: bold; color: #1a2b3c; text-align: right; }
     
     /* Action Buttons */
     .action-buttons { display: flex; gap: 15px; margin: 25px 0; }
@@ -128,7 +126,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // Firebase config (unchanged)
   const firebaseConfig = {
     apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
     authDomain: "project-task-588c4.firebaseapp.com",
@@ -140,13 +137,12 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // --- UPDATED COMPANY DETAILS (Penta Construction) ---
+  // Company details - NO BANK INFO
   const company = {
     name: 'PENTA CONSTRUCTION',
     email: 'repairs@hazida.co.zm',
     phone: '0771287206',
-    address: 'Lusaka, Zambia',
-    bank: 'Standard Chartered Bank · Account: 1122334455'
+    address: 'Lusaka, Zambia'
   };
 
   let jobs = [];
@@ -253,8 +249,20 @@
     } catch (error) { alert('Error loading PDF'); }
   };
 
-  // PDF generation with cleaned terms & removed clauses, updated company info
+  function getCurrentLiveQuote() {
+    let labourVal = parseFloat(document.getElementById('labourInput')?.value) || 0;
+    let markupVal = parseFloat(document.getElementById('markupInput')?.value) || 0;
+    let vatVal = parseFloat(document.getElementById('vatInput')?.value) || 16;
+    labour = labourVal;
+    markup = markupVal;
+    vat = vatVal;
+    return { jobs, indirect: indirectItems, customer, labour: labourVal, markup: markupVal, vat: vatVal, quoteNum };
+  }
+
+  // PDF generation - REMOVED VAT notice and bank details completely
   function generatePDF(quote) {
+    if (!quote || !quote.jobs) quote = getCurrentLiveQuote();
+    
     let materialsTotal = quote.jobs.reduce((acc, job) => acc + job.materials.reduce((s, m) => s + (m.qty * m.price), 0), 0);
     let indirectSum = quote.indirect.reduce((acc, i) => acc + (i.value || 0), 0);
     let labourVal = quote.labour || 0;
@@ -268,15 +276,22 @@
     let rows = '';
     quote.jobs.forEach(job => {
       job.materials.forEach(mat => {
-        rows += `<tr><td>${escapeHtml(job.name)}</td><td>${escapeHtml(mat.desc)}</td><td>${mat.qty}</td><td>${escapeHtml(mat.supplier)}</td><td>${mat.price.toFixed(2)}</td><td>${(mat.qty*mat.price).toFixed(2)}</td></tr>`;
+        rows += `<tr>
+                   <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(job.name)}</td>
+                   <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(mat.desc)}</td>
+                   <td style="border:1px solid #ddd; padding:8px;">${mat.qty}</td>
+                   <td style="border:1px solid #ddd; padding:8px;">${escapeHtml(mat.supplier)}</td>
+                   <td style="border:1px solid #ddd; padding:8px; text-align:right;">${mat.price.toFixed(2)}</td>
+                   <td style="border:1px solid #ddd; padding:8px; text-align:right;">${(mat.qty*mat.price).toFixed(2)}</td>
+                 </tr>`;
       });
     });
     if (!rows) rows = '<tr><td colspan="6" style="padding:20px;text-align:center;">No materials</td></tr>';
 
     let indRows = '';
-    quote.indirect.forEach(i => { indRows += `<tr><td>${escapeHtml(i.name)}</td><td>ZMW ${(i.value || 0).toFixed(2)}</td></tr>`; });
+    quote.indirect.forEach(i => { indRows += `<tr><td style="border:1px solid #ddd; padding:8px;">${escapeHtml(i.name)}</td><td style="border:1px solid #ddd; padding:8px; text-align:right;">ZMW ${(i.value || 0).toFixed(2)}</td></tr>`; });
 
-    // Filtered terms list: removed specific lines (2,4,8,10,12,14,16) and any mention of REG/PIN or bank line in footer
+    // Terms list - clean, no bank or VAT footer
     const remainingTerms = [
       "1. This quotation is valid for 30 days from date of issue.",
       "3. Balance payable upon completion and final inspection.",
@@ -304,6 +319,7 @@
       <html>
       <head><title>PENTA CONSTRUCTION · Quotation #Q-${quote.quoteNum}</title>
       <style>
+        * { font-family: Arial, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial; padding: 40px; max-width: 1200px; margin: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1a2b3c; }
         .company h1 { color: #1a2b3c; font-size: 28px; margin-bottom: 5px; }
@@ -321,7 +337,7 @@
         .terms { margin-top: 40px; padding: 20px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; }
         .terms h3 { color: #1a2b3c; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #ddd; }
         .terms-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 15px; font-size: 11px; color: #333; }
-        .vat-note { background: #e9ecef; padding: 10px; border-radius: 4px; font-weight: bold; text-align: right; margin-top: 15px; font-size: 12px; }
+        .term-item { display: flex; gap: 8px; margin-bottom: 6px; }
         .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #666; }
       </style>
       </head>
@@ -351,9 +367,14 @@
         </div>
         
         <h3>MATERIALS & WORKS</h3>
-        <table><thead><tr><th>Job</th><th>Material</th><th>Qty</th><th>Supplier</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+        <table style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr><th style="border:1px solid #ddd; padding:8px;">Job</th><th style="border:1px solid #ddd; padding:8px;">Material</th><th style="border:1px solid #ddd; padding:8px;">Qty</th><th style="border:1px solid #ddd; padding:8px;">Supplier</th><th style="border:1px solid #ddd; padding:8px;">Unit Price</th><th style="border:1px solid #ddd; padding:8px;">Total</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
         
-        ${quote.indirect.length > 0 ? `<h3>INDIRECT COSTS</h3><table><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody>${indRows}</tbody></table>` : ''}
+        ${quote.indirect.length > 0 ? `<h3>INDIRECT COSTS</h3><table style="width:100%; border-collapse: collapse;"><thead><tr><th style="border:1px solid #ddd; padding:8px;">Description</th><th style="border:1px solid #ddd; padding:8px;">Amount</th></tr></thead><tbody>${indRows}</tbody></table>` : ''}
         
         <div class="totals">
           <div class="total-row"><span>Materials Total:</span><span>ZMW ${materialsTotal.toFixed(2)}</span></div>
@@ -368,11 +389,9 @@
         <div class="terms">
           <h3>TERMS AND CONDITIONS</h3>
           <div class="terms-grid">${termsHtml}</div>
-          <div class="vat-note">VAT 16% is applied as shown above.</div>
         </div>
         
         <div class="footer">
-          <p>Bank: ${company.bank}</p>
           <p>Thank you for choosing Penta Construction.</p>
         </div>
         <script>window.onload=()=>window.print();<\/script>
@@ -407,11 +426,14 @@
         else {
           job.materials.forEach((mat, mIdx) => {
             let amt = (mat.qty * mat.price).toFixed(2);
-            html += `<tr><td><input type="text" value="${mat.desc}" placeholder="e.g., Cement" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-desc"></td>
-                     <td><input type="number" value="${mat.qty}" step="0.1" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-qty"></td>
-                     <td><input type="number" value="${mat.price}" step="0.01" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-price"></td>
-                     <td><input type="text" value="${mat.supplier}" placeholder="Supplier" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-supplier"></td>
-                     <td>${amt}</td><td><button class="remove-mat" data-job-id="${job.id}" data-mat-id="${mat.id}">✕</button></td></tr>`;
+            html += `<tr>
+                       <td><input type="text" value="${mat.desc}" placeholder="e.g., Cement" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-desc"></td>
+                       <td><input type="number" value="${mat.qty}" step="0.1" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-qty"></td>
+                       <td><input type="number" value="${mat.price}" step="0.01" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-price"></td>
+                       <td><input type="text" value="${mat.supplier}" placeholder="Supplier" data-job-idx="${jIdx}" data-mat-idx="${mIdx}" class="mat-supplier"></td>
+                       <td>${amt}</td>
+                       <td><button class="remove-mat" data-job-id="${job.id}" data-mat-id="${mat.id}">✕</button></td>
+                     </tr>`;
           });
         }
         html += `</tbody></table></div><button class="add-btn" data-job-id="${job.id}" style="margin-top:10px;">+ Add Material</button></div>`;
@@ -422,9 +444,11 @@
     if (indirectItems.length === 0) html += `<tr><td colspan="3" style="padding:12px;text-align:center;">No indirect costs added</td></tr>`;
     else {
       indirectItems.forEach((item, idx) => {
-        html += `<tr><td><input type="text" value="${item.name}" placeholder="Description" data-ind-idx="${idx}" class="indirect-name"></td>
-                 <td><input type="number" value="${item.value}" step="1" data-ind-idx="${idx}" class="indirect-value"></td>
-                 <td><button class="remove-indirect-btn" data-ind-idx="${idx}">✕</button></td></tr>`;
+        html += `<tr>
+                    <td><input type="text" value="${item.name}" placeholder="Description" data-ind-idx="${idx}" class="indirect-name"></td>
+                    <td><input type="number" value="${item.value}" step="1" data-ind-idx="${idx}" class="indirect-value"></td>
+                    <td><button class="remove-indirect-btn" data-ind-idx="${idx}">✕</button></td>
+                  </tr>`;
       });
     }
     html += `</tbody></table></div><button class="add-btn" id="addIndirectBtn">+ Add Indirect Cost</button></div>`;
@@ -432,7 +456,6 @@
              <div class="lm-item"><label>Markup %</label><input type="number" id="markupInput" value="${markup}" step="0.5"></div>
              <div class="lm-item"><label>VAT %</label><input type="number" id="vatInput" value="${vat}" step="0.5"></div></div>
              <div class="grand-total" id="grandTotalDisplay">0.00</div></div>`;
-    // Updated terms section: removed all unwanted lines as per client request
     html += `<div class="terms-section"><h3>STANDARD TERMS AND CONDITIONS · CONSTRUCTION WORKS</h3><div class="terms-grid">
       <div class="term-item"><i>1.</i> This quotation is valid for 30 days from the date of issue.</div>
       <div class="term-item"><i>3.</i> Balance payable upon completion and final inspection.</div>
@@ -445,7 +468,7 @@
       <div class="term-item"><i>15.</i> Insurance covered during construction by Penta Construction.</div>
       <div class="term-item"><i>17.</i> Working hours: Monday-Friday 7am-5pm, Saturday 7am-1pm.</div>
       <div class="term-item"><i>18.</i> Overtime and Sunday work charged at 1.5x standard rates.</div>
-    </div><div class="vat-note">VAT 16% is applied in the grand total.</div></div>`;
+    </div></div>`;
     html += `<div class="action-buttons"><button class="save-btn" id="saveQuoteBtn">Save Quotation</button><button class="pdf-btn" id="downloadPdfBtn">Download PDF</button></div>`;
     main.innerHTML = html;
     attachEvents();
@@ -472,7 +495,7 @@
     document.getElementById('markupInput')?.addEventListener('input', updateGrandTotal);
     document.getElementById('vatInput')?.addEventListener('input', updateGrandTotal);
     document.getElementById('saveQuoteBtn')?.addEventListener('click', saveQuote);
-    document.getElementById('downloadPdfBtn')?.addEventListener('click', () => { generatePDF({ jobs, indirect: indirectItems, customer, labour, markup, vat, quoteNum }); });
+    document.getElementById('downloadPdfBtn')?.addEventListener('click', () => { generatePDF(getCurrentLiveQuote()); });
   }
 
   function updateGrandTotal() {
