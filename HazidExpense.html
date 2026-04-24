@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>IMS | Expenses Tracker</title>
+  <title>IMS | Expenses Tracker - Hide Projects</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
     html, body {
@@ -80,7 +80,6 @@
     }
     #toggle-form-btn:hover { background: #e6efff; }
     
-    /* Three dots dropdown styles */
     .dropdown {
       position: relative;
       display: inline-block;
@@ -106,13 +105,13 @@
       position: absolute;
       right: 0;
       background-color: #fff;
-      min-width: 200px;
+      min-width: 220px;
       box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
       z-index: 20;
       border-radius: 4px;
       padding: 5px 0;
       border: 2px solid #1f3d62;
-      max-height: 400px;
+      max-height: 500px;
       overflow-y: auto;
     }
     .dropdown-content.show {
@@ -139,8 +138,6 @@
       background: #b3c7e0;
       margin: 5px 0;
     }
-    
-    /* Account buttons in dropdown */
     .dropdown-account-btn {
       background: #ffffff;
       border: 1px solid #b3c7e0;
@@ -168,7 +165,40 @@
       font-weight: bold;
     }
     
-    /* Filter toggles */
+    /* Hide projects management section inside dropdown */
+    .manage-hide-section {
+      padding: 6px 0;
+      border-top: 1px solid #b3c7e0;
+      margin-top: 4px;
+    }
+    .hide-project-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .hide-project-item:hover {
+      background: #f0f4fa;
+    }
+    .hide-project-item .project-name {
+      flex: 1;
+    }
+    .hide-project-item .toggle-eye {
+      color: #1f3d62;
+      font-size: 14px;
+      width: 24px;
+      text-align: center;
+    }
+    .sub-section-title {
+      font-weight: bold;
+      font-size: 12px;
+      padding: 8px 16px 4px 16px;
+      color: #2b4a73;
+      letter-spacing: 0.5px;
+    }
     .filter-toggle {
       display: flex;
       align-items: center;
@@ -217,7 +247,6 @@
       transform: translateX(16px);
     }
     
-    /* Action dots in table */
     .action-cell {
       position: relative;
       width: 40px;
@@ -265,12 +294,8 @@
       width: 100%;
       text-align: left;
     }
-    .row-dropdown-item:hover {
-      background-color: #e6efff;
-    }
     .row-dropdown-item.edit:hover {
       background-color: #e6efff;
-      color: #0a1c2f;
     }
     .row-dropdown-item.delete:hover {
       background-color: #ffe5e5;
@@ -387,872 +412,296 @@
       color: #7f96b3;
       opacity: 1;
     }
+    .small-note {
+      font-size: 11px;
+      color: #5a6e85;
+      padding: 4px 16px 8px 16px;
+      border-top: 1px solid #e0e8f0;
+    }
     @media (max-width: 700px) {
       .panel { padding: 0; }
       table th, table td { white-space: nowrap; }
-      form input[type="text"], form input[type="number"], form select, form textarea {
-        min-width: 60px;
-      }
+      form input, form select { min-width: 60px; }
       .account-filter-bar { flex-direction: column; gap: 7px; }
-      .search-bar input[type="text"] { width: 90px; }
-      .panel-heading, .panel-controls, .sticky-filters { padding-left: 3vw; padding-right: 3vw; }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-  <div class="panel">
-    <div class="panel-top-sticky">
-      <div class="panel-heading"> PENTA CONSTRUCTION GENERAL EXPENSES</div>
-      <div class="panel-controls">
-        <button id="toggle-form-btn" type="button">Add transaction</button>
-        
-        <!-- Three dots dropdown -->
-        <div class="dropdown">
-          <button class="dropdown-btn" type="button">
-            <i class="fa fa-ellipsis-v"></i> Options
-          </button>
-          <div class="dropdown-content" id="dropdown-menu">
-            <!-- Account filters -->
-            <button class="dropdown-account-btn selected" data-account="">All Accounts</button>
-            <button class="dropdown-account-btn" data-account="Hazida Limited">Hazida Limited</button>
-            <button class="dropdown-account-btn" data-account="Hazida Motors">Hazida Motors</button>
-            <button class="dropdown-account-btn" data-account="Freight n Passengers">Freight n Passengers</button>
-            <button class="dropdown-account-btn" data-account="Hazida Ezone Limited">Hazida Ezone Limited</button>
-            
-            <div class="dropdown-divider"></div>
-            
-            <!-- Action buttons -->
-            <button class="dropdown-item" id="dropdown-download-week-btn" type="button">Download Report</button>
-            <button class="dropdown-item" id="dropdown-download-selected-btn" type="button" class="hide">Download Selected</button>
-            <button class="dropdown-item" id="dropdown-toggle-checkboxes" type="button">Show Checkboxes</button>
-            
-            <div class="dropdown-divider"></div>
-            
-            <!-- Filter toggles -->
-            <div class="filter-toggle">
-              <span>Week Filter</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-week-filter">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-            <div class="filter-toggle">
-              <span>Month Filter</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-month-filter">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-            <div class="filter-toggle">
-              <span>Project Filter</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-project-filter">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="sticky-filters">
-        <div class="account-filter-bar">
-          <!-- Only search bar is always visible -->
-          <div class="search-bar">
-            <input type="text" id="search-filter" placeholder="Search any field...">
-          </div>
-          
-          <!-- Hidden filters that can be shown/hidden -->
-          <div id="week-filter-container" class="hide">
-            <select id="week-filter"></select>
-          </div>
-          
-          <div id="month-filter-container" class="hide">
-            <select id="month-filter"></select>
-          </div>
-          
-          <div id="project-filter-container" class="hide" style="display:flex;align-items:center;">
-            <button class="project-filter-collapse-btn" id="project-collapse-btn" title="Show/Hide Projects">&#9660;</button>
-            <div class="project-filter-btns" id="project-btns"></div>
-          </div>
+<div class="panel">
+  <div class="panel-top-sticky">
+    <div class="panel-heading"> PENTA CONSTRUCTION GENERAL EXPENSES</div>
+    <div class="panel-controls">
+      <button id="toggle-form-btn" type="button">Add transaction</button>
+      <div class="dropdown">
+        <button class="dropdown-btn" type="button">
+          <i class="fa fa-ellipsis-v"></i> Options
+        </button>
+        <div class="dropdown-content" id="dropdown-menu">
+          <button class="dropdown-account-btn selected" data-account="">All Accounts</button>
+          <button class="dropdown-account-btn" data-account="Hazida Limited">Hazida Limited</button>
+          <button class="dropdown-account-btn" data-account="Hazida Motors">Hazida Motors</button>
+          <button class="dropdown-account-btn" data-account="Freight n Passengers">Freight n Passengers</button>
+          <button class="dropdown-account-btn" data-account="Hazida Ezone Limited">Hazida Ezone Limited</button>
+          <div class="dropdown-divider"></div>
+          <div class="sub-section-title"><i class="fa fa-eye-slash"></i> Hide Projects from Form</div>
+          <div id="hide-projects-list" class="hide-projects-container"></div>
+          <div class="small-note">✓ Hidden projects won't appear in dropdown</div>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item" id="dropdown-download-week-btn">Download Report</button>
+          <button class="dropdown-item" id="dropdown-download-selected-btn" class="hide">Download Selected</button>
+          <button class="dropdown-item" id="dropdown-toggle-checkboxes">Show Checkboxes</button>
+          <div class="dropdown-divider"></div>
+          <div class="filter-toggle"><span>Week Filter</span><label class="toggle-switch"><input type="checkbox" id="toggle-week-filter"><span class="toggle-slider"></span></label></div>
+          <div class="filter-toggle"><span>Month Filter</span><label class="toggle-switch"><input type="checkbox" id="toggle-month-filter"><span class="toggle-slider"></span></label></div>
+          <div class="filter-toggle"><span>Project Filter (Buttons)</span><label class="toggle-switch"><input type="checkbox" id="toggle-project-filter"><span class="toggle-slider"></span></label></div>
         </div>
       </div>
     </div>
-    <form id="expense-form" autocomplete="off" class="hide">
-      <div>
-        <label for="exp-date">Date</label><br>
-        <input type="date" id="exp-date" required>
+    <div class="sticky-filters">
+      <div class="account-filter-bar">
+        <div class="search-bar"><input type="text" id="search-filter" placeholder="Search any field..."></div>
+        <div id="week-filter-container" class="hide"><select id="week-filter"></select></div>
+        <div id="month-filter-container" class="hide"><select id="month-filter"></select></div>
+        <div id="project-filter-container" class="hide" style="display:flex;align-items:center;">
+          <button class="project-filter-collapse-btn" id="project-collapse-btn" title="Show/Hide Projects">&#9660;</button>
+          <div class="project-filter-btns" id="project-btns"></div>
+        </div>
       </div>
-      <div>
-        <label for="exp-description">Description</label><br>
-        <textarea id="exp-description" placeholder="Expense Description"></textarea>
-      </div>
-      <div>
-        <label for="exp-project">Project</label><br>
-        <select id="exp-project" required>
-          <option value="">--Choose Project--</option>
-          <option value="_general">General (No Project)</option>
-        </select>
-      </div>
-      <div>
-        <label for="exp-account">Account</label><br>
-        <select id="exp-account" required>
-          <option value="">--Choose--</option>
-          <option value="Hazida Limited">Hazida Limited</option>
-          <option value="Hazida Motors">Hazida Motors</option>
-          <option value="Freight n Passengers">Freight n Passengers</option>
-          <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
-        </select>
-      </div>
-      <div>
-        <label for="exp-supplier">Supplier</label><br>
-        <input type="text" id="exp-supplier" required placeholder="Supplier name">
-      </div>
-      <div>
-        <label for="exp-amount">Amount</label><br>
-        <input type="number" min="0" id="exp-amount" required placeholder="Amount">
-      </div>
-      <div style="align-self: flex-end;">
-        <button type="submit" id="submit-btn">Add Expense</button>
-        <button type="button" id="cancel-edit-btn" class="hide">Cancel Edit</button>
-      </div>
-      <div id="expense-form-error"></div>
-    </form>
-    <div class="table-responsive">
-      <table>
-        <thead>
-          <tr>
-            <th class="checkbox-col hide">Select</th>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Project</th>
-            <th>Account</th>
-            <th>Supplier</th>
-            <th>Amount</th>
-            <th>Balance</th>
-            <th class="action-cell">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="expenses-table-body"></tbody>
-      </table>
     </div>
   </div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      updateDoc,
-      deleteDoc,
-      doc,
-      onSnapshot,
-      Timestamp
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  <form id="expense-form" autocomplete="off" class="hide">
+    <div><label for="exp-date">Date</label><br><input type="date" id="exp-date" required></div>
+    <div><label for="exp-description">Description</label><br><textarea id="exp-description" placeholder="Expense Description"></textarea></div>
+    <div><label for="exp-project">Project</label><br><select id="exp-project" required><option value="">--Choose Project--</option><option value="_general">General (No Project)</option></select></div>
+    <div><label for="exp-account">Account</label><br><select id="exp-account" required><option value="">--Choose--</option><option value="Hazida Limited">Hazida Limited</option><option value="Hazida Motors">Hazida Motors</option><option value="Freight n Passengers">Freight n Passengers</option><option value="Hazida Ezone Limited">Hazida Ezone Limited</option></select></div>
+    <div><label for="exp-supplier">Supplier</label><br><input type="text" id="exp-supplier" required placeholder="Supplier name"></div>
+    <div><label for="exp-amount">Amount</label><br><input type="number" min="0" id="exp-amount" required placeholder="Amount"></div>
+    <div style="align-self: flex-end;"><button type="submit" id="submit-btn">Add Expense</button><button type="button" id="cancel-edit-btn" class="hide">Cancel Edit</button></div>
+    <div id="expense-form-error"></div>
+  </form>
+  <div class="table-responsive">
+    <table>
+      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
+      <tbody id="expenses-table-body"></tbody>
+    </table>
+  </div>
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-      authDomain: "project-task-588c4.firebaseapp.com",
-      projectId: "project-task-588c4",
-      storageBucket: "project-task-588c4.appspot.com",
-      messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const firebaseConfig = { apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU", authDomain: "project-task-588c4.firebaseapp.com", projectId: "project-task-588c4", storageBucket: "project-task-588c4.appspot.com", messagingSenderId: "411882772509", appId: "1:411882772509:web:08d613186c101a99f38ef4", measurementId: "G-JMFLFYEM0F" };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // --- Elements ---
-    const expenseForm = document.getElementById("expense-form");
-    const expensesTableBody = document.getElementById("expenses-table-body");
-    const formError = document.getElementById("expense-form-error");
-    const toggleFormBtn = document.getElementById("toggle-form-btn");
-    const accountSelect = document.getElementById("exp-account");
-    const dateInput = document.getElementById("exp-date");
-    const projectSelect = document.getElementById("exp-project");
-    const supplierInput = document.getElementById("exp-supplier");
-    const descriptionInput = document.getElementById("exp-description");
-    const amountInput = document.getElementById("exp-amount");
-    const submitBtn = document.getElementById("submit-btn");
-    const cancelEditBtn = document.getElementById("cancel-edit-btn");
-    const searchFilter = document.getElementById("search-filter");
-    const monthFilter = document.getElementById("month-filter");
-    const weekFilter = document.getElementById("week-filter");
-    const projectBtnsContainer = document.getElementById("project-btns");
-    const projectCollapseBtn = document.getElementById("project-collapse-btn");
-    
-    // Dropdown elements
-    const dropdownBtn = document.querySelector('.dropdown-btn');
-    const dropdownMenu = document.getElementById('dropdown-menu');
-    const dropdownDownloadWeekBtn = document.getElementById('dropdown-download-week-btn');
-    const dropdownDownloadSelectedBtn = document.getElementById('dropdown-download-selected-btn');
-    const dropdownToggleCheckboxes = document.getElementById('dropdown-toggle-checkboxes');
-    
-    // Account buttons in dropdown
-    const dropdownAccountBtns = document.querySelectorAll('.dropdown-account-btn');
-    
-    // Filter toggle elements
-    const toggleWeekFilter = document.getElementById('toggle-week-filter');
-    const toggleMonthFilter = document.getElementById('toggle-month-filter');
-    const toggleProjectFilter = document.getElementById('toggle-project-filter');
-    
-    // Filter containers
-    const weekFilterContainer = document.getElementById('week-filter-container');
-    const monthFilterContainer = document.getElementById('month-filter-container');
-    const projectFilterContainer = document.getElementById('project-filter-container');
+  // DOM elements
+  const expenseForm = document.getElementById("expense-form");
+  const expensesTableBody = document.getElementById("expenses-table-body");
+  const toggleFormBtn = document.getElementById("toggle-form-btn");
+  const accountSelect = document.getElementById("exp-account");
+  const dateInput = document.getElementById("exp-date");
+  const projectSelect = document.getElementById("exp-project");
+  const supplierInput = document.getElementById("exp-supplier");
+  const descriptionInput = document.getElementById("exp-description");
+  const amountInput = document.getElementById("exp-amount");
+  const submitBtn = document.getElementById("submit-btn");
+  const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  const searchFilter = document.getElementById("search-filter");
+  const monthFilter = document.getElementById("month-filter");
+  const weekFilter = document.getElementById("week-filter");
+  const projectBtnsContainer = document.getElementById("project-btns");
+  const projectCollapseBtn = document.getElementById("project-collapse-btn");
+  const dropdownMenu = document.getElementById("dropdown-menu");
+  const dropdownBtn = document.querySelector('.dropdown-btn');
+  const dropdownAccountBtns = document.querySelectorAll('.dropdown-account-btn');
+  const toggleWeekFilter = document.getElementById('toggle-week-filter');
+  const toggleMonthFilter = document.getElementById('toggle-month-filter');
+  const toggleProjectFilter = document.getElementById('toggle-project-filter');
+  const weekFilterContainer = document.getElementById('week-filter-container');
+  const monthFilterContainer = document.getElementById('month-filter-container');
+  const projectFilterContainer = document.getElementById('project-filter-container');
+  const dropdownDownloadWeekBtn = document.getElementById('dropdown-download-week-btn');
+  const dropdownDownloadSelectedBtn = document.getElementById('dropdown-download-selected-btn');
+  const dropdownToggleCheckboxes = document.getElementById('dropdown-toggle-checkboxes');
 
-    // --- Filter State ---
-    let selectedAccount = localStorage.getItem('expenses_selectedAccount') || "";
-    let selectedProjectFilter = localStorage.getItem('expenses_selectedProject') || "";
-    let persistedSearchFilter = localStorage.getItem('expenses_searchFilter') || "";
-    let persistedWeekFilter = localStorage.getItem('expenses_weekFilter') || "ALL";
-    let persistedMonthFilter = localStorage.getItem('expenses_monthFilter') || "all";
-    let projectBtnsVisible = localStorage.getItem('expenses_projectBtnsVisible') !== 'false';
-    let checkboxesVisible = false;
-    let selectedTransactions = new Set();
-    let editingTransactionId = null;
-    
-    // Persistent filter visibility
-    let weekFilterVisible = localStorage.getItem('expenses_weekFilterVisible') === 'true';
-    let monthFilterVisible = localStorage.getItem('expenses_monthFilterVisible') === 'true';
-    let projectFilterVisible = localStorage.getItem('expenses_projectFilterVisible') === 'true';
-
-    // --- Filter Persistence ---
-    function saveFilters() {
-      localStorage.setItem('expenses_selectedAccount', selectedAccount);
-      localStorage.setItem('expenses_selectedProject', selectedProjectFilter);
-      localStorage.setItem('expenses_searchFilter', searchFilter.value);
-      localStorage.setItem('expenses_weekFilter', weekFilter.value);
-      localStorage.setItem('expenses_monthFilter', monthFilter.value);
-      localStorage.setItem('expenses_projectBtnsVisible', projectBtnsVisible);
-      localStorage.setItem('expenses_weekFilterVisible', weekFilterVisible);
-      localStorage.setItem('expenses_monthFilterVisible', monthFilterVisible);
-      localStorage.setItem('expenses_projectFilterVisible', projectFilterVisible);
-    }
-
-    // --- Dropdown Toggle ---
-    dropdownBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      dropdownMenu.classList.toggle('show');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-        dropdownMenu.classList.remove('show');
+  // State
+  let selectedAccount = localStorage.getItem('expenses_selectedAccount') || "";
+  let selectedProjectFilter = localStorage.getItem('expenses_selectedProject') || "";
+  let persistedSearchFilter = localStorage.getItem('expenses_searchFilter') || "";
+  let weekFilterVisible = localStorage.getItem('expenses_weekFilterVisible') === 'true';
+  let monthFilterVisible = localStorage.getItem('expenses_monthFilterVisible') === 'true';
+  let projectFilterVisible = localStorage.getItem('expenses_projectFilterVisible') === 'true';
+  let projectBtnsVisible = localStorage.getItem('expenses_projectBtnsVisible') !== 'false';
+  let checkboxesVisible = false;
+  let selectedTransactions = new Set();
+  let editingTransactionId = null;
+  let allExpenses = [];
+  let filteredExpenses = [];
+  
+  // HIDDEN PROJECTS SET (store IDs or names? we store project names as strings for simplicity)
+  let hiddenProjectsSet = new Set(JSON.parse(localStorage.getItem('hidden_projects') || '[]'));
+  
+  function saveHiddenProjects() {
+    localStorage.setItem('hidden_projects', JSON.stringify(Array.from(hiddenProjectsSet)));
+    refreshProjectDropdown(); // refresh the form dropdown
+    renderProjectButtonsForFilter(); // also refresh filter project buttons (they are independent but fine)
+  }
+  
+  // Function to rebuild project dropdown with hidden filtering
+  function refreshProjectDropdown() {
+    // We'll re-render based on currently loaded projects from firestore (projectsRawList)
+    if (!window.allProjectsRaw) return;
+    let html = `<option value="">--Choose Project--</option><option value="_general">General (No Project)</option>`;
+    for (let p of window.allProjectsRaw) {
+      if (!hiddenProjectsSet.has(p.name)) {
+        html += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
       }
-    });
-
-    // --- Account Filter in Dropdown ---
-    dropdownAccountBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        // Remove selected class from all account buttons
-        dropdownAccountBtns.forEach(b => b.classList.remove('selected'));
-        
-        // Add selected class to clicked button
-        this.classList.add('selected');
-        
-        // Update selected account
-        selectedAccount = this.getAttribute('data-account');
-        
-        // Close dropdown
-        dropdownMenu.classList.remove('show');
-        
-        // Save and render
-        saveFilters();
-        renderTable();
-      });
-    });
-
-    // --- Initialize Filter Visibility ---
-    function initializeFilterVisibility() {
-      // Set toggle switches based on saved state
-      toggleWeekFilter.checked = weekFilterVisible;
-      toggleMonthFilter.checked = monthFilterVisible;
-      toggleProjectFilter.checked = projectFilterVisible;
-      
-      // Show/hide filter containers
-      weekFilterContainer.classList.toggle('hide', !weekFilterVisible);
-      monthFilterContainer.classList.toggle('hide', !monthFilterVisible);
-      projectFilterContainer.classList.toggle('hide', !projectFilterVisible);
-      
-      // Initialize project filter visibility
-      projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
-      projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
-      projectCollapseBtn.title = projectBtnsVisible ? "Hide Projects" : "Show Projects";
     }
-
-    // --- Filter Toggle Handlers ---
-    toggleWeekFilter.addEventListener('change', function() {
-      weekFilterVisible = this.checked;
-      weekFilterContainer.classList.toggle('hide', !weekFilterVisible);
-      saveFilters();
-    });
-
-    toggleMonthFilter.addEventListener('change', function() {
-      monthFilterVisible = this.checked;
-      monthFilterContainer.classList.toggle('hide', !monthFilterVisible);
-      saveFilters();
-    });
-
-    toggleProjectFilter.addEventListener('change', function() {
-      projectFilterVisible = this.checked;
-      projectFilterContainer.classList.toggle('hide', !projectFilterVisible);
-      saveFilters();
-    });
-
-    // --- Week Filter Dropdown ---
-    function fillWeekDropdown(data) {
-      const weeksSet = new Set();
-      
-      // Get unique weeks from data
-      data.forEach(exp => {
-        if (exp.date) {
-          const d = new Date(exp.date);
-          const weekYear = getWeekYear(d);
-          weeksSet.add(`${weekYear.year}-${weekYear.week}`);
-        }
-      });
-      
-      // Convert to array and sort by year/week (newest first)
-      const weeksArray = Array.from(weeksSet)
-        .map(w => {
-          const [year, week] = w.split('-').map(Number);
-          return { year, week, label: `Week ${week}, ${year}` };
-        })
-        .sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year;
-          return b.week - a.week;
-        });
-      
-      let options = `<option value="ALL"${persistedWeekFilter === "ALL" ? ' selected' : ''}>All Weeks</option>`;
-      
-      weeksArray.forEach(w => {
-        const value = `${w.year}-${w.week}`;
-        const selected = value === persistedWeekFilter ? ' selected' : '';
-        options += `<option value="${value}"${selected}>${w.label}</option>`;
-      });
-      
-      weekFilter.innerHTML = options;
+    projectSelect.innerHTML = html;
+    // preserve selection if possible
+    if (editingTransactionId === null) projectSelect.value = "";
+  }
+  
+  function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  
+  // Render hide projects UI inside dropdown
+  function renderHideProjectsUI(projectsList) {
+    const container = document.getElementById('hide-projects-list');
+    if (!container) return;
+    if (!projectsList.length) { container.innerHTML = '<div class="dropdown-item" style="color:#888;">No projects</div>'; return; }
+    let itemsHtml = '';
+    for (let p of projectsList) {
+      const isHidden = hiddenProjectsSet.has(p.name);
+      itemsHtml += `<div class="hide-project-item" data-project-name="${escapeAttr(p.name)}">
+        <span class="project-name">${escapeHtml(p.name)}</span>
+        <span class="toggle-eye"><i class="fa ${isHidden ? 'fa-eye-slash' : 'fa-eye'}" style="width:18px;"></i></span>
+      </div>`;
     }
-
-    // --- Month Filter Dropdown ---
-    function fillMonthDropdown() {
-      const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const d = new Date();
-      let options = `<option value="all"${persistedMonthFilter === "all" ? ' selected' : ''}>All Months</option>`;
-      for (let y = d.getFullYear(); y >= d.getFullYear() - 10; y--) {
-        for (let m = 11; m >= 0; m--) {
-          options += `<option value="${y}-${String(m+1).padStart(2,'0')}"${`${y}-${String(m+1).padStart(2,'0')}` === persistedMonthFilter ? ' selected' : ''}>${months[m]} ${y}</option>`;
-        }
-      }
-      monthFilter.innerHTML = options;
-    }
-    fillMonthDropdown();
-
-    // --- Show/Hide Form Logic ---
-    let formVisible = false;
-    expenseForm.classList.add("hide");
-    toggleFormBtn.textContent = "Add Transaction";
-    toggleFormBtn.onclick = function() {
-      formVisible = !formVisible;
-      expenseForm.classList.toggle("hide", !formVisible);
-      toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction";
-      if (!formVisible) {
-        cancelEdit();
-      }
-    };
-
-    // --- Toggle Checkboxes ---
-    dropdownToggleCheckboxes.onclick = function() {
-      checkboxesVisible = !checkboxesVisible;
-      document.querySelectorAll('.checkbox-col').forEach(col => {
-        col.classList.toggle('hide', !checkboxesVisible);
-      });
-      dropdownDownloadSelectedBtn.classList.toggle('hide', !checkboxesVisible);
-      dropdownToggleCheckboxes.textContent = checkboxesVisible ? "Hide Checkboxes" : "Show Checkboxes";
-      
-      // Clear selection when hiding checkboxes
-      if (!checkboxesVisible) {
-        selectedTransactions.clear();
-      }
-      dropdownMenu.classList.remove('show');
-    };
-
-    // Initialize UI based on persisted filters
-    window.addEventListener('DOMContentLoaded', () => {
-      // Set account filter in dropdown
-      dropdownAccountBtns.forEach((btn) => {
-        if (btn.getAttribute("data-account") === selectedAccount) {
-          btn.classList.add('selected');
+    container.innerHTML = itemsHtml;
+    container.querySelectorAll('.hide-project-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const projName = item.getAttribute('data-project-name');
+        if (hiddenProjectsSet.has(projName)) {
+          hiddenProjectsSet.delete(projName);
+          item.querySelector('.toggle-eye i').className = 'fa fa-eye';
         } else {
-          btn.classList.remove('selected');
+          hiddenProjectsSet.add(projName);
+          item.querySelector('.toggle-eye i').className = 'fa fa-eye-slash';
         }
+        saveHiddenProjects();
       });
-      
-      // Set search filter
-      searchFilter.value = persistedSearchFilter;
-      
-      // Initialize filter visibility
-      initializeFilterVisibility();
     });
-
-    // Week filter change
-    weekFilter.addEventListener("change", function() {
-      saveFilters();
-      renderTable();
+  }
+  function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  
+  // Filter toggles and UI persistence
+  function initializeFilterVisibility() {
+    toggleWeekFilter.checked = weekFilterVisible;
+    toggleMonthFilter.checked = monthFilterVisible;
+    toggleProjectFilter.checked = projectFilterVisible;
+    weekFilterContainer.classList.toggle('hide', !weekFilterVisible);
+    monthFilterContainer.classList.toggle('hide', !monthFilterVisible);
+    projectFilterContainer.classList.toggle('hide', !projectFilterVisible);
+    projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
+    if(projectCollapseBtn) projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
+  }
+  toggleWeekFilter.addEventListener('change', function(){ weekFilterVisible=this.checked; weekFilterContainer.classList.toggle('hide',!weekFilterVisible); localStorage.setItem('expenses_weekFilterVisible',weekFilterVisible); renderTable(); });
+  toggleMonthFilter.addEventListener('change', function(){ monthFilterVisible=this.checked; monthFilterContainer.classList.toggle('hide',!monthFilterVisible); localStorage.setItem('expenses_monthFilterVisible',monthFilterVisible); renderTable(); });
+  toggleProjectFilter.addEventListener('change', function(){ projectFilterVisible=this.checked; projectFilterContainer.classList.toggle('hide',!projectFilterVisible); localStorage.setItem('expenses_projectFilterVisible',projectFilterVisible); if(projectFilterVisible) renderTable(); });
+  projectCollapseBtn.onclick = function(){ projectBtnsVisible=!projectBtnsVisible; projectBtnsContainer.style.display=projectBtnsVisible?'flex':'none'; projectCollapseBtn.innerHTML=projectBtnsVisible?"&#9660;":"&#9654;"; localStorage.setItem('expenses_projectBtnsVisible',projectBtnsVisible); };
+  
+  dropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
+  document.addEventListener('click', (e) => { if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) dropdownMenu.classList.remove('show'); });
+  dropdownAccountBtns.forEach(btn => { btn.addEventListener('click', function(){ dropdownAccountBtns.forEach(b=>b.classList.remove('selected')); this.classList.add('selected'); selectedAccount=this.getAttribute('data-account'); localStorage.setItem('expenses_selectedAccount',selectedAccount); renderTable(); dropdownMenu.classList.remove('show'); }); });
+  if(selectedAccount) { dropdownAccountBtns.forEach(btn=>{ if(btn.getAttribute('data-account')===selectedAccount) btn.classList.add('selected'); }); }
+  
+  searchFilter.value = persistedSearchFilter;
+  searchFilter.addEventListener('input', () => { localStorage.setItem('expenses_searchFilter',searchFilter.value); renderTable(); });
+  weekFilter.addEventListener('change', () => { localStorage.setItem('expenses_weekFilter', weekFilter.value); renderTable(); });
+  monthFilter.addEventListener('change', () => { localStorage.setItem('expenses_monthFilter', monthFilter.value); renderTable(); });
+  
+  function fillWeekDropdown(data) {
+    const weeksSet = new Set();
+    data.forEach(exp => { if(exp.date) { const d=new Date(exp.date); const wy=getWeekYear(d); weeksSet.add(`${wy.year}-${wy.week}`); } });
+    const weeksArray = Array.from(weeksSet).map(w=>{const[y,wk]=w.split('-').map(Number); return {year:y,week:wk,label:`Week ${wk}, ${y}`};}).sort((a,b)=>b.year!==a.year?b.year-a.year:b.week-a.week);
+    let options = `<option value="ALL" ${(localStorage.getItem('expenses_weekFilter')||"ALL")==="ALL"?"selected":""}>All Weeks</option>`;
+    weeksArray.forEach(w=>{ const val=`${w.year}-${w.week}`; options+=`<option value="${val}" ${val===localStorage.getItem('expenses_weekFilter')?'selected':''}>${w.label}</option>`; });
+    weekFilter.innerHTML=options;
+  }
+  function fillMonthDropdown() { const months=["January","February","March","April","May","June","July","August","September","October","November","December"]; let d=new Date(); let opts=`<option value="all" ${(localStorage.getItem('expenses_monthFilter')||"all")==="all"?"selected":""}>All Months</option>`; for(let y=d.getFullYear();y>=d.getFullYear()-10;y--) for(let m=11;m>=0;m--) { let val=`${y}-${String(m+1).padStart(2,'0')}`; opts+=`<option value="${val}" ${val===localStorage.getItem('expenses_monthFilter')?'selected':''}>${months[m]} ${y}</option>`; } monthFilter.innerHTML=opts; }
+  fillMonthDropdown();
+  
+  // Project filter buttons for global filter (not hidden)
+  function renderProjectButtonsForFilter() {
+    let projectList = window.allProjectsRaw || [];
+    let html = `<button type="button" class="project-btn${selectedProjectFilter===""?" selected":""}" data-project="">All Projects</button>`;
+    for(let p of projectList) { html += `<button type="button" class="project-btn${selectedProjectFilter===p.name?" selected":""}" data-project="${p.name}">${p.name}</button>`; }
+    projectBtnsContainer.innerHTML=html;
+    projectBtnsContainer.style.display=projectBtnsVisible?'flex':'none';
+    projectBtnsContainer.querySelectorAll(".project-btn").forEach(btn=>{ btn.addEventListener("click",()=>{ projectBtnsContainer.querySelectorAll(".project-btn").forEach(b=>b.classList.remove("selected")); btn.classList.add("selected"); selectedProjectFilter=btn.getAttribute("data-project"); localStorage.setItem('expenses_selectedProject',selectedProjectFilter); renderTable(); }); });
+  }
+  
+  // load projects for dropdown and hide manager
+  let projectsRawListener = null;
+  function loadProjects() {
+    if(projectsRawListener) return;
+    projectsRawListener = onSnapshot(collection(db, "projectDashboard"), (snap) => {
+      let projectList = [];
+      snap.forEach(docSnap => { const name = docSnap.data().name || "Unnamed"; projectList.push({id: docSnap.id, name}); });
+      window.allProjectsRaw = projectList;
+      refreshProjectDropdown();
+      renderHideProjectsUI(projectList);
+      renderProjectButtonsForFilter();
+    }, (err) => { projectSelect.innerHTML = `<option value="">--Error--</option>`; });
+  }
+  loadProjects();
+  
+  // Add transaction logic, edit, delete
+  let formVisible = false;
+  expenseForm.classList.add("hide"); toggleFormBtn.textContent = "Add Transaction";
+  toggleFormBtn.onclick = function() { formVisible = !formVisible; expenseForm.classList.toggle("hide", !formVisible); toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction"; if (!formVisible) cancelEdit(); };
+  function cancelEdit() { editingTransactionId=null; submitBtn.textContent="Add Expense"; cancelEditBtn.classList.add("hide"); expenseForm.reset(); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
+  cancelEditBtn.addEventListener("click", cancelEdit);
+  function editTransaction(exp){ editingTransactionId=exp.id; dateInput.value=exp.date||""; descriptionInput.value=exp.description||""; supplierInput.value=exp.supplier||""; amountInput.value=exp.amount||""; accountSelect.value=exp.account||""; setTimeout(()=>{ const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); if(optionExists) projectSelect.value=optionExists.value; else if(exp.project==="General") projectSelect.value="_general"; },100); submitBtn.textContent="Update Expense"; cancelEditBtn.classList.remove("hide"); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } expenseForm.scrollIntoView({behavior:'smooth'}); }
+  async function deleteTransaction(id){ if(!confirm("Delete transaction?")) return; await deleteDoc(doc(db,"General expenses",id)); selectedTransactions.delete(id); }
+  
+  expenseForm.onsubmit = async function(e) { e.preventDefault(); document.getElementById("expense-form-error").textContent=""; const dateVal=dateInput.value; const projectVal=projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||""; const accountVal=accountSelect.value; const supplierVal=supplierInput.value.trim(); const descriptionVal=descriptionInput.value.trim(); const amountVal=parseFloat(amountInput.value); if(!accountVal||!dateVal||!supplierVal||isNaN(amountVal)||amountVal<0||!projectVal){ document.getElementById("expense-form-error").textContent="Please fill all fields."; return; } const expenseData={date:dateVal,project:projectVal,account:accountVal,supplier:supplierVal,description:descriptionVal,amount:amountVal,updatedAt:Timestamp.now()}; try{ if(editingTransactionId){ await updateDoc(doc(db,"General expenses",editingTransactionId),expenseData); cancelEdit(); } else { await addDoc(collection(db,"General expenses"),{...expenseData,createdAt:Timestamp.now()}); expenseForm.reset(); } } catch(err){ document.getElementById("expense-form-error").textContent="Error: "+err.message; } };
+  
+  onSnapshot(collection(db,"General expenses"), (snapshot)=>{ allExpenses=[]; snapshot.forEach(d=>{ let e=d.data(); e.id=d.id; allExpenses.push(e); }); fillWeekDropdown(allExpenses); renderTable(); });
+  
+  function getWeekYear(date){ let d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())); d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7)); let yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1)); let weekNo=Math.ceil(((d-yearStart)/86400000+1)/7); return {week:weekNo,year:d.getUTCFullYear()}; }
+  function formatDate(iso){ let d=new Date(iso); if(isNaN(d)) return iso; return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+  
+  function renderTable() {
+    let filtered = [...allExpenses];
+    if(selectedAccount) filtered = filtered.filter(exp=>exp.account===selectedAccount);
+    if(selectedProjectFilter) filtered = filtered.filter(exp=>exp.project && exp.project.toLowerCase()===selectedProjectFilter.toLowerCase());
+    let weekVal=weekFilter.value; if(weekVal && weekVal!=="ALL"){ let [fy,fw]=weekVal.split("-").map(Number); filtered=filtered.filter(exp=>{ if(!exp.date) return false; let d=new Date(exp.date); let wy=getWeekYear(d); return wy.year===fy && wy.week===fw; }); }
+    let monthVal=monthFilter.value; if(monthVal && monthVal!=="all"){ filtered=filtered.filter(exp=>{ if(!exp.date) return false; let d=new Date(exp.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`===monthVal; }); }
+    let searchVal=searchFilter.value.trim().toLowerCase(); if(searchVal) filtered=filtered.filter(exp=>Object.values(exp).some(v=>v&&String(v).toLowerCase().includes(searchVal)));
+    filteredExpenses=filtered; filtered.sort((a,b)=>(a.date||"")===(b.date||"")?((a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)):(a.date||"")<(b.date||"")?-1:1);
+    expensesTableBody.innerHTML=""; let balance=0;
+    filtered.forEach(exp=>{ balance+=exp.amount||0; const tr=document.createElement("tr"); const isChecked=selectedTransactions.has(exp.id);
+    tr.innerHTML=`<td class="checkbox-col ${checkboxesVisible?'':'hide'}"><input type="checkbox" ${isChecked?'checked':''} data-id="${exp.id}"></td><td>${formatDate(exp.date)}</td><td>${exp.description||"-"}</td><td>${exp.project||"-"}</td><td>${exp.account||"-"}</td><td>${exp.supplier||"-"}</td><td>${typeof exp.amount==="number"?exp.amount.toLocaleString(undefined,{minimumFractionDigits:2}):"-"}</td><td>${balance.toLocaleString(undefined,{minimumFractionDigits:2})}</td><td class="action-cell"><button class="action-btn" data-id="${exp.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" id="dropdown-${exp.id}"><button class="row-dropdown-item edit" data-id="${exp.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete" data-id="${exp.id}"><i class="fa fa-trash"></i> Delete</button></div></td>`;
+    expensesTableBody.appendChild(tr);
+    const cb=tr.querySelector('input[type="checkbox"]'); if(cb) cb.addEventListener('change',function(){ if(this.checked) selectedTransactions.add(exp.id); else selectedTransactions.delete(exp.id); });
+    const actBtn=tr.querySelector('.action-btn'); const rowDrop=tr.querySelector('.row-dropdown-content'); const editBtn=tr.querySelector('.row-dropdown-item.edit'); const delBtn=tr.querySelector('.row-dropdown-item.delete');
+    actBtn.addEventListener('click',(e)=>{ e.stopPropagation(); document.querySelectorAll('.row-dropdown-content.show').forEach(d=>{if(d!==rowDrop)d.classList.remove('show');}); rowDrop.classList.toggle('show'); });
+    editBtn.addEventListener('click',(e)=>{ rowDrop.classList.remove('show'); editTransaction(exp); });
+    delBtn.addEventListener('click',(e)=>{ rowDrop.classList.remove('show'); deleteTransaction(exp.id); });
     });
-
-    // Month filter change
-    monthFilter.addEventListener("change", function() {
-      saveFilters();
-      renderTable();
-    });
-
-    // Search filter input
-    searchFilter.addEventListener("input", function() {
-      saveFilters();
-      renderTable();
-    });
-
-    // --- Cancel Edit ---
-    cancelEditBtn.addEventListener("click", cancelEdit);
-
-    function cancelEdit() {
-      editingTransactionId = null;
-      submitBtn.textContent = "Add Expense";
-      cancelEditBtn.classList.add("hide");
-      expenseForm.reset();
-      // Show form if it's hidden
-      if (!formVisible) {
-        formVisible = true;
-        expenseForm.classList.remove("hide");
-        toggleFormBtn.textContent = "Hide Form";
-      }
-    }
-
-    // --- Edit Transaction ---
-    function editTransaction(exp) {
-      editingTransactionId = exp.id;
-      dateInput.value = exp.date || "";
-      descriptionInput.value = exp.description || "";
-      supplierInput.value = exp.supplier || "";
-      amountInput.value = exp.amount || "";
-      
-      // Set account
-      accountSelect.value = exp.account || "";
-      
-      // Set project - need to find the correct option
-      setTimeout(() => {
-        const projectOptions = Array.from(projectSelect.options);
-        const matchingOption = projectOptions.find(option => 
-          option.text === exp.project || option.value === exp.project
-        );
-        if (matchingOption) {
-          projectSelect.value = matchingOption.value;
-        } else if (exp.project === "General") {
-          projectSelect.value = "_general";
-        }
-      }, 100);
-      
-      submitBtn.textContent = "Update Expense";
-      cancelEditBtn.classList.remove("hide");
-      
-      // Show form if hidden
-      if (!formVisible) {
-        formVisible = true;
-        expenseForm.classList.remove("hide");
-        toggleFormBtn.textContent = "Hide Form";
-      }
-      
-      // Scroll to form
-      expenseForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // --- Delete Transaction ---
-    async function deleteTransaction(id) {
-      if (!confirm("Are you sure you want to delete this transaction? This action cannot be undone.")) {
-        return;
-      }
-      
-      try {
-        await deleteDoc(doc(db, "General expenses", id));
-        // Remove from selected transactions if present
-        selectedTransactions.delete(id);
-      } catch (err) {
-        alert("Error deleting transaction: " + (err.message || err));
-      }
-    }
-
-    // --- Collapsible Project Filter Buttons ---
-    projectCollapseBtn.onclick = function() {
-      projectBtnsVisible = !projectBtnsVisible;
-      projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
-      projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
-      projectCollapseBtn.title = projectBtnsVisible ? "Hide Projects" : "Show Projects";
-      saveFilters();
-    };
-
-    // --- Project Filter Button Logic ---
-    function renderProjectButtons(projectList) {
-      let html = `<button type="button" class="project-btn${selectedProjectFilter === "" ? " selected" : ""}" data-project="">All Projects</button>`;
-      for (const p of projectList) {
-        html += `<button type="button" class="project-btn${selectedProjectFilter === p.name ? " selected" : ""}" data-project="${p.name}">${p.name}</button>`;
-      }
-      projectBtnsContainer.innerHTML = html;
-      projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
-
-      // Add click listeners for filtering
-      projectBtnsContainer.querySelectorAll(".project-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          projectBtnsContainer.querySelectorAll(".project-btn").forEach(b => b.classList.remove("selected"));
-          btn.classList.add("selected");
-          selectedProjectFilter = btn.getAttribute("data-project");
-          saveFilters();
-          renderTable();
-        });
-      });
-    }
-
-    // --- Load Projects for Dropdown & Project Filter Buttons ---
-    function loadProjectsForDropdown() {
-      onSnapshot(collection(db, "projectDashboard"), (snap) => {
-        let html = `<option value="">--Choose Project--</option><option value="_general">General (No Project)</option>`;
-        let projectList = [];
-        snap.forEach(doc => {
-          const name = doc.data().name || "Unnamed Project";
-          html += `<option value="${doc.id}">${name}</option>`;
-          projectList.push({id: doc.id, name});
-        });
-        projectSelect.innerHTML = html;
-        renderProjectButtons(projectList);
-      }, (err) => {
-        projectSelect.innerHTML = `<option value="">--Error Loading Projects--</option>`;
-        projectSelect.disabled = true;
-        renderProjectButtons([]);
-      });
-    }
-    loadProjectsForDropdown();
-
-    // --- Add/Update Expense Handler ---
-    expenseForm.onsubmit = async function(e) {
-      e.preventDefault();
-      formError.textContent = "";
-      const dateVal = dateInput.value;
-      const projectVal = projectSelect.value === "_general" ? "General" : projectSelect.options[projectSelect.selectedIndex]?.text || "";
-      const accountVal = accountSelect.value;
-      const supplierVal = supplierInput.value.trim();
-      const descriptionVal = descriptionInput.value.trim();
-      const amountVal = parseFloat(amountInput.value);
-
-      if (!accountVal || !dateVal || !supplierVal || isNaN(amountVal) || amountVal < 0 || !projectVal) {
-        formError.textContent = "Please fill all fields correctly.";
-        return;
-      }
-
-      const expenseData = {
-        date: dateVal,
-        project: projectVal,
-        account: accountVal,
-        supplier: supplierVal,
-        description: descriptionVal,
-        amount: amountVal,
-        updatedAt: Timestamp.now()
-      };
-
-      try {
-        if (editingTransactionId) {
-          // Update existing transaction
-          await updateDoc(doc(db, "General expenses", editingTransactionId), expenseData);
-          cancelEdit();
-        } else {
-          // Add new transaction
-          await addDoc(collection(db, "General expenses"), {
-            ...expenseData,
-            createdAt: Timestamp.now()
-          });
-          expenseForm.reset();
-        }
-      } catch (err) {
-        formError.textContent = "Error saving expense: " + (err.message || err);
-      }
-    };
-
-    // --- Real-time Table Sync ---
-    let allExpenses = [];
-    let filteredExpenses = [];
-    
-    onSnapshot(
-      collection(db, "General expenses"),
-      (snapshot) => {
-        allExpenses = [];
-        snapshot.forEach(docSnap => {
-          const exp = docSnap.data();
-          exp.id = docSnap.id;
-          allExpenses.push(exp);
-        });
-        
-        // Fill week dropdown with weeks from data
-        fillWeekDropdown(allExpenses);
-        
-        renderTable();
-      }
-    );
-
-    // --- Table Rendering & Filtering ---
-    function renderTable() {
-      let filtered = [...allExpenses];
-
-      // Account filter
-      if (selectedAccount !== "") {
-        filtered = filtered.filter(exp => exp.account === selectedAccount);
-      }
-
-      // Project filter
-      if (selectedProjectFilter !== "") {
-        filtered = filtered.filter(exp =>
-          exp.project && exp.project.toLowerCase() === selectedProjectFilter.toLowerCase()
-        );
-      }
-
-      // Week filter - only apply if not "ALL"
-      const weekVal = weekFilter.value;
-      if (weekVal && weekVal !== "ALL") {
-        const [filterYear, filterWeek] = weekVal.split("-").map(Number);
-        filtered = filtered.filter(exp => {
-          if (!exp.date) return false;
-          const d = new Date(exp.date);
-          const weekYear = getWeekYear(d);
-          return weekYear.year === filterYear && weekYear.week === filterWeek;
-        });
-      }
-
-      // Month filter
-      const monthVal = monthFilter.value;
-      if (monthVal && monthVal !== "all") {
-        filtered = filtered.filter(exp => {
-          if (!exp.date) return false;
-          const d = new Date(exp.date);
-          return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === monthVal;
-        });
-      }
-
-      // Search filter (applies to all fields)
-      const searchVal = searchFilter.value.trim().toLowerCase();
-      if (searchVal) {
-        filtered = filtered.filter(exp =>
-          Object.values(exp).some(value =>
-            (typeof value === "string" || typeof value === "number") &&
-            String(value).toLowerCase().includes(searchVal)
-          )
-        );
-      }
-
-      // Save filtered for download
-      filteredExpenses = filtered;
-
-      // Sort by date ascending, then by createdAt if needed
-      filtered.sort((a, b) => {
-        if ((a.date || "") === (b.date || "")) {
-          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-        }
-        return (a.date || "") < (b.date || "") ? -1 : 1;
-      });
-
-      expensesTableBody.innerHTML = "";
-      let balance = 0;
-      filtered.forEach(exp => {
-        balance += exp.amount || 0;
-        const tr = document.createElement("tr");
-        const isChecked = selectedTransactions.has(exp.id);
-        
-        tr.innerHTML = `
-          <td class="checkbox-col ${checkboxesVisible ? '' : 'hide'}">
-            <input type="checkbox" ${isChecked ? 'checked' : ''} data-id="${exp.id}">
-          </td>
-          <td>${exp.date ? formatDate(exp.date) : "-"}</td>
-          <td>${exp.description || "-"}</td>
-          <td>${typeof exp.project === "string" && exp.project.trim() ? exp.project : "-"}</td>
-          <td>${exp.account || "-"}</td>
-          <td>${exp.supplier || "-"}</td>
-          <td>${typeof exp.amount === "number" ? exp.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
-          <td>${balance ? balance.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
-          <td class="action-cell">
-            <button class="action-btn" data-id="${exp.id}">
-              <i class="fa fa-ellipsis-v"></i>
-            </button>
-            <div class="row-dropdown-content" id="dropdown-${exp.id}">
-              <button class="row-dropdown-item edit" data-id="${exp.id}">
-                <i class="fa fa-edit" style="margin-right: 6px;"></i>Edit
-              </button>
-              <button class="row-dropdown-item delete" data-id="${exp.id}">
-                <i class="fa fa-trash" style="margin-right: 6px;"></i>Delete
-              </button>
-            </div>
-          </td>
-        `;
-        expensesTableBody.appendChild(tr);
-        
-        // Add checkbox event listener
-        const checkbox = tr.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-          checkbox.addEventListener('change', function() {
-            const id = this.getAttribute('data-id');
-            if (this.checked) {
-              selectedTransactions.add(id);
-            } else {
-              selectedTransactions.delete(id);
-            }
-          });
-        }
-        
-        // Add action button listeners
-        const actionBtn = tr.querySelector('.action-btn');
-        const rowDropdown = tr.querySelector('.row-dropdown-content');
-        const editBtn = tr.querySelector('.row-dropdown-item.edit');
-        const deleteBtn = tr.querySelector('.row-dropdown-item.delete');
-        
-        // Toggle dropdown on action button click
-        actionBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          // Close all other dropdowns
-          document.querySelectorAll('.row-dropdown-content.show').forEach(d => {
-            if (d !== rowDropdown) d.classList.remove('show');
-          });
-          rowDropdown.classList.toggle('show');
-        });
-        
-        // Edit button
-        editBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          rowDropdown.classList.remove('show');
-          editTransaction(exp);
-        });
-        
-        // Delete button
-        deleteBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          rowDropdown.classList.remove('show');
-          deleteTransaction(exp.id);
-        });
-      });
-      
-      // Close dropdowns when clicking outside
-      document.addEventListener('click', function() {
-        document.querySelectorAll('.row-dropdown-content.show').forEach(d => {
-          d.classList.remove('show');
-        });
-      });
-    }
-
-    // --- Week number helpers ---
-    function getWeekNumber(d) {
-      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-      return weekNo;
-    }
-    
-    function getWeekYear(date) {
-      let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-      var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-      var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-      return {week: weekNo, year: d.getUTCFullYear()};
-    }
-
-    function formatDate(isoDateStr) {
-      const date = new Date(isoDateStr);
-      if (isNaN(date.getTime())) return isoDateStr;
-      const dd = String(date.getDate()).padStart(2, '0');
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const yyyy = date.getFullYear();
-      return `${dd}/${mm}/${yyyy}`;
-    }
-
-    // --- Download Filtered Report ---
-    dropdownDownloadWeekBtn.onclick = function() {
-      if (!filteredExpenses.length) return alert("No filtered results to download!");
-      downloadReport(filteredExpenses, "expenses-filtered-report");
-      dropdownMenu.classList.remove('show');
-    };
-
-    // --- Download Selected Report ---
-    dropdownDownloadSelectedBtn.onclick = function() {
-      if (selectedTransactions.size === 0) return alert("No transactions selected!");
-      
-      const selectedExpenses = filteredExpenses.filter(exp => 
-        selectedTransactions.has(exp.id)
-      );
-      
-      if (selectedExpenses.length === 0) return alert("No matching selected transactions found!");
-      
-      downloadReport(selectedExpenses, "expenses-selected-report");
-      dropdownMenu.classList.remove('show');
-    };
-
-    // --- Common Report Download Function ---
-    function downloadReport(expenses, filename) {
-      let html = `
-        <div style="font-family:Arial,sans-serif;max-width:1000px;">
-          <h2 style="color:#0a1c2f;">Expenses Report</h2>
-          <div style="margin-bottom:10px;font-weight:bold;">${filename.includes('selected') ? 'Selected' : 'Filtered'} Export</div>
-          <div style="margin-bottom:10px;color:#666;">
-            ${weekFilter.value === "ALL" ? "All Weeks" : "Week: " + weekFilter.options[weekFilter.selectedIndex].text} | 
-            ${monthFilter.value === "all" ? "All Months" : "Month: " + monthFilter.options[monthFilter.selectedIndex].text}
-          </div>
-          <table style="width:100%;border-collapse:collapse;background:#fff;">
-            <thead>
-              <tr>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Date</th>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Description</th>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Project</th>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Account</th>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Supplier</th>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Amount</th>
-                <th style="padding:8px 6px;border:1px solid #b3c7e0;background:#d4e2f2;">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-      let balance = 0;
-      expenses.sort((a, b) => {
-        if ((a.date || "") === (b.date || "")) {
-          return ((a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-        }
-        return (a.date || "") < (b.date || "") ? -1 : 1;
-      });
-      expenses.forEach(exp => {
-        balance += exp.amount || 0;
-        html += `
-          <tr>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.date ? formatDate(exp.date) : "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.description || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${typeof exp.project === "string" && exp.project.trim() ? exp.project : "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.account || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${exp.supplier || "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${typeof exp.amount === "number" ? exp.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
-            <td style="padding:8px 6px;border:1px solid #eee;">${balance ? balance.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : "-"}</td>
-          </tr>
-        `;
-      });
-      html += `</tbody></table></div>`;
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = html;
-      document.body.appendChild(tempDiv);
-      html2pdf().from(tempDiv).set({
-        margin: 0.5,
-        filename: `${filename}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-      }).save().then(() => {
-        document.body.removeChild(tempDiv);
-      });
-    };
-  </script>
+    document.addEventListener('click',()=>{ document.querySelectorAll('.row-dropdown-content.show').forEach(d=>d.classList.remove('show')); });
+  }
+  
+  dropdownDownloadWeekBtn.onclick = function(){ if(!filteredExpenses.length) return alert("No data"); downloadReport(filteredExpenses,"expenses-report"); dropdownMenu.classList.remove('show'); };
+  dropdownDownloadSelectedBtn.onclick = function(){ if(selectedTransactions.size===0) return alert("Select transactions"); const sel=filteredExpenses.filter(e=>selectedTransactions.has(e.id)); if(sel.length) downloadReport(sel,"selected-report"); else alert("No matching"); dropdownMenu.classList.remove('show'); };
+  dropdownToggleCheckboxes.onclick = function(){ checkboxesVisible=!checkboxesVisible; document.querySelectorAll('.checkbox-col').forEach(col=>col.classList.toggle('hide',!checkboxesVisible)); dropdownDownloadSelectedBtn.classList.toggle('hide',!checkboxesVisible); dropdownToggleCheckboxes.textContent=checkboxesVisible?"Hide Checkboxes":"Show Checkboxes"; if(!checkboxesVisible) selectedTransactions.clear(); dropdownMenu.classList.remove('show'); };
+  
+  function downloadReport(expenses,filename){ let balance=0; let rows=""; expenses.sort((a,b)=>(a.date||"")===(b.date||"")?0:(a.date||"")<(b.date||"")?-1:1); expenses.forEach(e=>{ balance+=e.amount||0; rows+=`<tr><td>${formatDate(e.date)}</td><td>${e.description||"-"}</td><td>${e.project||"-"}</td><td>${e.account||"-"}</td><td>${e.supplier||"-"}</td><td>${e.amount?e.amount.toLocaleString():0}</td><td>${balance.toLocaleString()}</td></tr>`; }); let html=`<div><h3>Expense Report</h3><table border="1" cellpadding="5"><thead><tr><th>Date</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Amount</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table></div>`; let div=document.createElement('div'); div.innerHTML=html; document.body.appendChild(div); html2pdf().from(div).set({margin:0.5,filename:`${filename}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'in',format:'a4',orientation:'landscape'}}).save().then(()=>document.body.removeChild(div)); }
+  initializeFilterVisibility();
+  if(dropdownDownloadSelectedBtn) dropdownDownloadSelectedBtn.classList.add('hide');
+</script>
 </body>
 </html>
