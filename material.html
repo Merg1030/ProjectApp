@@ -385,7 +385,7 @@
     </div>
 
     <footer style="font-size:0.7rem; text-align:center; padding:16px; color:#6f95b5; border-top:1px solid #e2edf7;">
-        <i class="fas fa-database"></i> Data synced with Firebase | Week format: Week / Year (e.g., 17/26)
+        <i class="fas fa-database"></i> Data synced with Firebase | Your selected material and week range are saved
     </footer>
 </div>
 
@@ -423,7 +423,7 @@
                 </thead>
                 <tbody id="receiveItemsBody">
                     <tr class="item-row">
-                        <tr>
+                        <td>
                             <select class="material-select">
                                 <option value="">Select material</option>
                             </select>
@@ -486,10 +486,55 @@
     let fromWeek = 1;
     let toWeek = 52;
     
+    // ========== PERSISTENCE FUNCTIONS ==========
+    function saveToLocalStorage() {
+        if (currentSelectedMaterialId) {
+            localStorage.setItem('selectedMaterialId', currentSelectedMaterialId);
+        }
+        localStorage.setItem('selectedYear', currentYear);
+        localStorage.setItem('fromWeek', fromWeek);
+        localStorage.setItem('toWeek', toWeek);
+    }
+    
+    function loadFromLocalStorage() {
+        const savedMaterialId = localStorage.getItem('selectedMaterialId');
+        const savedYear = localStorage.getItem('selectedYear');
+        const savedFromWeek = localStorage.getItem('fromWeek');
+        const savedToWeek = localStorage.getItem('toWeek');
+        
+        if (savedYear) {
+            currentYear = parseInt(savedYear);
+            document.getElementById("yearSelect").value = currentYear;
+        }
+        
+        if (savedFromWeek) {
+            fromWeek = parseInt(savedFromWeek);
+            document.getElementById("fromWeek").value = fromWeek;
+        }
+        
+        if (savedToWeek) {
+            toWeek = parseInt(savedToWeek);
+            document.getElementById("toWeek").value = toWeek;
+        }
+        
+        return savedMaterialId;
+    }
+    
     // Helper: Format week as "week/year" e.g., "17/26"
     function formatWeekDisplay(weekNum, year) {
         const yearShort = year.toString().slice(-2);
         return `${weekNum}/${yearShort}`;
+    }
+    
+    // Update badge with current range
+    function updateRangeBadge() {
+        const yearShort = currentYear.toString().slice(-2);
+        const badge = document.getElementById("activeRangeBadge");
+        if (fromWeek === 1 && toWeek === 52) {
+            badge.innerHTML = `1/${yearShort} - 52/${yearShort} (All)`;
+        } else {
+            badge.innerHTML = `${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
+        }
     }
     
     // Toggle week range panel
@@ -527,14 +572,8 @@
         document.getElementById("fromWeek").value = fromWeek;
         document.getElementById("toWeek").value = toWeek;
         
-        const badge = document.getElementById("activeRangeBadge");
-        const yearShort = currentYear.toString().slice(-2);
-        if (fromWeek === 1 && toWeek === 52) {
-            badge.innerHTML = `1/${yearShort} - 52/${yearShort} (All)`;
-        } else {
-            badge.innerHTML = `${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
-        }
-        
+        updateRangeBadge();
+        saveToLocalStorage();
         loadAllData();
     }
     
@@ -543,8 +582,8 @@
         toWeek = 52;
         document.getElementById("fromWeek").value = 1;
         document.getElementById("toWeek").value = 52;
-        const yearShort = currentYear.toString().slice(-2);
-        document.getElementById("activeRangeBadge").innerHTML = `1/${yearShort} - 52/${yearShort} (All)`;
+        updateRangeBadge();
+        saveToLocalStorage();
         loadAllData();
     }
 
@@ -581,12 +620,17 @@
                 if (currentVal) sel.value = currentVal;
             });
             
-            if (!currentSelectedMaterialId && materialsList.length > 0) {
-                currentSelectedMaterialId = materialsList[0].id;
+            // Restore previously selected material from localStorage
+            const savedMaterialId = loadFromLocalStorage();
+            
+            if (savedMaterialId && materialsList.some(m => m.id === savedMaterialId)) {
+                currentSelectedMaterialId = savedMaterialId;
                 selectEl.value = currentSelectedMaterialId;
                 await loadAllData();
-            } else if (currentSelectedMaterialId) {
+            } else if (materialsList.length > 0) {
+                currentSelectedMaterialId = materialsList[0].id;
                 selectEl.value = currentSelectedMaterialId;
+                saveToLocalStorage();
                 await loadAllData();
             }
         } catch (error) {
@@ -837,7 +881,7 @@
         if (!currentSelectedMaterialId) return;
         
         document.getElementById("ledgerTableBody").innerHTML = 
-            `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading ledger...<\/td><\/tr>`;
+            `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading ledger...</td></tr>`;
         
         await loadUsageRecords();
         const recData = await loadWeeklyRecData(currentSelectedMaterialId);
@@ -989,13 +1033,17 @@
     
     function changeYear() {
         currentYear = parseInt(document.getElementById("yearSelect").value);
-        const yearShort = currentYear.toString().slice(-2);
-        document.getElementById("activeRangeBadge").innerHTML = `${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
+        updateRangeBadge();
+        saveToLocalStorage();
         loadAllData();
     }
 
     // Event Listeners
     document.addEventListener("DOMContentLoaded", async () => {
+        // Load saved preferences first
+        loadFromLocalStorage();
+        updateRangeBadge();
+        
         await loadMaterials();
         
         document.getElementById("yearSelect").addEventListener("change", changeYear);
@@ -1005,6 +1053,7 @@
         
         document.getElementById("itemSelect").addEventListener("change", async (e) => {
             currentSelectedMaterialId = e.target.value;
+            saveToLocalStorage();
             if (currentSelectedMaterialId) {
                 await loadAllData();
             }
