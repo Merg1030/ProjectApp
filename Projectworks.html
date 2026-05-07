@@ -200,9 +200,6 @@
         .cost-clickable:hover { background: #fbcba5 !important; text-decoration: none; }
         .cost-clickable.cost-zero::before { content: '+'; color: #97adc9; font-size: 0.7rem; font-weight: 700; }
 
-        /* =============================================
-           MODALS
-           ============================================= */
         .allocation-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.55); align-items: center; justify-content: center; z-index: 2000;
@@ -349,7 +346,6 @@
         .ptb-divider { width: 1px; height: 20px; background: #b3c7e0; margin: 0 4px; }
         .ptb-desc { margin-left: 14px; font-size: 0.65rem; color: #7f96b3; font-style: italic; }
 
-        /* ── INLINE STATUS EDITOR ── */
         .status-edit-select {
             padding: 2px 4px; border: 1px solid #2b4a73; border-radius: 4px;
             font-size: 0.65rem; font-weight: 700; background: white; color: #0a1c2f;
@@ -1513,38 +1509,58 @@ document.addEventListener('DOMContentLoaded', function() {
         );
     }
 
+    // ═══════════════════════════════════════════════════════
+    // FIXED filterTasks — search now works correctly
+    // ═══════════════════════════════════════════════════════
     function filterTasks() {
-        const status=statusFilter.value, month=monthFilter.value, year=yearFilter.value, search=searchInput.value.toLowerCase();
+        const status = statusFilter.value;
+        const month  = monthFilter.value;
+        const year   = yearFilter.value;
+        // Trim and lowercase the search term live from the input
+        const search = searchInput.value.trim().toLowerCase();
+
         return allTasks
             .filter(task => {
+                // Task filter picker
                 if (selectedTaskIds !== null && !selectedTaskIds.has(task.id)) return false;
-                if (hideCompleted && task.status==='COMPLETED') return false;
-                if (status && task.status!==status) return false;
-                if (month||year) {
+                // Hide completed toggle
+                if (hideCompleted && task.status === 'COMPLETED') return false;
+                // Status dropdown
+                if (status && task.status !== status) return false;
+                // Month / Year filter
+                if (month || year) {
                     if (!task.startDate) return false;
-                    const d=task.startDate.toDate?task.startDate.toDate():new Date(task.startDate);
-                    if (month && d.getMonth()+1!==parseInt(month)) return false;
-                    if (year  && d.getFullYear()!==parseInt(year))  return false;
+                    const d = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
+                    if (month && (d.getMonth() + 1) !== parseInt(month)) return false;
+                    if (year  && d.getFullYear()    !== parseInt(year))  return false;
                 }
+                // Search — fixed: use String() so numbers/zeros are never dropped
                 if (search) {
-                    const s=[task.taskId,task.taskDescription,task.assignedTo,task.status,task.location,task.taskLine?.toString()].filter(Boolean).join(' ').toLowerCase();
-                    return s.includes(search);
+                    const haystack = [
+                        String(task.taskId          ?? ''),
+                        String(task.taskDescription ?? ''),
+                        String(task.assignedTo      ?? ''),
+                        String(task.status          ?? ''),
+                        String(task.location        ?? ''),
+                        String(task.taskLine        ?? '')
+                    ].join(' ').toLowerCase();
+                    return haystack.includes(search);
                 }
                 return true;
             })
             .map(task => {
-                const filteredSubs = (task.subTasks||[])
-                    .filter(sub => !(hideCompleted && sub.status==='COMPLETED'))
+                const filteredSubs = (task.subTasks || [])
+                    .filter(sub => !(hideCompleted && sub.status === 'COMPLETED'))
                     .map(sub => ({
                         ...sub,
-                        subSubtasks: (sub.subSubtasks||[])
-                            .filter(ss => !(hideCompleted && ss.status==='COMPLETED'))
+                        subSubtasks: (sub.subSubtasks || [])
+                            .filter(ss => !(hideCompleted && ss.status === 'COMPLETED'))
                     }));
                 return { ...task, subTasks: filteredSubs };
             });
     }
 
-    let taskAssignedNames = {};
+    let taskAssignedNames  = {};
     let unsubAssignedNames = null;
 
     function listenForAssignedNames() {
@@ -1557,7 +1573,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const x = d.data(); if (x.reversed) return;
                     const tid = x.taskId || x.taskDocId; if (!tid) return;
                     if (!nameMap[tid]) nameMap[tid] = new Set();
-                    const fullName = x.employeeName || '';
+                    const fullName  = x.employeeName || '';
                     const firstName = fullName.trim().split(' ')[0];
                     if (firstName) nameMap[tid].add(firstName);
                 });
@@ -1583,47 +1599,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     addEmptyRowBtn.addEventListener('click', () => {
-        const id='empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
-        emptyRows.push({id,type:'empty',description:'',location:'',createdAt:new Date().toISOString()});
+        const id = 'empty-' + Date.now() + '-' + Math.random().toString(36).substr(2,9);
+        emptyRows.push({ id, type: 'empty', description: '', location: '', createdAt: new Date().toISOString() });
         saveEmptyRows(); renderTasks(filterTasks());
     });
-    window.insertRow = (pos,tid) => {
-        const id='empty-'+Date.now()+'-'+Math.random().toString(36).substr(2,9);
-        emptyRows.push({id,type:'empty',position:pos,targetId:tid,description:'',location:'',createdAt:new Date().toISOString()});
+    window.insertRow = (pos, tid) => {
+        const id = 'empty-' + Date.now() + '-' + Math.random().toString(36).substr(2,9);
+        emptyRows.push({ id, type: 'empty', position: pos, targetId: tid, description: '', location: '', createdAt: new Date().toISOString() });
         saveEmptyRows(); renderTasks(filterTasks());
     };
-    window.updateEmptyRow = (id,field,val) => { const r=emptyRows.find(r=>r.id===id); if(r){r[field]=val;saveEmptyRows();} };
-    window.removeEmptyRow = (id) => { emptyRows=emptyRows.filter(r=>r.id!==id); saveEmptyRows(); renderTasks(filterTasks()); };
+    window.updateEmptyRow = (id, field, val) => { const r = emptyRows.find(r => r.id === id); if (r) { r[field] = val; saveEmptyRows(); } };
+    window.removeEmptyRow = (id) => { emptyRows = emptyRows.filter(r => r.id !== id); saveEmptyRows(); renderTasks(filterTasks()); };
     window.toggleMenu = (menuId) => {
-        if (openMenuId===menuId) { openMenuId=null; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show')); }
-        else { openMenuId=menuId; document.querySelectorAll('.menu-dropdown.show').forEach(m=>m.classList.remove('show')); document.getElementById(`menu-${menuId}`)?.classList.add('show'); }
+        if (openMenuId === menuId) {
+            openMenuId = null;
+            document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
+        } else {
+            openMenuId = menuId;
+            document.querySelectorAll('.menu-dropdown.show').forEach(m => m.classList.remove('show'));
+            document.getElementById(`menu-${menuId}`)?.classList.add('show');
+        }
     };
 
-    // ══════════════════════════════════════════════════════════════════
-    // RENDER TASKS
-    // KEY FIXES:
-    //  1. Status dropdown uses 'onchange' + 'onkeydown(Enter)' — NOT onblur
-    //     This means it only saves when user deliberately picks an option
-    //     or presses Enter, never when accidentally losing focus.
-    //  2. saveEdit() now immediately updates the DOM cell after saving to
-    //     Firestore, so changes appear instantly without waiting for a
-    //     Firestore snapshot round-trip.
-    // ══════════════════════════════════════════════════════════════════
     function renderTasks(tasks) {
+        // Remember scroll position and active element before wiping DOM
+        const tableContainer  = document.getElementById('tableContainer');
+        const scrollTop       = tableContainer.scrollTop;
+        const scrollLeft      = tableContainer.scrollLeft;
+        const activeEl        = document.activeElement;
+        const wasSearchFocused = activeEl === searchInput;
+        const searchCursorPos  = wasSearchFocused ? searchInput.selectionStart : 0;
+
         taskListEl.innerHTML = '';
-        tasks.sort((a,b) => (a.taskLine||0)-(b.taskLine||0));
+        tasks.sort((a, b) => (a.taskLine || 0) - (b.taskLine || 0));
 
         const byTarget = {};
         emptyRows.forEach(e => {
             if (e.targetId) {
-                if (!byTarget[e.targetId]) byTarget[e.targetId]={before:[],after:[]};
+                if (!byTarget[e.targetId]) byTarget[e.targetId] = { before: [], after: [] };
                 byTarget[e.targetId][e.position].push(e);
             }
         });
-        emptyRows.filter(e=>!e.targetId).forEach(e=>renderEmptyRow(e));
+        emptyRows.filter(e => !e.targetId).forEach(e => renderEmptyRow(e));
 
         tasks.forEach(task => {
-            byTarget[task.id]?.before.forEach(e=>renderEmptyRow(e));
+            byTarget[task.id]?.before.forEach(e => renderEmptyRow(e));
             const matCost = task._aggMatCost ?? task._matCost ?? 0;
             const labCost = task._aggLabCost ?? task._labCost ?? 0;
             const total   = matCost + labCost;
@@ -1660,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', function() {
             taskListEl.appendChild(tr);
 
             task.subTasks.forEach(sub => {
-                const sMat=sub._matCost||0, sLab=sub._labCost||0, sTotal=sMat+sLab;
+                const sMat = sub._matCost||0, sLab = sub._labCost||0, sTotal = sMat + sLab;
                 const subTr = document.createElement('tr');
                 subTr.className = 'subtask-row';
                 subTr.dataset.taskId = sub.id;
@@ -1691,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskListEl.appendChild(subTr);
 
                 sub.subSubtasks?.forEach(ss => {
-                    const ssMat=ss._matCost||0, ssLab=ss._labCost||0, ssTotal=ssMat+ssLab;
+                    const ssMat = ss._matCost||0, ssLab = ss._labCost||0, ssTotal = ssMat + ssLab;
                     const ssTr = document.createElement('tr');
                     ssTr.className = 'subsubtask-row';
                     ssTr.dataset.taskId = ss.id;
@@ -1722,30 +1742,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            byTarget[task.id]?.after.forEach(e=>renderEmptyRow(e));
+            byTarget[task.id]?.after.forEach(e => renderEmptyRow(e));
         });
 
-        emptyStateEl.style.display = tasks.length===0 && emptyRows.length===0 ? 'block' : 'none';
+        emptyStateEl.style.display = tasks.length === 0 && emptyRows.length === 0 ? 'block' : 'none';
 
-        // ─────────────────────────────────────────────────────────────
-        // CELL CLICK HANDLER — completely rebuilt
-        //
-        // STATUS FIX: We use a <select> that saves on 'change' event
-        // (fires when user picks an option) AND on Enter keydown.
-        // We do NOT use onblur because onblur fires the instant the
-        // dropdown opens (focus moves to the native picker on mobile,
-        // or the dropdown list on desktop), causing premature save.
-        //
-        // We also call e.stopPropagation() on the select itself so
-        // clicking an option doesn't trigger the cell's onclick again.
-        //
-        // INSTANT UPDATE FIX: saveEdit() now updates the DOM immediately
-        // after a successful Firestore write, rather than waiting for
-        // the onSnapshot callback to come back and re-render everything.
-        // ─────────────────────────────────────────────────────────────
+        // Restore scroll position after DOM rebuild
+        tableContainer.scrollTop  = scrollTop;
+        tableContainer.scrollLeft = scrollLeft;
+
+        // ── CRITICAL FIX: restore search focus after DOM rebuild ──
+        // renderTasks wipes innerHTML which blurs any focused input.
+        // We must synchronously re-focus searchInput if it was active.
+        if (wasSearchFocused) {
+            searchInput.focus();
+            try { searchInput.setSelectionRange(searchCursorPos, searchCursorPos); } catch(e) {}
+        }
+
+        // ── CELL CLICK HANDLER ──
         document.querySelectorAll('.editable').forEach(cell => {
             cell.onclick = (e) => {
-                // Don't re-open editor if already editing
                 if (cell.querySelector('input, select')) return;
                 e.stopPropagation();
 
@@ -1753,7 +1769,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rawText = cell.textContent.trim().replace(/↪/g,'').replace(/↪↪/g,'').trim();
 
                 if (field === 'status') {
-                    // ── STATUS: use a select that saves on change (not blur) ──
                     const currentVal = cell.querySelector('.status-badge')?.textContent.trim() || rawText || 'PENDING';
                     const sel = document.createElement('select');
                     sel.className = 'status-edit-select';
@@ -1763,44 +1778,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (currentVal === s) o.selected = true;
                         sel.appendChild(o);
                     });
-
-                    // Stop clicks inside the select from bubbling to the cell
-                    sel.onclick = (ev) => ev.stopPropagation();
-
-                    // SAVE on change — fires when user picks a different option
-                    sel.onchange = () => {
-                        const newVal = sel.value;
-                        saveEdit(cell, type, field, newVal);
-                    };
-
-                    // Also allow Enter to confirm
+                    sel.onclick   = (ev) => ev.stopPropagation();
+                    sel.onchange  = () => { saveEdit(cell, type, field, sel.value); };
                     sel.onkeydown = (ev) => {
-                        if (ev.key === 'Enter') { ev.preventDefault(); sel.onchange(); sel.blur(); }
+                        if (ev.key === 'Enter')  { ev.preventDefault(); sel.onchange(); sel.blur(); }
                         if (ev.key === 'Escape') { renderTasks(filterTasks()); }
                     };
-
                     cell.innerHTML = '';
                     cell.appendChild(sel);
                     sel.focus();
 
                 } else if (field === 'startDate' || field === 'endDate') {
-                    // ── DATE: input[type=date], save on blur ──
                     const inp = document.createElement('input');
                     inp.type = 'date';
-                    const currentDate = cell.getAttribute('data-raw-date') || '';
                     if (rawText) {
                         try {
-                            // Try to parse the formatted date back to yyyy-mm-dd
                             const parsed = new Date(rawText + ' ' + new Date().getFullYear());
                             if (!isNaN(parsed)) inp.value = parsed.toISOString().split('T')[0];
                         } catch(e) {}
                     }
-                    inp.onblur = () => {
-                        const val = inp.value ? new Date(inp.value) : null;
-                        saveEdit(cell, type, field, val);
-                    };
+                    inp.onblur   = () => { const val = inp.value ? new Date(inp.value) : null; saveEdit(cell, type, field, val); };
                     inp.onkeydown = (ev) => {
-                        if (ev.key === 'Enter') { inp.blur(); }
+                        if (ev.key === 'Enter')  { inp.blur(); }
                         if (ev.key === 'Escape') { renderTasks(filterTasks()); }
                     };
                     cell.innerHTML = '';
@@ -1808,15 +1807,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     inp.focus();
 
                 } else {
-                    // ── TEXT / NUMBER: input, save on blur or Enter ──
                     const inp = document.createElement('input');
                     inp.type = field === 'taskLine' ? 'number' : 'text';
                     inp.value = rawText;
                     inp.style.cssText = 'width:100%;padding:2px 4px;border:1px solid #2b4a73;border-radius:4px;font-size:0.68rem;outline:none;';
-
-                    inp.onblur = () => saveEdit(cell, type, field, inp.value);
+                    inp.onblur   = () => saveEdit(cell, type, field, inp.value);
                     inp.onkeydown = (ev) => {
-                        if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); }
+                        if (ev.key === 'Enter')  { ev.preventDefault(); inp.blur(); }
                         if (ev.key === 'Escape') { renderTasks(filterTasks()); }
                     };
                     cell.innerHTML = '';
@@ -1828,9 +1825,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderEmptyRow(empty) {
-        const tr=document.createElement('tr');
-        tr.className='empty-row'; tr.dataset.emptyId=empty.id;
-        tr.innerHTML=`
+        const tr = document.createElement('tr');
+        tr.className = 'empty-row'; tr.dataset.emptyId = empty.id;
+        tr.innerHTML = `
             <td></td><td></td>
             <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}','description',this.textContent)">${empty.description||''}</span></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
@@ -1846,47 +1843,34 @@ document.addEventListener('DOMContentLoaded', function() {
         taskListEl.appendChild(tr);
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // saveEdit — saves to Firestore AND immediately updates the DOM cell
-    // so the user sees the change right away without waiting for
-    // the Firestore onSnapshot to come back.
-    // ─────────────────────────────────────────────────────────────────
     async function saveEdit(cell, type, field, value) {
         const mainId = cell.dataset.mainid || cell.dataset.id;
 
-        // ── INSTANT DOM UPDATE ──
-        // Update the cell content immediately so user sees the change now
+        // Instant DOM update
         if (field === 'status') {
             const statusVal = value || 'PENDING';
             cell.innerHTML = `<span class="status-badge status-${statusVal}">${statusVal}</span>`;
-            // Also update in allTasks so filter/gantt stay in sync
             const taskObj = findTaskObj(cell.dataset.id);
             if (taskObj) taskObj.status = statusVal;
         } else if (field === 'startDate' || field === 'endDate') {
             const dateVal = value ? (value instanceof Date ? value : new Date(value)) : null;
             cell.textContent = dateVal && !isNaN(dateVal) ? formatDate(dateVal) : '';
-            // Update allTasks
             const taskObj = findTaskObj(cell.dataset.id);
             if (taskObj && dateVal && !isNaN(dateVal)) taskObj[field] = dateVal;
         } else {
-            // For description — preserve the prefix arrow if subtask/subsubtask
             const taskObj = findTaskObj(cell.dataset.id);
             if (field === 'taskDescription') {
                 const rowType = cell.dataset.type;
-                if (rowType === 'sub') {
-                    cell.innerHTML = `<span class="task-prefix">↪</span> ${value}`;
-                } else if (rowType === 'subsub') {
-                    cell.innerHTML = `<span class="task-prefix">↪↪</span> ${value}`;
-                } else {
-                    cell.textContent = value;
-                }
+                if (rowType === 'sub')    { cell.innerHTML = `<span class="task-prefix">↪</span> ${value}`; }
+                else if (rowType === 'subsub') { cell.innerHTML = `<span class="task-prefix">↪↪</span> ${value}`; }
+                else { cell.textContent = value; }
             } else {
                 cell.textContent = value;
             }
             if (taskObj) taskObj[field] = value;
         }
 
-        // ── FIRESTORE WRITE ──
+        // Firestore write
         try {
             let firestoreValue = value;
             if ((field === 'startDate' || field === 'endDate') && value) {
@@ -1902,46 +1886,49 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch(e) {
             alert("Error saving: " + e.message);
-            // Re-render to restore previous value on failure
             renderTasks(filterTasks());
         }
     }
 
-    window.deleteTask = async (type,mainId,subId,subSubId) => {
+    window.deleteTask = async (type, mainId, subId, subSubId) => {
         if (!confirm("Delete task?")) return;
         try {
-            if (type==='main')        await deleteDoc(doc(db,"projectTasks",mainId));
-            else if (type==='sub')    await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId));
-            else                      await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks",subSubId));
-        } catch(e) { alert("Delete error: "+e.message); }
+            if (type === 'main')        await deleteDoc(doc(db,"projectTasks",mainId));
+            else if (type === 'sub')    await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId));
+            else                        await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks",subSubId));
+        } catch(e) { alert("Delete error: " + e.message); }
     };
 
-    function formatDateForInput(date) {
-        if (!date) return '';
-        const d = date.toDate ? date.toDate() : new Date(date);
-        return d.toISOString().split('T')[0];
-    }
-
-    // ─── Gantt ───
+    // ── Gantt ──
     function renderGantt() {
         if (!ganttVisible) return;
         const tasks = filterTasks();
         if (!tasks.length) return;
         const today = new Date(); today.setHours(0,0,0,0);
         let minYear = today.getFullYear();
-        tasks.forEach(t => { if(t.startDate){const y=new Date(t.startDate.toDate?t.startDate.toDate():t.startDate).getFullYear();if(y<minYear)minYear=y;} });
-        const md=[31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
-        const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        tasks.forEach(t => { if(t.startDate){ const y=new Date(t.startDate.toDate?t.startDate.toDate():t.startDate).getFullYear(); if(y<minYear) minYear=y; } });
+        const md = [31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
+        const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         let h1='<tr><th rowspan="3" style="min-width:120px">TASK</th>', r2='<tr>', r3='<tr>';
-        for(let m=0;m<12;m++){
-            if(showCurrentMonthOnly&&m!==today.getMonth()) continue;
-            h1+=`<th colspan="${md[m]}">${mn[m]}</th>`;
-            for(let d=1;d<=md[m];d++){const dt=new Date(minYear,m,d),it=dt.toDateString()===today.toDateString();r2+=`<th class="${it?'today-highlight':''}">${d}</th>`;r3+=`<th class="${it?'today-highlight':''}">${['S','M','T','W','R','F','S'][dt.getDay()]}</th>`;}
+        for (let m=0; m<12; m++) {
+            if (showCurrentMonthOnly && m !== today.getMonth()) continue;
+            h1 += `<th colspan="${md[m]}">${mn[m]}</th>`;
+            for (let d=1; d<=md[m]; d++) {
+                const dt = new Date(minYear,m,d), it = dt.toDateString()===today.toDateString();
+                r2 += `<th class="${it?'today-highlight':''}">${d}</th>`;
+                r3 += `<th class="${it?'today-highlight':''}">${['S','M','T','W','R','F','S'][dt.getDay()]}</th>`;
+            }
         }
-        ganttHeadEl.innerHTML=h1+'</tr>'+r2+'</tr>'+r3+'</tr>';
-        let body='';
-        tasks.forEach(t=>{body+=ganttRow(t,'main',minYear,today);t.subTasks.forEach(s=>{body+=ganttRow(s,'sub',minYear,today);s.subSubtasks?.forEach(ss=>{body+=ganttRow(ss,'subsub',minYear,today);});});});
-        ganttBodyEl.innerHTML=body;
+        ganttHeadEl.innerHTML = h1+'</tr>'+r2+'</tr>'+r3+'</tr>';
+        let body = '';
+        tasks.forEach(t => {
+            body += ganttRow(t,'main',minYear,today);
+            t.subTasks.forEach(s => {
+                body += ganttRow(s,'sub',minYear,today);
+                s.subSubtasks?.forEach(ss => { body += ganttRow(ss,'subsub',minYear,today); });
+            });
+        });
+        ganttBodyEl.innerHTML = body;
     }
 
     function ganttRow(task, level, minYear, today) {
@@ -1975,12 +1962,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const md = [31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
         let row = `<tr><td style="text-align:left;padding:3px 6px;white-space:nowrap;min-width:120px">${desc}</td>`;
-        for (let m = 0; m < 12; m++) {
+        for (let m=0; m<12; m++) {
             if (showCurrentMonthOnly && m !== today.getMonth()) continue;
-            for (let d = 1; d <= md[m]; d++) {
+            for (let d=1; d<=md[m]; d++) {
                 const dt = new Date(minYear, m, d);
-                const isToday = dt.toDateString() === today.toDateString();
-                const inRange = start && dt >= start && (!end || dt <= end);
+                const isToday  = dt.toDateString() === today.toDateString();
+                const inRange  = start && dt >= start && (!end || dt <= end);
                 const cls = isToday
                     ? (inRange ? hitClass + ' today-highlight' : 'today-highlight')
                     : (inRange ? hitClass : '');
@@ -1990,45 +1977,76 @@ document.addEventListener('DOMContentLoaded', function() {
         return row + '</tr>';
     }
 
-    // ─── Task CRUD ───
+    // ── Task CRUD ──
     addTaskBtn.onclick = async () => {
-        const desc=prompt("Task description:"); if(!desc) return;
-        const num=await getNextTaskNumber(projectId);
-        await addDoc(collection(db,"projectTasks"),{projectId,taskId:`PRJ-${num}`,taskDescription:desc,status:"PENDING",matCost:0,labCost:0,totalHours:0,createdAt:new Date(),updatedAt:new Date()});
+        const desc = prompt("Task description:"); if (!desc) return;
+        const num  = await getNextTaskNumber(projectId);
+        await addDoc(collection(db,"projectTasks"), {
+            projectId, taskId: `PRJ-${num}`, taskDescription: desc,
+            status: "PENDING", matCost: 0, labCost: 0, totalHours: 0,
+            createdAt: new Date(), updatedAt: new Date()
+        });
     };
 
     window.addSubtask = async (mainId) => {
-        const main=await getDoc(doc(db,"projectTasks",mainId)); if(!main.exists()) return;
-        const desc=prompt("Subtask description:"); if(!desc) return;
+        const main = await getDoc(doc(db,"projectTasks",mainId)); if (!main.exists()) return;
+        const desc = prompt("Subtask description:"); if (!desc) return;
         const existSnap = await getDocs(collection(db,"projectTasks",mainId,"subtasks"));
         const nextNum   = existSnap.size + 1;
         const parentId  = main.data().taskId || 'PRJ';
-        await addDoc(collection(db,"projectTasks",mainId,"subtasks"),{taskId:`${parentId}-${nextNum}`,taskDescription:desc,status:"PENDING",matCost:0,labCost:0,totalHours:0,createdAt:new Date(),updatedAt:new Date()});
+        await addDoc(collection(db,"projectTasks",mainId,"subtasks"), {
+            taskId: `${parentId}-${nextNum}`, taskDescription: desc,
+            status: "PENDING", matCost: 0, labCost: 0, totalHours: 0,
+            createdAt: new Date(), updatedAt: new Date()
+        });
     };
 
-    window.addSubSubtask = async (mainId,subId) => {
-        const sub=await getDoc(doc(db,"projectTasks",mainId,"subtasks",subId)); if(!sub.exists()) return;
-        const desc=prompt("Sub-subtask description:"); if(!desc) return;
+    window.addSubSubtask = async (mainId, subId) => {
+        const sub = await getDoc(doc(db,"projectTasks",mainId,"subtasks",subId)); if (!sub.exists()) return;
+        const desc = prompt("Sub-subtask description:"); if (!desc) return;
         const existSnap = await getDocs(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"));
         const nextNum   = existSnap.size + 1;
         const parentId  = sub.data().taskId || 'PRJ-1';
-        await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"),{taskId:`${parentId}-${nextNum}`,taskDescription:desc,status:"PENDING",matCost:0,labCost:0,totalHours:0,createdAt:new Date(),updatedAt:new Date()});
+        await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"), {
+            taskId: `${parentId}-${nextNum}`, taskDescription: desc,
+            status: "PENDING", matCost: 0, labCost: 0, totalHours: 0,
+            createdAt: new Date(), updatedAt: new Date()
+        });
     };
 
     currentMonthBtn.onclick = () => {
-        showCurrentMonthOnly=!showCurrentMonthOnly;
-        currentMonthBtn.textContent=showCurrentMonthOnly?"All Months":"Current Month";
+        showCurrentMonthOnly = !showCurrentMonthOnly;
+        currentMonthBtn.textContent = showCurrentMonthOnly ? "All Months" : "Current Month";
         renderGantt();
     };
 
-    statusFilter.onchange=monthFilter.onchange=yearFilter.onchange=searchInput.oninput=()=>{ renderTasks(filterTasks()); renderGantt(); };
+    // ═══════════════════════════════════════════════════════
+    // FIXED FILTER EVENT LISTENERS
+    // Search: re-focuses input after every render so typing is uninterrupted
+    // Dropdowns: deferred with setTimeout so select value commits first
+    // ═══════════════════════════════════════════════════════
+    searchInput.addEventListener('input', () => {
+        renderTasks(filterTasks());
+        renderGantt();
+        // Re-focus is handled inside renderTasks via wasSearchFocused flag
+    });
+
+    statusFilter.addEventListener('change', () => {
+        setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
+    });
+    monthFilter.addEventListener('change', () => {
+        setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
+    });
+    yearFilter.addEventListener('change', () => {
+        setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
+    });
 
     loadResources();
     loadTasks();
-    setInterval(()=>renderGantt(), 60000);
+    setInterval(() => renderGantt(), 60000);
 
     // ══════════════════════════════════════════════════════
-    // MAIN TASK FILTER
+    // MAIN TASK FILTER PICKER
     // ══════════════════════════════════════════════════════
     const TASK_FILTER_KEY = `taskFilter_${projectId}`;
     let selectedTaskIds = null;
@@ -2073,7 +2091,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function buildTfpList(filter = '') {
         tfpList.innerHTML = '';
-        const tasks = allTasks.slice().sort((a,b)=>(a.taskLine||0)-(b.taskLine||0));
+        const tasks = allTasks.slice().sort((a,b) => (a.taskLine||0) - (b.taskLine||0));
         tasks.forEach(t => {
             const desc = t.taskDescription || t.taskId || 'Unnamed';
             if (filter && !desc.toLowerCase().includes(filter.toLowerCase())) return;
@@ -2118,13 +2136,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.getElementById('tfpApply').addEventListener('click', () => {
         const checked = [...tfpList.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.dataset.id);
-        if (checked.length === allTasks.length) {
-            selectedTaskIds = null;
-        } else if (checked.length === 0) {
-            selectedTaskIds = new Set();
-        } else {
-            selectedTaskIds = new Set(checked);
-        }
+        if (checked.length === allTasks.length) { selectedTaskIds = null; }
+        else if (checked.length === 0)          { selectedTaskIds = new Set(); }
+        else                                    { selectedTaskIds = new Set(checked); }
         saveTaskFilterToStorage();
         applyTaskFilterCount();
         renderTasks(filterTasks());
@@ -2136,12 +2150,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // ══════════════════════════════════════════════════════
     // NOTES PANEL
     // ══════════════════════════════════════════════════════
-    const NOTES_KEY      = `notes_${projectId}`;
-    const notesFab       = document.getElementById('notesFab');
-    const notesPanel     = document.getElementById('notesPanel');
-    const notesDot       = document.getElementById('notesDot');
-    const notesTextarea  = document.getElementById('notesTextarea');
-    const notesSavedTxt  = document.getElementById('notesSavedTxt');
+    const NOTES_KEY     = `notes_${projectId}`;
+    const notesFab      = document.getElementById('notesFab');
+    const notesPanel    = document.getElementById('notesPanel');
+    const notesDot      = document.getElementById('notesDot');
+    const notesTextarea = document.getElementById('notesTextarea');
+    const notesSavedTxt = document.getElementById('notesSavedTxt');
 
     notesTextarea.value = localStorage.getItem(NOTES_KEY) || '';
     updateNotesDot();
