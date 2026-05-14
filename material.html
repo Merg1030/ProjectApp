@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Editable Stock Ledger | Match Physical Inventory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Ledger | REC / ISSU / B/C</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -86,17 +87,13 @@
         .btn-primary:hover { background: #1f3d62; }
         .btn-success { background: #059669; color: white; border-color: #059669; }
         .btn-success:hover { background: #047857; }
-        .btn-warning { background: #e9b35f; color: #1f3d0f; border-color: #e9b35f; }
-        .btn-warning:hover { background: #d4942e; }
-        .btn-danger-outline { background: white; border-color: #dc2626; color: #dc2626; }
-        .btn-danger-outline:hover { background: #fee2e2; }
         
         .ledger-table-wrapper { padding: 20px 24px; overflow-x: auto; }
         .weekly-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85rem;
-            min-width: 500px;
+            min-width: 400px;
         }
         .weekly-table th, .weekly-table td {
             border: 1.5px solid #cfdfed;
@@ -110,24 +107,12 @@
             text-transform: uppercase;
             color: #1a4c6e;
         }
+        .weekly-table td:first-child { font-weight: 700; background: #fefaf5; }
         .rec-cell { background: #f2f9f0; font-weight: 600; color: #2e6b2f; }
         .issu-cell { background: #fff2e6; font-weight: 600; color: #bc5a2c; }
-        .balance-cell { background: #eef2fa; font-weight: 700; color: #1f6392; cursor: pointer; transition: 0.1s; }
-        .balance-cell:hover { background: #d9e4f5; }
-        .stock-edit-mode .balance-cell { background: #ffe6b3; outline: 2px solid #e9b35f; }
+        .balance-cell { background: #eef2fa; font-weight: 700; color: #1f6392; }
         
-        /* editable inline badge */
-        .edit-badge {
-            font-size: 0.65rem;
-            background: #e9b35f20;
-            border-radius: 20px;
-            padding: 2px 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-left: 8px;
-        }
-        
+        /* Week Selector Panel */
         .week-selector-panel {
             background: #f8fafd;
             padding: 12px 24px;
@@ -140,10 +125,19 @@
             cursor: pointer;
             padding: 8px 0;
         }
+        .week-toggle-header h4 {
+            font-size: 0.8rem;
+            color: #0a1c2f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .week-toggle-header i { transition: transform 0.2s; color: #1f3d62; }
         .week-range-selector {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
+            padding: 0;
         }
         .week-range-selector.open {
             max-height: 200px;
@@ -155,13 +149,39 @@
             align-items: flex-end;
             flex-wrap: wrap;
         }
+        .range-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .range-group label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #4b6e8a;
+            text-transform: uppercase;
+        }
+        .range-group input {
+            width: 100px;
+            padding: 8px 12px;
+            border: 1px solid #b3c7e0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+        .week-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
         .active-range-badge {
             background: #e6efff;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.7rem;
+            color: #0a1c2f;
             border: 1px solid #b3c7e0;
         }
+        
+        /* MODAL STYLES */
         .modal {
             display: none;
             position: fixed;
@@ -179,52 +199,128 @@
             background: white;
             border-radius: 20px;
             width: 90%;
-            max-width: 500px;
-            padding: 24px;
+            max-width: 1000px;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             border: 3px solid #1f3d62;
         }
-        .modal-content h3 { margin-bottom: 16px; display: flex; gap: 10px; align-items: center; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
-        
-        .flash-message {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
+        .modal-header {
             background: #0a1c2f;
             color: white;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            z-index: 2100;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding: 16px 20px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
         }
-        .stock-card {
-            background: #fef9e6;
-            border-radius: 16px;
-            padding: 6px 16px;
+        .modal-header h3 { display: flex; align-items: center; gap: 10px; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e0e8f5;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        /* Receive Form Styles */
+        .receive-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .receive-items-table th, .receive-items-table td {
+            border: 1px solid #b3c7e0;
+            padding: 10px;
+            text-align: left;
+            font-size: 0.75rem;
+        }
+        .receive-items-table th {
+            background: #e6f0f9;
+            font-weight: 700;
+        }
+        .receive-items-table input, .receive-items-table select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #b3c7e0;
+            border-radius: 6px;
+            font-size: 0.7rem;
+        }
+        .add-row-btn {
+            background: #0a1c2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-bottom: 10px;
+        }
+        .remove-row-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.65rem;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #4b6e8a;
+            margin-bottom: 4px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #b3c7e0;
+            border-radius: 8px;
             font-size: 0.8rem;
-            border-left: 4px solid #e9b35f;
         }
-        footer { font-size:0.7rem; text-align:center; padding:16px; color:#6f95b5; border-top:1px solid #e2edf7;}
+        
+        .history-item {
+            background: #f8fafd;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #b3c7e0;
+        }
+        .loading { text-align: center; padding: 40px; color: #7f96b3; }
     </style>
 </head>
 <body>
 
 <div class="ledger-container">
     <div class="ledger-header">
-        <h1><i class="fas fa-pen-ruler"></i> STOCK LEDGER · MANUAL EDIT MODE</h1>
+        <h1><i class="fas fa-clipboard-list"></i> MATERIAL LEDGER</h1>
     </div>
 
     <div class="item-selector-area">
         <div class="selector-group">
-            <label><i class="fas fa-cubes"></i> MATERIAL</label>
+            <label><i class="fas fa-cubes"></i> SELECT MATERIAL</label>
             <select id="itemSelect">
-                <option value="">— Loading —</option>
+                <option value="">— Loading materials —</option>
             </select>
         </div>
+        
         <div class="selector-group">
             <label><i class="fas fa-calendar"></i> YEAR</label>
             <select id="yearSelect">
@@ -234,30 +330,34 @@
                 <option value="2027">2027</option>
             </select>
         </div>
+        
         <div>
-            <button class="btn-sm btn-success" id="editStockBtn"><i class="fas fa-edit"></i> FIX STOCK (Manual)</button>
-            <button class="btn-sm" id="viewHistoryBtn"><i class="fas fa-history"></i> Receipts</button>
+            <button class="btn-sm btn-success" id="showReceiveFormBtn"><i class="fas fa-boxes"></i> RECEIVE ITEMS</button>
+            <button class="btn-sm" id="viewHistoryBtn"><i class="fas fa-history"></i> Received History</button>
             <button class="btn-sm" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
         </div>
     </div>
     
+    <!-- Week Selector Panel -->
     <div class="week-selector-panel">
         <div class="week-toggle-header" id="weekToggleHeader">
-            <h4><i class="fas fa-calendar-alt"></i> WEEK RANGE <span id="activeRangeBadge" class="active-range-badge">1/26 - 52/26</span></h4>
+            <h4><i class="fas fa-calendar-alt"></i> WEEK RANGE <span id="activeRangeBadge" class="active-range-badge" style="margin-left:8px;">1/26 - 52/26</span></h4>
             <i class="fas fa-chevron-down chevron" id="weekChevron"></i>
         </div>
         <div class="week-range-selector" id="weekRangeSelector">
             <div class="range-inputs">
-                <div class="selector-group" style="min-width: 80px;">
+                <div class="range-group">
                     <label>FROM WEEK</label>
                     <input type="number" id="fromWeek" min="1" max="52" value="1">
                 </div>
-                <div class="selector-group" style="min-width: 80px;">
+                <div class="range-group">
                     <label>TO WEEK</label>
                     <input type="number" id="toWeek" min="1" max="52" value="52">
                 </div>
-                <button class="btn-sm" id="applyWeekRangeBtn">APPLY</button>
-                <button class="btn-sm" id="resetWeeksBtn">Reset</button>
+                <div class="week-buttons">
+                    <button class="btn-sm" id="applyWeekRangeBtn" style="padding: 8px 20px;">APPLY</button>
+                    <button class="btn-sm" id="resetWeeksBtn" style="padding: 8px 16px;">Reset</button>
+                </div>
             </div>
         </div>
     </div>
@@ -265,7 +365,12 @@
     <div class="ledger-table-wrapper">
         <table class="weekly-table" id="weeklyLedgerTable">
             <thead>
-                <tr><th>WEEK</th><th>REC (Received)</th><th>ISSU (Issued)</th><th>B/C (Balance) ✎</th></tr>
+                <tr>
+                    <th>WEEK</th>
+                    <th>REC (Received)</th>
+                    <th>ISSU (Issued)</th>
+                    <th>B/C (Balance)</th>
+                </tr>
             </thead>
             <tbody id="ledgerTableBody">
                 <tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...<\/td><\/tr>
@@ -274,34 +379,94 @@
     </div>
 
     <div style="padding: 0 24px 24px 24px;">
-        <div id="currentItemInfo" class="stock-card">
-            <i class="fas fa-info-circle"></i> Select material to view ledger. <strong>Click on any Balance cell</strong> to manually correct stock.
+        <div class="selected-item-info" id="currentItemInfo" style="background:#f8fafd; padding:12px 16px; border-radius:12px;">
+            <i class="fas fa-info-circle"></i> Select a material to view ledger
         </div>
     </div>
-    <footer><i class="fas fa-hand-holding-usd"></i> DIRECT STOCK ADJUSTMENT | Changes update both ledger and master stock</footer>
+
+    <footer style="font-size:0.7rem; text-align:center; padding:16px; color:#6f95b5; border-top:1px solid #e2edf7;">
+        <i class="fas fa-database"></i> Data synced with Firebase | Your selected material and week range are saved
+    </footer>
 </div>
 
-<!-- manual stock adjustment modal -->
-<div id="stockModal" class="modal">
+<!-- RECEIVE ITEMS MODAL -->
+<div id="receiveModal" class="modal">
     <div class="modal-content">
-        <h3><i class="fas fa-balance-scale"></i> MANUAL STOCK CORRECTION</h3>
-        <div style="margin-bottom: 16px;">
-            <p><strong id="modalMaterialName"></strong> — Week <span id="modalWeekLabel"></span></p>
-            <p style="font-size:0.8rem; margin-top:8px;">Current Balance: <strong id="currentBalanceSpan">0</strong></p>
-            <div class="selector-group" style="margin-top: 12px;">
-                <label>NEW BALANCE (Final Stock)</label>
-                <input type="number" id="newStockBalance" step="1" value="0" style="width: 100%;">
-                <small style="color:#4b6e8a;">This will replace the balance at this week and adjust all future weeks accordingly.</small>
+        <div class="modal-header">
+            <h3><i class="fas fa-boxes"></i> RECEIVE MATERIALS</h3>
+            <button class="modal-close" onclick="closeReceiveModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label><i class="fas fa-truck"></i> SUPPLIER NAME</label>
+                <input type="text" id="supplierName" placeholder="Enter supplier name">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-calendar-day"></i> RECEIPT DATE</label>
+                <input type="date" id="receiptDate">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-receipt"></i> INVOICE / REFERENCE #</label>
+                <input type="text" id="invoiceRef" placeholder="Optional invoice number">
+            </div>
+            
+            <label><i class="fas fa-list"></i> ITEMS RECEIVED</label>
+            <table class="receive-items-table" id="receiveItemsTable">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                        <th style="width:40px"></th>
+                    </tr>
+                </thead>
+                <tbody id="receiveItemsBody">
+                    <tr class="item-row">
+                        <td>
+                            <select class="material-select">
+                                <option value="">Select material</option>
+                            </select>
+                        </td>
+                        <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
+                        <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
+                        <td><span class="item-total">0.00</span></td>
+                        <td><button class="remove-row-btn" onclick="removeRow(this)" style="display:none;">✕</button></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="add-row-btn" onclick="addReceiveRow()"><i class="fas fa-plus"></i> Add another material</button>
+            
+            <div class="form-group" style="margin-top:15px;">
+                <label><i class="fas fa-sticky-note"></i> NOTES</label>
+                <textarea id="receiveNotes" rows="2" style="width:100%; padding:8px; border-radius:8px; border:1px solid #b3c7e0;"></textarea>
             </div>
         </div>
-        <div class="modal-buttons">
-            <button class="btn-sm" id="cancelStockModal">Cancel</button>
-            <button class="btn-sm btn-primary" id="confirmStockAdjustment"><i class="fas fa-save"></i> APPLY & RECALCULATE</button>
+        <div class="modal-footer">
+            <button class="btn-sm" onclick="closeReceiveModal()">Cancel</button>
+            <button class="btn-sm btn-primary" id="submitReceiveBtn"><i class="fas fa-save"></i> SAVE RECEIVED ITEMS</button>
+        </div>
+    </div>
+</div>
+
+<!-- RECEIVED HISTORY MODAL -->
+<div id="historyModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-history"></i> RECEIVED ITEMS HISTORY</h3>
+            <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="historyModalBody">
+            <div class="loading">Loading history...</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-sm" onclick="closeHistoryModal()">Close</button>
         </div>
     </div>
 </div>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
@@ -310,363 +475,606 @@
         messagingSenderId: "411882772509",
         appId: "1:411882772509:web:08d613186c101a99f38ef4"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let currentMaterialId = null;
+    let currentSelectedMaterialId = null;
     let materialsList = [];
     let allUsageRecords = [];
     let currentYear = 2026;
-    let fromWeek = 1, toWeek = 52;
-    let weeklyRecCache = {};       // { weekKey: rec }
-    let weeklyIssuCache = {};      // { weekKey: issu }
-    let baseStockBeforeRange = null; // stock before fromWeek (running balance calculation)
+    let fromWeek = 1;
+    let toWeek = 52;
     
-    // DOM elements
-    const itemSelect = document.getElementById("itemSelect");
-    const yearSelect = document.getElementById("yearSelect");
-    const ledgerBody = document.getElementById("ledgerTableBody");
-    const fromWeekInput = document.getElementById("fromWeek");
-    const toWeekInput = document.getElementById("toWeek");
-    const activeRangeBadge = document.getElementById("activeRangeBadge");
-    const weekRangeSelector = document.getElementById("weekRangeSelector");
-    const weekChevron = document.getElementById("weekChevron");
-    const stockModal = document.getElementById("stockModal");
-    const modalMaterialName = document.getElementById("modalMaterialName");
-    const modalWeekLabel = document.getElementById("modalWeekLabel");
-    const currentBalanceSpan = document.getElementById("currentBalanceSpan");
-    const newStockBalanceInput = document.getElementById("newStockBalance");
-    
-    let pendingAdjustment = { weekNum: null, weekKey: null, oldBalance: 0, previousBalanceBeforeWeek: 0, recVal: 0, issuVal: 0 };
-    
-    function showFlash(msg, isError = false) {
-        let flash = document.querySelector(".flash-message");
-        if(flash) flash.remove();
-        flash = document.createElement("div");
-        flash.className = "flash-message";
-        flash.style.background = isError ? "#b91c1c" : "#0a1c2f";
-        flash.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
-        document.body.appendChild(flash);
-        setTimeout(() => flash.remove(), 3000);
-    }
-    
-    function saveLocalPrefs() {
-        if(currentMaterialId) localStorage.setItem('selectedMaterialId', currentMaterialId);
+    // ========== PERSISTENCE FUNCTIONS ==========
+    function saveToLocalStorage() {
+        if (currentSelectedMaterialId) {
+            localStorage.setItem('selectedMaterialId', currentSelectedMaterialId);
+        }
         localStorage.setItem('selectedYear', currentYear);
         localStorage.setItem('fromWeek', fromWeek);
         localStorage.setItem('toWeek', toWeek);
     }
     
-    function loadLocalPrefs() {
-        const savedMat = localStorage.getItem('selectedMaterialId');
-        const savedY = localStorage.getItem('selectedYear');
-        const savedFrom = localStorage.getItem('fromWeek');
-        const savedTo = localStorage.getItem('toWeek');
-        if(savedY) currentYear = parseInt(savedY);
-        if(savedFrom) fromWeek = parseInt(savedFrom);
-        if(savedTo) toWeek = parseInt(savedTo);
-        yearSelect.value = currentYear;
-        fromWeekInput.value = fromWeek;
-        toWeekInput.value = toWeek;
-        updateRangeBadge();
-        return savedMat;
+    function loadFromLocalStorage() {
+        const savedMaterialId = localStorage.getItem('selectedMaterialId');
+        const savedYear = localStorage.getItem('selectedYear');
+        const savedFromWeek = localStorage.getItem('fromWeek');
+        const savedToWeek = localStorage.getItem('toWeek');
+        
+        if (savedYear) {
+            currentYear = parseInt(savedYear);
+            document.getElementById("yearSelect").value = currentYear;
+        }
+        
+        if (savedFromWeek) {
+            fromWeek = parseInt(savedFromWeek);
+            document.getElementById("fromWeek").value = fromWeek;
+        }
+        
+        if (savedToWeek) {
+            toWeek = parseInt(savedToWeek);
+            document.getElementById("toWeek").value = toWeek;
+        }
+        
+        return savedMaterialId;
     }
     
-    function updateRangeBadge() {
-        const short = currentYear.toString().slice(-2);
-        if(fromWeek === 1 && toWeek === 52) activeRangeBadge.innerHTML = `1/${short} - 52/${short} (All)`;
-        else activeRangeBadge.innerHTML = `${fromWeek}/${short} - ${toWeek}/${short}`;
+    // Helper: Format week as "week/year" e.g., "17/26"
+    function formatWeekDisplay(weekNum, year) {
+        const yearShort = year.toString().slice(-2);
+        return `${weekNum}/${yearShort}`;
     }
+    
+    // Update badge with current range
+    function updateRangeBadge() {
+        const yearShort = currentYear.toString().slice(-2);
+        const badge = document.getElementById("activeRangeBadge");
+        if (fromWeek === 1 && toWeek === 52) {
+            badge.innerHTML = `1/${yearShort} - 52/${yearShort} (All)`;
+        } else {
+            badge.innerHTML = `${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
+        }
+    }
+    
+    // Toggle week range panel
+    let weekPanelOpen = false;
     
     function toggleWeekPanel() {
-        weekRangeSelector.classList.toggle("open");
-        const chev = weekChevron;
-        if(weekRangeSelector.classList.contains("open")) chev.style.transform = "rotate(180deg)";
-        else chev.style.transform = "rotate(0deg)";
+        weekPanelOpen = !weekPanelOpen;
+        const selector = document.getElementById("weekRangeSelector");
+        const chevron = document.getElementById("weekChevron");
+        
+        if (weekPanelOpen) {
+            selector.classList.add("open");
+            chevron.style.transform = "rotate(180deg)";
+        } else {
+            selector.classList.remove("open");
+            chevron.style.transform = "rotate(0deg)";
+        }
     }
     
     function applyWeekRange() {
-        let from = parseInt(fromWeekInput.value), to = parseInt(toWeekInput.value);
-        if(isNaN(from)) from = 1; if(isNaN(to)) to = 52;
-        if(from<1) from=1; if(to>52) to=52; if(from>to)[from,to]=[to,from];
-        fromWeek = from; toWeek = to;
-        fromWeekInput.value = fromWeek; toWeekInput.value = toWeek;
+        let from = parseInt(document.getElementById("fromWeek").value);
+        let to = parseInt(document.getElementById("toWeek").value);
+        
+        if (isNaN(from)) from = 1;
+        if (isNaN(to)) to = 52;
+        if (from < 1) from = 1;
+        if (to > 52) to = 52;
+        if (from > to) {
+            [from, to] = [to, from];
+        }
+        
+        fromWeek = from;
+        toWeek = to;
+        
+        document.getElementById("fromWeek").value = fromWeek;
+        document.getElementById("toWeek").value = toWeek;
+        
         updateRangeBadge();
-        saveLocalPrefs();
-        renderLedgerWithCurrentData();
+        saveToLocalStorage();
+        loadAllData();
     }
     
     function resetWeeks() {
-        fromWeek = 1; toWeek = 52;
-        fromWeekInput.value = 1; toWeekInput.value = 52;
+        fromWeek = 1;
+        toWeek = 52;
+        document.getElementById("fromWeek").value = 1;
+        document.getElementById("toWeek").value = 52;
         updateRangeBadge();
-        saveLocalPrefs();
-        renderLedgerWithCurrentData();
+        saveToLocalStorage();
+        loadAllData();
     }
-    
+
+    // Load materials from database
     async function loadMaterials() {
+        const selectEl = document.getElementById("itemSelect");
+        const materialSelects = document.querySelectorAll(".material-select");
+        
         try {
-            const snap = await db.collection("materials").orderBy("materialName").get();
+            const snapshot = await db.collection("materials").orderBy("materialName").get();
             materialsList = [];
-            snap.forEach(doc => { materialsList.push({ id: doc.id, name: doc.data().materialName || "Unnamed", currentStock: doc.data().quantity || 0 }); });
-            if(materialsList.length === 0) { itemSelect.innerHTML = '<option>— No materials —</option>'; return; }
-            let opts = '<option value="">-- Choose material --</option>' + materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-            itemSelect.innerHTML = opts;
-            const savedId = loadLocalPrefs();
-            if(savedId && materialsList.some(m=>m.id===savedId)) currentMaterialId = savedId;
-            else if(materialsList.length) currentMaterialId = materialsList[0].id;
-            if(currentMaterialId) {
-                itemSelect.value = currentMaterialId;
-                await loadAllLedgerData();
-                renderLedgerWithCurrentData();
+            snapshot.forEach(doc => {
+                materialsList.push({
+                    id: doc.id,
+                    name: doc.data().materialName || "Unnamed",
+                    currentStock: doc.data().quantity || 0,
+                    category: doc.data().category || ""
+                });
+            });
+
+            if (materialsList.length === 0) {
+                selectEl.innerHTML = '<option value="">— No materials found —</option>';
+                return;
             }
-        } catch(e) { console.error(e); showFlash("Error loading materials", true); }
+
+            const options = '<option value="">-- Choose a material --</option>' + 
+                materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            
+            selectEl.innerHTML = options;
+            
+            materialSelects.forEach(sel => {
+                const currentVal = sel.value;
+                sel.innerHTML = options;
+                if (currentVal) sel.value = currentVal;
+            });
+            
+            // Restore previously selected material from localStorage
+            const savedMaterialId = loadFromLocalStorage();
+            
+            if (savedMaterialId && materialsList.some(m => m.id === savedMaterialId)) {
+                currentSelectedMaterialId = savedMaterialId;
+                selectEl.value = currentSelectedMaterialId;
+                await loadAllData();
+            } else if (materialsList.length > 0) {
+                currentSelectedMaterialId = materialsList[0].id;
+                selectEl.value = currentSelectedMaterialId;
+                saveToLocalStorage();
+                await loadAllData();
+            }
+        } catch (error) {
+            console.error("Error loading materials:", error);
+            selectEl.innerHTML = '<option value="">— Error loading —</option>';
+        }
     }
-    
+
+    // Load usage records for ISSU calculation
     async function loadUsageRecords() {
         try {
-            const snap = await db.collection("materialsUsage").where("reversed", "!=", true).get();
+            const snapshot = await db.collection("materialsUsage")
+                .where("reversed", "!=", true)
+                .get();
+            
             allUsageRecords = [];
-            snap.forEach(doc => {
-                let d = doc.data();
-                allUsageRecords.push({ materialId: d.materialId, quantity: parseFloat(d.quantity)||0, assignedAt: d.assignedAt });
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                allUsageRecords.push({
+                    id: doc.id,
+                    materialId: data.materialId,
+                    materialName: data.materialName,
+                    quantity: parseFloat(data.quantity) || 0,
+                    assignedAt: data.assignedAt,
+                    reversed: data.reversed || false
+                });
             });
-        } catch(e) { allUsageRecords = []; }
+        } catch (error) {
+            console.error("Error loading usage records:", error);
+            allUsageRecords = [];
+        }
     }
-    
+
+    // Load weekly REC data for a material
     async function loadWeeklyRecData(materialId) {
-        const recMap = {};
+        const recData = {};
         try {
-            const colRef = db.collection("materials").doc(materialId).collection("weeklyLedger");
-            const snap = await colRef.get();
-            snap.forEach(doc => { recMap[doc.id] = (doc.data().rec || 0); });
-        } catch(e) {}
-        return recMap;
+            const ledgerRef = db.collection("materials").doc(materialId).collection("weeklyLedger");
+            const snapshot = await ledgerRef.get();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                recData[doc.id] = {
+                    rec: data.rec || 0,
+                    issu: data.issu || 0
+                };
+            });
+        } catch (error) {
+            console.error("Error loading rec data:", error);
+        }
+        return recData;
     }
-    
+
+    // Calculate ISSU per week based on usage records
     function calculateIssuByWeek(materialId, year) {
-        const issuMap = {};
-        for(let w=1; w<=52; w++) issuMap[`${year}-W${String(w).padStart(2,'0')}`] = 0;
-        allUsageRecords.forEach(rec => {
-            if(rec.materialId === materialId && rec.assignedAt) {
-                let date = rec.assignedAt.toDate ? rec.assignedAt.toDate() : new Date(rec.assignedAt);
-                if(!isNaN(date) && date.getFullYear() === year) {
-                    let start = new Date(year,0,1);
-                    let days = Math.floor((date - start) / (24*60*60*1000));
-                    let weekNum = Math.ceil((days + start.getDay() + 1)/7);
-                    if(weekNum<1) weekNum=1; if(weekNum>52) weekNum=52;
-                    let key = `${year}-W${String(weekNum).padStart(2,'0')}`;
-                    issuMap[key] = (issuMap[key] || 0) + rec.quantity;
+        const issuByWeek = {};
+        
+        for (let w = 1; w <= 52; w++) {
+            const weekKey = `${year}-W${String(w).padStart(2,'0')}`;
+            issuByWeek[weekKey] = 0;
+        }
+
+        allUsageRecords.forEach(record => {
+            if (record.materialId === materialId && record.assignedAt) {
+                const assignedDate = record.assignedAt.toDate ? record.assignedAt.toDate() : new Date(record.assignedAt);
+                if (!isNaN(assignedDate) && assignedDate.getFullYear() === year) {
+                    const startOfYear = new Date(year, 0, 1);
+                    const days = Math.floor((assignedDate - startOfYear) / (24 * 60 * 60 * 1000));
+                    let weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+                    if (weekNum < 1) weekNum = 1;
+                    if (weekNum > 52) weekNum = 52;
+                    
+                    const weekKey = `${year}-W${String(weekNum).padStart(2,'0')}`;
+                    issuByWeek[weekKey] = (issuByWeek[weekKey] || 0) + record.quantity;
                 }
             }
         });
-        return issuMap;
+        
+        return issuByWeek;
     }
-    
-    // compute running balances for all weeks and also find stock before first visible week
-    async function computeFullBalances(materialId) {
-        const recData = await loadWeeklyRecData(materialId);
-        const issuData = calculateIssuByWeek(materialId, currentYear);
-        let running = 0;
-        const materialObj = materialsList.find(m=>m.id === materialId);
-        let startingStock = materialObj ? materialObj.currentStock : 0;
-        // We need to reconstruct backward: we know ending stock = currentStock; but easier: we calculate forward from week1 to current stock by actual dynamic: Actually we need correct running balances.
-        // To make manual adjustments robust: we fetch total received - issued from all weeks? but we currently trust weekly rec/issu. We'll compute forward from week1 assuming starting stock = 0? but we have final stock.
-        // Better: Calculate all rece/issue and then the delta. But to keep editable: we will base on existing ledger rec/issu and we'll let manual adjust overwrite specific balances.
-        // For precise forward, we can get initial stock from first available week? Or we compute by starting from 0 then add all rec minus issu: that yields balance after 52 weeks. Then difference to actual currentStock is discrepancy.
-        // For clarity, when we render we need running balance based on cumulative from week1 with initial stock = 0? That's misleading. BUT we have "currentStock" stored in materials collection. We can derive initial stock = currentStock - (total Rec - total Issu) for whole year.
-        let totalRec = 0, totalIss = 0;
-        for(let w=1; w<=52; w++) { let key = `${currentYear}-W${String(w).padStart(2,'0')}`; totalRec += recData[key]||0; totalIss += issuData[key]||0; }
-        let initialStock = (materialObj?.currentStock || 0) - (totalRec - totalIss);
-        if(isNaN(initialStock)) initialStock = 0;
-        running = initialStock;
-        const balances = {};
-        for(let w=1; w<=52; w++) {
-            let key = `${currentYear}-W${String(w).padStart(2,'0')}`;
-            let rec = recData[key]||0, issu = issuData[key]||0;
-            running = running + rec - issu;
-            balances[key] = { rec, issu, balance: running };
-        }
-        return { balances, recData, issuData };
-    }
-    
-    let currentBalancesMap = {}; // { weekKey: { rec, issu, balance } }
-    
-    async function loadAllLedgerData() {
-        if(!currentMaterialId) return;
-        ledgerBody.innerHTML = '<tr><td colspan="4" class="loading">Loading ledger...</td></tr>';
-        await loadUsageRecords();
-        const { balances, recData, issuData } = await computeFullBalances(currentMaterialId);
-        currentBalancesMap = balances;
-        weeklyRecCache = recData;
-        weeklyIssuCache = issuData;
-    }
-    
-    function renderLedgerWithCurrentData() {
-        if(!currentMaterialId || !currentBalancesMap) return;
+
+    // Render the ledger table (only weeks in range)
+    function renderLedgerTable(recData, issuByWeek, currentStock) {
+        const tbody = document.getElementById("ledgerTableBody");
+        
         let rows = '';
-        let material = materialsList.find(m=>m.id===currentMaterialId);
-        let currentStockVal = material ? material.currentStock : 0;
-        for(let w=1; w<=52; w++) {
-            let weekKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
-            let weekData = currentBalancesMap[weekKey];
-            if(!weekData) continue;
-            let rec = weekData.rec;
-            let issu = weekData.issu;
-            let balance = weekData.balance;
-            if(w >= fromWeek && w <= toWeek) {
-                let weekDisplay = `${w}/${currentYear.toString().slice(-2)}`;
-                rows += `<tr data-week="${w}" data-weekkey="${weekKey}">
-                            <td>${weekDisplay}</td>
-                            <td class="rec-cell">${rec}</td>
-                            <td class="issu-cell">${issu}</td>
-                            <td class="balance-cell editable-balance" data-week="${w}" data-weekkey="${weekKey}" data-balance="${balance}" style="cursor:pointer;">${balance}</td>
-                         </tr>`;
+        let runningBalance = currentStock;
+        
+        for (let w = 1; w <= 52; w++) {
+            const weekKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
+            const rec = recData[weekKey]?.rec || 0;
+            const issu = issuByWeek[weekKey] || 0;
+            
+            runningBalance = runningBalance + rec - issu;
+            
+            if (w >= fromWeek && w <= toWeek) {
+                const weekDisplay = formatWeekDisplay(w, currentYear);
+                rows += `
+                    <tr>
+                        <td style="font-weight:700;">${weekDisplay}</td>
+                        <td class="rec-cell"><strong>${rec}</strong></td>
+                        <td class="issu-cell"><strong>${issu}</strong></td>
+                        <td class="balance-cell"><strong>${runningBalance}</strong></td>
+                    </tr>
+                `;
             }
         }
-        if(rows==='') ledgerBody.innerHTML = '<tr><td colspan="4">No weeks in range</td></tr>';
-        else ledgerBody.innerHTML = rows;
         
-        // attach click listeners to balance cells
-        document.querySelectorAll('.editable-balance').forEach(cell => {
-            cell.removeEventListener('click', handleBalanceClick);
-            cell.addEventListener('click', handleBalanceClick);
+        if (rows === '') {
+            tbody.innerHTML = `<tr><td colspan="4" class="loading"><i class="fas fa-calendar"></i> No weeks in selected range</td></tr>`;
+        } else {
+            tbody.innerHTML = rows;
+        }
+        
+        const material = materialsList.find(m => m.id === currentSelectedMaterialId);
+        if (material) {
+            const yearShort = currentYear.toString().slice(-2);
+            document.getElementById("currentItemInfo").innerHTML = 
+                `<i class="fas fa-cube"></i> <strong>${material.name}</strong> | Current Stock: <strong>${material.currentStock}</strong> | Category: ${material.category || '—'} | Showing Weeks ${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
+        }
+    }
+
+    // Save received items to database
+    async function saveReceivedItems(supplier, date, invoiceRef, items, notes) {
+        const receiptData = {
+            receiptId: Date.now().toString(),
+            supplier: supplier,
+            receiptDate: date,
+            invoiceRef: invoiceRef || '',
+            notes: notes || '',
+            items: items,
+            createdAt: new Date(),
+            totalAmount: items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+        };
+        
+        try {
+            await db.collection("receivedHistory").add(receiptData);
+            
+            for (const item of items) {
+                if (item.materialId) {
+                    const receiptDateObj = new Date(date);
+                    const year = receiptDateObj.getFullYear();
+                    const startOfYear = new Date(year, 0, 1);
+                    const days = Math.floor((receiptDateObj - startOfYear) / (24 * 60 * 60 * 1000));
+                    let weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+                    if (weekNum < 1) weekNum = 1;
+                    if (weekNum > 52) weekNum = 52;
+                    
+                    const weekKey = `${year}-W${String(weekNum).padStart(2,'0')}`;
+                    const ledgerRef = db.collection("materials").doc(item.materialId).collection("weeklyLedger").doc(weekKey);
+                    
+                    const docSnap = await ledgerRef.get();
+                    let currentRec = 0;
+                    if (docSnap.exists) {
+                        currentRec = docSnap.data().rec || 0;
+                    }
+                    
+                    await ledgerRef.set({
+                        rec: currentRec + item.quantity,
+                        lastUpdated: new Date()
+                    }, { merge: true });
+                    
+                    const materialRef = db.collection("materials").doc(item.materialId);
+                    const materialSnap = await materialRef.get();
+                    const currentStock = materialSnap.data().quantity || 0;
+                    await materialRef.update({ 
+                        quantity: currentStock + item.quantity,
+                        lastRestocked: new Date()
+                    });
+                }
+            }
+            
+            return true;
+        } catch (error) {
+            console.error("Error saving received items:", error);
+            throw error;
+        }
+    }
+
+    // Load received history
+    async function loadReceivedHistory() {
+        try {
+            const snapshot = await db.collection("receivedHistory").orderBy("createdAt", "desc").get();
+            const records = [];
+            snapshot.forEach(doc => {
+                records.push({ id: doc.id, ...doc.data() });
+            });
+            return records;
+        } catch (error) {
+            console.error("Error loading history:", error);
+            return [];
+        }
+    }
+
+    // Display received history
+    async function displayHistoryModal() {
+        const historyBody = document.getElementById("historyModalBody");
+        historyBody.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...</div>';
+        
+        const records = await loadReceivedHistory();
+        
+        if (records.length === 0) {
+            historyBody.innerHTML = '<div class="loading"><i class="fas fa-inbox"></i> No received records found</div>';
+            return;
+        }
+        
+        let html = '';
+        for (const record of records) {
+            html += `
+                <div class="history-item">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <strong><i class="fas fa-truck"></i> ${record.supplier || 'Unknown supplier'}</strong>
+                        <span style="color:#059669;">${new Date(record.receiptDate).toLocaleDateString()}</span>
+                    </div>
+                    <div style="font-size:0.7rem; color:#6f95b5; margin-bottom:8px;">
+                        ${record.invoiceRef ? `<i class="fas fa-receipt"></i> Invoice: ${record.invoiceRef} | ` : ''}
+                        <i class="fas fa-dollar-sign"></i> Total: ${(record.totalAmount || 0).toFixed(2)}
+                    </div>
+                    <table style="width:100%; font-size:0.7rem; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#e6f0f9;">
+                                <th style="padding:6px; text-align:left;">Material</th>
+                                <th style="padding:6px; text-align:right;">Qty</th>
+                                <th style="padding:6px; text-align:right;">Unit Price</th>
+                                <th style="padding:6px; text-align:right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${record.items.map(item => `
+                                <tr>
+                                    <td style="padding:6px;">${item.materialName}</td>
+                                    <td style="padding:6px; text-align:right;">${item.quantity}</td>
+                                    <td style="padding:6px; text-align:right;">${(item.price || 0).toFixed(2)}</td>
+                                    <td style="padding:6px; text-align:right;">${((item.quantity || 0) * (item.price || 0)).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    ${record.notes ? `<div style="margin-top:8px; font-size:0.65rem; color:#7f96b3;"><i class="fas fa-sticky-note"></i> ${record.notes}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        historyBody.innerHTML = html;
+    }
+
+    // Load all data and refresh display
+    async function loadAllData() {
+        if (!currentSelectedMaterialId) return;
+        
+        document.getElementById("ledgerTableBody").innerHTML = 
+            `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading ledger...</td></tr>`;
+        
+        await loadUsageRecords();
+        const recData = await loadWeeklyRecData(currentSelectedMaterialId);
+        const issuByWeek = calculateIssuByWeek(currentSelectedMaterialId, currentYear);
+        
+        const material = materialsList.find(m => m.id === currentSelectedMaterialId);
+        const currentStock = material ? material.currentStock : 0;
+        
+        renderLedgerTable(recData, issuByWeek, currentStock);
+    }
+
+    // Add row to receive form
+    function addReceiveRow() {
+        const tbody = document.getElementById("receiveItemsBody");
+        const options = '<option value="">Select material</option>' + 
+            materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+        
+        const newRow = document.createElement('tr');
+        newRow.className = 'item-row';
+        newRow.innerHTML = `
+            <td><select class="material-select">${options}</select></td>
+            <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
+            <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
+            <td><span class="item-total">0.00</span></td>
+            <td><button class="remove-row-btn" onclick="removeRow(this)">✕</button></td>
+        `;
+        
+        const qtyInput = newRow.querySelector('.item-qty');
+        const priceInput = newRow.querySelector('.item-price');
+        qtyInput.addEventListener('input', () => updateRowTotal(newRow));
+        priceInput.addEventListener('input', () => updateRowTotal(newRow));
+        
+        tbody.appendChild(newRow);
+        updateRowTotal(newRow);
+    }
+    
+    function removeRow(btn) {
+        const tbody = document.getElementById("receiveItemsBody");
+        if (tbody.children.length > 1) {
+            btn.closest('tr').remove();
+        } else {
+            alert("At least one item is required");
+        }
+    }
+    
+    function updateRowTotal(row) {
+        const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+        const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+        const total = qty * price;
+        const totalSpan = row.querySelector('.item-total');
+        if (totalSpan) totalSpan.textContent = total.toFixed(2);
+    }
+    
+    function showReceiveForm() {
+        if (materialsList.length === 0) {
+            alert("No materials found in database. Please add materials first.");
+            return;
+        }
+        document.getElementById("supplierName").value = "";
+        document.getElementById("receiptDate").value = new Date().toISOString().split('T')[0];
+        document.getElementById("invoiceRef").value = "";
+        document.getElementById("receiveNotes").value = "";
+        
+        const tbody = document.getElementById("receiveItemsBody");
+        const options = '<option value="">Select material</option>' + 
+            materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+        
+        tbody.innerHTML = `
+            <tr class="item-row">
+                <td><select class="material-select">${options}</select></td>
+                <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
+                <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
+                <td><span class="item-total">0.00</span></td>
+                <td><button class="remove-row-btn" onclick="removeRow(this)" style="display:none;">✕</button></td>
+            </tr>
+        `;
+        
+        document.getElementById("receiveModal").classList.add("active");
+    }
+    
+    function closeReceiveModal() {
+        document.getElementById("receiveModal").classList.remove("active");
+    }
+    
+    function closeHistoryModal() {
+        document.getElementById("historyModal").classList.remove("active");
+    }
+    
+    async function submitReceive() {
+        const supplier = document.getElementById("supplierName").value.trim();
+        if (!supplier) {
+            alert("Please enter supplier name");
+            return;
+        }
+        
+        const receiptDate = document.getElementById("receiptDate").value;
+        if (!receiptDate) {
+            alert("Please select receipt date");
+            return;
+        }
+        
+        const invoiceRef = document.getElementById("invoiceRef").value.trim();
+        const notes = document.getElementById("receiveNotes").value.trim();
+        
+        const rows = document.querySelectorAll("#receiveItemsBody .item-row");
+        const items = [];
+        
+        for (const row of rows) {
+            const materialSelect = row.querySelector('.material-select');
+            const materialId = materialSelect.value;
+            const materialName = materialSelect.options[materialSelect.selectedIndex]?.text || '';
+            const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+            const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+            
+            if (!materialId) {
+                alert("Please select a material for all rows");
+                return;
+            }
+            if (qty <= 0) {
+                alert(`Quantity must be greater than 0 for ${materialName}`);
+                return;
+            }
+            
+            items.push({ materialId, materialName, quantity: qty, price: price });
+        }
+        
+        if (items.length === 0) {
+            alert("Please add at least one item");
+            return;
+        }
+        
+        const submitBtn = document.getElementById("submitReceiveBtn");
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Saving...';
+        
+        try {
+            await saveReceivedItems(supplier, receiptDate, invoiceRef, items, notes);
+            alert(`✅ Successfully received ${items.length} item(s) from ${supplier}!`);
+            closeReceiveModal();
+            await loadAllData();
+            await loadMaterials();
+        } catch (error) {
+            alert("Error saving: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> SAVE RECEIVED ITEMS';
+        }
+    }
+    
+    function changeYear() {
+        currentYear = parseInt(document.getElementById("yearSelect").value);
+        updateRangeBadge();
+        saveToLocalStorage();
+        loadAllData();
+    }
+
+    // Event Listeners
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Load saved preferences first
+        loadFromLocalStorage();
+        updateRangeBadge();
+        
+        await loadMaterials();
+        
+        document.getElementById("yearSelect").addEventListener("change", changeYear);
+        document.getElementById("weekToggleHeader").addEventListener("click", toggleWeekPanel);
+        document.getElementById("applyWeekRangeBtn").addEventListener("click", applyWeekRange);
+        document.getElementById("resetWeeksBtn").addEventListener("click", resetWeeks);
+        
+        document.getElementById("itemSelect").addEventListener("change", async (e) => {
+            currentSelectedMaterialId = e.target.value;
+            saveToLocalStorage();
+            if (currentSelectedMaterialId) {
+                await loadAllData();
+            }
         });
         
-        document.getElementById("currentItemInfo").innerHTML = `<i class="fas fa-pen"></i> <strong>${material?.name || ''}</strong> | Current system stock: <strong>${currentStockVal}</strong> | ✨ Click any balance to correct & align.`;
-    }
-    
-    function handleBalanceClick(e) {
-        let td = e.currentTarget;
-        let week = parseInt(td.getAttribute('data-week'));
-        let weekKey = td.getAttribute('data-weekkey');
-        let currentBalance = parseFloat(td.getAttribute('data-balance'));
-        let material = materialsList.find(m=>m.id===currentMaterialId);
-        modalMaterialName.innerText = material ? material.name : 'Material';
-        modalWeekLabel.innerText = `Week ${week} (${currentYear})`;
-        currentBalanceSpan.innerText = currentBalance;
-        newStockBalanceInput.value = currentBalance;
-        // store adjustment context
-        let prevBalanceBeforeWeek = 0;
-        // find previous week balance (if exists)
-        for(let w=week-1; w>=1; w--) {
-            let prevKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
-            if(currentBalancesMap[prevKey]) {
-                prevBalanceBeforeWeek = currentBalancesMap[prevKey].balance;
-                break;
-            }
-        }
-        let recVal = (weeklyRecCache[weekKey] || 0);
-        let issuVal = (weeklyIssuCache[weekKey] || 0);
-        pendingAdjustment = { weekNum: week, weekKey, oldBalance: currentBalance, previousBalanceBeforeWeek: prevBalanceBeforeWeek, recVal, issuVal };
-        stockModal.classList.add("active");
-    }
-    
-    async function applyStockAdjustment() {
-        let newBalance = parseFloat(newStockBalanceInput.value);
-        if(isNaN(newBalance)) { showFlash("Invalid number", true); return; }
-        let { weekNum, weekKey, oldBalance, previousBalanceBeforeWeek, recVal, issuVal } = pendingAdjustment;
-        if(newBalance === oldBalance) { stockModal.classList.remove("active"); return; }
-        // compute delta: new balance vs old balance
-        let delta = newBalance - oldBalance;
-        // We need to shift future weeks (+delta) and also update current week balance & update material stock
-        // Principle: change at week `weekNum` onward by delta.
-        let updatedBalances = { ...currentBalancesMap };
-        let keysSorted = [];
-        for(let w=1; w<=52; w++) {
-            let key = `${currentYear}-W${String(w).padStart(2,'0')}`;
-            keysSorted.push(key);
-        }
-        let startModifying = false;
-        for(let k of keysSorted) {
-            if(k === weekKey) startModifying = true;
-            if(startModifying && updatedBalances[k]) {
-                updatedBalances[k].balance = updatedBalances[k].balance + delta;
-            }
-        }
-        // also need to update the weeklyLedger collection's balance? Actually balance is computed, but to persist we must update the stored weekly rec/issu? No, we adjust by introducing an adjustment record? EASIER: create a "stockAdjustment" entry for that week. But to keep simple and permanent, we will update the material's weeklyLedger document with an extra field "manualAdjustment" or we can modify Rec/Issu by creating a correction factor.
-        // better approach: add a new transaction where we store a correction event for that week. For simplicity and robustness: we update the material's currentStock and also update the weekly balances by changing the "REC" of that selected week by delta? Actually delta applies to balance, but week rec/issu remains same; future weeks' balances shift.
-        // We'll store a correction log in Firestore under "stockCorrections" and recompute balances on load. For immediate UI and database consistency, we implement a correction collection.
-        try {
-            const correctionRef = db.collection("materials").doc(currentMaterialId).collection("stockCorrections").doc(weekKey);
-            await correctionRef.set({
-                weekKey: weekKey,
-                year: currentYear,
-                weekNumber: weekNum,
-                originalBalance: oldBalance,
-                correctedBalance: newBalance,
-                delta: delta,
-                timestamp: new Date(),
-                reason: "Manual adjustment"
-            }, { merge: true });
-            // Also update master material stock by delta (since future weeks balance shift, the final stock changes by delta)
-            const materialRef = db.collection("materials").doc(currentMaterialId);
-            const matSnap = await materialRef.get();
-            let currStock = matSnap.data().quantity || 0;
-            let finalDelta = delta;   // final stock changes by delta
-            await materialRef.update({ quantity: currStock + finalDelta, lastManualAdjust: new Date() });
-            // update local cache for currentBalancesMap
-            for(let k of keysSorted) {
-                if(startModifying && currentBalancesMap[k]) {
-                    currentBalancesMap[k].balance += delta;
-                } else if(k === weekKey) startModifying = true;
-            }
-            renderLedgerWithCurrentData();
-            showFlash(`Stock adjusted: Week ${weekNum} balance changed from ${oldBalance} → ${newBalance}. Future weeks updated.`);
-            // reload materials to reflect new stock
+        document.getElementById("showReceiveFormBtn").addEventListener("click", showReceiveForm);
+        document.getElementById("submitReceiveBtn").addEventListener("click", submitReceive);
+        document.getElementById("viewHistoryBtn").addEventListener("click", async () => {
+            await displayHistoryModal();
+            document.getElementById("historyModal").classList.add("active");
+        });
+        document.getElementById("refreshBtn").addEventListener("click", async () => {
             await loadMaterials();
-            if(currentMaterialId) itemSelect.value = currentMaterialId;
-        } catch(err) { console.error(err); showFlash("Adjustment failed: "+err.message, true); }
-        stockModal.classList.remove("active");
-    }
-    
-    // replace submit receive part simplified (keep original style but ensure stock updates)
-    // we keep receive modal stub because we had that but functionality wasn't fully bound in this simplified version. But add a quick receive stub that works.
-    async function quickReceiveFlow() {
-        alert("Use 'RECEIVE ITEMS' from earlier version? For simplicity, use manual click on balance to fix mismatches. Or you can add receive via history manager. But balance click directly solves mismatch.");
-    }
-    
-    async function refreshEverything() {
-        await loadMaterials();
-        if(currentMaterialId) await loadAllLedgerData();
-        renderLedgerWithCurrentData();
-    }
-    
-    document.getElementById("editStockBtn").addEventListener("click", () => {
-        if(!currentMaterialId) { showFlash("Select material first", true); return; }
-        showFlash("Click on ANY balance cell in the table to adjust stock!", false);
-    });
-    document.getElementById("viewHistoryBtn").addEventListener("click", () => {
-        alert("📦 To see received history, you can add later. The main fix: Click on any balance cell to align stock with physical inventory.");
-    });
-    document.getElementById("refreshBtn").addEventListener("click", refreshEverything);
-    document.getElementById("applyWeekRangeBtn").addEventListener("click", applyWeekRange);
-    document.getElementById("resetWeeksBtn").addEventListener("click", resetWeeks);
-    document.getElementById("weekToggleHeader").addEventListener("click", toggleWeekPanel);
-    document.getElementById("cancelStockModal").addEventListener("click", () => stockModal.classList.remove("active"));
-    document.getElementById("confirmStockAdjustment").addEventListener("click", applyStockAdjustment);
-    yearSelect.addEventListener("change", async (e) => {
-        currentYear = parseInt(e.target.value);
-        updateRangeBadge();
-        saveLocalPrefs();
-        await loadAllLedgerData();
-        renderLedgerWithCurrentData();
-    });
-    itemSelect.addEventListener("change", async (e) => {
-        currentMaterialId = e.target.value;
-        saveLocalPrefs();
-        if(currentMaterialId) {
-            await loadAllLedgerData();
-            renderLedgerWithCurrentData();
-        }
+            await loadAllData();
+        });
     });
     
-    // initializer
-    (async() => {
-        await loadMaterials();
-        if(currentMaterialId) await loadAllLedgerData();
-        renderLedgerWithCurrentData();
-    })();
+    window.removeRow = removeRow;
+    window.closeReceiveModal = closeReceiveModal;
+    window.closeHistoryModal = closeHistoryModal;
+    window.addReceiveRow = addReceiveRow;
 </script>
 </body>
 </html>
