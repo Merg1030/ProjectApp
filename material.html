@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,7 +111,6 @@
         .issu-cell { background: #fff2e6; font-weight: 600; color: #bc5a2c; }
         .balance-cell { background: #eef2fa; font-weight: 700; color: #1f6392; }
         
-        /* Week Selector Panel */
         .week-selector-panel {
             background: #f8fafd;
             padding: 12px 24px;
@@ -181,7 +179,6 @@
             border: 1px solid #b3c7e0;
         }
         
-        /* MODAL STYLES */
         .modal {
             display: none;
             position: fixed;
@@ -235,7 +232,6 @@
             justify-content: flex-end;
         }
         
-        /* Receive Form Styles */
         .receive-items-table {
             width: 100%;
             border-collapse: collapse;
@@ -304,6 +300,18 @@
             border: 1px solid #b3c7e0;
         }
         .loading { text-align: center; padding: 40px; color: #7f96b3; }
+        .selected-item-info {
+            background:#f8fafd; 
+            padding:12px 16px; 
+            border-radius:12px;
+        }
+        footer {
+            font-size:0.7rem; 
+            text-align:center; 
+            padding:16px; 
+            color:#6f95b5; 
+            border-top:1px solid #e2edf7;
+        }
     </style>
 </head>
 <body>
@@ -338,7 +346,6 @@
         </div>
     </div>
     
-    <!-- Week Selector Panel -->
     <div class="week-selector-panel">
         <div class="week-toggle-header" id="weekToggleHeader">
             <h4><i class="fas fa-calendar-alt"></i> WEEK RANGE <span id="activeRangeBadge" class="active-range-badge" style="margin-left:8px;">1/26 - 52/26</span></h4>
@@ -365,12 +372,7 @@
     <div class="ledger-table-wrapper">
         <table class="weekly-table" id="weeklyLedgerTable">
             <thead>
-                <tr>
-                    <th>WEEK</th>
-                    <th>REC (Received)</th>
-                    <th>ISSU (Issued)</th>
-                    <th>B/C (Balance)</th>
-                </tr>
+                <tr><th>WEEK</th><th>REC (Received)</th><th>ISSU (Issued)</th><th>B/C (Balance)</th></tr>
             </thead>
             <tbody id="ledgerTableBody">
                 <tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...<\/td><\/tr>
@@ -379,12 +381,12 @@
     </div>
 
     <div style="padding: 0 24px 24px 24px;">
-        <div class="selected-item-info" id="currentItemInfo" style="background:#f8fafd; padding:12px 16px; border-radius:12px;">
+        <div class="selected-item-info" id="currentItemInfo">
             <i class="fas fa-info-circle"></i> Select a material to view ledger
         </div>
     </div>
 
-    <footer style="font-size:0.7rem; text-align:center; padding:16px; color:#6f95b5; border-top:1px solid #e2edf7;">
+    <footer>
         <i class="fas fa-database"></i> Data synced with Firebase | Your selected material and week range are saved
     </footer>
 </div>
@@ -413,21 +415,11 @@
             <label><i class="fas fa-list"></i> ITEMS RECEIVED</label>
             <table class="receive-items-table" id="receiveItemsTable">
                 <thead>
-                    <tr>
-                        <th>Material</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
-                        <th>Total</th>
-                        <th style="width:40px"></th>
-                    </tr>
+                    <tr><th>Material</th><th>Quantity</th><th>Unit Price</th><th>Total</th><th style="width:40px"></th></tr>
                 </thead>
                 <tbody id="receiveItemsBody">
                     <tr class="item-row">
-                        <td>
-                            <select class="material-select">
-                                <option value="">Select material</option>
-                            </select>
-                        </td>
+                        <td><select class="material-select"><option value="">Select material</option></select></td>
                         <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
                         <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
                         <td><span class="item-total">0.00</span></td>
@@ -466,7 +458,6 @@
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
         authDomain: "project-task-588c4.firebaseapp.com",
@@ -486,7 +477,6 @@
     let fromWeek = 1;
     let toWeek = 52;
     
-    // ========== PERSISTENCE FUNCTIONS ==========
     function saveToLocalStorage() {
         if (currentSelectedMaterialId) {
             localStorage.setItem('selectedMaterialId', currentSelectedMaterialId);
@@ -506,27 +496,22 @@
             currentYear = parseInt(savedYear);
             document.getElementById("yearSelect").value = currentYear;
         }
-        
         if (savedFromWeek) {
             fromWeek = parseInt(savedFromWeek);
             document.getElementById("fromWeek").value = fromWeek;
         }
-        
         if (savedToWeek) {
             toWeek = parseInt(savedToWeek);
             document.getElementById("toWeek").value = toWeek;
         }
-        
         return savedMaterialId;
     }
     
-    // Helper: Format week as "week/year" e.g., "17/26"
     function formatWeekDisplay(weekNum, year) {
         const yearShort = year.toString().slice(-2);
         return `${weekNum}/${yearShort}`;
     }
     
-    // Update badge with current range
     function updateRangeBadge() {
         const yearShort = currentYear.toString().slice(-2);
         const badge = document.getElementById("activeRangeBadge");
@@ -537,14 +522,11 @@
         }
     }
     
-    // Toggle week range panel
     let weekPanelOpen = false;
-    
     function toggleWeekPanel() {
         weekPanelOpen = !weekPanelOpen;
         const selector = document.getElementById("weekRangeSelector");
         const chevron = document.getElementById("weekChevron");
-        
         if (weekPanelOpen) {
             selector.classList.add("open");
             chevron.style.transform = "rotate(180deg)";
@@ -557,21 +539,15 @@
     function applyWeekRange() {
         let from = parseInt(document.getElementById("fromWeek").value);
         let to = parseInt(document.getElementById("toWeek").value);
-        
         if (isNaN(from)) from = 1;
         if (isNaN(to)) to = 52;
         if (from < 1) from = 1;
         if (to > 52) to = 52;
-        if (from > to) {
-            [from, to] = [to, from];
-        }
-        
+        if (from > to) [from, to] = [to, from];
         fromWeek = from;
         toWeek = to;
-        
         document.getElementById("fromWeek").value = fromWeek;
         document.getElementById("toWeek").value = toWeek;
-        
         updateRangeBadge();
         saveToLocalStorage();
         loadAllData();
@@ -587,11 +563,9 @@
         loadAllData();
     }
 
-    // Load materials from database
     async function loadMaterials() {
         const selectEl = document.getElementById("itemSelect");
         const materialSelects = document.querySelectorAll(".material-select");
-        
         try {
             const snapshot = await db.collection("materials").orderBy("materialName").get();
             materialsList = [];
@@ -603,26 +577,19 @@
                     category: doc.data().category || ""
                 });
             });
-
             if (materialsList.length === 0) {
                 selectEl.innerHTML = '<option value="">— No materials found —</option>';
                 return;
             }
-
             const options = '<option value="">-- Choose a material --</option>' + 
                 materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-            
             selectEl.innerHTML = options;
-            
             materialSelects.forEach(sel => {
                 const currentVal = sel.value;
                 sel.innerHTML = options;
                 if (currentVal) sel.value = currentVal;
             });
-            
-            // Restore previously selected material from localStorage
             const savedMaterialId = loadFromLocalStorage();
-            
             if (savedMaterialId && materialsList.some(m => m.id === savedMaterialId)) {
                 currentSelectedMaterialId = savedMaterialId;
                 selectEl.value = currentSelectedMaterialId;
@@ -639,13 +606,9 @@
         }
     }
 
-    // Load usage records for ISSU calculation
     async function loadUsageRecords() {
         try {
-            const snapshot = await db.collection("materialsUsage")
-                .where("reversed", "!=", true)
-                .get();
-            
+            const snapshot = await db.collection("materialsUsage").where("reversed", "!=", true).get();
             allUsageRecords = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
@@ -664,7 +627,6 @@
         }
     }
 
-    // Load weekly REC data for a material
     async function loadWeeklyRecData(materialId) {
         const recData = {};
         try {
@@ -683,15 +645,12 @@
         return recData;
     }
 
-    // Calculate ISSU per week based on usage records
     function calculateIssuByWeek(materialId, year) {
         const issuByWeek = {};
-        
         for (let w = 1; w <= 52; w++) {
             const weekKey = `${year}-W${String(w).padStart(2,'0')}`;
             issuByWeek[weekKey] = 0;
         }
-
         allUsageRecords.forEach(record => {
             if (record.materialId === materialId && record.assignedAt) {
                 const assignedDate = record.assignedAt.toDate ? record.assignedAt.toDate() : new Date(record.assignedAt);
@@ -701,30 +660,29 @@
                     let weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
                     if (weekNum < 1) weekNum = 1;
                     if (weekNum > 52) weekNum = 52;
-                    
                     const weekKey = `${year}-W${String(weekNum).padStart(2,'0')}`;
                     issuByWeek[weekKey] = (issuByWeek[weekKey] || 0) + record.quantity;
                 }
             }
         });
-        
         return issuByWeek;
     }
 
-    // Render the ledger table (only weeks in range)
     function renderLedgerTable(recData, issuByWeek, currentStock) {
         const tbody = document.getElementById("ledgerTableBody");
-        
         let rows = '';
         let runningBalance = currentStock;
-        
+        for (let w = 52; w >= 1; w--) {
+            const weekKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
+            const rec = recData[weekKey]?.rec || 0;
+            const issu = issuByWeek[weekKey] || 0;
+            runningBalance = runningBalance - rec + issu;
+        }
         for (let w = 1; w <= 52; w++) {
             const weekKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
             const rec = recData[weekKey]?.rec || 0;
             const issu = issuByWeek[weekKey] || 0;
-            
             runningBalance = runningBalance + rec - issu;
-            
             if (w >= fromWeek && w <= toWeek) {
                 const weekDisplay = formatWeekDisplay(w, currentYear);
                 rows += `
@@ -737,13 +695,11 @@
                 `;
             }
         }
-        
         if (rows === '') {
             tbody.innerHTML = `<tr><td colspan="4" class="loading"><i class="fas fa-calendar"></i> No weeks in selected range</td></tr>`;
         } else {
             tbody.innerHTML = rows;
         }
-        
         const material = materialsList.find(m => m.id === currentSelectedMaterialId);
         if (material) {
             const yearShort = currentYear.toString().slice(-2);
@@ -752,7 +708,6 @@
         }
     }
 
-    // Save received items to database
     async function saveReceivedItems(supplier, date, invoiceRef, items, notes) {
         const receiptData = {
             receiptId: Date.now().toString(),
@@ -764,10 +719,8 @@
             createdAt: new Date(),
             totalAmount: items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
         };
-        
         try {
             await db.collection("receivedHistory").add(receiptData);
-            
             for (const item of items) {
                 if (item.materialId) {
                     const receiptDateObj = new Date(date);
@@ -777,31 +730,17 @@
                     let weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
                     if (weekNum < 1) weekNum = 1;
                     if (weekNum > 52) weekNum = 52;
-                    
                     const weekKey = `${year}-W${String(weekNum).padStart(2,'0')}`;
                     const ledgerRef = db.collection("materials").doc(item.materialId).collection("weeklyLedger").doc(weekKey);
-                    
                     const docSnap = await ledgerRef.get();
-                    let currentRec = 0;
-                    if (docSnap.exists) {
-                        currentRec = docSnap.data().rec || 0;
-                    }
-                    
-                    await ledgerRef.set({
-                        rec: currentRec + item.quantity,
-                        lastUpdated: new Date()
-                    }, { merge: true });
-                    
+                    let currentRec = docSnap.exists ? (docSnap.data().rec || 0) : 0;
+                    await ledgerRef.set({ rec: currentRec + item.quantity, lastUpdated: new Date() }, { merge: true });
                     const materialRef = db.collection("materials").doc(item.materialId);
                     const materialSnap = await materialRef.get();
                     const currentStock = materialSnap.data().quantity || 0;
-                    await materialRef.update({ 
-                        quantity: currentStock + item.quantity,
-                        lastRestocked: new Date()
-                    });
+                    await materialRef.update({ quantity: currentStock + item.quantity, lastRestocked: new Date() });
                 }
             }
-            
             return true;
         } catch (error) {
             console.error("Error saving received items:", error);
@@ -809,14 +748,11 @@
         }
     }
 
-    // Load received history
     async function loadReceivedHistory() {
         try {
             const snapshot = await db.collection("receivedHistory").orderBy("createdAt", "desc").get();
             const records = [];
-            snapshot.forEach(doc => {
-                records.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach(doc => records.push({ id: doc.id, ...doc.data() }));
             return records;
         } catch (error) {
             console.error("Error loading history:", error);
@@ -824,18 +760,14 @@
         }
     }
 
-    // Display received history
     async function displayHistoryModal() {
         const historyBody = document.getElementById("historyModalBody");
         historyBody.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...</div>';
-        
         const records = await loadReceivedHistory();
-        
         if (records.length === 0) {
             historyBody.innerHTML = '<div class="loading"><i class="fas fa-inbox"></i> No received records found</div>';
             return;
         }
-        
         let html = '';
         for (const record of records) {
             html += `
@@ -849,56 +781,32 @@
                         <i class="fas fa-dollar-sign"></i> Total: ${(record.totalAmount || 0).toFixed(2)}
                     </div>
                     <table style="width:100%; font-size:0.7rem; border-collapse:collapse;">
-                        <thead>
-                            <tr style="background:#e6f0f9;">
-                                <th style="padding:6px; text-align:left;">Material</th>
-                                <th style="padding:6px; text-align:right;">Qty</th>
-                                <th style="padding:6px; text-align:right;">Unit Price</th>
-                                <th style="padding:6px; text-align:right;">Total</th>
-                            </tr>
-                        </thead>
+                        <thead><tr style="background:#e6f0f9;"><th style="padding:6px;">Material</th><th style="padding:6px;">Qty</th><th style="padding:6px;">Unit Price</th><th style="padding:6px;">Total</th></tr></thead>
                         <tbody>
-                            ${record.items.map(item => `
-                                <tr>
-                                    <td style="padding:6px;">${item.materialName}</td>
-                                    <td style="padding:6px; text-align:right;">${item.quantity}</td>
-                                    <td style="padding:6px; text-align:right;">${(item.price || 0).toFixed(2)}</td>
-                                    <td style="padding:6px; text-align:right;">${((item.quantity || 0) * (item.price || 0)).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
+                            ${record.items.map(item => `<tr><td style="padding:6px;">${item.materialName}</td><td style="padding:6px;">${item.quantity}</td><td style="padding:6px;">${(item.price || 0).toFixed(2)}</td><td style="padding:6px;">${((item.quantity || 0) * (item.price || 0)).toFixed(2)}</td></tr>`).join('')}
                         </tbody>
                     </table>
-                    ${record.notes ? `<div style="margin-top:8px; font-size:0.65rem; color:#7f96b3;"><i class="fas fa-sticky-note"></i> ${record.notes}</div>` : ''}
+                    ${record.notes ? `<div style="margin-top:8px; font-size:0.65rem;"><i class="fas fa-sticky-note"></i> ${record.notes}</div>` : ''}
                 </div>
             `;
         }
-        
         historyBody.innerHTML = html;
     }
 
-    // Load all data and refresh display
     async function loadAllData() {
         if (!currentSelectedMaterialId) return;
-        
-        document.getElementById("ledgerTableBody").innerHTML = 
-            `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading ledger...</td></tr>`;
-        
+        document.getElementById("ledgerTableBody").innerHTML = `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading ledger...</td></tr>`;
         await loadUsageRecords();
         const recData = await loadWeeklyRecData(currentSelectedMaterialId);
         const issuByWeek = calculateIssuByWeek(currentSelectedMaterialId, currentYear);
-        
         const material = materialsList.find(m => m.id === currentSelectedMaterialId);
         const currentStock = material ? material.currentStock : 0;
-        
         renderLedgerTable(recData, issuByWeek, currentStock);
     }
 
-    // Add row to receive form
     function addReceiveRow() {
         const tbody = document.getElementById("receiveItemsBody");
-        const options = '<option value="">Select material</option>' + 
-            materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-        
+        const options = '<option value="">Select material</option>' + materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
         const newRow = document.createElement('tr');
         newRow.className = 'item-row';
         newRow.innerHTML = `
@@ -908,127 +816,79 @@
             <td><span class="item-total">0.00</span></td>
             <td><button class="remove-row-btn" onclick="removeRow(this)">✕</button></td>
         `;
-        
         const qtyInput = newRow.querySelector('.item-qty');
         const priceInput = newRow.querySelector('.item-price');
         qtyInput.addEventListener('input', () => updateRowTotal(newRow));
         priceInput.addEventListener('input', () => updateRowTotal(newRow));
-        
         tbody.appendChild(newRow);
         updateRowTotal(newRow);
     }
     
     function removeRow(btn) {
         const tbody = document.getElementById("receiveItemsBody");
-        if (tbody.children.length > 1) {
-            btn.closest('tr').remove();
-        } else {
-            alert("At least one item is required");
-        }
+        if (tbody.children.length > 1) btn.closest('tr').remove();
+        else alert("At least one item is required");
     }
     
     function updateRowTotal(row) {
         const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
         const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-        const total = qty * price;
         const totalSpan = row.querySelector('.item-total');
-        if (totalSpan) totalSpan.textContent = total.toFixed(2);
+        if (totalSpan) totalSpan.textContent = (qty * price).toFixed(2);
     }
     
     function showReceiveForm() {
-        if (materialsList.length === 0) {
-            alert("No materials found in database. Please add materials first.");
-            return;
-        }
+        if (materialsList.length === 0) { alert("No materials found. Please add materials first."); return; }
         document.getElementById("supplierName").value = "";
         document.getElementById("receiptDate").value = new Date().toISOString().split('T')[0];
         document.getElementById("invoiceRef").value = "";
         document.getElementById("receiveNotes").value = "";
-        
+        const options = '<option value="">Select material</option>' + materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
         const tbody = document.getElementById("receiveItemsBody");
-        const options = '<option value="">Select material</option>' + 
-            materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-        
-        tbody.innerHTML = `
-            <tr class="item-row">
-                <td><select class="material-select">${options}</select></td>
-                <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
-                <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
-                <td><span class="item-total">0.00</span></td>
-                <td><button class="remove-row-btn" onclick="removeRow(this)" style="display:none;">✕</button></td>
-            </tr>
-        `;
-        
+        tbody.innerHTML = `<tr class="item-row">
+            <td><select class="material-select">${options}</select></td>
+            <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
+            <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
+            <td><span class="item-total">0.00</span></td>
+            <td><button class="remove-row-btn" onclick="removeRow(this)" style="display:none;">✕</button></td>
+        </tr>`;
         document.getElementById("receiveModal").classList.add("active");
     }
     
-    function closeReceiveModal() {
-        document.getElementById("receiveModal").classList.remove("active");
-    }
-    
-    function closeHistoryModal() {
-        document.getElementById("historyModal").classList.remove("active");
-    }
+    function closeReceiveModal() { document.getElementById("receiveModal").classList.remove("active"); }
+    function closeHistoryModal() { document.getElementById("historyModal").classList.remove("active"); }
     
     async function submitReceive() {
         const supplier = document.getElementById("supplierName").value.trim();
-        if (!supplier) {
-            alert("Please enter supplier name");
-            return;
-        }
-        
+        if (!supplier) { alert("Please enter supplier name"); return; }
         const receiptDate = document.getElementById("receiptDate").value;
-        if (!receiptDate) {
-            alert("Please select receipt date");
-            return;
-        }
-        
+        if (!receiptDate) { alert("Please select receipt date"); return; }
         const invoiceRef = document.getElementById("invoiceRef").value.trim();
         const notes = document.getElementById("receiveNotes").value.trim();
-        
         const rows = document.querySelectorAll("#receiveItemsBody .item-row");
         const items = [];
-        
         for (const row of rows) {
             const materialSelect = row.querySelector('.material-select');
             const materialId = materialSelect.value;
             const materialName = materialSelect.options[materialSelect.selectedIndex]?.text || '';
             const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
             const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-            
-            if (!materialId) {
-                alert("Please select a material for all rows");
-                return;
-            }
-            if (qty <= 0) {
-                alert(`Quantity must be greater than 0 for ${materialName}`);
-                return;
-            }
-            
+            if (!materialId) { alert("Please select a material for all rows"); return; }
+            if (qty <= 0) { alert(`Quantity must be greater than 0 for ${materialName}`); return; }
             items.push({ materialId, materialName, quantity: qty, price: price });
         }
-        
-        if (items.length === 0) {
-            alert("Please add at least one item");
-            return;
-        }
-        
+        if (items.length === 0) { alert("Please add at least one item"); return; }
         const submitBtn = document.getElementById("submitReceiveBtn");
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Saving...';
-        
         try {
             await saveReceivedItems(supplier, receiptDate, invoiceRef, items, notes);
             alert(`✅ Successfully received ${items.length} item(s) from ${supplier}!`);
             closeReceiveModal();
             await loadAllData();
             await loadMaterials();
-        } catch (error) {
-            alert("Error saving: " + error.message);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> SAVE RECEIVED ITEMS';
-        }
+        } catch (error) { alert("Error saving: " + error.message); } 
+        finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-save"></i> SAVE RECEIVED ITEMS'; }
     }
     
     function changeYear() {
@@ -1038,37 +898,23 @@
         loadAllData();
     }
 
-    // Event Listeners
     document.addEventListener("DOMContentLoaded", async () => {
-        // Load saved preferences first
         loadFromLocalStorage();
         updateRangeBadge();
-        
         await loadMaterials();
-        
         document.getElementById("yearSelect").addEventListener("change", changeYear);
         document.getElementById("weekToggleHeader").addEventListener("click", toggleWeekPanel);
         document.getElementById("applyWeekRangeBtn").addEventListener("click", applyWeekRange);
         document.getElementById("resetWeeksBtn").addEventListener("click", resetWeeks);
-        
         document.getElementById("itemSelect").addEventListener("change", async (e) => {
             currentSelectedMaterialId = e.target.value;
             saveToLocalStorage();
-            if (currentSelectedMaterialId) {
-                await loadAllData();
-            }
+            if (currentSelectedMaterialId) await loadAllData();
         });
-        
         document.getElementById("showReceiveFormBtn").addEventListener("click", showReceiveForm);
         document.getElementById("submitReceiveBtn").addEventListener("click", submitReceive);
-        document.getElementById("viewHistoryBtn").addEventListener("click", async () => {
-            await displayHistoryModal();
-            document.getElementById("historyModal").classList.add("active");
-        });
-        document.getElementById("refreshBtn").addEventListener("click", async () => {
-            await loadMaterials();
-            await loadAllData();
-        });
+        document.getElementById("viewHistoryBtn").addEventListener("click", async () => { await displayHistoryModal(); document.getElementById("historyModal").classList.add("active"); });
+        document.getElementById("refreshBtn").addEventListener("click", async () => { await loadMaterials(); await loadAllData(); });
     });
     
     window.removeRow = removeRow;
