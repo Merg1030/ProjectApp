@@ -75,7 +75,7 @@
     .penta { color: white; }
   </style>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK + Login Logic (using module to keep imports) -->
   <script type="module">
     // Initialize Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
@@ -97,107 +97,98 @@
     const database = getDatabase(app);
     const analytics = getAnalytics(app);
 
-    async function login() {
+    // Helper: Save login attempt to Firebase
+    function saveLoginAttempt(username, method) {
+      const loginRef = ref(database, 'loginAttempts');
+      push(loginRef, {
+        username: username,
+        timestamp: new Date().toISOString(),
+        method: method
+      }).catch(err => console.warn("Firebase push failed", err));
+    }
+
+    // Main login function (exposed globally for onclick)
+    window.login = async function() {
       const usernameRaw = document.getElementById("username").value.trim();
-      const username = usernameRaw.toLowerCase();
+      const username = usernameRaw.toLowerCase();  // normalize for case-insensitive matching except special names later
       const password = document.getElementById("password").value;
       const warningMessage = document.getElementById("warningMessage");
+      
+      // Hide any previous warning
+      warningMessage.style.display = "none";
 
-      // List of users for assessment.html
-      const assessmentUsers = [
-        "brighton matolokosh", "caphas tembo", "clisha mambilima", "dabson daka",
-        "danny mvula", "james daka", "joseph tembo", "luckson phiri", "micheal lobela",
-        "obert siame", "dominic sakala", "peter mawere", "saviour phiri", "tembeya sakala", "kelvin siame"
-      ];
+      // --- NEW USER: kaunda (username case-insensitive but stored as 'kaunda') ---
+      // Username: "kaunda" (any case, e.g., Kaunda, KAUNDA) and password: "kay@hazida"
+      if (username === "kaunda" && password === "kay@hazida") {
+        saveLoginAttempt(username, "kaunda-dashboard");
+        // Store user info (optional, but we store the exact original name)
+        localStorage.setItem('currentUser', 'kaunda');
+        // Redirect to cleandashboard.html as requested
+        window.location.href = 'cleandashboard.html';
+        return;
+      }
 
-      // PMP user login - routes to Ex-pdashboard.html
+      // --- PMP user login: routes to Ex-pdashboard.html ---
       if (username === "pmp" && password === "123454321") {
-        // Save login attempt data to Firebase
-        const loginRef = ref(database, 'loginAttempts');
-        push(loginRef, {
-          username: username,
-          timestamp: new Date().toISOString(),
-          method: "pmp"
-        });
-
-        // Store user and redirect to Ex-pdashboard.html
+        saveLoginAttempt(username, "pmp");
         localStorage.setItem('currentUser', 'pmp');
         window.location.href = 'Ex-pdashboard.html';
         return;
       }
 
-      // Shared global account (everyone uses this except admins)
-      // Username: "Penta" (case-insensitive), Password: "12345"
+      // --- Shared global account: "penta" / "12345" -> assessment.html ---
       if (username === "penta" && password === "12345") {
-        // Save login attempt data to Firebase
-        const loginRef = ref(database, 'loginAttempts');
-        push(loginRef, {
-          username: username,
-          timestamp: new Date().toISOString(),
-          method: "shared-account"
-        });
-
-        // Record current user and redirect to assessment (shared account is routed to assessment)
+        saveLoginAttempt(username, "shared-account");
         localStorage.setItem('currentUser', 'penta');
         window.location.href = 'assessment.html';
         return;
       }
 
-      // Assessment user logic (individual usernames)
+      // --- Assessment individual users list (all use password "12345") ---
+      const assessmentUsers = [
+        "brighton matolokosh", "caphas tembo", "clisha mambilima", "dabson daka",
+        "danny mvula", "james daka", "joseph tembo", "luckson phiri", "micheal lobela",
+        "obert siame", "dominic sakala", "peter mawere", "saviour phiri", "tembeya sakala", "kelvin siame"
+      ];
+      
       if (assessmentUsers.includes(username) && password === "12345") {
-        // Save login attempt data to Firebase
-        const loginRef = ref(database, 'loginAttempts');
-        push(loginRef, {
-          username: username,
-          timestamp: new Date().toISOString(),
-          method: "individual-assessment"
-        });
-
-        // Store user for assessment.html
+        saveLoginAttempt(username, "individual-assessment");
         localStorage.setItem('currentUser', username);
         window.location.href = 'assessment.html';
         return;
       }
 
-      // Admin/dashboard users (keep their passwords as-is)
-      if (
-        (username === "faiyaz mulla" && password === "PENTACON") ||
-        (username === "chishela" && password === "PENTACON")
-      ) {
-        // Save login attempt data to Firebase
-        const loginRef = ref(database, 'loginAttempts');
-        push(loginRef, {
-          username: username,
-          timestamp: new Date().toISOString(),
-          method: "admin"
-        });
-
-        // Store user if needed
+      // --- Admin / dashboard users (original admins) ---
+      // Important: Since we changed username to lower case for checks, we need to handle "faiyaz mulla" and "chishela" as exact original casing? 
+      // But the input raw is already trimmed, but for safety we compare original raw lowercased? 
+      // However admin's original username strings have spaces and lowercasing them is fine. 
+      // The password for both is "PENTACON". Let's keep robust comparison using lowercased but preserve original for localStorage if needed.
+      // Passwords are case-sensitive (PENTACON).
+      if ((username === "faiyaz mulla" && password === "PENTACON") || 
+          (username === "chishela" && password === "PENTACON")) {
+        saveLoginAttempt(username, "admin");
         localStorage.setItem('currentUser', username);
         window.location.href = 'dashboard.html';
         return;
       }
 
-      // If none of the above match, show warning message
+      // If none matched, show warning
       warningMessage.style.display = "block";
-    }
+    };
 
-    // Function to toggle password visibility
-    function togglePasswordVisibility() {
+    // Password visibility toggle (global function)
+    window.togglePasswordVisibility = function() {
       const passwordField = document.getElementById("password");
       const toggleIcon = document.getElementById("togglePasswordIcon");
 
       if (passwordField.type === "password") {
         passwordField.type = "text";
-        toggleIcon.textContent = "🙈"; // Change to "hide" icon
+        toggleIcon.textContent = "🙈";
       } else {
         passwordField.type = "password";
-        toggleIcon.textContent = "👁"; // Change to "show" icon
+        toggleIcon.textContent = "👁";
       }
-    }
-
-    window.login = login;
-    window.togglePasswordVisibility = togglePasswordVisibility;
+    };
   </script>
 </head>
 
