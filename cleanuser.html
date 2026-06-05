@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --white: #ffffff;
+      --accent: #f59e0b;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); padding:28px; color:var(--text); }
+
+    .page-header {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:24px; flex-wrap:wrap; gap:12px;
+    }
+    .page-header h2 { font-size:1.3rem; font-weight:600; }
+    .page-header h2 span { color:var(--text-muted); font-weight:400; font-size:1rem; margin-left:6px; }
+
+    .btn-primary {
+      background: var(--accent);
+      border: none;
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex; align-items:center; gap:7px;
+      transition: 0.15s;
+      font-family: inherit;
+    }
+    .btn-primary:hover { filter:brightness(0.92); }
+
+    /* Form */
+    .form-panel {
+      background:var(--white);
+      border-radius:var(--radius);
+      padding:20px 24px;
+      margin-bottom:20px;
+      border:1px solid var(--border);
+      display:none;
+    }
+    .form-panel.open { display:block; }
+    .form-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+    .form-group { display:flex; flex-direction:column; gap:5px; flex:1; min-width:160px; }
+    .form-group label { font-size:0.78rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .form-group input, .form-group select {
+      padding:10px 14px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      font-size:0.9rem;
+      font-family:inherit;
+      outline:none;
+      transition:0.15s;
+      background:white;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(245,158,11,0.12); }
+    .btn-save { background:#111827; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:inherit; }
+    .btn-cancel { background:none; border:1px solid var(--border); padding:10px 16px; border-radius:8px; font-size:0.88rem; cursor:pointer; font-family:inherit; color:var(--text-muted); }
+
+    /* Table */
+    .table-wrap {
+      background:var(--white);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      overflow:hidden;
+    }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#f9fafb; }
+    th {
+      padding:12px 16px;
+      text-align:left;
+      font-size:0.75rem;
+      font-weight:600;
+      color:var(--text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.06em;
+      border-bottom:1px solid var(--border);
+    }
+    td {
+      padding:14px 16px;
+      font-size:0.9rem;
+      border-bottom:1px solid #f3f4f6;
+      vertical-align:middle;
+    }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover { background:#fafafa; }
+
+    .user-cell { display:flex; align-items:center; gap:10px; }
+    .avatar {
+      width:34px; height:34px;
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:0.85rem;
+      color:#fff;
+      flex-shrink:0;
+    }
+    .avatar-colors { } /* assigned per user */
+
+    .badge {
+      display:inline-flex; padding:3px 10px;
+      border-radius:40px; font-size:0.75rem; font-weight:600;
+    }
+    .badge-active { background:#dcfce7; color:#16a34a; }
+    .badge-role {
+      background:#f3f4f6; color:#374151;
+      padding:3px 10px; border-radius:40px;
+      font-size:0.75rem; font-weight:500;
+    }
+
+    .action-btns { display:flex; gap:6px; }
+    .btn-del {
+      background:none; border:1px solid #fee2e2;
+      width:30px; height:30px; border-radius:7px;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      color:#dc2626; font-size:0.78rem; transition:0.15s;
+    }
+    .btn-del:hover { background:#fee2e2; }
+
+    .empty-state { padding:50px; text-align:center; color:var(--text-muted); }
+    .empty-state i { font-size:2rem; margin-bottom:10px; opacity:0.3; display:block; }
+
+    .info-box {
+      margin-top:16px;
+      background:#fffbeb;
+      border:1px solid #fde68a;
+      border-radius:10px;
+      padding:12px 16px;
+      font-size:0.83rem;
+      color:#92400e;
+      display:flex; align-items:center; gap:8px;
+    }
+
+    @media(max-width:600px){ body{padding:16px;} }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h2>Users <span>System Access</span></h2>
+  <button class="btn-primary" id="addUserBtn"><i class="fas fa-user-plus"></i> Add User</button>
+</div>
+
+<div class="form-panel" id="formPanel">
+  <div class="form-row">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="newUsername" placeholder="e.g. john">
+    </div>
+    <div class="form-group" style="max-width:180px;">
+      <label>Role</label>
+      <select id="newRole">
+        <option value="Staff">Staff</option>
+        <option value="Admin">Admin</option>
+        <option value="Manager">Manager</option>
+        <option value="Executive">Executive</option>
+      </select>
+    </div>
+    <div class="form-group" style="max-width:180px;">
+      <label>Password</label>
+      <input type="password" id="newPassword" placeholder="Set password">
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <button class="btn-save" id="saveUserBtn"><i class="fas fa-check"></i> Save</button>
+      <button class="btn-cancel" id="cancelUserBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="userBody">
+      <tr><td colspan="5" class="empty-state"><i class="fas fa-spinner fa-spin"></i>Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="info-box"><i class="fas fa-info-circle"></i> Default system users are always active. Custom users are stored and managed in the database.</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+  const config = {
+    apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",
+    authDomain: "project-app-58ff6.firebaseapp.com",
+    databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com",
+    projectId: "project-app-58ff6",
+    storageBucket: "project-app-58ff6.appspot.com",
+    messagingSenderId: "586923989952",
+    appId: "1:586923989952:web:72b300dbc00d830e2e4625"
+  };
+  const app = initializeApp(config);
+  const db = getDatabase(app);
+  const usersRef = ref(db, 'appUsers');
+
+  const defaultUsers = [
+    { username:'kaunda', role:'Manager', type:'default' },
+    { username:'pmp', role:'Executive', type:'default' },
+    { username:'penta', role:'Staff', type:'default' },
+    { username:'faiyaz mulla', role:'Admin', type:'default' },
+    { username:'chishela', role:'Admin', type:'default' }
+  ];
+
+  const avatarColors = ['#6366f1','#ec4899','#14b8a6','#f59e0b','#3b82f6','#10b981','#8b5cf6','#ef4444'];
+  const colorCache = {};
+  function getColor(name) {
+    if (!colorCache[name]) {
+      let hash = 0;
+      for (let c of name) hash = c.charCodeAt(0) + (hash << 5) - hash;
+      colorCache[name] = avatarColors[Math.abs(hash) % avatarColors.length];
+    }
+    return colorCache[name];
+  }
+
+  const tbody = document.getElementById('userBody');
+  const formPanel = document.getElementById('formPanel');
+
+  onValue(usersRef, snap => {
+    const extra = snap.val()
+      ? Object.entries(snap.val()).map(([id,v]) => ({ id, ...v, type:'custom' }))
+      : [];
+
+    const all = [...defaultUsers, ...extra];
+    tbody.innerHTML = '';
+
+    all.forEach(u => {
+      const initial = (u.username || '?').charAt(0).toUpperCase();
+      const color = getColor(u.username || '');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div class="user-cell">
+            <div class="avatar" style="background:${color}">${initial}</div>
+            <span style="font-weight:500">${esc(u.username)}</span>
+          </div>
+        </td>
+        <td><span class="badge-role">${esc(u.role)}</span></td>
+        <td><span style="font-size:0.8rem;color:var(--text-muted)">${u.type === 'default' ? 'System' : 'Custom'}</span></td>
+        <td><span class="badge badge-active">Active</span></td>
+        <td>
+          ${u.type === 'custom'
+            ? `<div class="action-btns"><button class="btn-del" data-id="${u.id}" title="Remove"><i class="fas fa-trash"></i></button></div>`
+            : '<span style="font-size:0.78rem;color:var(--text-muted)">Protected</span>'
+          }
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.btn-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (confirm('Remove this user?')) {
+          remove(ref(db, `appUsers/${btn.dataset.id}`));
+        }
+      });
+    });
+  });
+
+  document.getElementById('addUserBtn').addEventListener('click', () => {
+    formPanel.classList.add('open');
+    document.getElementById('newUsername').focus();
+  });
+  document.getElementById('cancelUserBtn').addEventListener('click', () => {
+    formPanel.classList.remove('open');
+  });
+  document.getElementById('saveUserBtn').addEventListener('click', async () => {
+    const username = document.getElementById('newUsername').value.trim().toLowerCase();
+    const role = document.getElementById('newRole').value;
+    const password = document.getElementById('newPassword').value.trim();
+    if (!username || !password) { alert('Please enter a username and password.'); return; }
+    // Save to DB — password stored for login compatibility
+    await push(usersRef, { username, role, password, createdAt: Date.now() });
+    formPanel.classList.remove('open');
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+  });
+
+  function esc(s) {
+    if (!s) return '';
+    return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  }
+
+  setInterval(() => window.parent?.postMessage({ type:'reset_session_timer' },'*'), 30000);
+  document.addEventListener('click', () => window.parent?.postMessage({ type:'reset_session_timer' },'*'));
+</script>
+</body>
+</html>
