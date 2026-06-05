@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hazida Reports & Analytics</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --sidebar: #111827;
+      --sidebar-hover: #1f2937;
+      --accent: #f59e0b;
+      --accent-dim: rgba(245,158,11,0.13);
+      --text: #111827;
+      --text-muted: #6b7280;
+      --white: #ffffff;
+      --border: #e5e7eb;
+      --sidebar-w: 260px;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+    }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      height: 100vh; 
+      overflow: hidden; 
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+      transition: width 0.28s ease;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    
+    .sidebar.collapsed { 
+      width: 0; 
+    }
+
+    .sidebar-brand {
+      padding: 26px 22px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      flex-shrink: 0;
+    }
+    
+    .brand-name { 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      color: #fff; 
+      letter-spacing: 0.02em; 
+      white-space: nowrap; 
+    }
+    
+    .brand-dot { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--accent); 
+      border-radius: 50%; 
+      margin-right: 8px; 
+    }
+    
+    .brand-sub { 
+      font-size: 0.7rem; 
+      color: rgba(255, 255, 255, 0.35); 
+      margin-top: 3px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      white-space: nowrap; 
+    }
+
+    .sidebar-nav { 
+      flex: 1; 
+      padding: 14px 10px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      overflow-y: auto; 
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 10px 12px 4px;
+      white-space: nowrap;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    
+    .nav-item i { 
+      width: 17px; 
+      text-align: center; 
+      font-size: 0.9rem; 
+      flex-shrink: 0; 
+    }
+    
+    .nav-item:hover { 
+      background: var(--sidebar-hover); 
+      color: rgba(255, 255, 255, 0.88); 
+    }
+    
+    .nav-item.active { 
+      background: var(--accent-dim); 
+      color: var(--accent); 
+    }
+
+    .nav-divider { 
+      height: 1px; 
+      background: rgba(255, 255, 255, 0.07); 
+      margin: 8px 0; 
+    }
+    
+    .nav-item.logout { 
+      color: rgba(255, 100, 100, 0.55); 
+    }
+    
+    .nav-item.logout:hover { 
+      background: rgba(220, 53, 69, 0.13); 
+      color: #f87171; 
+    }
+
+    .main { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    
+    .topbar-left { 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+    }
+    
+    .toggle-btn {
+      width: 34px; 
+      height: 34px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      color: var(--text-muted); 
+      font-size: 0.88rem; 
+      transition: 0.15s;
+    }
+    
+    .toggle-btn:hover { 
+      background: var(--border); 
+      color: var(--text); 
+    }
+    
+    .page-title { 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      color: var(--text); 
+    }
+    
+    .page-title span { 
+      color: var(--text-muted); 
+      font-weight: 400; 
+    }
+
+    .user-chip {
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      background: var(--bg); 
+      border: 1px solid var(--border);
+      border-radius: 40px; 
+      padding: 5px 14px 5px 7px;
+      font-size: 0.83rem; 
+      font-weight: 500; 
+      color: var(--text);
+    }
+    
+    .user-avatar {
+      width: 24px; 
+      height: 24px; 
+      background: var(--accent);
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 0.68rem; 
+      font-weight: 700; 
+      color: #fff;
+    }
+
+    .content-area { 
+      flex: 1; 
+      overflow: auto; 
+      padding: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-dim);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Report Sections */
+    .report-section {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 8px;
+    }
+
+    .section-title i {
+      color: var(--accent);
+    }
+
+    /* Top Items Grid */
+    .top-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .top-item-card {
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .top-item-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .top-item-rank {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .top-item-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .top-item-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .top-item-stat {
+      text-align: center;
+    }
+
+    .top-item-stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .top-item-stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      min-width: 600px;
+    }
+
+    .report-table thead {
+      background: var(--bg);
+    }
+
+    .report-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .report-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-table tr:hover {
+      background: var(--bg);
+    }
+
+    .high-usage {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .medium-usage {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .normal-usage {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--success);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .status-low {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .status-critical {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .status-ok {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--success);
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Date Range Picker */
+    .date-range {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .date-input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .alert {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 3000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .alert-success {
+      background: #22c55e;
+      color: white;
+    }
+
+    .alert-error {
+      background: #ef4444;
+      color: white;
+    }
+
+    .clock-display {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .clock-display span {
+      color: var(--accent);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar-cell {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    @media(max-width: 768px) {
+      :root {
+        --sidebar-w: 0;
+      }
+
+      .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 999;
+      }
+
+      .sidebar.collapsed {
+        width: 0;
+      }
+
+      .sidebar:not(.collapsed) {
+        width: 260px;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .top-items-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .date-range {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .date-input {
+        width: 100%;
+      }
+    }
+
+    /* PDF Landscape Styles */
+    @media print {
+      .sidebar, .topbar, .header-actions, .date-range, .btn, .toggle-btn {
+        display: none !important;
+      }
+      
+      .main {
+        margin-left: 0 !important;
+      }
+      
+      .content-area {
+        padding: 20px !important;
+      }
+      
+      .report-section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      
+      body {
+        background: white;
+      }
+      
+      @page {
+        size: landscape;
+        margin: 1cm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">
+        <span class="brand-dot"></span>Kaunda
+      </div>
+      <div class="brand-sub">Hazida Cleaning</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html" class="nav-item" id="dashboardLink">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top: 14px;">Management</div>
+      <a href="cleanaccounts.html" class="nav-item" id="accountsLink">
+        <i class="fas fa-wallet"></i>
+        <span>Accounts</span>
+      </a>
+      <a href="users.html" class="nav-item" id="usersLink">
+        <i class="fas fa-users"></i>
+        <span>Users</span>
+      </a>
+      <a href="cleaninventory.html" class="nav-item" id="inventoryLink">
+        <i class="fas fa-boxes-stacked"></i>
+        <span>Inventory</span>
+      </a>
+      <a href="reports.html" class="nav-item active" id="reportsLink">
+        <i class="fas fa-file-chart-column"></i>
+        <span>Reports</span>
+      </a>
+
+      <div class="nav-divider" style="margin-top: 14px;"></div>
+      <button class="nav-item logout" id="logoutBtn" style="background: none; border: none; width: 100%; text-align: left;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-btn" id="toggleBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="page-title">
+          Reports <span>| Analytics & Insights</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="clock-display">
+          <i class="fas fa-clock" style="color: var(--accent); margin-right: 6px;"></i>
+          <span id="clockTime">00:00:00</span>
+        </div>
+        <div class="user-chip">
+          <div class="user-avatar">A</div>
+          <span id="userName">Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area" id="reportContent">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>Reports & Analytics</h1>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="downloadPdfBtn">
+            <i class="fas fa-file-pdf"></i> Download PDF Report
+          </button>
+          <button class="btn btn-secondary" id="refreshBtn">
+            <i class="fas fa-refresh"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Date Range Filter -->
+      <div class="date-range">
+        <label style="font-weight: 600;">From:</label>
+        <input type="date" class="date-input" id="startDate">
+        <label style="font-weight: 600;">To:</label>
+        <input type="date" class="date-input" id="endDate">
+        <button class="btn btn-primary" id="applyDateBtn">
+          <i class="fas fa-calendar-alt"></i> Apply Filter
+        </button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="totalAssignments">0</div>
+          <div class="stat-label">Total Assignments</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-boxes"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="totalItemsAssigned">0</div>
+          <div class="stat-label">Total Items Assigned</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="totalValue">0</div>
+          <div class="stat-label">Total Value</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="uniqueUsers">0</div>
+          <div class="stat-label">Users Served</div>
+        </div>
+      </div>
+
+      <!-- Items Needing Reorder Section -->
+      <div class="report-section">
+        <div class="section-title">
+          <i class="fas fa-exclamation-triangle"></i>
+          Items Needing Reorder (Low Stock Alert)
+        </div>
+        <div id="reorderLoading" class="loading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <p>Loading inventory data...</p>
+        </div>
+        <div class="table-container">
+          <table class="report-table" id="reorderTable">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Current Stock</th>
+                <th>Reorder Level</th>
+                <th>Needed Quantity</th>
+                <th>Status</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody id="reorderTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Most Assigned Items Section -->
+      <div class="report-section">
+        <div class="section-title">
+          <i class="fas fa-trophy"></i>
+          Most Assigned Items
+        </div>
+        <div id="topItemsLoading" class="loading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <p>Loading top items...</p>
+        </div>
+        <div class="top-items-grid" id="topItemsGrid">
+          <!-- Dynamic content -->
+        </div>
+      </div>
+
+      <!-- User Assignment Report Section -->
+      <div class="report-section">
+        <div class="section-title">
+          <i class="fas fa-user-chart"></i>
+          User Assignment Report
+        </div>
+        <div id="userTableLoading" class="loading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <p>Loading user data...</p>
+        </div>
+        <div class="table-container">
+          <table class="report-table" id="userReportTable">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Department</th>
+                <th>Times Assigned</th>
+                <th>Total Items</th>
+                <th>Total Value</th>
+                <th>Usage Level</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Assignments Section -->
+      <div class="report-section">
+        <div class="section-title">
+          <i class="fas fa-list-alt"></i>
+          Recent Assignments
+        </div>
+        <div class="table-container">
+          <table class="report-table" id="assignmentsTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Department</th>
+                <th>Items</th>
+                <th>Total Qty</th>
+                <th>Total Value</th>
+              </tr>
+            </thead>
+            <tbody id="assignmentsTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF Loading Modal -->
+  <div class="modal" id="pdfModal">
+    <div class="modal-content">
+      <div class="loading-spinner" style="margin-bottom: 16px;"></div>
+      <p>Generating PDF report...</p>
+    </div>
+  </div>
+
+  <!-- Session Warning Modal -->
+  <div class="modal" id="sessionWarning">
+    <div style="background: var(--white); border-radius: 12px; padding: 30px; max-width: 400px; width: 90%;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <i class="fas fa-hourglass-end" style="font-size: 2.5rem; color: var(--accent);"></i>
+      </div>
+      <div style="text-align: center; margin-bottom: 10px; font-size: 1.1rem; font-weight: 700; color: var(--text);">Session Expiring Soon</div>
+      <div style="text-align: center; margin-bottom: 20px; color: var(--text-muted);">Your session will expire due to inactivity.</div>
+      <div style="text-align: center; margin-bottom: 20px; font-size: 1.3rem; font-weight: 700; color: var(--accent);">
+        <span id="countdownTimer">60</span>s
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" style="flex: 1;" id="continueBtn">
+          <i class="fas fa-check"></i> Continue
+        </button>
+        <button class="btn btn-secondary" style="flex: 1;" id="logoutWarningBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const clockTime = document.getElementById('clockTime');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    const applyDateBtn = document.getElementById('applyDateBtn');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const pdfModal = document.getElementById('pdfModal');
+    
+    // Stats Elements
+    const totalAssignmentsEl = document.getElementById('totalAssignments');
+    const totalItemsAssignedEl = document.getElementById('totalItemsAssigned');
+    const totalValueEl = document.getElementById('totalValue');
+    const uniqueUsersEl = document.getElementById('uniqueUsers');
+    
+    // Table Bodies
+    const topItemsGrid = document.getElementById('topItemsGrid');
+    const userTableBody = document.getElementById('userTableBody');
+    const assignmentsTableBody = document.getElementById('assignmentsTableBody');
+    const reorderTableBody = document.getElementById('reorderTableBody');
+    
+    // Loading Elements
+    const topItemsLoading = document.getElementById('topItemsLoading');
+    const userTableLoading = document.getElementById('userTableLoading');
+    const reorderLoading = document.getElementById('reorderLoading');
+    
+    // Session Elements
+    const sessionWarning = document.getElementById('sessionWarning');
+    const continueBtn = document.getElementById('continueBtn');
+    const logoutWarningBtn = document.getElementById('logoutWarningBtn');
+    const countdownTimer = document.getElementById('countdownTimer');
+
+    // Data
+    let allAssignments = [];
+    let filteredAssignments = [];
+    let allInventory = [];
+    let currentStartDate = null;
+    let currentEndDate = null;
+
+    // Alert function
+    function showAlert(message, type = 'error') {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> <span>${message}</span>`;
+      document.body.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 4000);
+    }
+
+    // Session Management
+    const SESSION_TIMEOUT = 15 * 60 * 1000;
+    const WARNING_TIME = 60 * 1000;
+    let sessionTimer = null;
+    let warningTimer = null;
+    let countdownInterval = null;
+    let sessionActive = true;
+
+    // Sidebar Toggle
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', performLogout);
+    logoutWarningBtn.addEventListener('click', performLogout);
+
+    function performLogout() {
+      sessionActive = false;
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      window.location.href = 'logout.html';
+    }
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      clockTime.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function resetSessionTimer() {
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      sessionWarning.classList.remove('show');
+      sessionActive = true;
+
+      warningTimer = setTimeout(showSessionWarning, SESSION_TIMEOUT - WARNING_TIME);
+      sessionTimer = setTimeout(() => {
+        if (sessionActive) performLogout();
+      }, SESSION_TIMEOUT);
+    }
+
+    function showSessionWarning() {
+      sessionWarning.classList.add('show');
+      let countdown = 60;
+      countdownTimer.textContent = countdown;
+
+      countdownInterval = setInterval(() => {
+        countdown--;
+        countdownTimer.textContent = countdown;
+        if (countdown <= 0) clearInterval(countdownInterval);
+      }, 1000);
+    }
+
+    continueBtn.addEventListener('click', () => {
+      sessionWarning.classList.remove('show');
+      resetSessionTimer();
+    });
+
+    document.addEventListener('mousemove', resetSessionTimer);
+    document.addEventListener('keypress', resetSessionTimer);
+    document.addEventListener('click', resetSessionTimer);
+
+    resetSessionTimer();
+
+    // Set default date range (last 30 days)
+    function setDefaultDateRange() {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      
+      startDateInput.value = startDate.toISOString().split('T')[0];
+      endDateInput.value = endDate.toISOString().split('T')[0];
+      
+      currentStartDate = startDate;
+      currentEndDate = endDate;
+    }
+
+    // Load Inventory for Reorder Report
+    async function loadInventory() {
+      try {
+        const inventoryQuery = query(collection(db, 'inventory'), orderBy('name'));
+        const snapshot = await getDocs(inventoryQuery);
+        
+        allInventory = [];
+        snapshot.forEach(doc => {
+          allInventory.push({ id: doc.id, ...doc.data() });
+        });
+        
+        updateReorderReport();
+      } catch (error) {
+        console.error('Error loading inventory:', error);
+      }
+    }
+
+    // Update Reorder Report
+    function updateReorderReport() {
+      if (!allInventory.length) {
+        reorderTableBody.innerHTML = '</td><td colspan="6" style="text-align: center;">No inventory data available</td></tr>';
+        return;
+      }
+      
+      const itemsNeedingReorder = allInventory
+        .filter(item => item.quantity <= item.reorderLevel)
+        .sort((a, b) => (a.quantity / a.reorderLevel) - (b.quantity / b.reorderLevel));
+      
+      if (itemsNeedingReorder.length === 0) {
+        reorderTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">All items are well stocked! No reorder needed.</td></tr>';
+        return;
+      }
+      
+      reorderTableBody.innerHTML = itemsNeedingReorder.map(item => {
+        const neededQty = item.reorderLevel - item.quantity;
+        let statusClass = '';
+        let statusText = '';
+        let priority = '';
+        
+        if (item.quantity === 0) {
+          statusClass = 'status-critical';
+          statusText = 'Out of Stock';
+          priority = 'URGENT';
+        } else if (item.quantity <= item.reorderLevel / 2) {
+          statusClass = 'status-critical';
+          statusText = 'Critical';
+          priority = 'High';
+        } else {
+          statusClass = 'status-low';
+          statusText = 'Low Stock';
+          priority = 'Medium';
+        }
+        
+        return `
+          <tr>
+            <td><strong>${escapeHtml(item.name)}</strong></td>
+            <td>${item.quantity}</td>
+            <td>${item.reorderLevel}</td>
+            <td>${neededQty}</td>
+            <td><span class="${statusClass}">${statusText}</span></td>
+            <td><span class="${statusClass}">${priority}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Load Assignments
+    async function loadAssignments() {
+      try {
+        const assignmentsQuery = query(collection(db, 'assignments'), orderBy('assignedAt', 'desc'));
+        const snapshot = await getDocs(assignmentsQuery);
+        
+        allAssignments = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          let assignDate;
+          if (data.assignedAt) {
+            if (data.assignedAt.toDate) {
+              assignDate = data.assignedAt.toDate();
+            } else if (data.assignedAt instanceof Date) {
+              assignDate = data.assignedAt;
+            } else {
+              assignDate = new Date(data.assignedAt);
+            }
+          } else {
+            assignDate = new Date();
+          }
+          
+          allAssignments.push({ 
+            id: doc.id, 
+            ...data, 
+            assignDate: assignDate 
+          });
+        });
+        
+        console.log('Loaded assignments:', allAssignments.length);
+        applyDateFilter();
+        
+      } catch (error) {
+        console.error('Error loading assignments:', error);
+        showAlert('Error loading assignments: ' + error.message, 'error');
+      }
+    }
+
+    // Apply Date Filter
+    function applyDateFilter() {
+      if (!currentStartDate || !currentEndDate) {
+        filteredAssignments = [...allAssignments];
+      } else {
+        filteredAssignments = allAssignments.filter(assignment => {
+          return assignment.assignDate >= currentStartDate && assignment.assignDate <= currentEndDate;
+        });
+      }
+      
+      updateReports();
+    }
+
+    // Update All Reports
+    function updateReports() {
+      updateStats();
+      updateTopItems();
+      updateUserReport();
+      updateRecentAssignments();
+    }
+
+    // Update Statistics
+    function updateStats() {
+      const totalAssignments = filteredAssignments.length;
+      let totalItems = 0;
+      let totalValue = 0;
+      const uniqueUsersSet = new Set();
+      
+      filteredAssignments.forEach(assignment => {
+        if (assignment.userId) {
+          uniqueUsersSet.add(assignment.userId);
+        }
+        
+        if (assignment.items && Array.isArray(assignment.items)) {
+          assignment.items.forEach(item => {
+            totalItems += item.quantity || 0;
+            totalValue += (item.value || 0) * (item.quantity || 0);
+          });
+        }
+      });
+      
+      totalAssignmentsEl.textContent = totalAssignments;
+      totalItemsAssignedEl.textContent = totalItems;
+      totalValueEl.textContent = totalValue.toFixed(2);
+      uniqueUsersEl.textContent = uniqueUsersSet.size;
+    }
+
+    // Update Top Items (Most Assigned)
+    function updateTopItems() {
+      const itemMap = new Map();
+      
+      filteredAssignments.forEach(assignment => {
+        if (assignment.items && Array.isArray(assignment.items)) {
+          assignment.items.forEach(item => {
+            const itemName = item.itemName;
+            if (itemMap.has(itemName)) {
+              const existing = itemMap.get(itemName);
+              existing.quantity += item.quantity || 0;
+              existing.value += (item.value || 0) * (item.quantity || 0);
+              existing.count++;
+            } else {
+              itemMap.set(itemName, {
+                name: itemName,
+                quantity: item.quantity || 0,
+                value: (item.value || 0) * (item.quantity || 0),
+                count: 1
+              });
+            }
+          });
+        }
+      });
+      
+      const topItems = Array.from(itemMap.values())
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 5);
+      
+      if (topItems.length === 0) {
+        topItemsGrid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">No items assigned in this period</div>';
+        return;
+      }
+      
+      topItemsGrid.innerHTML = topItems.map((item, index) => `
+        <div class="top-item-card">
+          <div class="top-item-rank">#${index + 1}</div>
+          <div class="top-item-name">${escapeHtml(item.name)}</div>
+          <div class="top-item-stats">
+            <div class="top-item-stat">
+              <div class="top-item-stat-value">${item.quantity}</div>
+              <div class="top-item-stat-label">Total Qty</div>
+            </div>
+            <div class="top-item-stat">
+              <div class="top-item-stat-value">${item.count}</div>
+              <div class="top-item-stat-label">Times Assigned</div>
+            </div>
+            <div class="top-item-stat">
+              <div class="top-item-stat-value">${item.value.toFixed(2)}</div>
+              <div class="top-item-stat-label">Total Value</div>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${(item.quantity / topItems[0].quantity) * 100}%"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Update User Report
+    function updateUserReport() {
+      const userMap = new Map();
+      let maxItems = 0;
+      
+      filteredAssignments.forEach(assignment => {
+        const userId = assignment.userId;
+        const userName = assignment.userName || 'Unknown';
+        const userDept = assignment.userDepartment || 'N/A';
+        
+        let assignmentItems = 0;
+        let assignmentValue = 0;
+        
+        if (assignment.items && Array.isArray(assignment.items)) {
+          assignment.items.forEach(item => {
+            assignmentItems += item.quantity || 0;
+            assignmentValue += (item.value || 0) * (item.quantity || 0);
+          });
+        }
+        
+        if (userMap.has(userId)) {
+          const existing = userMap.get(userId);
+          existing.timesAssigned++;
+          existing.totalItems += assignmentItems;
+          existing.totalValue += assignmentValue;
+        } else {
+          userMap.set(userId, {
+            id: userId,
+            name: userName,
+            department: userDept,
+            timesAssigned: 1,
+            totalItems: assignmentItems,
+            totalValue: assignmentValue
+          });
+        }
+      });
+      
+      const users = Array.from(userMap.values())
+        .sort((a, b) => b.totalItems - a.totalItems);
+      
+      if (users.length === 0) {
+        userTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No user data available</td></tr>';
+        return;
+      }
+      
+      const maxTotalItems = users[0]?.totalItems || 1;
+      
+      userTableBody.innerHTML = users.map(user => {
+        const percentage = (user.totalItems / maxTotalItems) * 100;
+        let usageClass = '';
+        let usageText = '';
+        
+        if (percentage >= 70) {
+          usageClass = 'high-usage';
+          usageText = 'High Usage';
+        } else if (percentage >= 40) {
+          usageClass = 'medium-usage';
+          usageText = 'Medium Usage';
+        } else {
+          usageClass = 'normal-usage';
+          usageText = 'Normal Usage';
+        }
+        
+        const initials = (user.name || 'U')
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
+        
+        return `
+          <tr>
+            <td>
+              <div class="user-cell">
+                <div class="user-avatar-cell">${initials}</div>
+                <span style="font-weight: 600;">${escapeHtml(user.name)}</span>
+              </div>
+            </td>
+            <td>${escapeHtml(user.department)}</td>
+            <td>${user.timesAssigned}</td>
+            <td><strong>${user.totalItems}</strong></td>
+            <td>${user.totalValue.toFixed(2)}</td>
+            <td><span class="${usageClass}">${usageText}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Update Recent Assignments
+    function updateRecentAssignments() {
+      const recentAssignments = filteredAssignments.slice(0, 20);
+      
+      if (recentAssignments.length === 0) {
+        assignmentsTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No assignments in this period</td></tr>';
+        return;
+      }
+      
+      assignmentsTableBody.innerHTML = recentAssignments.map(assignment => {
+        const dateStr = assignment.assignDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        
+        let totalQty = 0;
+        let totalValue = 0;
+        let itemsList = [];
+        
+        if (assignment.items && Array.isArray(assignment.items)) {
+          assignment.items.forEach(item => {
+            totalQty += item.quantity || 0;
+            totalValue += (item.value || 0) * (item.quantity || 0);
+            itemsList.push(`${item.itemName} (${item.quantity})`);
+          });
+        }
+        
+        return `
+          <tr>
+            <td><small>${dateStr}</small></td>
+            <td><strong>${escapeHtml(assignment.userName || 'Unknown')}</strong></td>
+            <td>${escapeHtml(assignment.userDepartment || 'N/A')}</td>
+            <td><small>${itemsList.slice(0, 2).join(', ')}${itemsList.length > 2 ? '...' : ''}</small></td>
+            <td>${totalQty}</td>
+            <td>${totalValue.toFixed(2)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Generate PDF Report (Landscape)
+    async function generatePDF() {
+      pdfModal.classList.add('show');
+      
+      try {
+        const element = document.getElementById('reportContent');
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `inventory-report-${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, letterRendering: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+        
+        await html2pdf().set(opt).from(element).save();
+        showAlert('PDF report downloaded successfully!', 'success');
+      } catch (error) {
+        console.error('PDF generation error:', error);
+        showAlert('Error generating PDF: ' + error.message, 'error');
+      } finally {
+        pdfModal.classList.remove('show');
+      }
+    }
+
+    // Apply Date Filter Handler
+    function handleApplyDate() {
+      const startDate = new Date(startDateInput.value);
+      const endDate = new Date(endDateInput.value);
+      endDate.setHours(23, 59, 59, 999);
+      
+      if (startDateInput.value && endDateInput.value) {
+        if (startDate > endDate) {
+          showAlert('Start date cannot be after end date', 'error');
+          return;
+        }
+        currentStartDate = startDate;
+        currentEndDate = endDate;
+      } else {
+        currentStartDate = null;
+        currentEndDate = null;
+      }
+      
+      applyDateFilter();
+      showAlert('Report filtered successfully!', 'success');
+    }
+
+    // Escape HTML
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    // Event Listeners
+    refreshBtn.addEventListener('click', () => {
+      loadAssignments();
+      loadInventory();
+    });
+    
+    downloadPdfBtn.addEventListener('click', generatePDF);
+    applyDateBtn.addEventListener('click', handleApplyDate);
+    
+    // Initialize
+    setDefaultDateRange();
+    loadInventory();
+    loadAssignments();
+  </script>
+</body>
+</html>

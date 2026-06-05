@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hazida | Assignment History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --sidebar: #111827;
+      --sidebar-hover: #1f2937;
+      --accent: #f59e0b;
+      --accent-dim: rgba(245,158,11,0.13);
+      --text: #111827;
+      --text-muted: #6b7280;
+      --white: #ffffff;
+      --border: #e5e7eb;
+      --sidebar-w: 260px;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      height: 100vh; 
+      overflow: hidden; 
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+      transition: width 0.28s ease;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    
+    .sidebar.collapsed { 
+      width: 0; 
+    }
+
+    .sidebar-brand {
+      padding: 26px 22px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      flex-shrink: 0;
+    }
+    
+    .brand-name { 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      color: #fff; 
+      letter-spacing: 0.02em; 
+      white-space: nowrap; 
+    }
+    
+    .brand-dot { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--accent); 
+      border-radius: 50%; 
+      margin-right: 8px; 
+    }
+    
+    .brand-sub { 
+      font-size: 0.7rem; 
+      color: rgba(255, 255, 255, 0.35); 
+      margin-top: 3px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      white-space: nowrap; 
+    }
+
+    .sidebar-nav { 
+      flex: 1; 
+      padding: 14px 10px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      overflow-y: auto; 
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 10px 12px 4px;
+      white-space: nowrap;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    
+    .nav-item i { 
+      width: 17px; 
+      text-align: center; 
+      font-size: 0.9rem; 
+      flex-shrink: 0; 
+    }
+    
+    .nav-item:hover { 
+      background: var(--sidebar-hover); 
+      color: rgba(255, 255, 255, 0.88); 
+    }
+    
+    .nav-item.active { 
+      background: var(--accent-dim); 
+      color: var(--accent); 
+    }
+
+    .nav-divider { 
+      height: 1px; 
+      background: rgba(255, 255, 255, 0.07); 
+      margin: 8px 0; 
+    }
+    
+    .nav-item.logout { 
+      color: rgba(255, 100, 100, 0.55); 
+    }
+    
+    .nav-item.logout:hover { 
+      background: rgba(220, 53, 69, 0.13); 
+      color: #f87171; 
+    }
+
+    .main { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    
+    .topbar-left { 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+    }
+    
+    .toggle-btn {
+      width: 34px; 
+      height: 34px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      color: var(--text-muted); 
+      font-size: 0.88rem; 
+      transition: 0.15s;
+    }
+    
+    .toggle-btn:hover { 
+      background: var(--border); 
+      color: var(--text); 
+    }
+    
+    .page-title { 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      color: var(--text); 
+    }
+    
+    .page-title span { 
+      color: var(--text-muted); 
+      font-weight: 400; 
+    }
+
+    .user-chip {
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      background: var(--bg); 
+      border: 1px solid var(--border);
+      border-radius: 40px; 
+      padding: 5px 14px 5px 7px;
+      font-size: 0.83rem; 
+      font-weight: 500; 
+      color: var(--text);
+    }
+    
+    .user-avatar {
+      width: 24px; 
+      height: 24px; 
+      background: var(--accent);
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 0.68rem; 
+      font-weight: 700; 
+      color: #fff;
+    }
+
+    .content-area { 
+      flex: 1; 
+      overflow: auto; 
+      padding: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-dim);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Search and Filter */
+    .search-filter {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      background: var(--white);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+    }
+
+    .date-input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* Table */
+    .table-container {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead {
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    tbody tr:hover {
+      background: var(--bg);
+    }
+
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar-cell {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .user-email {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .items-list {
+      font-size: 0.8rem;
+      max-width: 250px;
+    }
+
+    .items-list-item {
+      padding: 2px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .items-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--border);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 700px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .clock-display {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .clock-display span {
+      color: var(--accent);
+    }
+
+    .alert {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 3000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .alert-success {
+      background: #22c55e;
+      color: white;
+    }
+
+    .alert-error {
+      background: #ef4444;
+      color: white;
+    }
+
+    .detail-btn {
+      background: none;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .detail-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    .items-table th,
+    .items-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .items-table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+
+    @media(max-width: 768px) {
+      :root {
+        --sidebar-w: 0;
+      }
+
+      .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 999;
+      }
+
+      .sidebar.collapsed {
+        width: 0;
+      }
+
+      .sidebar:not(.collapsed) {
+        width: 260px;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .search-filter {
+        flex-direction: column;
+      }
+
+      .search-input {
+        min-width: 100%;
+      }
+
+      table {
+        font-size: 0.8rem;
+      }
+
+      th, td {
+        padding: 10px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">
+        <span class="brand-dot"></span>Kaunda
+      </div>
+      <div class="brand-sub">Hazida Cleaning</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html" class="nav-item" id="dashboardLink">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top: 14px;">Management</div>
+      <a href="cleanaccounts.html" class="nav-item" id="accountsLink">
+        <i class="fas fa-wallet"></i>
+        <span>Accounts</span>
+      </a>
+      <a href="users.html" class="nav-item" id="usersLink">
+        <i class="fas fa-users"></i>
+        <span>Users</span>
+      </a>
+      <a href="cleaninventory.html" class="nav-item" id="inventoryLink">
+        <i class="fas fa-boxes-stacked"></i>
+        <span>Inventory</span>
+      </a>
+      <a href="cleanreport.html" class="nav-item" id="reportsLink">
+        <i class="fas fa-file-chart-column"></i>
+        <span>Reports</span>
+      </a>
+
+      <div class="nav-divider" style="margin-top: 14px;"></div>
+      <button class="nav-item logout" id="logoutBtn" style="background: none; border: none; width: 100%; text-align: left;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-btn" id="toggleBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="page-title">
+          Assignment History <span>| Track All Assignments</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="clock-display">
+          <i class="fas fa-clock" style="color: var(--accent); margin-right: 6px;"></i>
+          <span id="clockTime">00:00:00</span>
+        </div>
+        <div class="user-chip">
+          <div class="user-avatar">A</div>
+          <span id="userName">Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>Assignment History</h1>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="refreshBtn">
+            <i class="fas fa-refresh"></i> Refresh
+          </button>
+          <button class="btn btn-primary" id="downloadCsvBtn">
+            <i class="fas fa-download"></i> Download CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="totalAssignments">0</div>
+          <div class="stat-label">Total Assignments</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-boxes"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="totalItemsAssigned">0</div>
+          <div class="stat-label">Items Assigned</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="uniqueUsers">0</div>
+          <div class="stat-label">Users Served</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-icon">
+              <i class="fas fa-calendar-week"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="thisMonthAssignments">0</div>
+          <div class="stat-label">This Month</div>
+        </div>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="search-filter">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Search by user name, email, department or item..."
+        >
+        <select class="filter-select" id="userFilter">
+          <option value="">All Users</option>
+        </select>
+        <input 
+          type="date" 
+          class="date-input" 
+          id="startDateFilter" 
+          placeholder="Start Date"
+        >
+        <input 
+          type="date" 
+          class="date-input" 
+          id="endDateFilter" 
+          placeholder="End Date"
+        >
+        <button class="btn btn-secondary" id="clearFiltersBtn">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <div id="loadingState" class="loading">
+          <div class="loading-spinner"></div>
+          <p style="margin-top: 12px;">Loading assignment history...</p>
+        </div>
+        <table id="historyTable" style="display: none;">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Department</th>
+              <th>Items Assigned</th>
+              <th>Total Items</th>
+              <th>Total Quantity</th>
+              <th>Assigned By</th>
+              <th>Date & Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <p>No assignment records found. Go to Inventory page to assign items.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assignment Details Modal -->
+  <div class="modal" id="detailsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Assignment Details</h2>
+        <button class="modal-close" id="detailsModalClose">&times;</button>
+      </div>
+      <div id="detailsContent">
+        <!-- Dynamic content will be inserted here -->
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" id="detailsModalCancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session Warning Modal -->
+  <div class="modal" id="sessionWarning">
+    <div style="background: var(--white); border-radius: 12px; padding: 30px; max-width: 400px; width: 90%;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <i class="fas fa-hourglass-end" style="font-size: 2.5rem; color: var(--accent);"></i>
+      </div>
+      <div style="text-align: center; margin-bottom: 10px; font-size: 1.1rem; font-weight: 700; color: var(--text);">Session Expiring Soon</div>
+      <div style="text-align: center; margin-bottom: 20px; color: var(--text-muted);">Your session will expire due to inactivity.</div>
+      <div style="text-align: center; margin-bottom: 20px; font-size: 1.3rem; font-weight: 700; color: var(--accent);">
+        <span id="countdownTimer">60</span>s
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" style="flex: 1;" id="continueBtn">
+          <i class="fas fa-check"></i> Continue
+        </button>
+        <button class="btn btn-secondary" style="flex: 1;" id="logoutWarningBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs,
+      onSnapshot,
+      query,
+      orderBy,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const clockTime = document.getElementById('clockTime');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    
+    // Stats
+    const totalAssignments = document.getElementById('totalAssignments');
+    const totalItemsAssigned = document.getElementById('totalItemsAssigned');
+    const uniqueUsers = document.getElementById('uniqueUsers');
+    const thisMonthAssignments = document.getElementById('thisMonthAssignments');
+
+    // Table
+    const tableBody = document.getElementById('tableBody');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const historyTable = document.getElementById('historyTable');
+
+    // Search and Filter
+    const searchInput = document.getElementById('searchInput');
+    const userFilter = document.getElementById('userFilter');
+    const startDateFilter = document.getElementById('startDateFilter');
+    const endDateFilter = document.getElementById('endDateFilter');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+    // Details Modal
+    const detailsModal = document.getElementById('detailsModal');
+    const detailsModalClose = document.getElementById('detailsModalClose');
+    const detailsModalCancel = document.getElementById('detailsModalCancel');
+    const detailsContent = document.getElementById('detailsContent');
+
+    // Session
+    const sessionWarning = document.getElementById('sessionWarning');
+    const continueBtn = document.getElementById('continueBtn');
+    const logoutWarningBtn = document.getElementById('logoutWarningBtn');
+    const countdownTimer = document.getElementById('countdownTimer');
+
+    // Data
+    let allAssignments = [];
+    let allUsers = [];
+
+    // Alert function
+    function showAlert(message, type = 'error') {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> <span>${message}</span>`;
+      document.body.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 4000);
+    }
+
+    // Session Management
+    const SESSION_TIMEOUT = 15 * 60 * 1000;
+    const WARNING_TIME = 60 * 1000;
+    let sessionTimer = null;
+    let warningTimer = null;
+    let countdownInterval = null;
+    let sessionActive = true;
+
+    // Sidebar Toggle
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', performLogout);
+    logoutWarningBtn.addEventListener('click', performLogout);
+
+    function performLogout() {
+      sessionActive = false;
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      window.location.href = 'logout.html';
+    }
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      clockTime.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function resetSessionTimer() {
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      sessionWarning.classList.remove('show');
+      sessionActive = true;
+
+      warningTimer = setTimeout(showSessionWarning, SESSION_TIMEOUT - WARNING_TIME);
+      sessionTimer = setTimeout(() => {
+        if (sessionActive) performLogout();
+      }, SESSION_TIMEOUT);
+    }
+
+    function showSessionWarning() {
+      sessionWarning.classList.add('show');
+      let countdown = 60;
+      countdownTimer.textContent = countdown;
+
+      countdownInterval = setInterval(() => {
+        countdown--;
+        countdownTimer.textContent = countdown;
+        if (countdown <= 0) clearInterval(countdownInterval);
+      }, 1000);
+    }
+
+    continueBtn.addEventListener('click', () => {
+      sessionWarning.classList.remove('show');
+      resetSessionTimer();
+    });
+
+    document.addEventListener('mousemove', resetSessionTimer);
+    document.addEventListener('keypress', resetSessionTimer);
+    document.addEventListener('click', resetSessionTimer);
+
+    resetSessionTimer();
+
+    // Load Users for Filter
+    async function loadUsers() {
+      try {
+        const usersQuery = query(collection(db, 'cleaningUsers'));
+        const snapshot = await getDocs(usersQuery);
+        allUsers = [];
+        snapshot.forEach(doc => {
+          allUsers.push({ id: doc.id, ...doc.data() });
+        });
+        populateUserFilter();
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
+
+    function populateUserFilter() {
+      userFilter.innerHTML = '<option value="">All Users</option>';
+      allUsers.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        option.textContent = `${user.name || user.email || 'User'} - ${user.department || 'Staff'}`;
+        userFilter.appendChild(option);
+      });
+    }
+
+    // Load Assignments
+    async function loadAssignments() {
+      try {
+        loadingState.style.display = 'flex';
+        tableBody.innerHTML = '';
+
+        const assignmentsQuery = query(collection(db, 'assignments'), orderBy('assignedAt', 'desc'));
+        const snapshot = await getDocs(assignmentsQuery);
+
+        allAssignments = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          allAssignments.push({ id: doc.id, ...data });
+        });
+
+        console.log('Loaded assignments:', allAssignments.length);
+        
+        updateStats();
+        applyFilters();
+        loadingState.style.display = 'none';
+
+        if (allAssignments.length === 0) {
+          historyTable.style.display = 'none';
+          emptyState.style.display = 'block';
+        } else {
+          historyTable.style.display = 'table';
+          emptyState.style.display = 'none';
+        }
+
+      } catch (error) {
+        console.error('Error loading assignments:', error);
+        showAlert('Error loading assignments: ' + error.message, 'error');
+        loadingState.style.display = 'none';
+      }
+    }
+
+    function updateStats() {
+      // Total Assignments
+      totalAssignments.textContent = allAssignments.length;
+
+      // Total Items Assigned (sum of all quantities)
+      let totalQty = 0;
+      const uniqueUserIds = new Set();
+      let thisMonthCount = 0;
+      const now = new Date();
+      const thisMonth = now.getMonth();
+      const thisYear = now.getFullYear();
+
+      allAssignments.forEach(assignment => {
+        if (assignment.items && Array.isArray(assignment.items)) {
+          assignment.items.forEach(item => {
+            totalQty += item.quantity || 0;
+          });
+        }
+        
+        if (assignment.userId) {
+          uniqueUserIds.add(assignment.userId);
+        }
+
+        // Check if assignment is from this month
+        if (assignment.assignedAt) {
+          let assignDate;
+          if (assignment.assignedAt.toDate) {
+            assignDate = assignment.assignedAt.toDate();
+          } else if (assignment.assignedAt instanceof Date) {
+            assignDate = assignment.assignedAt;
+          } else {
+            assignDate = new Date(assignment.assignedAt);
+          }
+          
+          if (assignDate.getMonth() === thisMonth && assignDate.getFullYear() === thisYear) {
+            thisMonthCount++;
+          }
+        }
+      });
+
+      totalItemsAssigned.textContent = totalQty;
+      uniqueUsers.textContent = uniqueUserIds.size;
+      thisMonthAssignments.textContent = thisMonthCount;
+    }
+
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedUserId = userFilter.value;
+      const startDate = startDateFilter.value ? new Date(startDateFilter.value) : null;
+      const endDate = endDateFilter.value ? new Date(endDateFilter.value) : null;
+      
+      // Set end date to end of day
+      if (endDate) {
+        endDate.setHours(23, 59, 59, 999);
+      }
+
+      const filtered = allAssignments.filter(assignment => {
+        // Search filter
+        let matchesSearch = true;
+        if (searchTerm) {
+          const userName = (assignment.userName || '').toLowerCase();
+          const userEmail = (assignment.userEmail || '').toLowerCase();
+          const userDept = (assignment.userDepartment || '').toLowerCase();
+          
+          // Check items
+          let itemsMatch = false;
+          if (assignment.items && Array.isArray(assignment.items)) {
+            itemsMatch = assignment.items.some(item => 
+              (item.itemName || '').toLowerCase().includes(searchTerm)
+            );
+          }
+          
+          matchesSearch = userName.includes(searchTerm) || 
+                         userEmail.includes(searchTerm) || 
+                         userDept.includes(searchTerm) ||
+                         itemsMatch;
+        }
+
+        // User filter
+        const matchesUser = !selectedUserId || assignment.userId === selectedUserId;
+
+        // Date filter
+        let matchesDate = true;
+        if (assignment.assignedAt) {
+          let assignDate;
+          if (assignment.assignedAt.toDate) {
+            assignDate = assignment.assignedAt.toDate();
+          } else if (assignment.assignedAt instanceof Date) {
+            assignDate = assignment.assignedAt;
+          } else {
+            assignDate = new Date(assignment.assignedAt);
+          }
+          
+          if (startDate && assignDate < startDate) {
+            matchesDate = false;
+          }
+          if (endDate && assignDate > endDate) {
+            matchesDate = false;
+          }
+        } else if (startDate || endDate) {
+          matchesDate = false;
+        }
+
+        return matchesSearch && matchesUser && matchesDate;
+      });
+
+      renderTable(filtered);
+    }
+
+    function renderTable(assignments) {
+      tableBody.innerHTML = '';
+
+      if (assignments.length === 0) {
+        historyTable.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      historyTable.style.display = 'table';
+      emptyState.style.display = 'none';
+
+      assignments.forEach(assignment => {
+        let date;
+        if (assignment.assignedAt) {
+          if (assignment.assignedAt.toDate) {
+            date = assignment.assignedAt.toDate();
+          } else if (assignment.assignedAt instanceof Date) {
+            date = assignment.assignedAt;
+          } else {
+            date = new Date(assignment.assignedAt);
+          }
+        } else {
+          date = new Date();
+        }
+        
+        const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        
+        const userName = assignment.userName || 'Unknown User';
+        const userEmail = assignment.userEmail || '';
+        const userDept = assignment.userDepartment || 'N/A';
+        const initials = userName
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
+
+        // Calculate total quantity for this assignment
+        let totalQty = 0;
+        let itemsList = [];
+        if (assignment.items && Array.isArray(assignment.items)) {
+          assignment.items.forEach(item => {
+            totalQty += item.quantity || 0;
+            itemsList.push(`${item.itemName || 'Item'} (${item.quantity})`);
+          });
+        }
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar-cell">${escapeHtml(initials)}</div>
+              <div>
+                <div class="user-name">${escapeHtml(userName)}</div>
+                <div class="user-email">${escapeHtml(userEmail)}</div>
+              </div>
+            </div>
+          </td>
+          <td>${escapeHtml(userDept)}</td> <div class="items-list">
+              ${itemsList.slice(0, 3).map(item => `<div class="items-list-item">${escapeHtml(item)}</div>`).join('')}
+              ${itemsList.length > 3 ? `<div class="items-list-item">+${itemsList.length - 3} more...</div>` : ''}
+            </div>
+           </td>
+           <td>${assignment.items?.length || 0}</td>
+           <td><strong>${totalQty}</strong></td>
+           <td>${escapeHtml(assignment.assignedBy || 'Admin')}</td>
+           <td><small>${dateStr}<br>${timeStr}</small></td>
+           <td>
+            <button class="detail-btn" onclick="window.showDetails('${assignment.id}')">
+              <i class="fas fa-eye"></i> View
+            </button>
+           </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    // Show Assignment Details
+    window.showDetails = function(assignmentId) {
+      const assignment = allAssignments.find(a => a.id === assignmentId);
+      if (!assignment) {
+        showAlert('Assignment not found', 'error');
+        return;
+      }
+
+      let date;
+      if (assignment.assignedAt) {
+        if (assignment.assignedAt.toDate) {
+          date = assignment.assignedAt.toDate();
+        } else if (assignment.assignedAt instanceof Date) {
+          date = assignment.assignedAt;
+        } else {
+          date = new Date(assignment.assignedAt);
+        }
+      } else {
+        date = new Date();
+      }
+      
+      const dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      let itemsHtml = '';
+      let totalValue = 0;
+      let totalPrice = 0;
+
+      if (assignment.items && Array.isArray(assignment.items) && assignment.items.length > 0) {
+        itemsHtml = `
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th style="text-align: center;">Quantity</th>
+                <th style="text-align: right;">Value (K)</th>
+                <th style="text-align: right;">Price (K)</th>
+                <th style="text-align: right;">Total Value</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        assignment.items.forEach(item => {
+          const itemValue = (item.value || 0) * (item.quantity || 0);
+          const itemPrice = (item.price || 0) * (item.quantity || 0);
+          totalValue += itemValue;
+          totalPrice += itemPrice;
+          
+          itemsHtml += `
+            <tr>
+              <td><strong>${escapeHtml(item.itemName)}</strong></td>
+              <td style="text-align: center;">${item.quantity}</td>
+              <td style="text-align: right;">${(item.value || 0).toFixed(2)}</td>
+              <td style="text-align: right;">${(item.price || 0).toFixed(2)}</td>
+              <td style="text-align: right;"><strong>${itemValue.toFixed(2)}</strong></td>
+            </tr>
+          `;
+        });
+        
+        itemsHtml += `
+            </tbody>
+            <tfoot>
+              <tr style="background: var(--bg);">
+                <td colspan="4" style="text-align: right;"><strong>Totals:</strong></td>
+                <td style="text-align: right;"><strong>${totalValue.toFixed(2)} K</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        `;
+      } else {
+        itemsHtml = '<p style="text-align: center; padding: 20px; color: var(--text-muted);">No items in this assignment</p>';
+      }
+
+      detailsContent.innerHTML = `
+        <div style="margin-bottom: 20px;">
+          <div style="display: grid; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span style="font-weight: 600;">User:</span>
+              <span>${escapeHtml(assignment.userName || 'Unknown')}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span style="font-weight: 600;">Email:</span>
+              <span>${escapeHtml(assignment.userEmail || 'N/A')}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span style="font-weight: 600;">Department:</span>
+              <span>${escapeHtml(assignment.userDepartment || 'N/A')}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span style="font-weight: 600;">Assigned By:</span>
+              <span>${escapeHtml(assignment.assignedBy || 'Admin')}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span style="font-weight: 600;">Date & Time:</span>
+              <span>${dateStr} at ${timeStr}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+              <span style="font-weight: 600;">Total Items:</span>
+              <span>${assignment.items?.length || 0}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+              <span style="font-weight: 600;">Total Quantity:</span>
+              <span>${assignment.items?.reduce((sum, i) => sum + (i.quantity || 0), 0) || 0}</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">Items Assigned:</h3>
+          ${itemsHtml}
+        </div>
+      `;
+
+      detailsModal.classList.add('show');
+    };
+
+    detailsModalClose.addEventListener('click', () => {
+      detailsModal.classList.remove('show');
+    });
+
+    detailsModalCancel.addEventListener('click', () => {
+      detailsModal.classList.remove('show');
+    });
+
+    // Event Listeners for Filters
+    searchInput.addEventListener('input', () => applyFilters());
+    userFilter.addEventListener('change', () => applyFilters());
+    startDateFilter.addEventListener('change', () => applyFilters());
+    endDateFilter.addEventListener('change', () => applyFilters());
+
+    clearFiltersBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      userFilter.value = '';
+      startDateFilter.value = '';
+      endDateFilter.value = '';
+      applyFilters();
+    });
+
+    // Download CSV
+    downloadCsvBtn.addEventListener('click', () => {
+      if (allAssignments.length === 0) {
+        showAlert('No assignment data to download', 'error');
+        return;
+      }
+
+      let csv = 'User Name,User Email,Department,Items,Total Items,Total Quantity,Assigned By,Date,Time\n';
+      
+      allAssignments.forEach(assignment => {
+        let date;
+        if (assignment.assignedAt) {
+          if (assignment.assignedAt.toDate) {
+            date = assignment.assignedAt.toDate();
+          } else if (assignment.assignedAt instanceof Date) {
+            date = assignment.assignedAt;
+          } else {
+            date = new Date(assignment.assignedAt);
+          }
+        } else {
+          date = new Date();
+        }
+        
+        const dateStr = date.toLocaleDateString('en-US');
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        
+        const userName = assignment.userName || 'Unknown';
+        const userEmail = assignment.userEmail || '';
+        const userDept = assignment.userDepartment || 'N/A';
+        const assignedBy = assignment.assignedBy || 'Admin';
+        
+        let itemsList = '';
+        let totalQty = 0;
+        if (assignment.items && Array.isArray(assignment.items)) {
+          itemsList = assignment.items.map(item => `${item.itemName}(${item.quantity})`).join('; ');
+          totalQty = assignment.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        }
+        
+        csv += `"${userName}","${userEmail}","${userDept}","${itemsList}",${assignment.items?.length || 0},${totalQty},"${assignedBy}","${dateStr}","${timeStr}"\n`;
+      });
+
+      const element = document.createElement('a');
+      element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+      element.setAttribute('download', `assignment-history-${new Date().toISOString().split('T')[0]}.csv`);
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      
+      showAlert('CSV downloaded successfully!', 'success');
+    });
+
+    // Refresh
+    refreshBtn.addEventListener('click', () => {
+      loadAssignments();
+      loadUsers();
+    });
+
+    // Real-time listener for assignments
+    onSnapshot(collection(db, 'assignments'), () => {
+      loadAssignments();
+    });
+
+    // Initialize
+    loadAssignments();
+    loadUsers();
+  </script>
+</body>
+</html>

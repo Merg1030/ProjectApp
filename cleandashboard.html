@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kaunda | Hazida Cleaning Materials</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --sidebar: #111827;
+      --sidebar-hover: #1f2937;
+      --accent: #f59e0b;
+      --accent-dim: rgba(245,158,11,0.13);
+      --text: #111827;
+      --text-muted: #6b7280;
+      --white: #ffffff;
+      --border: #e5e7eb;
+      --sidebar-w: 260px;
+    }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      height: 100vh; 
+      overflow: hidden; 
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+      transition: width 0.28s ease;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    
+    .sidebar.collapsed { 
+      width: 0; 
+    }
+
+    .sidebar-brand {
+      padding: 26px 22px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      flex-shrink: 0;
+    }
+    
+    .brand-name { 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      color: #fff; 
+      letter-spacing: 0.02em; 
+      white-space: nowrap; 
+    }
+    
+    .brand-dot { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--accent); 
+      border-radius: 50%; 
+      margin-right: 8px; 
+    }
+    
+    .brand-sub { 
+      font-size: 0.7rem; 
+      color: rgba(255, 255, 255, 0.35); 
+      margin-top: 3px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      white-space: nowrap; 
+    }
+
+    .sidebar-nav { 
+      flex: 1; 
+      padding: 14px 10px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      overflow-y: auto; 
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 10px 12px 4px;
+      white-space: nowrap;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    
+    .nav-item i { 
+      width: 17px; 
+      text-align: center; 
+      font-size: 0.9rem; 
+      flex-shrink: 0; 
+    }
+    
+    .nav-item:hover { 
+      background: var(--sidebar-hover); 
+      color: rgba(255, 255, 255, 0.88); 
+    }
+    
+    .nav-item.active { 
+      background: var(--accent-dim); 
+      color: var(--accent); 
+    }
+
+    .nav-divider { 
+      height: 1px; 
+      background: rgba(255, 255, 255, 0.07); 
+      margin: 8px 0; 
+    }
+    
+    .nav-item.logout { 
+      color: rgba(255, 100, 100, 0.55); 
+    }
+    
+    .nav-item.logout:hover { 
+      background: rgba(220, 53, 69, 0.13); 
+      color: #f87171; 
+    }
+
+    .main { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    
+    .topbar-left { 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+    }
+    
+    .toggle-btn {
+      width: 34px; 
+      height: 34px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      color: var(--text-muted); 
+      font-size: 0.88rem; 
+      transition: 0.15s;
+    }
+    
+    .toggle-btn:hover { 
+      background: var(--border); 
+      color: var(--text); 
+    }
+    
+    .page-title { 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      color: var(--text); 
+    }
+    
+    .page-title span { 
+      color: var(--text-muted); 
+      font-weight: 400; 
+    }
+
+    .user-chip {
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      background: var(--bg); 
+      border: 1px solid var(--border);
+      border-radius: 40px; 
+      padding: 5px 14px 5px 7px;
+      font-size: 0.83rem; 
+      font-weight: 500; 
+      color: var(--text);
+    }
+    
+    .user-avatar {
+      width: 24px; 
+      height: 24px; 
+      background: var(--accent);
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 0.68rem; 
+      font-weight: 700; 
+      color: #fff;
+    }
+
+    .content-area { 
+      flex: 1; 
+      overflow: auto; 
+      padding: 24px;
+    }
+
+    /* Dashboard Content */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: var(--accent);
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-dim);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1.2rem;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .section-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .section-icon {
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    .section-content {
+      padding: 20px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    .status-pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--accent);
+    }
+
+    .status-inactive {
+      background: rgba(107, 114, 128, 0.1);
+      color: var(--text-muted);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Session Warning Modal */
+    .session-warning {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .session-warning.show {
+      display: flex;
+    }
+
+    .warning-box {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .warning-icon {
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .warning-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .warning-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .countdown-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .warning-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #d97706;
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .clock-display {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .clock-display span {
+      color: var(--accent);
+    }
+
+    @media(max-width: 768px) {
+      :root {
+        --sidebar-w: 0;
+      }
+
+      .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 999;
+      }
+
+      .sidebar.collapsed {
+        width: 0;
+      }
+
+      .sidebar:not(.collapsed) {
+        width: 260px;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">
+        <span class="brand-dot"></span>Kaunda
+      </div>
+      <div class="brand-sub">Hazida Cleaning</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html" class="nav-item active" id="dashboardLink">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top: 14px;">Management</div>
+      <a href="cleanaccounts.html" class="nav-item" id="accountsLink">
+        <i class="fas fa-wallet"></i>
+        <span>Accounts</span>
+      </a>
+      <a href="users.html" class="nav-item" id="usersLink">
+        <i class="fas fa-users"></i>
+        <span>Users</span>
+      </a>
+      <a href="cleaninventory.html" class="nav-item" id="inventoryLink">
+        <i class="fas fa-boxes-stacked"></i>
+        <span>Inventory</span>
+      </a>
+      <a href="cleanreport.html" class="nav-item" id="reportsLink">
+        <i class="fas fa-file-chart-column"></i>
+        <span>Reports</span>
+      </a>
+
+      <div class="nav-divider" style="margin-top: 14px;"></div>
+      <button class="nav-item logout" id="logoutBtn" style="background: none; border: none; width: 100%; text-align: left;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-btn" id="toggleBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="page-title">
+          Dashboard <span>| Hazida Cleaning Materials</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="clock-display">
+          <i class="fas fa-clock" style="color: var(--accent); margin-right: 6px;"></i>
+          <span id="clockTime">00:00:00</span>
+        </div>
+        <div class="user-chip">
+          <div class="user-avatar">A</div>
+          <span id="userName">Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Dashboard Stats -->
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <i class="fas fa-wallet"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="accountsTotal">0</div>
+          <div class="stat-label">Total Accounts</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="usersTotal">0</div>
+          <div class="stat-label">Active Users</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <i class="fas fa-boxes-stacked"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="inventoryTotal">0</div>
+          <div class="stat-label">Inventory Items</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <i class="fas fa-file-chart-column"></i>
+            </div>
+          </div>
+          <div class="stat-value" id="reportsTotal">0</div>
+          <div class="stat-label">Reports</div>
+        </div>
+      </div>
+
+      <!-- Recent Accounts -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-wallet"></i></div>
+          <h2>Recent Accounts</h2>
+        </div>
+        <div class="section-content">
+          <div id="recentAccounts" class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Users -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-users"></i></div>
+          <h2>Recent Users</h2>
+        </div>
+        <div class="section-content">
+          <div id="recentUsers" class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Low Stock Items -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <h2>Low Stock Items</h2>
+        </div>
+        <div class="section-content">
+          <div id="lowStockItems" class="loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session Warning Modal -->
+  <div class="session-warning" id="sessionWarning">
+    <div class="warning-box">
+      <div class="warning-icon">
+        <i class="fas fa-hourglass-end"></i>
+      </div>
+      <div class="warning-title">Session Expiring Soon</div>
+      <div class="warning-text">Your session will expire due to inactivity. Click "Continue" to stay logged in.</div>
+      <div class="countdown-text">
+        <span id="countdownTimer">60</span>s
+      </div>
+      <div class="warning-buttons">
+        <button class="btn btn-primary" id="continueBtn">
+          <i class="fas fa-check"></i> Continue
+        </button>
+        <button class="btn btn-secondary" id="logoutWarningBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs,
+      onSnapshot,
+      query,
+      orderBy,
+      limit,
+      where
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const clockTime = document.getElementById('clockTime');
+    const sessionWarning = document.getElementById('sessionWarning');
+    const continueBtn = document.getElementById('continueBtn');
+    const logoutWarningBtn = document.getElementById('logoutWarningBtn');
+    const countdownTimer = document.getElementById('countdownTimer');
+
+    // Stats elements
+    const accountsTotal = document.getElementById('accountsTotal');
+    const usersTotal = document.getElementById('usersTotal');
+    const inventoryTotal = document.getElementById('inventoryTotal');
+    const reportsTotal = document.getElementById('reportsTotal');
+
+    // Content sections
+    const recentAccounts = document.getElementById('recentAccounts');
+    const recentUsers = document.getElementById('recentUsers');
+    const lowStockItems = document.getElementById('lowStockItems');
+
+    // Session Management
+    const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+    const WARNING_TIME = 60 * 1000; // 1 minute warning
+    let sessionTimer = null;
+    let warningTimer = null;
+    let countdownInterval = null;
+    let sessionActive = true;
+
+    // Sidebar Toggle
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', performLogout);
+    logoutWarningBtn.addEventListener('click', performLogout);
+
+    function performLogout() {
+      sessionActive = false;
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      sessionStorage.clear();
+      localStorage.removeItem('userSession');
+      window.location.href = 'logout.html';
+    }
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      clockTime.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Session Management
+    function resetSessionTimer() {
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      sessionWarning.classList.remove('show');
+      sessionActive = true;
+
+      warningTimer = setTimeout(() => {
+        showSessionWarning();
+      }, SESSION_TIMEOUT - WARNING_TIME);
+
+      sessionTimer = setTimeout(() => {
+        if (sessionActive) {
+          performLogout();
+        }
+      }, SESSION_TIMEOUT);
+    }
+
+    function showSessionWarning() {
+      sessionWarning.classList.add('show');
+      let countdown = 60;
+      countdownTimer.textContent = countdown;
+
+      countdownInterval = setInterval(() => {
+        countdown--;
+        countdownTimer.textContent = countdown;
+
+        if (countdown <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+    }
+
+    continueBtn.addEventListener('click', () => {
+      sessionWarning.classList.remove('show');
+      resetSessionTimer();
+    });
+
+    // Track user activity
+    document.addEventListener('mousemove', resetSessionTimer);
+    document.addEventListener('keypress', resetSessionTimer);
+    document.addEventListener('click', resetSessionTimer);
+
+    resetSessionTimer();
+
+    // Fetch Dashboard Data
+    async function fetchDashboardData() {
+      try {
+        // Get all collections count
+        const accountsSnapshot = await getDocs(collection(db, "accounts"));
+        accountsTotal.textContent = accountsSnapshot.size;
+
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        usersTotal.textContent = usersSnapshot.size;
+
+        const inventorySnapshot = await getDocs(collection(db, "inventory"));
+        inventoryTotal.textContent = inventorySnapshot.size;
+
+        const reportsSnapshot = await getDocs(collection(db, "reports"));
+        reportsTotal.textContent = reportsSnapshot.size;
+
+        // Fetch recent accounts
+        const recentAccountsQuery = query(collection(db, "accounts"), orderBy("createdAt", "desc"), limit(5));
+        const recentAccountsDocs = await getDocs(recentAccountsQuery);
+        
+        let accountsHTML = '';
+        if (recentAccountsDocs.empty) {
+          accountsHTML = '<p style="color: var(--text-muted);">No accounts found</p>';
+        } else {
+          recentAccountsDocs.forEach((doc) => {
+            const data = doc.data();
+            accountsHTML += `
+              <div style="padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 600; color: var(--text);">${data.name || 'N/A'}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">${data.email || 'N/A'}</div>
+                </div>
+                <span class="status-badge status-active">Active</span>
+              </div>
+            `;
+          });
+        }
+        recentAccounts.innerHTML = accountsHTML;
+
+        // Fetch recent users
+        const recentUsersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"), limit(5));
+        const recentUsersDocs = await getDocs(recentUsersQuery);
+        
+        let usersHTML = '';
+        if (recentUsersDocs.empty) {
+          usersHTML = '<p style="color: var(--text-muted);">No users found</p>';
+        } else {
+          recentUsersDocs.forEach((doc) => {
+            const data = doc.data();
+            accountsHTML += `
+              <div style="padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 600; color: var(--text);">${data.name || 'N/A'}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">${data.role || 'User'}</div>
+                </div>
+                <span class="status-badge status-active">Active</span>
+              </div>
+            `;
+          });
+        }
+        recentUsers.innerHTML = usersHTML;
+
+        // Fetch low stock items
+        const lowStockQuery = query(collection(db, "inventory"), where("quantity", "<", 10), limit(5));
+        const lowStockDocs = await getDocs(lowStockQuery);
+        
+        let stockHTML = '';
+        if (lowStockDocs.empty) {
+          stockHTML = '<p style="color: var(--text-muted);">All items have sufficient stock</p>';
+        } else {
+          lowStockDocs.forEach((doc) => {
+            const data = doc.data();
+            stockHTML += `
+              <div style="padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-weight: 600; color: var(--text);">${data.name || 'N/A'}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Stock: ${data.quantity || 0} units</div>
+                </div>
+                <span class="status-badge status-pending">Low Stock</span>
+              </div>
+            `;
+          });
+        }
+        lowStockItems.innerHTML = stockHTML;
+
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    }
+
+    // Real-time listeners
+    onSnapshot(collection(db, "accounts"), (snapshot) => {
+      accountsTotal.textContent = snapshot.size;
+    });
+
+    onSnapshot(collection(db, "users"), (snapshot) => {
+      usersTotal.textContent = snapshot.size;
+    });
+
+    onSnapshot(collection(db, "inventory"), (snapshot) => {
+      inventoryTotal.textContent = snapshot.size;
+    });
+
+    onSnapshot(collection(db, "reports"), (snapshot) => {
+      reportsTotal.textContent = snapshot.size;
+    });
+
+    // Initialize
+    fetchDashboardData();
+    setInterval(fetchDashboardData, 30000);
+
+    // Update active nav link
+    const navLinks = document.querySelectorAll('.nav-item');
+    navLinks.forEach(link => {
+      if (link.href === window.location.href) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  </script>
+</body>
+</html>

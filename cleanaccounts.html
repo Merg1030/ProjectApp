@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hazida | Accounts Management</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --sidebar: #111827;
+      --sidebar-hover: #1f2937;
+      --accent: #f59e0b;
+      --accent-dim: rgba(245,158,11,0.13);
+      --text: #111827;
+      --text-muted: #6b7280;
+      --white: #ffffff;
+      --border: #e5e7eb;
+      --sidebar-w: 260px;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #3b82f6;
+    }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      height: 100vh; 
+      overflow: hidden; 
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      flex-shrink: 0;
+      transition: width 0.28s ease;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    
+    .sidebar.collapsed { 
+      width: 0; 
+    }
+
+    .sidebar-brand {
+      padding: 26px 22px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      flex-shrink: 0;
+    }
+    
+    .brand-name { 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      color: #fff; 
+      letter-spacing: 0.02em; 
+      white-space: nowrap; 
+    }
+    
+    .brand-dot { 
+      display: inline-block; 
+      width: 8px; 
+      height: 8px; 
+      background: var(--accent); 
+      border-radius: 50%; 
+      margin-right: 8px; 
+    }
+    
+    .brand-sub { 
+      font-size: 0.7rem; 
+      color: rgba(255, 255, 255, 0.35); 
+      margin-top: 3px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      white-space: nowrap; 
+    }
+
+    .sidebar-nav { 
+      flex: 1; 
+      padding: 14px 10px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      overflow-y: auto; 
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 10px 12px 4px;
+      white-space: nowrap;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    
+    .nav-item i { 
+      width: 17px; 
+      text-align: center; 
+      font-size: 0.9rem; 
+      flex-shrink: 0; 
+    }
+    
+    .nav-item:hover { 
+      background: var(--sidebar-hover); 
+      color: rgba(255, 255, 255, 0.88); 
+    }
+    
+    .nav-item.active { 
+      background: var(--accent-dim); 
+      color: var(--accent); 
+    }
+
+    .nav-divider { 
+      height: 1px; 
+      background: rgba(255, 255, 255, 0.07); 
+      margin: 8px 0; 
+    }
+    
+    .nav-item.logout { 
+      color: rgba(255, 100, 100, 0.55); 
+    }
+    
+    .nav-item.logout:hover { 
+      background: rgba(220, 53, 69, 0.13); 
+      color: #f87171; 
+    }
+
+    .main { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    
+    .topbar-left { 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+    }
+    
+    .toggle-btn {
+      width: 34px; 
+      height: 34px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      color: var(--text-muted); 
+      font-size: 0.88rem; 
+      transition: 0.15s;
+    }
+    
+    .toggle-btn:hover { 
+      background: var(--border); 
+      color: var(--text); 
+    }
+    
+    .page-title { 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      color: var(--text); 
+    }
+    
+    .page-title span { 
+      color: var(--text-muted); 
+      font-weight: 400; 
+    }
+
+    .user-chip {
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+      background: var(--bg); 
+      border: 1px solid var(--border);
+      border-radius: 40px; 
+      padding: 5px 14px 5px 7px;
+      font-size: 0.83rem; 
+      font-weight: 500; 
+      color: var(--text);
+    }
+    
+    .user-avatar {
+      width: 24px; 
+      height: 24px; 
+      background: var(--accent);
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 0.68rem; 
+      font-weight: 700; 
+      color: #fff;
+    }
+
+    .content-area { 
+      flex: 1; 
+      overflow: auto; 
+      padding: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    /* Total Spend Card */
+    .total-spend-card {
+      background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .total-spend-info h3 {
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .total-spend-amount {
+      font-size: 2.2rem;
+      font-weight: 800;
+    }
+
+    .total-spend-icon {
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+
+    /* Search and Filter */
+    .search-filter {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      background: var(--white);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      min-width: 140px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Table */
+    .table-container {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead {
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    tbody tr:hover {
+      background: var(--bg);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-paid {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    .status-unpaid {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .status-partial {
+      background: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+    }
+
+    .payment-ref {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: block;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+
+    .action-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: var(--border);
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .clock-display {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .clock-display span {
+      color: var(--accent);
+    }
+
+    .alert {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 3000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .alert-success {
+      background: #22c55e;
+      color: white;
+    }
+
+    .alert-error {
+      background: #ef4444;
+      color: white;
+    }
+
+    .payment-ref-badge {
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-family: monospace;
+    }
+
+    @media(max-width: 768px) {
+      :root {
+        --sidebar-w: 0;
+      }
+
+      .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 999;
+      }
+
+      .sidebar.collapsed {
+        width: 0;
+      }
+
+      .sidebar:not(.collapsed) {
+        width: 260px;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .search-filter {
+        flex-direction: column;
+      }
+
+      .search-input {
+        min-width: 100%;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .total-spend-card {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">
+        <span class="brand-dot"></span>Kaunda
+      </div>
+      <div class="brand-sub">Hazida Cleaning</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="index.html" class="nav-item" id="dashboardLink">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top: 14px;">Management</div>
+      <a href="cleanaccounts.html" class="nav-item active" id="accountsLink">
+        <i class="fas fa-wallet"></i>
+        <span>Accounts</span>
+      </a>
+      <a href="users.html" class="nav-item" id="usersLink">
+        <i class="fas fa-users"></i>
+        <span>Users</span>
+      </a>
+      <a href="cleaninventory.html" class="nav-item" id="inventoryLink">
+        <i class="fas fa-boxes-stacked"></i>
+        <span>Inventory</span>
+      </a>
+      <a href="cleanreport.html" class="nav-item" id="reportsLink">
+        <i class="fas fa-file-chart-column"></i>
+        <span>Reports</span>
+      </a>
+
+      <div class="nav-divider" style="margin-top: 14px;"></div>
+      <button class="nav-item logout" id="logoutBtn" style="background: none; border: none; width: 100%; text-align: left;">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="toggle-btn" id="toggleBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="page-title">
+          Accounts <span>| Financial Transactions</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="clock-display">
+          <i class="fas fa-clock" style="color: var(--accent); margin-right: 6px;"></i>
+          <span id="clockTime">00:00:00</span>
+        </div>
+        <div class="user-chip">
+          <div class="user-avatar">A</div>
+          <span id="userName">Admin</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>Accounts Management</h1>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="addTransactionBtn">
+            <i class="fas fa-plus"></i> Add Transaction
+          </button>
+          <button class="btn btn-secondary" id="refreshBtn">
+            <i class="fas fa-refresh"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Total Spend Card -->
+      <div class="total-spend-card">
+        <div class="total-spend-info">
+          <h3>TOTAL SPEND</h3>
+          <div class="total-spend-amount" id="totalSpend">0.00</div>
+        </div>
+        <div class="total-spend-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="search-filter">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Search by description, supplier, or reference..."
+        >
+        <select class="filter-select" id="monthFilter">
+          <option value="">All Months</option>
+        </select>
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Status</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="partial">Partial</option>
+        </select>
+        <button class="btn btn-secondary" id="clearFiltersBtn">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <div id="loadingState" class="loading">
+          <div class="loading-spinner"></div>
+          <p style="margin-top: 12px;">Loading transactions...</p>
+        </div>
+        <table id="transactionsTable" style="display: none;">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Supplier</th>
+              <th>Reference</th>
+              <th>Amount</th>
+              <th>Paid</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <p>No transactions found</p>
+          <button class="btn btn-primary" id="emptyAddBtn" style="margin-top: 16px;">
+            <i class="fas fa-plus"></i> Add First Transaction
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Transaction Modal -->
+  <div class="modal" id="transactionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Add Transaction</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <form id="transactionForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date *</label>
+            <input type="date" class="form-input" id="transactionDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount *</label>
+            <input type="number" class="form-input" id="transactionAmount" required min="0" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <input type="text" class="form-input" id="transactionDescription" required placeholder="Enter description...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Supplier *</label>
+          <input type="text" class="form-input" id="transactionSupplier" required placeholder="Enter supplier name...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reference Number</label>
+          <input type="text" class="form-input" id="transactionReference" placeholder="Invoice/Receipt number...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status *</label>
+          <select class="form-input" id="transactionStatus" required>
+            <option value="">Select status...</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="partial">Partial</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="paidAmountGroup" style="display: none;">
+          <label class="form-label">Paid Amount</label>
+          <input type="number" class="form-input" id="paidAmountInput" min="0" step="0.01" placeholder="Enter amount paid...">
+          <small style="color: var(--text-muted); font-size: 0.7rem;">Remaining: <span id="remainingAmount">0.00</span></small>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal" id="paymentModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Make Payment</h2>
+        <button class="modal-close" id="paymentModalClose">&times;</button>
+      </div>
+      <div id="paymentInfo"></div>
+      <form id="paymentForm">
+        <div class="form-group">
+          <label class="form-label">Payment Amount *</label>
+          <input type="number" class="form-input" id="paymentAmount" required min="0.01" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Reference *</label>
+          <input type="text" class="form-input" id="paymentReference" required placeholder="Payment reference number...">
+        </div>
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-secondary" id="paymentModalCancel">Cancel</button>
+          <button type="submit" class="btn btn-success">Process Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Payment Details Modal -->
+  <div class="modal" id="paymentDetailsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Payment Details</h2>
+        <button class="modal-close" id="paymentDetailsModalClose">&times;</button>
+      </div>
+      <div id="paymentDetailsContent"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" id="paymentDetailsModalCancel">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session Warning Modal -->
+  <div class="modal" id="sessionWarning">
+    <div style="background: var(--white); border-radius: 12px; padding: 30px; max-width: 400px; width: 90%;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <i class="fas fa-hourglass-end" style="font-size: 2.5rem; color: var(--accent);"></i>
+      </div>
+      <div style="text-align: center; margin-bottom: 10px; font-size: 1.1rem; font-weight: 700; color: var(--text);">Session Expiring Soon</div>
+      <div style="text-align: center; margin-bottom: 20px; color: var(--text-muted);">Your session will expire due to inactivity.</div>
+      <div style="text-align: center; margin-bottom: 20px; font-size: 1.3rem; font-weight: 700; color: var(--accent);">
+        <span id="countdownTimer">60</span>s
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" style="flex: 1;" id="continueBtn">
+          <i class="fas fa-check"></i> Continue
+        </button>
+        <button class="btn btn-secondary" style="flex: 1;" id="logoutWarningBtn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs,
+      onSnapshot,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
+      query,
+      orderBy,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+      authDomain: "project-task-588c4.firebaseapp.com",
+      projectId: "project-task-588c4",
+      storageBucket: "project-task-588c4.appspot.com",
+      messagingSenderId: "411882772509",
+      appId: "1:411882772509:web:08d613186c101a99f38ef4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const clockTime = document.getElementById('clockTime');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const addTransactionBtn = document.getElementById('addTransactionBtn');
+    const emptyAddBtn = document.getElementById('emptyAddBtn');
+    
+    // Stats
+    const totalSpendEl = document.getElementById('totalSpend');
+
+    // Table
+    const tableBody = document.getElementById('tableBody');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const transactionsTable = document.getElementById('transactionsTable');
+
+    // Search and Filter
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const monthFilter = document.getElementById('monthFilter');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+    // Transaction Modal
+    const transactionModal = document.getElementById('transactionModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const transactionForm = document.getElementById('transactionForm');
+    const modalClose = document.getElementById('modalClose');
+    const modalCancel = document.getElementById('modalCancel');
+    const transactionDate = document.getElementById('transactionDate');
+    const transactionAmount = document.getElementById('transactionAmount');
+    const transactionDescription = document.getElementById('transactionDescription');
+    const transactionSupplier = document.getElementById('transactionSupplier');
+    const transactionReference = document.getElementById('transactionReference');
+    const transactionStatus = document.getElementById('transactionStatus');
+    const paidAmountGroup = document.getElementById('paidAmountGroup');
+    const paidAmountInput = document.getElementById('paidAmountInput');
+    const remainingAmount = document.getElementById('remainingAmount');
+
+    // Payment Modal
+    const paymentModal = document.getElementById('paymentModal');
+    const paymentModalClose = document.getElementById('paymentModalClose');
+    const paymentModalCancel = document.getElementById('paymentModalCancel');
+    const paymentForm = document.getElementById('paymentForm');
+    const paymentAmount = document.getElementById('paymentAmount');
+    const paymentReference = document.getElementById('paymentReference');
+    const paymentInfo = document.getElementById('paymentInfo');
+
+    // Payment Details Modal
+    const paymentDetailsModal = document.getElementById('paymentDetailsModal');
+    const paymentDetailsModalClose = document.getElementById('paymentDetailsModalClose');
+    const paymentDetailsModalCancel = document.getElementById('paymentDetailsModalCancel');
+    const paymentDetailsContent = document.getElementById('paymentDetailsContent');
+
+    // Session
+    const sessionWarning = document.getElementById('sessionWarning');
+    const continueBtn = document.getElementById('continueBtn');
+    const logoutWarningBtn = document.getElementById('logoutWarningBtn');
+    const countdownTimer = document.getElementById('countdownTimer');
+
+    // Data
+    let allTransactions = [];
+    let allPayments = [];
+    let editingId = null;
+    let paymentTransactionId = null;
+
+    // Alert function
+    function showAlert(message, type = 'error') {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> <span>${message}</span>`;
+      document.body.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 4000);
+    }
+
+    // Session Management
+    const SESSION_TIMEOUT = 15 * 60 * 1000;
+    const WARNING_TIME = 60 * 1000;
+    let sessionTimer = null;
+    let warningTimer = null;
+    let countdownInterval = null;
+    let sessionActive = true;
+
+    // Sidebar Toggle
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', performLogout);
+    logoutWarningBtn.addEventListener('click', performLogout);
+
+    function performLogout() {
+      sessionActive = false;
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      window.location.href = 'logout.html';
+    }
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      clockTime.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function resetSessionTimer() {
+      clearTimeout(sessionTimer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      sessionWarning.classList.remove('show');
+      sessionActive = true;
+
+      warningTimer = setTimeout(showSessionWarning, SESSION_TIMEOUT - WARNING_TIME);
+      sessionTimer = setTimeout(() => {
+        if (sessionActive) performLogout();
+      }, SESSION_TIMEOUT);
+    }
+
+    function showSessionWarning() {
+      sessionWarning.classList.add('show');
+      let countdown = 60;
+      countdownTimer.textContent = countdown;
+
+      countdownInterval = setInterval(() => {
+        countdown--;
+        countdownTimer.textContent = countdown;
+        if (countdown <= 0) clearInterval(countdownInterval);
+      }, 1000);
+    }
+
+    continueBtn.addEventListener('click', () => {
+      sessionWarning.classList.remove('show');
+      resetSessionTimer();
+    });
+
+    document.addEventListener('mousemove', resetSessionTimer);
+    document.addEventListener('keypress', resetSessionTimer);
+    document.addEventListener('click', resetSessionTimer);
+
+    resetSessionTimer();
+
+    // Populate month filter
+    function populateMonthFilter() {
+      const months = new Set();
+      allTransactions.forEach(transaction => {
+        if (transaction.date) {
+          const [year, month] = transaction.date.split('-');
+          months.add(`${year}-${month}`);
+        }
+      });
+      
+      const sortedMonths = Array.from(months).sort().reverse();
+      
+      monthFilter.innerHTML = '<option value="">All Months</option>';
+      sortedMonths.forEach(month => {
+        const [year, monthNum] = month.split('-');
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = monthNames[parseInt(monthNum) - 1];
+        const option = document.createElement('option');
+        option.value = month;
+        option.textContent = `${monthName} ${year}`;
+        monthFilter.appendChild(option);
+      });
+    }
+
+    // Handle status change for partial payments
+    transactionStatus.addEventListener('change', (e) => {
+      if (e.target.value === 'partial') {
+        paidAmountGroup.style.display = 'block';
+        updateRemainingAmount();
+      } else {
+        paidAmountGroup.style.display = 'none';
+        paidAmountInput.value = '';
+      }
+    });
+
+    transactionAmount.addEventListener('input', () => {
+      if (transactionStatus.value === 'partial') {
+        updateRemainingAmount();
+      }
+    });
+
+    paidAmountInput.addEventListener('input', () => {
+      updateRemainingAmount();
+    });
+
+    function updateRemainingAmount() {
+      const amount = parseFloat(transactionAmount.value) || 0;
+      const paid = parseFloat(paidAmountInput.value) || 0;
+      const remaining = amount - paid;
+      remainingAmount.textContent = remaining.toFixed(2);
+      
+      if (remaining < 0) {
+        remainingAmount.style.color = 'var(--danger)';
+      } else {
+        remainingAmount.style.color = 'var(--text-muted)';
+      }
+    }
+
+    // Load Payments
+    async function loadPayments() {
+      try {
+        const paymentsQuery = query(collection(db, 'paymentHistory'), orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(paymentsQuery);
+        allPayments = [];
+        snapshot.forEach(doc => {
+          allPayments.push({ id: doc.id, ...doc.data() });
+        });
+      } catch (error) {
+        console.error('Error loading payments:', error);
+      }
+    }
+
+    // Add Transaction Modal
+    addTransactionBtn.addEventListener('click', () => {
+      editingId = null;
+      transactionForm.reset();
+      paidAmountGroup.style.display = 'none';
+      transactionDate.value = new Date().toISOString().split('T')[0];
+      modalTitle.textContent = 'Add Transaction';
+      transactionModal.classList.add('show');
+    });
+
+    if (emptyAddBtn) {
+      emptyAddBtn.addEventListener('click', () => {
+        editingId = null;
+        transactionForm.reset();
+        paidAmountGroup.style.display = 'none';
+        transactionDate.value = new Date().toISOString().split('T')[0];
+        modalTitle.textContent = 'Add Transaction';
+        transactionModal.classList.add('show');
+      });
+    }
+
+    modalClose.addEventListener('click', () => {
+      transactionModal.classList.remove('show');
+    });
+
+    modalCancel.addEventListener('click', () => {
+      transactionModal.classList.remove('show');
+    });
+
+    transactionForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const amount = parseFloat(transactionAmount.value);
+      const status = transactionStatus.value;
+      let paidAmount = 0;
+      
+      if (status === 'paid') {
+        paidAmount = amount;
+      } else if (status === 'partial') {
+        paidAmount = parseFloat(paidAmountInput.value) || 0;
+        if (paidAmount > amount) {
+          showAlert('Paid amount cannot exceed total amount', 'error');
+          return;
+        }
+      }
+      
+      const transactionData = {
+        date: transactionDate.value,
+        description: transactionDescription.value,
+        supplier: transactionSupplier.value,
+        reference: transactionReference.value || '',
+        amount: amount,
+        status: status,
+        paidAmount: paidAmount,
+        remainingAmount: amount - paidAmount,
+        updatedAt: Timestamp.now()
+      };
+
+      try {
+        if (editingId) {
+          await updateDoc(doc(db, 'accounts', editingId), transactionData);
+          showAlert('Transaction updated successfully', 'success');
+        } else {
+          transactionData.createdAt = Timestamp.now();
+          await addDoc(collection(db, 'accounts'), transactionData);
+          showAlert('Transaction added successfully', 'success');
+        }
+        transactionModal.classList.remove('show');
+        loadTransactions();
+      } catch (error) {
+        console.error('Error saving transaction:', error);
+        showAlert('Error saving transaction: ' + error.message, 'error');
+      }
+    });
+
+    // Load Transactions
+    async function loadTransactions() {
+      try {
+        loadingState.style.display = 'flex';
+        tableBody.innerHTML = '';
+
+        const transactionsQuery = query(collection(db, 'accounts'), orderBy('date', 'desc'));
+        const snapshot = await getDocs(transactionsQuery);
+
+        allTransactions = [];
+        snapshot.forEach(doc => {
+          allTransactions.push({ id: doc.id, ...doc.data() });
+        });
+
+        await loadPayments();
+        populateMonthFilter();
+        updateTotalSpend();
+        applyFilters();
+        loadingState.style.display = 'none';
+
+      } catch (error) {
+        console.error('Error loading transactions:', error);
+        showAlert('Error loading transactions: ' + error.message, 'error');
+        loadingState.style.display = 'none';
+      }
+    }
+
+    function updateTotalSpend() {
+      let total = 0;
+      allTransactions.forEach(transaction => {
+        total += transaction.amount;
+      });
+      totalSpendEl.textContent = total.toFixed(2);
+    }
+
+    function getPaymentsForTransaction(transactionId) {
+      return allPayments.filter(payment => payment.transactionId === transactionId);
+    }
+
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const status = statusFilter.value;
+      const selectedMonth = monthFilter.value;
+      
+      const filtered = allTransactions.filter(transaction => {
+        // Search filter
+        let matchesSearch = true;
+        if (searchTerm) {
+          matchesSearch = (transaction.description || '').toLowerCase().includes(searchTerm) ||
+                         (transaction.supplier || '').toLowerCase().includes(searchTerm) ||
+                         (transaction.reference || '').toLowerCase().includes(searchTerm);
+        }
+        
+        // Status filter
+        const matchesStatus = !status || transaction.status === status;
+        
+        // Month filter
+        let matchesMonth = true;
+        if (selectedMonth && transaction.date) {
+          const [year, month] = transaction.date.split('-');
+          matchesMonth = `${year}-${month}` === selectedMonth;
+        }
+        
+        return matchesSearch && matchesStatus && matchesMonth;
+      });
+      
+      renderTable(filtered);
+    }
+
+    function getStatusBadge(status, paidAmount, amount) {
+      if (status === 'paid') {
+        return '<span class="status-badge status-paid">Paid</span>';
+      } else if (status === 'partial') {
+        return `<span class="status-badge status-partial">Partial (Paid: ${(paidAmount || 0).toFixed(2)})</span>`;
+      } else {
+        return '<span class="status-badge status-unpaid">Unpaid</span>';
+      }
+    }
+
+    // View Payment Details
+    window.viewPaymentDetails = async function(transactionId) {
+      const payments = getPaymentsForTransaction(transactionId);
+      const transaction = allTransactions.find(t => t.id === transactionId);
+      
+      if (payments.length === 0) {
+        showAlert('No payment records found for this transaction', 'error');
+        return;
+      }
+      
+      let paymentsHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="background: var(--bg); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Transaction:</span>
+              <strong>${escapeHtml(transaction?.description || 'N/A')}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Supplier:</span>
+              <span>${escapeHtml(transaction?.supplier || 'N/A')}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Total Amount:</span>
+              <strong>${(transaction?.amount || 0).toFixed(2)}</strong>
+            </div>
+          </div>
+          <h3 style="font-size: 0.9rem; margin-bottom: 12px;">Payment History:</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: var(--bg);">
+                <th style="padding: 8px; text-align: left;">Date</th>
+                <th style="padding: 8px; text-align: left;">Amount</th>
+                <th style="padding: 8px; text-align: left;">Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      payments.forEach(payment => {
+        const paymentDate = payment.date || (payment.timestamp?.toDate ? payment.timestamp.toDate().toLocaleDateString() : 'N/A');
+        paymentsHtml += `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid var(--border);">${paymentDate}</td>
+            <td style="padding: 8px; border-bottom: 1px solid var(--border);"><strong>${(payment.amount || 0).toFixed(2)}</strong></td>
+            <td style="padding: 8px; border-bottom: 1px solid var(--border);"><span class="payment-ref-badge">${escapeHtml(payment.reference || 'N/A')}</span></td>
+          </tr>
+        `;
+      });
+      
+      paymentsHtml += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      paymentDetailsContent.innerHTML = paymentsHtml;
+      paymentDetailsModal.classList.add('show');
+    };
+
+    function renderTable(transactions) {
+      tableBody.innerHTML = '';
+
+      if (transactions.length === 0) {
+        transactionsTable.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      transactionsTable.style.display = 'table';
+      emptyState.style.display = 'none';
+
+      transactions.forEach(transaction => {
+        const dateStr = transaction.date;
+        const statusBadge = getStatusBadge(transaction.status, transaction.paidAmount, transaction.amount);
+        const payments = getPaymentsForTransaction(transaction.id);
+        const hasPayments = payments.length > 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><small>${dateStr}</small></td>
+          <td><strong>${escapeHtml(transaction.description)}</strong></td>
+          <td>${escapeHtml(transaction.supplier)}</td>
+          <td>${transaction.reference ? escapeHtml(transaction.reference) : '-'}</td>
+          <td><strong>${transaction.amount.toFixed(2)}</strong></td>
+          <td>${(transaction.paidAmount || 0).toFixed(2)}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="action-btns">
+              ${transaction.status !== 'paid' ? `<button class="action-btn" onclick="window.makePayment('${transaction.id}')" title="Make Payment" style="color: #22c55e;">
+                <i class="fas fa-money-bill-wave"></i>
+              </button>` : ''}
+              ${hasPayments ? `<button class="action-btn" onclick="window.viewPaymentDetails('${transaction.id}')" title="View Payments" style="color: #3b82f6;">
+                <i class="fas fa-receipt"></i>
+              </button>` : ''}
+              <button class="action-btn" onclick="window.editTransaction('${transaction.id}')" title="Edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="action-btn" onclick="window.deleteTransaction('${transaction.id}')" style="color: #ef4444;" title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    // Make Payment
+    window.makePayment = function(id) {
+      const transaction = allTransactions.find(t => t.id === id);
+      if (!transaction) return;
+      
+      paymentTransactionId = id;
+      const remaining = transaction.remainingAmount || (transaction.amount - (transaction.paidAmount || 0));
+      
+      paymentInfo.innerHTML = `
+        <div style="margin-bottom: 20px; padding: 12px; background: var(--bg); border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Transaction:</span>
+            <strong>${escapeHtml(transaction.description)}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Supplier:</span>
+            <span>${escapeHtml(transaction.supplier)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Total Amount:</span>
+            <strong>${transaction.amount.toFixed(2)}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Remaining Balance:</span>
+            <strong style="color: var(--danger);">${remaining.toFixed(2)}</strong>
+          </div>
+        </div>
+      `;
+      
+      paymentAmount.max = remaining;
+      paymentAmount.placeholder = `Max: ${remaining.toFixed(2)}`;
+      paymentForm.reset();
+      paymentModal.classList.add('show');
+    };
+
+    paymentModalClose.addEventListener('click', () => {
+      paymentModal.classList.remove('show');
+    });
+
+    paymentModalCancel.addEventListener('click', () => {
+      paymentModal.classList.remove('show');
+    });
+
+    paymentDetailsModalClose.addEventListener('click', () => {
+      paymentDetailsModal.classList.remove('show');
+    });
+
+    paymentDetailsModalCancel.addEventListener('click', () => {
+      paymentDetailsModal.classList.remove('show');
+    });
+
+    paymentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const paymentAmt = parseFloat(paymentAmount.value);
+      const paymentRef = paymentReference.value;
+      
+      if (!paymentRef) {
+        showAlert('Please enter a payment reference', 'error');
+        return;
+      }
+      
+      if (!paymentTransactionId) return;
+      
+      const transaction = allTransactions.find(t => t.id === paymentTransactionId);
+      if (!transaction) return;
+      
+      const currentPaid = transaction.paidAmount || 0;
+      const newPaid = currentPaid + paymentAmt;
+      const remaining = transaction.amount - newPaid;
+      
+      let newStatus = transaction.status;
+      if (newPaid >= transaction.amount) {
+        newStatus = 'paid';
+      } else if (newPaid > 0) {
+        newStatus = 'partial';
+      }
+      
+      try {
+        await updateDoc(doc(db, 'accounts', paymentTransactionId), {
+          paidAmount: newPaid,
+          remainingAmount: remaining,
+          status: newStatus,
+          updatedAt: Timestamp.now()
+        });
+        
+        // Record payment in history
+        await addDoc(collection(db, 'paymentHistory'), {
+          transactionId: paymentTransactionId,
+          transactionDescription: transaction.description,
+          supplier: transaction.supplier,
+          amount: paymentAmt,
+          reference: paymentRef,
+          previousPaid: currentPaid,
+          newPaid: newPaid,
+          remaining: remaining,
+          date: new Date().toISOString().split('T')[0],
+          timestamp: Timestamp.now()
+        });
+        
+        showAlert(`Payment of ${paymentAmt.toFixed(2)} processed successfully! Reference: ${paymentRef}`, 'success');
+        paymentModal.classList.remove('show');
+        loadTransactions();
+      } catch (error) {
+        console.error('Error processing payment:', error);
+        showAlert('Error processing payment: ' + error.message, 'error');
+      }
+    });
+
+    // Edit Transaction
+    window.editTransaction = function(id) {
+      const transaction = allTransactions.find(t => t.id === id);
+      if (!transaction) return;
+      
+      editingId = id;
+      transactionDate.value = transaction.date;
+      transactionAmount.value = transaction.amount;
+      transactionDescription.value = transaction.description;
+      transactionSupplier.value = transaction.supplier;
+      transactionReference.value = transaction.reference || '';
+      transactionStatus.value = transaction.status;
+      
+      if (transaction.status === 'partial') {
+        paidAmountGroup.style.display = 'block';
+        paidAmountInput.value = transaction.paidAmount || 0;
+        updateRemainingAmount();
+      } else {
+        paidAmountGroup.style.display = 'none';
+      }
+      
+      modalTitle.textContent = 'Edit Transaction';
+      transactionModal.classList.add('show');
+    };
+
+    // Delete Transaction
+    window.deleteTransaction = async function(id) {
+      if (confirm('Are you sure you want to delete this transaction? This will also delete all associated payments.')) {
+        try {
+          // Delete associated payments
+          const paymentsToDelete = allPayments.filter(p => p.transactionId === id);
+          for (const payment of paymentsToDelete) {
+            await deleteDoc(doc(db, 'paymentHistory', payment.id));
+          }
+          
+          // Delete transaction
+          await deleteDoc(doc(db, 'accounts', id));
+          showAlert('Transaction deleted successfully', 'success');
+          loadTransactions();
+        } catch (error) {
+          console.error('Error deleting transaction:', error);
+          showAlert('Error deleting transaction: ' + error.message, 'error');
+        }
+      }
+    };
+
+    // Event Listeners for Filters
+    searchInput.addEventListener('input', () => applyFilters());
+    statusFilter.addEventListener('change', () => applyFilters());
+    monthFilter.addEventListener('change', () => applyFilters());
+
+    clearFiltersBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      statusFilter.value = '';
+      monthFilter.value = '';
+      applyFilters();
+    });
+
+    // Refresh
+    refreshBtn.addEventListener('click', loadTransactions);
+
+    // Real-time listener
+    onSnapshot(collection(db, 'accounts'), () => {
+      loadTransactions();
+    });
+
+    // Initialize
+    loadTransactions();
+  </script>
+</body>
+</html>
