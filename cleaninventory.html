@@ -58,6 +58,7 @@
 
     .action-btns{display:flex;gap:5px;}
     .icon-btn{background:none;border:1px solid var(--border);width:28px;height:28px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:0.15s;}
+    .icon-btn:hover{border-color:#111827;background:#f3f4f6;}
     .icon-btn.edit:hover{border-color:#111827;color:#111827;}
     .icon-btn.assign{color:#3b82f6;border-color:#bfdbfe;} .icon-btn.assign:hover{background:#eff6ff;}
     .icon-btn.restock{color:var(--green);border-color:#bbf7d0;} .icon-btn.restock:hover{background:var(--gbg);}
@@ -71,6 +72,9 @@
     .assign-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f3f4f6;font-size:0.88rem;}
     .assign-row:last-child{border-bottom:none;}
     .assign-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);}
+
+    .error-msg{color:#dc2626;font-size:0.8rem;margin-top:4px;display:none;}
+    .error-msg.show{display:block;}
 
     @media(max-width:600px){body{padding:14px;}th,td{padding:9px 10px;}.form-row-2{grid-template-columns:1fr;}}
   </style>
@@ -105,10 +109,21 @@
 <div class="modal-overlay" id="itemModal">
   <div class="modal">
     <div class="modal-title"><i class="fas fa-box-open" style="color:var(--accent)"></i> <span id="modalTitle">Add Item</span></div>
-    <div class="form-group"><label>Item Name</label><input type="text" id="fName" placeholder="e.g. Floor Cleaner"></div>
+    <div class="form-group">
+      <label>Item Name</label>
+      <input type="text" id="fName" placeholder="e.g. Floor Cleaner">
+      <div class="error-msg" id="errName">Item name is required</div>
+    </div>
     <div class="form-row-2">
-      <div class="form-group"><label>Quantity</label><input type="number" id="fQty" placeholder="0" min="0"></div>
-      <div class="form-group"><label>Unit</label><input type="text" id="fUnit" placeholder="pcs / litres / kg"></div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="fQty" placeholder="0" min="1" step="1">
+        <div class="error-msg" id="errQty">Quantity must be greater than 0</div>
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input type="text" id="fUnit" placeholder="pcs / litres / kg">
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" id="itemCancel">Cancel</button>
@@ -121,10 +136,21 @@
 <div class="modal-overlay" id="restockModal">
   <div class="modal">
     <div class="modal-title"><i class="fas fa-truck" style="color:var(--green)"></i> Restock — <span id="restockItemName"></span></div>
-    <div class="form-group"><label>Supplier</label><input type="text" id="rSupplier" placeholder="e.g. ABC Supplies"></div>
+    <div class="form-group">
+      <label>Supplier</label>
+      <input type="text" id="rSupplier" placeholder="e.g. ABC Supplies">
+      <div class="error-msg" id="errSupplier">Supplier name is required</div>
+    </div>
     <div class="form-row-2">
-      <div class="form-group"><label>Qty to Add</label><input type="number" id="rQty" placeholder="0" min="1"></div>
-      <div class="form-group"><label>Price (ZMW)</label><input type="number" id="rPrice" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="form-group">
+        <label>Qty to Add</label>
+        <input type="number" id="rQty" placeholder="0" min="1" step="1">
+        <div class="error-msg" id="errRQty">Quantity must be greater than 0</div>
+      </div>
+      <div class="form-group">
+        <label>Price (ZMW)</label>
+        <input type="number" id="rPrice" placeholder="0.00" min="0" step="0.01">
+      </div>
     </div>
     <div class="form-group"><label>Date</label><input type="date" id="rDate"></div>
     <div class="modal-actions">
@@ -141,7 +167,11 @@
     <div class="form-group"><label>Select Users to Assign</label></div>
     <div class="assign-list" id="assignList">Loading users...</div>
     <div class="form-row-2">
-      <div class="form-group"><label>Qty to Assign</label><input type="number" id="aQty" placeholder="0" min="1"></div>
+      <div class="form-group">
+        <label>Qty to Assign</label>
+        <input type="number" id="aQty" placeholder="0" min="1" step="1">
+        <div class="error-msg" id="errAQty">Quantity must be greater than 0</div>
+      </div>
       <div class="form-group"><label>Date</label><input type="date" id="aDate"></div>
     </div>
     <div class="modal-actions">
@@ -164,10 +194,8 @@
     messagingSenderId:"586923989952",
     appId:"1:586923989952:web:72b300dbc00d830e2e4625"
   };
-  const app = initializeApp(cfg);
-  const db  = getDatabase(app);
-  const invRef = ref(db,'cleaningInventory');
-
+  
+  let app, db, invRef;
   let editId = null;
   let restockId = null;
   let assignId  = null;
@@ -175,96 +203,140 @@
 
   function esc(s){ if(!s)return''; return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+  function clearErrors() {
+    document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+  }
+
+  function showError(elementId) {
+    const elem = document.getElementById(elementId);
+    if(elem) elem.classList.add('show');
+  }
+
+  // Initialize Firebase
+  try {
+    app = initializeApp(cfg);
+    db = getDatabase(app);
+    invRef = ref(db, 'cleaningInventory');
+    console.log('Firebase initialized successfully');
+  } catch(err) {
+    console.error('Firebase initialization error:', err);
+    alert('Error initializing database. Check console for details.');
+  }
+
   // ── LIVE INVENTORY ──
   onValue(invRef, snap => {
-    const data = snap.val();
-    allItems = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
+    try {
+      const data = snap.val();
+      allItems = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
 
-    document.getElementById('statTotal').textContent = allItems.length;
-    document.getElementById('statLow').textContent   = allItems.filter(i=>Number(i.quantity)<50&&Number(i.quantity)>=20).length;
-    document.getElementById('statCrit').textContent  = allItems.filter(i=>Number(i.quantity)<20).length;
+      document.getElementById('statTotal').textContent = allItems.length;
+      document.getElementById('statLow').textContent   = allItems.filter(i=>Number(i.quantity)<50&&Number(i.quantity)>=20).length;
+      document.getElementById('statCrit').textContent  = allItems.filter(i=>Number(i.quantity)<20).length;
 
-    const tbody = document.getElementById('invBody');
-    if(!allItems.length){
-      tbody.innerHTML=`<tr><td colspan="6" class="empty-state"><i class="fas fa-box-open"></i>No items yet — click "Add Item"</td></tr>`;
-      return;
+      const tbody = document.getElementById('invBody');
+      if(!allItems.length){
+        tbody.innerHTML=`<tr><td colspan="6" class="empty-state"><i class="fas fa-box-open"></i>No items yet — click "Add Item"</td></tr>`;
+        return;
+      }
+      tbody.innerHTML='';
+      allItems.forEach(item=>{
+        const qty=Number(item.quantity)||0;
+        let bc='bg',bt='In Stock';
+        if(qty<20){bc='bc';bt='Critical';}
+        else if(qty<50){bc='bl';bt='Low Stock';}
+        const assigned = item.assignedTo ? `<span style="font-size:0.78rem;color:#3b82f6">${esc(item.assignedTo)}</span>` : `<span style="color:var(--muted);font-size:0.78rem">—</span>`;
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><div class="item-name"><div class="item-icon"><i class="fas fa-spray-can"></i></div>${esc(item.name)}</div></td>
+          <td><strong>${qty}</strong></td>
+          <td>${esc(item.unit||'pcs')}</td>
+          <td><span class="badge ${bc}">${bt}</span></td>
+          <td>${assigned}</td>
+          <td><div class="action-btns">
+            <button class="icon-btn edit" data-id="${item.id}" title="Edit"><i class="fas fa-pen"></i></button>
+            <button class="icon-btn assign" data-id="${item.id}" title="Assign to user"><i class="fas fa-user-tag"></i></button>
+            <button class="icon-btn restock" data-id="${item.id}" title="Restock"><i class="fas fa-truck"></i></button>
+            <button class="icon-btn del" data-id="${item.id}" title="Delete"><i class="fas fa-trash"></i></button>
+          </div></td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Edit handlers
+      tbody.querySelectorAll('.icon-btn.edit').forEach(btn=>{
+        btn.onclick=()=>{
+          const it=allItems.find(i=>i.id===btn.dataset.id); if(!it)return;
+          editId=it.id;
+          document.getElementById('fName').value=it.name||'';
+          document.getElementById('fQty').value=it.quantity||'';
+          document.getElementById('fUnit').value=it.unit||'';
+          document.getElementById('modalTitle').textContent='Edit Item';
+          clearErrors();
+          document.getElementById('itemModal').classList.add('open');
+        };
+      });
+
+      // Delete handlers
+      tbody.querySelectorAll('.icon-btn.del').forEach(btn=>{
+        btn.onclick=async()=>{ 
+          if(confirm('Delete this item?')) {
+            try {
+              await remove(ref(db,`cleaningInventory/${btn.dataset.id}`));
+            } catch(err) {
+              console.error('Delete error:', err);
+              alert('Error deleting item');
+            }
+          }
+        };
+      });
+
+      // Restock handlers
+      tbody.querySelectorAll('.icon-btn.restock').forEach(btn=>{
+        btn.onclick=()=>{
+          const it=allItems.find(i=>i.id===btn.dataset.id); if(!it)return;
+          restockId=it.id;
+          document.getElementById('restockItemName').textContent=it.name;
+          document.getElementById('rQty').value='';
+          document.getElementById('rSupplier').value='';
+          document.getElementById('rPrice').value='';
+          document.getElementById('rDate').value=new Date().toISOString().slice(0,10);
+          clearErrors();
+          document.getElementById('restockModal').classList.add('open');
+        };
+      });
+
+      // Assign handlers
+      tbody.querySelectorAll('.icon-btn.assign').forEach(btn=>{
+        btn.onclick=async()=>{
+          const it=allItems.find(i=>i.id===btn.dataset.id); if(!it)return;
+          assignId=it.id;
+          document.getElementById('assignItemName').textContent=it.name;
+          document.getElementById('aQty').value='';
+          document.getElementById('aDate').value=new Date().toISOString().slice(0,10);
+          const assignList=document.getElementById('assignList');
+          assignList.innerHTML='<div style="padding:10px;color:var(--muted)">Loading...</div>';
+          clearErrors();
+          document.getElementById('assignModal').classList.add('open');
+
+          try {
+            const defaultUsers=[{username:'kaunda'},{username:'pmp'},{username:'penta'},{username:'faiyaz mulla'},{username:'chishela'}];
+            const snap2=await get(ref(db,'cleanMaterialsUsers'));
+            const extra=snap2.val()?Object.values(snap2.val()):[];
+            const all=[...defaultUsers,...extra];
+            assignList.innerHTML=all.map(u=>`
+              <div class="assign-row">
+                <input type="checkbox" class="assign-check" value="${esc(u.name||u.username)}">
+                <span>${esc(u.name||u.username)}</span>
+                ${u.department?`<span style="font-size:0.75rem;color:var(--muted);margin-left:auto">${esc(u.department)}</span>`:''}
+              </div>`).join('');
+          } catch(err) {
+            console.error('Users loading error:', err);
+            assignList.innerHTML='<div style="padding:10px;color:#dc2626">Error loading users</div>';
+          }
+        };
+      });
+    } catch(err) {
+      console.error('onValue listener error:', err);
     }
-    tbody.innerHTML='';
-    allItems.forEach(item=>{
-      const qty=Number(item.quantity)||0;
-      let bc='bg',bt='In Stock';
-      if(qty<20){bc='bc';bt='Critical';}
-      else if(qty<50){bc='bl';bt='Low Stock';}
-      const assigned = item.assignedTo ? `<span style="font-size:0.78rem;color:#3b82f6">${esc(item.assignedTo)}</span>` : `<span style="color:var(--muted);font-size:0.78rem">—</span>`;
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td><div class="item-name"><div class="item-icon"><i class="fas fa-spray-can"></i></div>${esc(item.name)}</div></td>
-        <td><strong>${qty}</strong></td>
-        <td>${esc(item.unit||'pcs')}</td>
-        <td><span class="badge ${bc}">${bt}</span></td>
-        <td>${assigned}</td>
-        <td><div class="action-btns">
-          <button class="icon-btn edit" data-id="${item.id}" title="Edit"><i class="fas fa-pen"></i></button>
-          <button class="icon-btn assign" data-id="${item.id}" title="Assign to user"><i class="fas fa-user-tag"></i></button>
-          <button class="icon-btn restock" data-id="${item.id}" title="Restock"><i class="fas fa-truck"></i></button>
-          <button class="icon-btn del" data-id="${item.id}" title="Delete"><i class="fas fa-trash"></i></button>
-        </div></td>`;
-      tbody.appendChild(tr);
-    });
-
-    tbody.querySelectorAll('.icon-btn.edit').forEach(btn=>{
-      btn.onclick=()=>{
-        const it=allItems.find(i=>i.id===btn.dataset.id); if(!it)return;
-        editId=it.id;
-        document.getElementById('fName').value=it.name||'';
-        document.getElementById('fQty').value=it.quantity||'';
-        document.getElementById('fUnit').value=it.unit||'';
-        document.getElementById('modalTitle').textContent='Edit Item';
-        document.getElementById('itemModal').classList.add('open');
-      };
-    });
-
-    tbody.querySelectorAll('.icon-btn.del').forEach(btn=>{
-      btn.onclick=()=>{ if(confirm('Delete this item?')) remove(ref(db,`cleaningInventory/${btn.dataset.id}`)); };
-    });
-
-    tbody.querySelectorAll('.icon-btn.restock').forEach(btn=>{
-      btn.onclick=()=>{
-        const it=allItems.find(i=>i.id===btn.dataset.id); if(!it)return;
-        restockId=it.id;
-        document.getElementById('restockItemName').textContent=it.name;
-        document.getElementById('rQty').value='';
-        document.getElementById('rSupplier').value='';
-        document.getElementById('rPrice').value='';
-        document.getElementById('rDate').value=new Date().toISOString().slice(0,10);
-        document.getElementById('restockModal').classList.add('open');
-      };
-    });
-
-    tbody.querySelectorAll('.icon-btn.assign').forEach(btn=>{
-      btn.onclick=async()=>{
-        const it=allItems.find(i=>i.id===btn.dataset.id); if(!it)return;
-        assignId=it.id;
-        document.getElementById('assignItemName').textContent=it.name;
-        document.getElementById('aQty').value='';
-        document.getElementById('aDate').value=new Date().toISOString().slice(0,10);
-        // load users
-        const assignList=document.getElementById('assignList');
-        assignList.innerHTML='<div style="padding:10px;color:var(--muted)">Loading...</div>';
-        document.getElementById('assignModal').classList.add('open');
-
-        const defaultUsers=[{username:'kaunda'},{username:'pmp'},{username:'penta'},{username:'faiyaz mulla'},{username:'chishela'}];
-        const snap2=await get(ref(db,'cleanMaterialsUsers'));
-        const extra=snap2.val()?Object.values(snap2.val()):[];
-        const all=[...defaultUsers,...extra];
-        assignList.innerHTML=all.map(u=>`
-          <div class="assign-row">
-            <input type="checkbox" class="assign-check" value="${esc(u.name||u.username)}">
-            <span>${esc(u.name||u.username)}</span>
-            ${u.department?`<span style="font-size:0.75rem;color:var(--muted);margin-left:auto">${esc(u.department)}</span>`:''}
-          </div>`).join('');
-      };
-    });
   });
 
   // ADD ITEM
@@ -274,65 +346,147 @@
     document.getElementById('fQty').value='';
     document.getElementById('fUnit').value='';
     document.getElementById('modalTitle').textContent='Add Item';
+    clearErrors();
     document.getElementById('itemModal').classList.add('open');
     setTimeout(()=>document.getElementById('fName').focus(),100);
   };
-  document.getElementById('itemCancel').onclick=()=>{ document.getElementById('itemModal').classList.remove('open'); editId=null; };
+
+  document.getElementById('itemCancel').onclick=()=>{ 
+    document.getElementById('itemModal').classList.remove('open'); 
+    editId=null; 
+    clearErrors();
+  };
+
   document.getElementById('itemSave').onclick=async()=>{
+    clearErrors();
     const name=document.getElementById('fName').value.trim();
-    const qty=parseInt(document.getElementById('fQty').value);
+    const qtyVal=document.getElementById('fQty').value.trim();
+    const qty=qtyVal ? parseInt(qtyVal) : NaN;
     const unit=document.getElementById('fUnit').value.trim()||'pcs';
-    if(!name||isNaN(qty)||qty<0){alert('Please fill in item name and a valid quantity.');return;}
-    if(editId){
-      await update(ref(db,`cleaningInventory/${editId}`),{name,quantity:qty,unit,updatedAt:Date.now()});
-    } else {
-      await push(invRef,{name,quantity:qty,unit,createdAt:Date.now()});
+
+    let hasError = false;
+    if(!name){
+      showError('errName');
+      hasError = true;
     }
-    document.getElementById('itemModal').classList.remove('open');
-    editId=null;
+    if(isNaN(qty) || qty <= 0){
+      showError('errQty');
+      hasError = true;
+    }
+
+    if(hasError) return;
+
+    try {
+      if(editId){
+        await update(ref(db,`cleaningInventory/${editId}`),{name,quantity:qty,unit,updatedAt:Date.now()});
+      } else {
+        await push(invRef,{name,quantity:qty,unit,createdAt:Date.now()});
+      }
+      document.getElementById('itemModal').classList.remove('open');
+      editId=null;
+    } catch(err) {
+      console.error('Save error:', err);
+      alert('Error saving item: ' + err.message);
+    }
   };
 
   // RESTOCK
-  document.getElementById('restockCancel').onclick=()=>{ document.getElementById('restockModal').classList.remove('open'); restockId=null; };
+  document.getElementById('restockCancel').onclick=()=>{ 
+    document.getElementById('restockModal').classList.remove('open'); 
+    restockId=null;
+    clearErrors();
+  };
+
   document.getElementById('restockSave').onclick=async()=>{
-    const addQty=parseInt(document.getElementById('rQty').value);
+    clearErrors();
+    const qtyVal=document.getElementById('rQty').value.trim();
+    const addQty=qtyVal ? parseInt(qtyVal) : NaN;
     const supplier=document.getElementById('rSupplier').value.trim();
     const price=parseFloat(document.getElementById('rPrice').value)||0;
     const date=document.getElementById('rDate').value;
-    if(!addQty||addQty<1){alert('Enter a valid quantity to restock.');return;}
-    if(!supplier){alert('Please enter a supplier name.');return;}
-    const it=allItems.find(i=>i.id===restockId); if(!it)return;
-    const newQty=(Number(it.quantity)||0)+addQty;
-    await update(ref(db,`cleaningInventory/${restockId}`),{quantity:newQty,lastRestocked:date,lastSupplier:supplier,updatedAt:Date.now()});
-    // also log restock
-    await push(ref(db,'restockLogs'),{
-      itemId:restockId, itemName:it.name, supplier, qtyAdded:addQty, price, date, createdAt:Date.now()
-    });
-    document.getElementById('restockModal').classList.remove('open');
-    restockId=null;
+
+    let hasError = false;
+    if(!supplier){
+      showError('errSupplier');
+      hasError = true;
+    }
+    if(isNaN(addQty) || addQty <= 0){
+      showError('errRQty');
+      hasError = true;
+    }
+
+    if(hasError) return;
+
+    try {
+      const it=allItems.find(i=>i.id===restockId); 
+      if(!it) {
+        alert('Item not found');
+        return;
+      }
+      const newQty=(Number(it.quantity)||0)+addQty;
+      await update(ref(db,`cleaningInventory/${restockId}`),{quantity:newQty,lastRestocked:date,lastSupplier:supplier,updatedAt:Date.now()});
+      await push(ref(db,'restockLogs'),{
+        itemId:restockId, itemName:it.name, supplier, qtyAdded:addQty, price, date, createdAt:Date.now()
+      });
+      document.getElementById('restockModal').classList.remove('open');
+      restockId=null;
+    } catch(err) {
+      console.error('Restock error:', err);
+      alert('Error restocking: ' + err.message);
+    }
   };
 
   // ASSIGN
-  document.getElementById('assignCancel').onclick=()=>{ document.getElementById('assignModal').classList.remove('open'); assignId=null; };
-  document.getElementById('assignSave').onclick=async()=>{
-    const checked=[...document.querySelectorAll('.assign-check:checked')].map(c=>c.value);
-    const qty=parseInt(document.getElementById('aQty').value);
-    const date=document.getElementById('aDate').value;
-    if(!checked.length){alert('Select at least one user.');return;}
-    if(!qty||qty<1){alert('Enter a valid quantity to assign.');return;}
-    const it=allItems.find(i=>i.id===assignId); if(!it)return;
-    await update(ref(db,`cleaningInventory/${assignId}`),{assignedTo:checked.join(', '),updatedAt:Date.now()});
-    await push(ref(db,'assignmentLogs'),{
-      itemId:assignId, itemName:it.name, assignedTo:checked.join(', '), qty, date, createdAt:Date.now()
-    });
-    document.getElementById('assignModal').classList.remove('open');
+  document.getElementById('assignCancel').onclick=()=>{ 
+    document.getElementById('assignModal').classList.remove('open'); 
     assignId=null;
+    clearErrors();
+  };
+
+  document.getElementById('assignSave').onclick=async()=>{
+    clearErrors();
+    const checked=[...document.querySelectorAll('.assign-check:checked')].map(c=>c.value);
+    const qtyVal=document.getElementById('aQty').value.trim();
+    const qty=qtyVal ? parseInt(qtyVal) : NaN;
+    const date=document.getElementById('aDate').value;
+
+    let hasError = false;
+    if(!checked.length){
+      alert('Select at least one user.');
+      hasError = true;
+    }
+    if(isNaN(qty) || qty <= 0){
+      showError('errAQty');
+      hasError = true;
+    }
+
+    if(hasError) return;
+
+    try {
+      const it=allItems.find(i=>i.id===assignId); 
+      if(!it) {
+        alert('Item not found');
+        return;
+      }
+      await update(ref(db,`cleaningInventory/${assignId}`),{assignedTo:checked.join(', '),updatedAt:Date.now()});
+      await push(ref(db,'assignmentLogs'),{
+        itemId:assignId, itemName:it.name, assignedTo:checked.join(', '), qty, date, createdAt:Date.now()
+      });
+      document.getElementById('assignModal').classList.remove('open');
+      assignId=null;
+    } catch(err) {
+      console.error('Assign error:', err);
+      alert('Error assigning item: ' + err.message);
+    }
   };
 
   // close modals on overlay click
   ['itemModal','restockModal','assignModal'].forEach(id=>{
     document.getElementById(id).addEventListener('click',e=>{
-      if(e.target===document.getElementById(id)) document.getElementById(id).classList.remove('open');
+      if(e.target===document.getElementById(id)) {
+        document.getElementById(id).classList.remove('open');
+        clearErrors();
+      }
     });
   });
 
