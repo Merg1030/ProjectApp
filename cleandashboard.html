@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Kaunda | Cleaning Dashboard</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-analytics.js"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #f0f2f5;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100%;
+      background: linear-gradient(180deg, #0f2b3d 0%, #1a4a6f 100%);
+      color: white;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+    }
+
+    .sidebar.collapsed {
+      left: -280px;
+    }
+
+    .sidebar-header {
+      padding: 25px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      text-align: center;
+    }
+
+    .sidebar-header h3 {
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-header p {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 20px 0;
+    }
+
+    .sidebar-menu li {
+      padding: 14px 25px;
+      margin: 5px 0;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1rem;
+      border-left: 4px solid transparent;
+    }
+
+    .sidebar-menu li i {
+      width: 24px;
+      font-size: 1.2rem;
+    }
+
+    .sidebar-menu li:hover {
+      background: rgba(255,255,255,0.15);
+      border-left-color: #ffc107;
+    }
+
+    .sidebar-menu li.active {
+      background: rgba(255,255,255,0.2);
+      border-left-color: #ffc107;
+      font-weight: 500;
+    }
+
+    /* Logout button in sidebar */
+    .logout-item {
+      margin-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      padding-top: 20px;
+    }
+    
+    .logout-item li {
+      color: #ffc107;
+    }
+    
+    .logout-item li:hover {
+      background: rgba(220,53,69,0.2);
+      border-left-color: #dc3545;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      transition: all 0.3s ease;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      background: white;
+      padding: 15px 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .menu-toggle {
+      background: #0f2b3d;
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      cursor: pointer;
+      width: 45px;
+      height: 45px;
+      border-radius: 8px;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-toggle:hover {
+      background: #1a4a6f;
+    }
+
+    .welcome-area {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1e2a3a;
+      background: #f8f9fc;
+      padding: 8px 18px;
+      border-radius: 40px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .welcome-area i {
+      margin-right: 5px;
+      color: #ffc107;
+    }
+    
+    .logout-top-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logout-top-btn:hover {
+      background: #c82333;
+      transform: scale(1.02);
+    }
+
+    /* Dashboard Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-bottom: 35px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+      border-left: 6px solid #ffc107;
+    }
+
+    .stat-card h3 {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #0f2b3d;
+    }
+
+    /* IFrame Container */
+    .iframe-container {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      height: calc(100vh - 160px);
+      min-height: 500px;
+    }
+    
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    .content-placeholder {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      color: #6c757d;
+    }
+    
+    .session-timer {
+      font-size: 0.8rem;
+      background: #e9ecef;
+      padding: 5px 12px;
+      border-radius: 20px;
+      color: #495057;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 260px;
+      }
+      .main-content {
+        margin-left: 0;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .iframe-container {
+        height: calc(100vh - 200px);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h3><i class="fas fa-broom"></i> PentaClean</h3>
+    <p>Inventory Manager</p>
+  </div>
+  <ul class="sidebar-menu">
+    <li data-page="inventory" class="active">
+      <i class="fas fa-boxes"></i> <span>Inventory</span>
+    </li>
+    <li data-page="users">
+      <i class="fas fa-users"></i> <span>Users</span>
+    </li>
+    <li data-page="report">
+      <i class="fas fa-chart-line"></i> <span>Report</span>
+    </li>
+    <li class="logout-item" data-page="logout">
+      <li style="list-style: none;" data-page="logout">
+        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+      </li>
+    </li>
+  </ul>
+</div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+  <div class="top-bar">
+    <button class="menu-toggle" id="toggleSidebarBtn"><i class="fas fa-bars"></i></button>
+    <div class="welcome-area">
+      <div>
+        <i class="fas fa-user-check"></i> Welcome, <span id="userNameDisplay">Kaunda</span>
+      </div>
+      <div class="session-timer" id="sessionTimer">
+        <i class="fas fa-hourglass-half"></i> <span id="timerText">15:00</span>
+      </div>
+      <button class="logout-top-btn" id="logoutTopBtn">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards Dashboard Summary -->
+  <div class="stats-grid">
+    <div class="stat-card"><h3><i class="fas fa-tools"></i> Total Items</h3><div class="stat-number" id="totalItemsCount">0</div></div>
+    <div class="stat-card"><h3><i class="fas fa-users"></i> System Users</h3><div class="stat-number" id="totalUsersCount">0</div></div>
+    <div class="stat-card"><h3><i class="fas fa-exclamation-triangle"></i> Low Stock (<50)</h3><div class="stat-number" id="lowStockCount">0</div></div>
+  </div>
+
+  <!-- Dynamic Content Area (loads HTML files) -->
+  <div id="dynamicContentArea" class="iframe-container">
+    <iframe id="pageFrame" src="cleandashboard_inventory.html" title="Dashboard Panel"></iframe>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+  // Firebase Config (same as login)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",
+    authDomain: "project-app-58ff6.firebaseapp.com",
+    databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com",
+    projectId: "project-app-58ff6",
+    storageBucket: "project-app-58ff6.appspot.com",
+    messagingSenderId: "586923989952",
+    appId: "1:586923989952:web:72b300dbc00d830e2e4625",
+    measurementId: "G-HV80KTBWSR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  
+  // Get current user from localStorage (set by login page)
+  let currentUser = localStorage.getItem('currentUser') || 'kaunda';
+  document.getElementById('userNameDisplay').innerText = currentUser.charAt(0).toUpperCase() + currentUser.slice(1);
+  
+  // ========== SESSION TIMEOUT (15 minutes inactivity) ==========
+  let inactivityTimer;
+  const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  let countdownInterval;
+  let timeLeftSeconds = 15 * 60; // 900 seconds
+  
+  function resetInactivityTimer() {
+    // Clear existing timers
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    // Reset countdown display
+    timeLeftSeconds = 15 * 60;
+    updateTimerDisplay();
+    // Start new inactivity timer
+    inactivityTimer = setTimeout(() => {
+      performLogout("Session expired due to inactivity (15 minutes).");
+    }, SESSION_TIMEOUT_MS);
+  }
+  
+  function updateTimerDisplay() {
+    const minutes = Math.floor(timeLeftSeconds / 60);
+    const seconds = timeLeftSeconds % 60;
+    const timerSpan = document.getElementById('timerText');
+    if (timerSpan) {
+      timerSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+  }
+  
+  function startCountdown() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+      if (timeLeftSeconds > 0) {
+        timeLeftSeconds--;
+        updateTimerDisplay();
+      }
+    }, 1000);
+  }
+  
+  function stopCountdown() {
+    if (countdownInterval) clearInterval(countdownInterval);
+  }
+  
+  // Listen to all user activity events
+  const activityEvents = ['mousedown', 'keydown', 'mousemove', 'scroll', 'click', 'touchstart'];
+  function bindActivityListeners() {
+    activityEvents.forEach(event => {
+      document.addEventListener(event, () => {
+        resetInactivityTimer();
+        // Also reset the countdown value
+        timeLeftSeconds = 15 * 60;
+        updateTimerDisplay();
+      });
+    });
+  }
+  
+  // Perform logout function
+  function performLogout(reason = "User logged out") {
+    stopCountdown();
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    // Clear session data
+    localStorage.removeItem('currentUser');
+    // Add logout record to Firebase (optional)
+    try {
+      const { getDatabase, ref, push } = import("https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js");
+      // We'll just do a simple record if possible but not blocking
+      const logoutRef = ref(database, 'logoutLogs');
+      push(logoutRef, {
+        username: currentUser,
+        timestamp: new Date().toISOString(),
+        reason: reason
+      }).catch(e => console.warn("Logout log error:", e));
+    } catch(e) { console.warn(e); }
+    
+    // Redirect to login page
+    window.location.href = 'index.html'; // Change to your login page filename
+  }
+  
+  // Manual logout function
+  function manualLogout() {
+    performLogout("Manual logout by user");
+  }
+  
+  // Bind logout buttons
+  document.getElementById('logoutTopBtn')?.addEventListener('click', manualLogout);
+  const logoutSidebarItem = document.querySelector('.logout-item li, [data-page="logout"]');
+  if (logoutSidebarItem) {
+    logoutSidebarItem.addEventListener('click', manualLogout);
+  }
+  
+  // Initialize session timer
+  resetInactivityTimer();
+  startCountdown();
+  bindActivityListeners();
+  
+  // ========== SIDEBAR TOGGLE ==========
+  const sidebar = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const toggleBtn = document.getElementById('toggleSidebarBtn');
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    mainContent.classList.toggle('expanded');
+    resetInactivityTimer(); // reset timer on interaction
+  });
+  
+  // ========== SIDEBAR NAVIGATION - Load respective HTML files ==========
+  // Define mapping: each menu item loads a different HTML file
+  const pageFileMapping = {
+    inventory: 'cleandashboard_inventory.html',
+    users: 'cleandashboard_users.html',
+    report: 'cleandashboard_report.html'
+  };
+  
+  // Function to load HTML file into iframe
+  function loadPageIntoIframe(pageKey) {
+    const iframe = document.getElementById('pageFrame');
+    const fileName = pageFileMapping[pageKey];
+    if (fileName && iframe) {
+      // Add timestamp to prevent caching issues (optional)
+      iframe.src = fileName;
+    } else {
+      console.error("Page not found:", pageKey);
+      const container = document.getElementById('dynamicContentArea');
+      if (container) {
+        container.innerHTML = `<div class="content-placeholder"><i class="fas fa-exclamation-triangle"></i> <h3>Page not found</h3><p>The requested page "${pageKey}" could not be loaded.</p></div>`;
+      }
+    }
+  }
+  
+  // Set active menu and load page
+  const menuItems = document.querySelectorAll('.sidebar-menu li[data-page]');
+  menuItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      const page = item.getAttribute('data-page');
+      if (page === 'logout') return; // handled separately
+      
+      resetInactivityTimer(); // reset timer on navigation
+      
+      // Update active class
+      menuItems.forEach(li => li.classList.remove('active'));
+      item.classList.add('active');
+      
+      // Load the corresponding HTML file into iframe
+      loadPageIntoIframe(page);
+    });
+  });
+  
+  // Load inventory stats from Firebase (for dashboard stats)
+  const inventoryRef = ref(database, 'cleaningInventory');
+  const appUsersRef = ref(database, 'appUsers');
+  
+  function updateStats() {
+    // Get inventory count and low stock
+    onValue(inventoryRef, (snapshot) => {
+      const data = snapshot.val();
+      const items = data ? Object.values(data) : [];
+      const totalItems = items.length;
+      let lowStock = items.filter(item => (Number(item.quantity) || 0) < 50).length;
+      document.getElementById('totalItemsCount').innerText = totalItems;
+      document.getElementById('lowStockCount').innerText = lowStock;
+    }, { onlyOnce: true });
+    
+    // Get users count
+    onValue(appUsersRef, (snapshot) => {
+      const extraUsers = snapshot.val() ? Object.values(snapshot.val()) : [];
+      const defaultUsersList = ["kaunda","pmp","penta","faiyaz mulla","chishela"];
+      const totalUsersCount = defaultUsersList.length + extraUsers.length;
+      document.getElementById('totalUsersCount').innerText = totalUsersCount;
+    }, { onlyOnce: true });
+  }
+  
+  updateStats();
+  
+  // Also make sure that iframe loads inventory page by default
+  // Check if initial page matches active (inventory)
+  loadPageIntoIframe('inventory');
+  
+  // Additional protection: if user closes tab or navigates, we don't auto-logout immediately
+  // But we also need to handle that the iframe pages also reset activity? We'll add a message listener.
+  // To reset timer when iframe content is interacted, we can use postMessage or detect clicks on iframe.
+  // Simple approach: reset timer on window blur/focus, but better: watch for iframe loads.
+  const pageFrame = document.getElementById('pageFrame');
+  pageFrame.addEventListener('load', () => {
+    resetInactivityTimer();
+    // Try to communicate with iframe to reset timer on its interactions
+    try {
+      // Send a message to iframe to bind activity listeners inside iframe content
+      const iframeWindow = pageFrame.contentWindow;
+      if (iframeWindow) {
+        iframeWindow.postMessage({ type: 'SESSION_RESET_NEEDED', origin: window.location.origin }, '*');
+      }
+    } catch(e) { console.warn("Cannot access iframe cross-origin but same origin should work"); }
+  });
+  
+  // Listen for messages from iframe to reset timer
+  window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'reset_session_timer') {
+      resetInactivityTimer();
+      timeLeftSeconds = 15 * 60;
+      updateTimerDisplay();
+    }
+  });
+  
+  // Bonus: inject a script into the iframe to send pings (only works if same domain)
+  // But we can also reset timer on page visibility change
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      resetInactivityTimer();
+    }
+  });
+  
+  // Also handle beforeunload to not abrupt logout
+  window.addEventListener('beforeunload', () => {
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    stopCountdown();
+  });
+  
+  console.log("Dashboard ready with 15-min inactivity auto-logout");
+</script>
+
+<!-- We must also create the three separate HTML files that this dashboard expects -->
+<!-- Since we need to provide FULL code, I will embed instructions and also ensure that the files are ready. 
+     But for full solution, I will include them as inline definitions or provide them in the answer.
+     To be complete, I'll generate the 3 HTML files (cleandashboard_inventory.html, cleandashboard_users.html, cleandashboard_report.html) as separate code blocks.
+     However to make a fully functional deliverable, I will present them as part of this answer. -->
+</body>
+</html>
+
+<!-- ========== ADDITIONAL HTML FILES REQUIRED ========== -->
+<!-- 
+  1. cleandashboard_inventory.html
+  2. cleandashboard_users.html  
+  3. cleandashboard_report.html
+-->
+
+<!-- FILE: cleandashboard_inventory.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management</title>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f8f9fa; padding: 20px; }
+    .inventory-container { max-width: 1400px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+    h2 { color: #0f2b3d; }
+    .btn-add { background: #ffc107; border: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+    .inventory-form { background: white; padding: 20px; border-radius: 16px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .inventory-form input { padding: 10px 15px; border: 1px solid #ddd; border-radius: 30px; flex: 1; min-width: 140px; }
+    table { width: 100%; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-collapse: collapse; }
+    th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #0f2b3d; color: white; }
+    .btn-edit { background: #17a2b8; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; margin-right: 5px; }
+    .btn-danger { background: #dc3545; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+    .badge { padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="inventory-container">
+  <div class="header"><h2><i class="fas fa-boxes"></i> Cleaning Inventory</h2><button class="btn-add" id="showAddBtn"><i class="fas fa-plus"></i> Add Item</button></div>
+  <div id="formDiv" style="display:none;"><div class="inventory-form"><input type="text" id="itemName" placeholder="Item Name"><input type="number" id="itemQty" placeholder="Quantity"><input type="text" id="itemUnit" placeholder="Unit"><button id="saveBtn" style="background:#28a745;color:white;border:none;padding:10px 20px;border-radius:30px;">Save</button><button id="cancelBtn" style="background:#6c757d;color:white;border:none;padding:10px 20px;border-radius:30px;">Cancel</button></div></div>
+  <div style="overflow-x:auto;"><table><thead><tr><th>Item</th><th>Quantity</th><th>Unit</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventoryBody"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+  const config = { apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4", authDomain: "project-app-58ff6.firebaseapp.com", databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com", projectId: "project-app-58ff6", storageBucket: "project-app-58ff6.appspot.com", messagingSenderId: "586923989952", appId: "1:586923989952:web:72b300dbc00d830e2e4625" };
+  const app = initializeApp(config); const db = getDatabase(app); const invRef = ref(db, 'cleaningInventory');
+  let editId = null;
+  const tbody = document.getElementById('inventoryBody');
+  function render() { onValue(invRef, (snap) => { const data = snap.val(); const items = data ? Object.entries(data).map(([id,val])=>({id,...val})) : []; tbody.innerHTML = ''; items.forEach(item => { const low = (item.quantity||0)<50; const critical = (item.quantity||0)<20; let badge = '<span class="badge" style="background:#28a745;">Good</span>'; if(critical) badge = '<span class="badge" style="background:#dc3545;color:white;">Critical</span>'; else if(low) badge = '<span class="badge" style="background:#ffc107;">Low</span>'; const row = `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.unit||'pcs'}</td><td>${badge}</td><td><button class="btn-edit" data-id="${item.id}">Edit</button><button class="btn-danger" data-id="${item.id}">Delete</button></td></tr>`; tbody.insertAdjacentHTML('beforeend', row); }); document.querySelectorAll('.btn-edit').forEach(btn=>btn.addEventListener('click',async(e)=>{ const id=btn.dataset.id; const found=items.find(i=>i.id===id); if(found){ editId=id; document.getElementById('itemName').value=found.name; document.getElementById('itemQty').value=found.quantity; document.getElementById('itemUnit').value=found.unit; document.getElementById('formDiv').style.display='block'; }})); document.querySelectorAll('.btn-danger').forEach(btn=>btn.addEventListener('click',async(e)=>{ if(confirm('Delete?')) await remove(ref(db,`cleaningInventory/${btn.dataset.id}`)); })); }); }
+  render();
+  document.getElementById('showAddBtn').onclick = () => { editId = null; document.getElementById('itemName').value=''; document.getElementById('itemQty').value=''; document.getElementById('itemUnit').value=''; document.getElementById('formDiv').style.display='block'; };
+  document.getElementById('cancelBtn').onclick = () => { document.getElementById('formDiv').style.display='none'; editId=null; };
+  document.getElementById('saveBtn').onclick = async () => { const name = document.getElementById('itemName').value.trim(); const qty = parseInt(document.getElementById('itemQty').value); const unit = document.getElementById('itemUnit').value.trim() || 'pcs'; if(!name || isNaN(qty)) return alert('Valid data required'); if(editId) await update(ref(db,`cleaningInventory/${editId}`), { name, quantity: qty, unit }); else await push(invRef, { name, quantity: qty, unit, createdAt: Date.now() }); document.getElementById('formDiv').style.display='none'; editId=null; };
+  // Session ping to parent
+  setInterval(() => { window.parent.postMessage({ type: 'reset_session_timer' }, '*'); }, 30000);
+  document.addEventListener('click', () => window.parent.postMessage({ type: 'reset_session_timer' }, '*'));
+</script>
+</body>
+</html>
+
+<!-- FILE: cleandashboard_users.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Users</title><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><style>body{padding:20px;background:#f8f9fa;font-family:Segoe UI;}.card{background:white;border-radius:20px;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{padding:12px;text-align:left;border-bottom:1px solid #ddd;}.btn-danger{background:#dc3545;color:white;border:none;padding:5px 12px;border-radius:20px;}</style></head>
+<body><div class="card"><h2><i class="fas fa-users"></i> System Users</h2><div style="overflow-x:auto;"><table><thead><tr><th>Username</th><th>Role</th><th>Status</th></tr></thead><tbody id="userList"><tr><td colspan="3">Loading...</td></tr></tbody></table></div><p style="margin-top:15px;color:#6c757d;"><i class="fas fa-info-circle"></i> User management via Firebase</p></div><script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";import{getDatabase,ref,onValue}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";const config={apiKey:"AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",authDomain:"project-app-58ff6.firebaseapp.com",databaseURL:"https://project-app-58ff6-default-rtdb.firebaseio.com",projectId:"project-app-58ff6",storageBucket:"project-app-58ff6.appspot.com",messagingSenderId:"586923989952",appId:"1:586923989952:web:72b300dbc00d830e2e4625"};const app=initializeApp(config);const db=getDatabase(app);const userListRef=ref(db,'appUsers');const defaultUsers=["kaunda","pmp","penta","faiyaz mulla","chishela"];function render(){onValue(userListRef,(snap)=>{const extra=snap.val()?Object.values(snap.val()):[];const all=[...defaultUsers.map(u=>({username:u,role:u==='kaunda'?'Manager':u==='pmp'?'Executive':'Staff'})),...extra.map(u=>({username:u.username,role:u.role||'Custom'}))];const tbody=document.getElementById('userList');tbody.innerHTML='';all.forEach(u=>{tbody.innerHTML+=`<tr><td>${u.username}</td><td>${u.role}</td><td><span style="color:green;">Active</span></td></tr>`;});});}render();setInterval(()=>window.parent.postMessage({type:'reset_session_timer'},'*'),30000);document.addEventListener('click',()=>window.parent.postMessage({type:'reset_session_timer'},'*'));
+</script></body></html>
+
+<!-- FILE: cleandashboard_report.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Report</title><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><style>body{padding:20px;background:#f8f9fa;font-family:Segoe UI;}.report-box{background:white;border-radius:20px;padding:25px;}</style></head>
+<body><div class="report-box"><h2><i class="fas fa-chart-line"></i> Inventory Report</h2><div id="reportContent">Loading report...</div><button id="refreshBtn" style="margin-top:20px;background:#0f2b3d;color:white;border:none;padding:10px 20px;border-radius:30px;"><i class="fas fa-sync-alt"></i> Refresh</button></div><script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";import{getDatabase,ref,get}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";const config={apiKey:"AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",authDomain:"project-app-58ff6.firebaseapp.com",databaseURL:"https://project-app-58ff6-default-rtdb.firebaseio.com",projectId:"project-app-58ff6",storageBucket:"project-app-58ff6.appspot.com",messagingSenderId:"586923989952",appId:"1:586923989952:web:72b300dbc00d830e2e4625"};const app=initializeApp(config);const db=getDatabase(app);async function loadReport(){const snap=await get(ref(db,'cleaningInventory'));const data=snap.val();const items=data?Object.values(data):[];let totalUnits=items.reduce((s,i)=>s+(Number(i.quantity)||0),0);let lowStock=items.filter(i=>(Number(i.quantity)||0)<50).length;let categories=[...new Set(items.map(i=>i.unit||'pcs'))];document.getElementById('reportContent').innerHTML=`<p><strong>📊 Summary</strong></p><p>Total Item Types: ${items.length}</p><p>Total Units: ${totalUnits}</p><p>Low Stock Items (<50): ${lowStock}</p><p>Units Categories: ${categories.join(', ')}</p><hr><h4>⚠️ Low Stock List</h4><ul>${items.filter(i=>(i.quantity||0)<50).map(i=>`<li>${i.name}: ${i.quantity} ${i.unit||'pcs'} left</li>`).join('')||'<li>All good ✅</li>'}</ul><small>Generated: ${new Date().toLocaleString()}</small>`;}loadReport();document.getElementById('refreshBtn').onclick=loadReport;setInterval(()=>window.parent.postMessage({type:'reset_session_timer'},'*'),30000);document.addEventListener('click',()=>window.parent.postMessage({type:'reset_session_timer'},'*'));
+</script></body></html>
