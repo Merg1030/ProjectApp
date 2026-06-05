@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Kaunda | Cleaning Dashboard</title>
+  <title>Kaunda | Penta Cleaning Dashboard</title>
   
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
@@ -96,9 +96,9 @@
 
     /* Logout button in sidebar */
     .logout-item {
-      margin-top: 40px;
+      margin-top: 50px;
       border-top: 1px solid rgba(255,255,255,0.2);
-      padding-top: 20px;
+      padding-top: 15px;
     }
     
     .logout-item li {
@@ -108,6 +108,7 @@
     .logout-item li:hover {
       background: rgba(220,53,69,0.2);
       border-left-color: #dc3545;
+      color: #fff;
     }
 
     /* Main Content */
@@ -132,6 +133,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 15px;
     }
 
     .menu-toggle {
@@ -154,7 +157,7 @@
     }
 
     .welcome-area {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: 600;
       color: #1e2a3a;
       background: #f8f9fc;
@@ -163,11 +166,27 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 20px;
+      flex-wrap: wrap;
     }
 
-    .welcome-area i {
-      margin-right: 5px;
+    .welcome-text i {
+      margin-right: 8px;
+      color: #ffc107;
+    }
+    
+    .session-timer {
+      font-size: 0.85rem;
+      background: #e9ecef;
+      padding: 6px 14px;
+      border-radius: 30px;
+      color: #495057;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .session-timer i {
       color: #ffc107;
     }
     
@@ -175,7 +194,7 @@
       background: #dc3545;
       color: white;
       border: none;
-      padding: 8px 18px;
+      padding: 8px 20px;
       border-radius: 30px;
       cursor: pointer;
       font-size: 0.9rem;
@@ -183,6 +202,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      font-weight: 500;
     }
     
     .logout-top-btn:hover {
@@ -190,65 +210,20 @@
       transform: scale(1.02);
     }
 
-    /* Dashboard Cards */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px;
-      margin-bottom: 35px;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      transition: transform 0.2s;
-      border-left: 6px solid #ffc107;
-    }
-
-    .stat-card h3 {
-      font-size: 0.9rem;
-      color: #6c757d;
-      margin-bottom: 10px;
-    }
-
-    .stat-number {
-      font-size: 2.2rem;
-      font-weight: bold;
-      color: #0f2b3d;
-    }
-
-    /* IFrame Container */
+    /* IFrame Container - Clean no extra content */
     .iframe-container {
       background: white;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      height: calc(100vh - 160px);
-      min-height: 500px;
+      height: calc(100vh - 140px);
+      min-height: 550px;
     }
     
     iframe {
       width: 100%;
       height: 100%;
       border: none;
-    }
-    
-    .content-placeholder {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      text-align: center;
-      color: #6c757d;
-    }
-    
-    .session-timer {
-      font-size: 0.8rem;
-      background: #e9ecef;
-      padding: 5px 12px;
-      border-radius: 20px;
-      color: #495057;
     }
 
     @media (max-width: 768px) {
@@ -258,11 +233,12 @@
       .main-content {
         margin-left: 0;
       }
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
       .iframe-container {
-        height: calc(100vh - 200px);
+        height: calc(100vh - 180px);
+      }
+      .welcome-area {
+        font-size: 0.9rem;
+        gap: 10px;
       }
     }
   </style>
@@ -273,7 +249,7 @@
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <h3><i class="fas fa-broom"></i> PentaClean</h3>
-    <p>Inventory Manager</p>
+    <p>Cleaning Management</p>
   </div>
   <ul class="sidebar-menu">
     <li data-page="inventory" class="active">
@@ -285,11 +261,11 @@
     <li data-page="report">
       <i class="fas fa-chart-line"></i> <span>Report</span>
     </li>
-    <li class="logout-item" data-page="logout">
-      <li style="list-style: none;" data-page="logout">
+    <div class="logout-item">
+      <li data-page="logout">
         <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
       </li>
-    </li>
+    </div>
   </ul>
 </div>
 
@@ -298,7 +274,7 @@
   <div class="top-bar">
     <button class="menu-toggle" id="toggleSidebarBtn"><i class="fas fa-bars"></i></button>
     <div class="welcome-area">
-      <div>
+      <div class="welcome-text">
         <i class="fas fa-user-check"></i> Welcome, <span id="userNameDisplay">Kaunda</span>
       </div>
       <div class="session-timer" id="sessionTimer">
@@ -310,22 +286,15 @@
     </div>
   </div>
 
-  <!-- Stats Cards Dashboard Summary -->
-  <div class="stats-grid">
-    <div class="stat-card"><h3><i class="fas fa-tools"></i> Total Items</h3><div class="stat-number" id="totalItemsCount">0</div></div>
-    <div class="stat-card"><h3><i class="fas fa-users"></i> System Users</h3><div class="stat-number" id="totalUsersCount">0</div></div>
-    <div class="stat-card"><h3><i class="fas fa-exclamation-triangle"></i> Low Stock (<50)</h3><div class="stat-number" id="lowStockCount">0</div></div>
-  </div>
-
-  <!-- Dynamic Content Area (loads HTML files) -->
+  <!-- Dynamic Content Area - loads external HTML files -->
   <div id="dynamicContentArea" class="iframe-container">
-    <iframe id="pageFrame" src="cleandashboard_inventory.html" title="Dashboard Panel"></iframe>
+    <iframe id="pageFrame" src="Cleaninventory.html" title="Dashboard Panel"></iframe>
   </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
 
   // Firebase Config (same as login)
   const firebaseConfig = {
@@ -352,6 +321,15 @@
   let countdownInterval;
   let timeLeftSeconds = 15 * 60; // 900 seconds
   
+  function updateTimerDisplay() {
+    const minutes = Math.floor(timeLeftSeconds / 60);
+    const seconds = timeLeftSeconds % 60;
+    const timerSpan = document.getElementById('timerText');
+    if (timerSpan) {
+      timerSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+  }
+  
   function resetInactivityTimer() {
     // Clear existing timers
     if (inactivityTimer) clearTimeout(inactivityTimer);
@@ -360,17 +338,8 @@
     updateTimerDisplay();
     // Start new inactivity timer
     inactivityTimer = setTimeout(() => {
-      performLogout("Session expired due to inactivity (15 minutes).");
+      performLogout("Session expired due to 15 minutes of inactivity.");
     }, SESSION_TIMEOUT_MS);
-  }
-  
-  function updateTimerDisplay() {
-    const minutes = Math.floor(timeLeftSeconds / 60);
-    const seconds = timeLeftSeconds % 60;
-    const timerSpan = document.getElementById('timerText');
-    if (timerSpan) {
-      timerSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
   }
   
   function startCountdown() {
@@ -393,9 +362,15 @@
     activityEvents.forEach(event => {
       document.addEventListener(event, () => {
         resetInactivityTimer();
-        // Also reset the countdown value
         timeLeftSeconds = 15 * 60;
         updateTimerDisplay();
+        // Also notify iframe to reset its own internal timer if needed
+        try {
+          const iframe = document.getElementById('pageFrame');
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'reset_session_timer' }, '*');
+          }
+        } catch(e) { /* cross-origin ignore */ }
       });
     });
   }
@@ -404,12 +379,9 @@
   function performLogout(reason = "User logged out") {
     stopCountdown();
     if (inactivityTimer) clearTimeout(inactivityTimer);
-    // Clear session data
-    localStorage.removeItem('currentUser');
-    // Add logout record to Firebase (optional)
+    
+    // Save logout record to Firebase
     try {
-      const { getDatabase, ref, push } = import("https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js");
-      // We'll just do a simple record if possible but not blocking
       const logoutRef = ref(database, 'logoutLogs');
       push(logoutRef, {
         username: currentUser,
@@ -418,8 +390,11 @@
       }).catch(e => console.warn("Logout log error:", e));
     } catch(e) { console.warn(e); }
     
-    // Redirect to login page
-    window.location.href = 'index.html'; // Change to your login page filename
+    // Clear session data
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('sessionActive');
+    // Redirect to login page (index.html or login page)
+    window.location.href = 'index.html';
   }
   
   // Manual logout function
@@ -429,7 +404,7 @@
   
   // Bind logout buttons
   document.getElementById('logoutTopBtn')?.addEventListener('click', manualLogout);
-  const logoutSidebarItem = document.querySelector('.logout-item li, [data-page="logout"]');
+  const logoutSidebarItem = document.querySelector('.logout-item li');
   if (logoutSidebarItem) {
     logoutSidebarItem.addEventListener('click', manualLogout);
   }
@@ -446,15 +421,15 @@
   toggleBtn.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
     mainContent.classList.toggle('expanded');
-    resetInactivityTimer(); // reset timer on interaction
+    resetInactivityTimer();
   });
   
   // ========== SIDEBAR NAVIGATION - Load respective HTML files ==========
-  // Define mapping: each menu item loads a different HTML file
+  // Mapping: menu items to HTML files (Cleaninventory.html, Cleanuser.html, Cleanreport.html)
   const pageFileMapping = {
-    inventory: 'cleandashboard_inventory.html',
-    users: 'cleandashboard_users.html',
-    report: 'cleandashboard_report.html'
+    inventory: 'Cleaninventory.html',
+    users: 'Cleanuser.html',
+    report: 'Cleanreport.html'
   };
   
   // Function to load HTML file into iframe
@@ -462,14 +437,9 @@
     const iframe = document.getElementById('pageFrame');
     const fileName = pageFileMapping[pageKey];
     if (fileName && iframe) {
-      // Add timestamp to prevent caching issues (optional)
       iframe.src = fileName;
     } else {
       console.error("Page not found:", pageKey);
-      const container = document.getElementById('dynamicContentArea');
-      if (container) {
-        container.innerHTML = `<div class="content-placeholder"><i class="fas fa-exclamation-triangle"></i> <h3>Page not found</h3><p>The requested page "${pageKey}" could not be loaded.</p></div>`;
-      }
     }
   }
   
@@ -491,54 +461,10 @@
     });
   });
   
-  // Load inventory stats from Firebase (for dashboard stats)
-  const inventoryRef = ref(database, 'cleaningInventory');
-  const appUsersRef = ref(database, 'appUsers');
-  
-  function updateStats() {
-    // Get inventory count and low stock
-    onValue(inventoryRef, (snapshot) => {
-      const data = snapshot.val();
-      const items = data ? Object.values(data) : [];
-      const totalItems = items.length;
-      let lowStock = items.filter(item => (Number(item.quantity) || 0) < 50).length;
-      document.getElementById('totalItemsCount').innerText = totalItems;
-      document.getElementById('lowStockCount').innerText = lowStock;
-    }, { onlyOnce: true });
-    
-    // Get users count
-    onValue(appUsersRef, (snapshot) => {
-      const extraUsers = snapshot.val() ? Object.values(snapshot.val()) : [];
-      const defaultUsersList = ["kaunda","pmp","penta","faiyaz mulla","chishela"];
-      const totalUsersCount = defaultUsersList.length + extraUsers.length;
-      document.getElementById('totalUsersCount').innerText = totalUsersCount;
-    }, { onlyOnce: true });
-  }
-  
-  updateStats();
-  
-  // Also make sure that iframe loads inventory page by default
-  // Check if initial page matches active (inventory)
+  // Load inventory page by default
   loadPageIntoIframe('inventory');
   
-  // Additional protection: if user closes tab or navigates, we don't auto-logout immediately
-  // But we also need to handle that the iframe pages also reset activity? We'll add a message listener.
-  // To reset timer when iframe content is interacted, we can use postMessage or detect clicks on iframe.
-  // Simple approach: reset timer on window blur/focus, but better: watch for iframe loads.
-  const pageFrame = document.getElementById('pageFrame');
-  pageFrame.addEventListener('load', () => {
-    resetInactivityTimer();
-    // Try to communicate with iframe to reset timer on its interactions
-    try {
-      // Send a message to iframe to bind activity listeners inside iframe content
-      const iframeWindow = pageFrame.contentWindow;
-      if (iframeWindow) {
-        iframeWindow.postMessage({ type: 'SESSION_RESET_NEEDED', origin: window.location.origin }, '*');
-      }
-    } catch(e) { console.warn("Cannot access iframe cross-origin but same origin should work"); }
-  });
-  
-  // Listen for messages from iframe to reset timer
+  // Listen for messages from iframe to reset timer (cross-origin safe)
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'reset_session_timer') {
       resetInactivityTimer();
@@ -547,70 +473,88 @@
     }
   });
   
-  // Bonus: inject a script into the iframe to send pings (only works if same domain)
-  // But we can also reset timer on page visibility change
+  // Handle page visibility (user switches tabs and comes back)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       resetInactivityTimer();
     }
   });
   
-  // Also handle beforeunload to not abrupt logout
+  // Clean up timers on page unload
   window.addEventListener('beforeunload', () => {
     if (inactivityTimer) clearTimeout(inactivityTimer);
     stopCountdown();
   });
   
-  console.log("Dashboard ready with 15-min inactivity auto-logout");
+  console.log("Dashboard ready - 15min auto-logout active | Pages: Cleaninventory.html, Cleanuser.html, Cleanreport.html");
 </script>
-
-<!-- We must also create the three separate HTML files that this dashboard expects -->
-<!-- Since we need to provide FULL code, I will embed instructions and also ensure that the files are ready. 
-     But for full solution, I will include them as inline definitions or provide them in the answer.
-     To be complete, I'll generate the 3 HTML files (cleandashboard_inventory.html, cleandashboard_users.html, cleandashboard_report.html) as separate code blocks.
-     However to make a fully functional deliverable, I will present them as part of this answer. -->
 </body>
 </html>
 
-<!-- ========== ADDITIONAL HTML FILES REQUIRED ========== -->
-<!-- 
-  1. cleandashboard_inventory.html
-  2. cleandashboard_users.html  
-  3. cleandashboard_report.html
--->
-
-<!-- FILE: cleandashboard_inventory.html -->
+<!-- ========================================================================= -->
+<!-- CLEANINVENTORY.HTML - Full featured inventory management page -->
+<!-- ========================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory Management</title>
+  <title>Clean Inventory Manager</title>
   <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: #f8f9fa; padding: 20px; }
-    .inventory-container { max-width: 1400px; margin: 0 auto; }
+    body { background: #f5f7fb; padding: 25px; }
+    .container { max-width: 1400px; margin: 0 auto; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
-    h2 { color: #0f2b3d; }
-    .btn-add { background: #ffc107; border: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
-    .inventory-form { background: white; padding: 20px; border-radius: 16px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .inventory-form input { padding: 10px 15px; border: 1px solid #ddd; border-radius: 30px; flex: 1; min-width: 140px; }
-    table { width: 100%; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-collapse: collapse; }
-    th, td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #0f2b3d; color: white; }
-    .btn-edit { background: #17a2b8; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; margin-right: 5px; }
-    .btn-danger { background: #dc3545; color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
-    .badge { padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; }
+    h2 { color: #0f2b3d; font-size: 1.6rem; }
+    .btn-add { background: #ffc107; border: none; padding: 12px 28px; border-radius: 40px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
+    .btn-add:hover { background: #e0a800; transform: scale(1.02); }
+    .form-card { background: white; padding: 25px; border-radius: 20px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); align-items: flex-end; }
+    .form-card input { padding: 12px 18px; border: 1px solid #e0e0e0; border-radius: 40px; flex: 1; min-width: 160px; font-size: 0.95rem; }
+    .form-card button { padding: 12px 24px; border-radius: 40px; border: none; font-weight: bold; cursor: pointer; }
+    .btn-save { background: #28a745; color: white; }
+    .btn-cancel { background: #6c757d; color: white; }
+    table { width: 100%; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-collapse: collapse; }
+    th, td { padding: 15px 12px; text-align: left; border-bottom: 1px solid #edf2f7; }
+    th { background: #0f2b3d; color: white; font-weight: 600; }
+    tr:hover { background: #f8f9fc; }
+    .btn-edit { background: #17a2b8; color: white; border: none; padding: 6px 14px; border-radius: 30px; cursor: pointer; margin-right: 8px; font-size: 0.85rem; }
+    .btn-delete { background: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 0.85rem; }
+    .status-badge { padding: 5px 12px; border-radius: 30px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+    .status-good { background: #d4edda; color: #155724; }
+    .status-low { background: #fff3cd; color: #856404; }
+    .status-critical { background: #f8d7da; color: #721c24; }
+    .empty-row { text-align: center; padding: 40px; color: #6c757d; }
+    @media (max-width: 768px) { body { padding: 15px; } th, td { padding: 10px 8px; } }
   </style>
 </head>
 <body>
-<div class="inventory-container">
-  <div class="header"><h2><i class="fas fa-boxes"></i> Cleaning Inventory</h2><button class="btn-add" id="showAddBtn"><i class="fas fa-plus"></i> Add Item</button></div>
-  <div id="formDiv" style="display:none;"><div class="inventory-form"><input type="text" id="itemName" placeholder="Item Name"><input type="number" id="itemQty" placeholder="Quantity"><input type="text" id="itemUnit" placeholder="Unit"><button id="saveBtn" style="background:#28a745;color:white;border:none;padding:10px 20px;border-radius:30px;">Save</button><button id="cancelBtn" style="background:#6c757d;color:white;border:none;padding:10px 20px;border-radius:30px;">Cancel</button></div></div>
-  <div style="overflow-x:auto;"><table><thead><tr><th>Item</th><th>Quantity</th><th>Unit</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventoryBody"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
+<div class="container">
+  <div class="header">
+    <h2><i class="fas fa-boxes"></i> Cleaning Materials Inventory</h2>
+    <button class="btn-add" id="showAddBtn"><i class="fas fa-plus-circle"></i> Add New Item</button>
+  </div>
+  <div id="formContainer" style="display: none;">
+    <div class="form-card">
+      <input type="text" id="itemName" placeholder="Item name (e.g., Floor Cleaner)" autocomplete="off">
+      <input type="number" id="itemQty" placeholder="Quantity" autocomplete="off">
+      <input type="text" id="itemUnit" placeholder="Unit (Liters, pcs, kg)" autocomplete="off">
+      <button class="btn-save" id="saveBtn"><i class="fas fa-save"></i> Save</button>
+      <button class="btn-cancel" id="cancelBtn"><i class="fas fa-times"></i> Cancel</button>
+    </div>
+  </div>
+  <div style="overflow-x: auto;">
+    <table id="inventoryTable">
+      <thead>
+        <tr><th>Item Name</th><th>Quantity</th><th>Unit</th><th>Stock Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="inventoryBody">
+        <tr><td colspan="5" class="empty-row"><i class="fas fa-spinner fa-spin"></i> Loading inventory...</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
@@ -619,30 +563,168 @@
   const app = initializeApp(config); const db = getDatabase(app); const invRef = ref(db, 'cleaningInventory');
   let editId = null;
   const tbody = document.getElementById('inventoryBody');
-  function render() { onValue(invRef, (snap) => { const data = snap.val(); const items = data ? Object.entries(data).map(([id,val])=>({id,...val})) : []; tbody.innerHTML = ''; items.forEach(item => { const low = (item.quantity||0)<50; const critical = (item.quantity||0)<20; let badge = '<span class="badge" style="background:#28a745;">Good</span>'; if(critical) badge = '<span class="badge" style="background:#dc3545;color:white;">Critical</span>'; else if(low) badge = '<span class="badge" style="background:#ffc107;">Low</span>'; const row = `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.unit||'pcs'}</td><td>${badge}</td><td><button class="btn-edit" data-id="${item.id}">Edit</button><button class="btn-danger" data-id="${item.id}">Delete</button></td></tr>`; tbody.insertAdjacentHTML('beforeend', row); }); document.querySelectorAll('.btn-edit').forEach(btn=>btn.addEventListener('click',async(e)=>{ const id=btn.dataset.id; const found=items.find(i=>i.id===id); if(found){ editId=id; document.getElementById('itemName').value=found.name; document.getElementById('itemQty').value=found.quantity; document.getElementById('itemUnit').value=found.unit; document.getElementById('formDiv').style.display='block'; }})); document.querySelectorAll('.btn-danger').forEach(btn=>btn.addEventListener('click',async(e)=>{ if(confirm('Delete?')) await remove(ref(db,`cleaningInventory/${btn.dataset.id}`)); })); }); }
-  render();
-  document.getElementById('showAddBtn').onclick = () => { editId = null; document.getElementById('itemName').value=''; document.getElementById('itemQty').value=''; document.getElementById('itemUnit').value=''; document.getElementById('formDiv').style.display='block'; };
-  document.getElementById('cancelBtn').onclick = () => { document.getElementById('formDiv').style.display='none'; editId=null; };
-  document.getElementById('saveBtn').onclick = async () => { const name = document.getElementById('itemName').value.trim(); const qty = parseInt(document.getElementById('itemQty').value); const unit = document.getElementById('itemUnit').value.trim() || 'pcs'; if(!name || isNaN(qty)) return alert('Valid data required'); if(editId) await update(ref(db,`cleaningInventory/${editId}`), { name, quantity: qty, unit }); else await push(invRef, { name, quantity: qty, unit, createdAt: Date.now() }); document.getElementById('formDiv').style.display='none'; editId=null; };
-  // Session ping to parent
+  function renderInventory() {
+    onValue(invRef, (snap) => {
+      const data = snap.val(); const items = data ? Object.entries(data).map(([id,val])=>({id, ...val})) : [];
+      if(items.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="empty-row"><i class="fas fa-box-open"></i> No items. Click "Add New Item"</td></tr>'; return; }
+      tbody.innerHTML = '';
+      items.forEach(item => {
+        const qty = Number(item.quantity) || 0;
+        let statusClass = '', statusText = '';
+        if(qty < 20) { statusClass = 'status-critical'; statusText = 'Critical'; }
+        else if(qty < 50) { statusClass = 'status-low'; statusText = 'Low Stock'; }
+        else { statusClass = 'status-good'; statusText = 'In Stock'; }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><i class="fas fa-broom"></i> ${escapeHtml(item.name || 'Unnamed')}</td>
+          <td><strong>${qty}</strong></td>
+          <td>${escapeHtml(item.unit || 'pcs')}</td>
+          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+          <td><button class="btn-edit" data-id="${item.id}"><i class="fas fa-edit"></i> Edit</button><button class="btn-delete" data-id="${item.id}"><i class="fas fa-trash-alt"></i> Delete</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+      document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.dataset.id; const found = items.find(i => i.id === id); if(found) { editId = id; document.getElementById('itemName').value = found.name; document.getElementById('itemQty').value = found.quantity; document.getElementById('itemUnit').value = found.unit || ''; document.getElementById('formContainer').style.display = 'block'; } }));
+      document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', async (e) => { if(confirm('Delete this item?')) await remove(ref(db, `cleaningInventory/${btn.dataset.id}`)); }));
+    });
+  }
+  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+  renderInventory();
+  document.getElementById('showAddBtn').onclick = () => { editId = null; document.getElementById('itemName').value = ''; document.getElementById('itemQty').value = ''; document.getElementById('itemUnit').value = ''; document.getElementById('formContainer').style.display = 'block'; };
+  document.getElementById('cancelBtn').onclick = () => { document.getElementById('formContainer').style.display = 'none'; editId = null; };
+  document.getElementById('saveBtn').onclick = async () => { const name = document.getElementById('itemName').value.trim(); const qty = parseInt(document.getElementById('itemQty').value); const unit = document.getElementById('itemUnit').value.trim() || 'pcs'; if(!name || isNaN(qty)) { alert('Please enter valid item name and quantity'); return; } if(editId) { await update(ref(db, `cleaningInventory/${editId}`), { name, quantity: qty, unit }); } else { await push(invRef, { name, quantity: qty, unit, createdAt: Date.now() }); } document.getElementById('formContainer').style.display = 'none'; editId = null; };
   setInterval(() => { window.parent.postMessage({ type: 'reset_session_timer' }, '*'); }, 30000);
   document.addEventListener('click', () => window.parent.postMessage({ type: 'reset_session_timer' }, '*'));
 </script>
 </body>
 </html>
 
-<!-- FILE: cleandashboard_users.html -->
+<!-- ========================================================================= -->
+<!-- CLEANUSER.HTML - User management page -->
+<!-- ========================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Users</title><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><style>body{padding:20px;background:#f8f9fa;font-family:Segoe UI;}.card{background:white;border-radius:20px;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{padding:12px;text-align:left;border-bottom:1px solid #ddd;}.btn-danger{background:#dc3545;color:white;border:none;padding:5px 12px;border-radius:20px;}</style></head>
-<body><div class="card"><h2><i class="fas fa-users"></i> System Users</h2><div style="overflow-x:auto;"><table><thead><tr><th>Username</th><th>Role</th><th>Status</th></tr></thead><tbody id="userList"><tr><td colspan="3">Loading...</td></tr></tbody></table></div><p style="margin-top:15px;color:#6c757d;"><i class="fas fa-info-circle"></i> User management via Firebase</p></div><script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";import{getDatabase,ref,onValue}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";const config={apiKey:"AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",authDomain:"project-app-58ff6.firebaseapp.com",databaseURL:"https://project-app-58ff6-default-rtdb.firebaseio.com",projectId:"project-app-58ff6",storageBucket:"project-app-58ff6.appspot.com",messagingSenderId:"586923989952",appId:"1:586923989952:web:72b300dbc00d830e2e4625"};const app=initializeApp(config);const db=getDatabase(app);const userListRef=ref(db,'appUsers');const defaultUsers=["kaunda","pmp","penta","faiyaz mulla","chishela"];function render(){onValue(userListRef,(snap)=>{const extra=snap.val()?Object.values(snap.val()):[];const all=[...defaultUsers.map(u=>({username:u,role:u==='kaunda'?'Manager':u==='pmp'?'Executive':'Staff'})),...extra.map(u=>({username:u.username,role:u.role||'Custom'}))];const tbody=document.getElementById('userList');tbody.innerHTML='';all.forEach(u=>{tbody.innerHTML+=`<tr><td>${u.username}</td><td>${u.role}</td><td><span style="color:green;">Active</span></td></tr>`;});});}render();setInterval(()=>window.parent.postMessage({type:'reset_session_timer'},'*'),30000);document.addEventListener('click',()=>window.parent.postMessage({type:'reset_session_timer'},'*'));
-</script></body></html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean Users</title>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f5f7fb; padding: 25px; }
+    .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    h2 { color: #0f2b3d; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #edf2f7; }
+    th { background: #f8f9fc; color: #1e4663; }
+    .badge-active { background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: bold; }
+    .info-note { margin-top: 20px; padding: 12px; background: #e7f3ff; border-radius: 12px; color: #004085; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2><i class="fas fa-users-cog"></i> Authorized System Users</h2>
+  <div style="overflow-x: auto;">
+    <table>
+      <thead><tr><th>Username</th><th>Role / Access</th><th>Status</th></tr></thead>
+      <tbody id="userTableBody"><tr><td colspan="3"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr></tbody>
+    </table>
+  </div>
+  <div class="info-note"><i class="fas fa-info-circle"></i> User list includes default staff + custom users from database. Manage access via Firebase.</div>
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+  const config = { apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4", authDomain: "project-app-58ff6.firebaseapp.com", databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com", projectId: "project-app-58ff6", storageBucket: "project-app-58ff6.appspot.com", messagingSenderId: "586923989952", appId: "1:586923989952:web:72b300dbc00d830e2e4625" };
+  const app = initializeApp(config); const db = getDatabase(app);
+  const defaultUsers = [
+    { username: "kaunda", role: "Manager" }, { username: "pmp", role: "Executive" }, { username: "penta", role: "Staff" },
+    { username: "faiyaz mulla", role: "Admin" }, { username: "chishela", role: "Admin" }
+  ];
+  function loadUsers() {
+    onValue(ref(db, 'appUsers'), (snap) => {
+      const extra = snap.val() ? Object.values(snap.val()) : [];
+      const combined = [...defaultUsers, ...extra.map(u => ({ username: u.username, role: u.role || 'Custom User' }))];
+      const tbody = document.getElementById('userTableBody');
+      if(combined.length === 0) { tbody.innerHTML = '<tr><td colspan="3">No users found</td></tr>'; return; }
+      tbody.innerHTML = combined.map(u => `<tr><td><i class="fas fa-user-circle"></i> ${escapeHtml(u.username)}</td><td>${escapeHtml(u.role)}</td><td><span class="badge-active">Active</span></td></tr>`).join('');
+    });
+  }
+  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  loadUsers();
+  setInterval(() => window.parent.postMessage({ type: 'reset_session_timer' }, '*'), 30000);
+  document.addEventListener('click', () => window.parent.postMessage({ type: 'reset_session_timer' }, '*'));
+</script>
+</body>
+</html>
 
-<!-- FILE: cleandashboard_report.html -->
+<!-- ========================================================================= -->
+<!-- CLEANREPORT.HTML - Report and analytics page -->
+<!-- ========================================================================= -->
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Report</title><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><style>body{padding:20px;background:#f8f9fa;font-family:Segoe UI;}.report-box{background:white;border-radius:20px;padding:25px;}</style></head>
-<body><div class="report-box"><h2><i class="fas fa-chart-line"></i> Inventory Report</h2><div id="reportContent">Loading report...</div><button id="refreshBtn" style="margin-top:20px;background:#0f2b3d;color:white;border:none;padding:10px 20px;border-radius:30px;"><i class="fas fa-sync-alt"></i> Refresh</button></div><script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";import{getDatabase,ref,get}from"https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";const config={apiKey:"AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4",authDomain:"project-app-58ff6.firebaseapp.com",databaseURL:"https://project-app-58ff6-default-rtdb.firebaseio.com",projectId:"project-app-58ff6",storageBucket:"project-app-58ff6.appspot.com",messagingSenderId:"586923989952",appId:"1:586923989952:web:72b300dbc00d830e2e4625"};const app=initializeApp(config);const db=getDatabase(app);async function loadReport(){const snap=await get(ref(db,'cleaningInventory'));const data=snap.val();const items=data?Object.values(data):[];let totalUnits=items.reduce((s,i)=>s+(Number(i.quantity)||0),0);let lowStock=items.filter(i=>(Number(i.quantity)||0)<50).length;let categories=[...new Set(items.map(i=>i.unit||'pcs'))];document.getElementById('reportContent').innerHTML=`<p><strong>📊 Summary</strong></p><p>Total Item Types: ${items.length}</p><p>Total Units: ${totalUnits}</p><p>Low Stock Items (<50): ${lowStock}</p><p>Units Categories: ${categories.join(', ')}</p><hr><h4>⚠️ Low Stock List</h4><ul>${items.filter(i=>(i.quantity||0)<50).map(i=>`<li>${i.name}: ${i.quantity} ${i.unit||'pcs'} left</li>`).join('')||'<li>All good ✅</li>'}</ul><small>Generated: ${new Date().toLocaleString()}</small>`;}loadReport();document.getElementById('refreshBtn').onclick=loadReport;setInterval(()=>window.parent.postMessage({type:'reset_session_timer'},'*'),30000);document.addEventListener('click',()=>window.parent.postMessage({type:'reset_session_timer'},'*'));
-</script></body></html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean Reports</title>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f5f7fb; padding: 25px; }
+    .report-container { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    h2 { color: #0f2b3d; margin-bottom: 25px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-box { background: #f8f9fc; padding: 20px; border-radius: 16px; text-align: center; border-left: 5px solid #ffc107; }
+    .stat-number { font-size: 2rem; font-weight: bold; color: #0f2b3d; }
+    .stat-label { color: #6c757d; margin-top: 8px; }
+    .lowstock-list { background: #fef9e6; padding: 20px; border-radius: 16px; margin-top: 20px; }
+    .lowstock-list ul { margin-left: 20px; margin-top: 10px; }
+    .lowstock-list li { margin: 8px 0; }
+    button { background: #0f2b3d; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; margin-top: 20px; }
+    hr { margin: 20px 0; }
+  </style>
+</head>
+<body>
+<div class="report-container">
+  <h2><i class="fas fa-chart-pie"></i> Inventory Analytics Report</h2>
+  <div id="reportStats" class="stats-grid">
+    <div class="stat-box"><div class="stat-number" id="totalItems">-</div><div class="stat-label">Total Item Types</div></div>
+    <div class="stat-box"><div class="stat-number" id="totalUnits">-</div><div class="stat-label">Total Units in Stock</div></div>
+    <div class="stat-box"><div class="stat-number" id="lowStockCount">-</div><div class="stat-label">Items Low Stock (&lt;50)</div></div>
+    <div class="stat-box"><div class="stat-number" id="criticalCount">-</div><div class="stat-label">Critical (&lt;20)</div></div>
+  </div>
+  <div class="lowstock-list" id="lowStockList"><h4><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h4><p>Loading...</p></div>
+  <hr>
+  <button id="refreshReportBtn"><i class="fas fa-sync-alt"></i> Refresh Report</button>
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+  const config = { apiKey: "AIzaSyDxQ9ai-C2RlJy27p_kdHkKXeqz1Cpbyh4", authDomain: "project-app-58ff6.firebaseapp.com", databaseURL: "https://project-app-58ff6-default-rtdb.firebaseio.com", projectId: "project-app-58ff6", storageBucket: "project-app-58ff6.appspot.com", messagingSenderId: "586923989952", appId: "1:586923989952:web:72b300dbc00d830e2e4625" };
+  const app = initializeApp(config); const db = getDatabase(app);
+  async function generateReport() {
+    const snap = await get(ref(db, 'cleaningInventory'));
+    const data = snap.val(); const items = data ? Object.values(data) : [];
+    const totalTypes = items.length;
+    const totalUnits = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+    const lowStock = items.filter(i => (Number(i.quantity) || 0) < 50).length;
+    const critical = items.filter(i => (Number(i.quantity) || 0) < 20).length;
+    document.getElementById('totalItems').innerText = totalTypes;
+    document.getElementById('totalUnits').innerText = totalUnits;
+    document.getElementById('lowStockCount').innerText = lowStock;
+    document.getElementById('criticalCount').innerText = critical;
+    const lowItems = items.filter(i => (Number(i.quantity) || 0) < 50);
+    const lowHtml = lowItems.length ? `<ul>${lowItems.map(i => `<li><strong>${i.name}</strong> - ${i.quantity} ${i.unit || 'pcs'} remaining</li>`).join('')}</ul>` : '<p>✅ All items are well stocked above 50 units.</p>';
+    document.getElementById('lowStockList').innerHTML = `<h4><i class="fas fa-exclamation-triangle"></i> Low Stock Alerts</h4>${lowHtml}`;
+  }
+  generateReport();
+  document.getElementById('refreshReportBtn').onclick = generateReport;
+  setInterval(() => window.parent.postMessage({ type: 'reset_session_timer' }, '*'), 30000);
+  document.addEventListener('click', () => window.parent.postMessage({ type: 'reset_session_timer' }, '*'));
+</script>
+</body>
+</html>
