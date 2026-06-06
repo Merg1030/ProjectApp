@@ -1042,7 +1042,7 @@
       // Clear any stored session data
       sessionStorage.clear();
       localStorage.removeItem('userSession');
-      window.location.href = 'logout.html';
+      window.location.href = 'index.html';
     }
 
     logoutBtn.addEventListener('click', performLogout);
@@ -1246,7 +1246,7 @@
           if (item) {
             const newQty = item.quantity - assignment.quantity;
             if (newQty < 0) { showAlert(`Not enough stock for ${item.name}`, 'error'); return; }
-            await updateDoc(doc(db, 'inventory', assignment.id), { quantity: newQty, updatedAt: Timestamp.now() });
+            await updateDoc(doc(db, 'cleanInventory', assignment.id), { quantity: newQty, updatedAt: Timestamp.now() });
           }
         }
 
@@ -1313,11 +1313,11 @@
 
       try {
         if (editingId) {
-          await updateDoc(doc(db, 'inventory', editingId), itemData);
+          await updateDoc(doc(db, 'cleanInventory', editingId), itemData);
           showAlert('Item updated successfully', 'success');
         } else {
           itemData.createdAt = Timestamp.now();
-          await addDoc(collection(db, 'inventory'), itemData);
+          await addDoc(collection(db, 'cleanInventory'), itemData);
           showAlert('Item added successfully', 'success');
         }
         itemModal.classList.remove('show');
@@ -1429,8 +1429,8 @@
       try {
         for (const item of restockItems) {
           const newQty = item.currentQty + item.restockQty;
-          await updateDoc(doc(db, 'inventory', item.id), { quantity: newQty, updatedAt: Timestamp.now() });
-          await addDoc(collection(db, 'restockHistory'), {
+          await updateDoc(doc(db, 'cleanInventory', item.id), { quantity: newQty, updatedAt: Timestamp.now() });
+          await addDoc(collection(db, 'cleanRestockHistory'), {
             productId: item.id,
             productName: item.name,
             previousQuantity: item.currentQty,
@@ -1456,7 +1456,7 @@
         loadingState.style.display = 'flex';
         tableBody.innerHTML = '';
 
-        const snapshot = await getDocs(query(collection(db, 'inventory'), orderBy('name')));
+        const snapshot = await getDocs(query(collection(db, 'cleanInventory'), orderBy('name')));
         allInventory = [];
 
         snapshot.forEach(doc => {
@@ -1539,7 +1539,7 @@
         historyLoadingState.style.display = 'flex';
         historyTableBody.innerHTML = '';
 
-        const snapshot = await getDocs(query(collection(db, 'restockHistory'), orderBy('date', 'desc')));
+        const snapshot = await getDocs(query(collection(db, 'cleanRestockHistory'), orderBy('date', 'desc')));
         allRestockHistory = [];
         snapshot.forEach(doc => allRestockHistory.push(doc.data()));
 
@@ -1612,7 +1612,7 @@
     window.deleteItem = async function(id) {
       if (confirm('Are you sure you want to delete this item?')) {
         try {
-          await deleteDoc(doc(db, 'inventory', id));
+          await deleteDoc(doc(db, 'cleanInventory', id));
           showAlert('Item deleted successfully', 'success');
           loadInventory();
         } catch (error) {
@@ -1644,7 +1644,7 @@
     refreshBtn.addEventListener('click', loadInventory);
 
     // Real-time listener
-    onSnapshot(collection(db, 'inventory'), () => loadInventory());
+    onSnapshot(collection(db, 'cleanInventory'), () => loadInventory());
 
     // Initialize
     loadInventory();
