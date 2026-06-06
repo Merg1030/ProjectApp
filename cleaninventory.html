@@ -601,10 +601,7 @@
           <button class="action-link primary" id="addItemBtn">
             <i class="fas fa-plus"></i> Add Item
           </button>
-          <div class="action-divider"></div>
-          <button class="action-link" id="refreshBtn">
-            <i class="fas fa-refresh"></i> Refresh
-          </button>
+
         </div>
       </div>
 
@@ -666,7 +663,7 @@
         <div class="search-filter">
           <input type="date" class="search-input" id="historyDateFilter">
           <button class="btn btn-secondary" id="downloadPdfBtn" style="font-size: 0.78rem; padding: 6px 12px;">
-            <i class="fas fa-download"></i> Download CSV
+            <i class="fas fa-file-pdf"></i> Download PDF
           </button>
         </div>
 
@@ -772,6 +769,11 @@
             <label class="form-label">Quantity to Assign *</label>
             <input type="number" class="form-input" id="assignQty" required min="1" value="1">
           </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Assignment Date *</label>
+          <input type="date" class="form-input" id="assignDate" required>
         </div>
 
         <div style="display: flex; gap: 8px; margin-top: 14px;">
@@ -928,7 +930,6 @@
     const toggleBtn = document.getElementById('toggleBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const clockTime = document.getElementById('clockTime');
-    const refreshBtn = document.getElementById('refreshBtn');
     const addItemBtn = document.getElementById('addItemBtn');
     const restockBtn = document.getElementById('restockBtn');
     const assignItemsBtn = document.getElementById('assignItemsBtn');
@@ -1236,6 +1237,9 @@
       if (!userId) { showAlert('Please select a user', 'error'); return; }
       if (assignmentItems.length === 0) { showAlert('No items to assign. Add items first.', 'error'); return; }
 
+      const assignDateVal = document.getElementById('assignDate').value;
+      if (!assignDateVal) { showAlert('Please select an assignment date', 'error'); return; }
+
       const selectedUser = allUsers.find(u => u.id === userId);
       if (!selectedUser) { showAlert('User not found', 'error'); return; }
       if (!confirm(`Assign ${assignmentItems.length} item(s) to ${selectedUser.name || selectedUser.email}?`)) return;
@@ -1250,6 +1254,7 @@
           }
         }
 
+        const assignedDate = new Date(assignDateVal + 'T00:00:00');
         await addDoc(collection(db, 'assignments'), {
           userId,
           userName: selectedUser.name || selectedUser.email,
@@ -1257,9 +1262,9 @@
           userDepartment: selectedUser.department || 'N/A',
           items: assignmentItems.map(a => ({ itemId: a.id, itemName: a.name, quantity: a.quantity, value: a.value || 0, price: a.price || 0 })),
           assignedBy: 'Admin',
-          assignedAt: Timestamp.now(),
+          assignedAt: Timestamp.fromDate(assignedDate),
           status: 'assigned',
-          timestamp: new Date().toISOString()
+          timestamp: assignedDate.toISOString()
         });
 
         showAlert(`Successfully assigned ${assignmentItems.length} item(s) to ${selectedUser.name || selectedUser.email}!`, 'success');
@@ -1282,6 +1287,9 @@
       itemSelect.value = '';
       availableStockDisplay.value = '';
       assignQty.value = 1;
+      // Default date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('assignDate').value = today;
       assignModal.classList.add('show');
     });
 
@@ -1621,29 +1629,90 @@
       }
     };
 
-    // Download CSV
+    // Download PDF
     downloadPdfBtn.addEventListener('click', () => {
       if (allRestockHistory.length === 0) { showAlert('No restock history to download', 'error'); return; }
 
-      let csv = 'Product,Previous Qty,Restocked Qty,Current Qty,Price,Date,Time\n';
-      allRestockHistory.forEach(item => {
-        const date = item.date.toDate ? item.date.toDate() : new Date(item.date);
-        csv += `"${item.productName}",${item.previousQuantity},${item.restockedQuantity},${item.currentQuantity},${(item.price || 0).toFixed(2)},"${date.toLocaleDateString('en-US')}","${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}"\n`;
-      });
-
-      const el = document.createElement('a');
-      el.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
-      el.setAttribute('download', `restock-history-${new Date().toISOString().split('T')[0]}.csv`);
-      el.style.display = 'none';
-      document.body.appendChild(el);
-      el.click();
-      document.body.removeChild(el);
-      showAlert('CSV downloaded successfully!', 'success');
+      // Load jsPDF dynamically
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        const script2 = document.createElement('script');
+        script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+        script2.onload = () => generatePDF();
+        document.head.appendChild(script2);
+      };
+      document.head.appendChild(script);
     });
 
-    refreshBtn.addEventListener('click', loadInventory);
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-    // Real-time listener
+      // Header
+      pdf.setFillColor(17, 24, 39);
+      pdf.rect(0, 0, 297, 22, 'F');
+      pdf.setTextColor(245, 158, 11);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('HAZIDA CLEANING', 14, 10);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Restock History Report', 14, 17);
+      const now = new Date();
+      pdf.text(`Generated: ${now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 200, 10);
+      pdf.text(`Total Records: ${allRestockHistory.length}`, 200, 17);
+
+      // Table
+      const rows = allRestockHistory.map(item => {
+        const date = item.date.toDate ? item.date.toDate() : new Date(item.date);
+        return [
+          item.productName,
+          item.previousQuantity,
+          item.restockedQuantity,
+          item.currentQuantity,
+          (item.price || 0).toFixed(2),
+          date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        ];
+      });
+
+      pdf.autoTable({
+        startY: 28,
+        head: [['Product', 'Prev Qty', 'Restocked', 'New Qty', 'Price', 'Date', 'Time']],
+        body: rows,
+        theme: 'grid',
+        headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 8, textColor: [30, 30, 30] },
+        alternateRowStyles: { fillColor: [248, 249, 250] },
+        columnStyles: {
+          0: { cellWidth: 70 },
+          1: { cellWidth: 25, halign: 'center' },
+          2: { cellWidth: 28, halign: 'center' },
+          3: { cellWidth: 25, halign: 'center' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 45 },
+          6: { cellWidth: 30 }
+        },
+        margin: { left: 14, right: 14 },
+        styles: { overflow: 'linebreak', cellPadding: 3 }
+      });
+
+      // Footer
+      const pageCount = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(7);
+        pdf.setTextColor(150);
+        pdf.text(`Page ${i} of ${pageCount}`, 283, 205, { align: 'right' });
+        pdf.text('Hazida Cleaning — Confidential', 14, 205);
+      }
+
+      pdf.save(`restock-history-${now.toISOString().split('T')[0]}.pdf`);
+      showAlert('PDF downloaded successfully!', 'success');
+    }
+
     onSnapshot(collection(db, 'cleanInventory'), () => loadInventory());
 
     // Initialize
