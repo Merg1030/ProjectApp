@@ -3,243 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Hazida | stock Report</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <title>Hazida | Stock Movement Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+    :root {
+      --bg: #f4f5f7;
+      --sidebar: #111827;
+      --sidebar-hover: #1f2937;
+      --accent: #f59e0b;
+      --accent-dim: rgba(245,158,11,0.13);
+      --text: #111827;
+      --text-muted: #6b7280;
+      --white: #ffffff;
+      --border: #e5e7eb;
+      --sidebar-w: 260px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #f4f7fc;
-      font-family: 'Inter', sans-serif;
-      padding: 28px 24px;
-      color: #0f172a;
-    }
-    .container {
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      margin-bottom: 28px;
-    }
-    .title h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #1e293b, #f59e0b);
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-    }
-    .title p {
-      color: #475569;
-      font-size: 0.8rem;
-      margin-top: 6px;
-    }
-    .action-group {
-      display: flex;
-      gap: 12px;
-    }
-    .btn {
-      padding: 8px 20px;
-      border-radius: 40px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      border: none;
-      background: white;
-      border: 1px solid #e2e8f0;
-    }
-    .btn-primary {
-      background: #f59e0b;
-      border-color: #f59e0b;
-      color: white;
-    }
-    .btn-primary:hover { background: #d97706; transform: translateY(-1px); }
-    .btn-outline:hover { background: #fef9e3; border-color: #f59e0b; }
-
-    .filter-card {
-      background: white;
-      border-radius: 28px;
-      padding: 16px 24px;
-      margin-bottom: 28px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 20px;
-      border: 1px solid #eef2f8;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-    .date-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #f8fafc;
-      padding: 6px 18px;
-      border-radius: 60px;
-      border: 1px solid #e2edf2;
-    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; font-size: 13px; }
+    
+    .sidebar { width: var(--sidebar-w); background: var(--sidebar); display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; transition: width 0.28s ease; overflow: hidden; z-index: 1000; }
+    .sidebar.collapsed { width: 0; }
+    .sidebar-brand { padding: 20px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0; }
+    .brand-name { font-size: 1rem; font-weight: 600; color: #fff; white-space: nowrap; }
+    .brand-dot { display: inline-block; width: 7px; height: 7px; background: var(--accent); border-radius: 50%; margin-right: 7px; }
+    .brand-sub { font-size: 0.65rem; color: rgba(255,255,255,0.35); margin-top: 3px; text-transform: uppercase; white-space: nowrap; }
+    .sidebar-nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 1px; overflow-y: auto; }
+    .nav-section-label { font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.25); text-transform: uppercase; padding: 8px 10px 3px; white-space: nowrap; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 7px; cursor: pointer; color: rgba(255,255,255,0.5); font-size: 0.82rem; font-weight: 500; transition: all 0.15s ease; text-decoration: none; white-space: nowrap; background: none; border: none; width: 100%; text-align: left; }
+    .nav-item i { width: 15px; text-align: center; font-size: 0.82rem; flex-shrink: 0; }
+    .nav-item:hover { background: var(--sidebar-hover); color: rgba(255,255,255,0.88); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+    .nav-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 6px 0; }
+    .nav-item.logout { color: rgba(255,100,100,0.55); }
+    .nav-item.logout:hover { background: rgba(220,53,69,0.13); color: #f87171; }
+    
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .toggle-btn { width: 30px; height: 30px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.82rem; }
+    .toggle-btn:hover { background: var(--border); color: var(--text); }
+    .page-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .user-chip { display: flex; align-items: center; gap: 7px; background: var(--bg); border: 1px solid var(--border); border-radius: 40px; padding: 4px 12px 4px 6px; font-size: 0.78rem; font-weight: 500; color: var(--text); }
+    .user-avatar { width: 22px; height: 22px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; color: #fff; }
+    .clock-display { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .clock-display span { color: var(--accent); }
+    
+    .content-area { flex: 1; overflow: auto; padding: 18px; }
+    .page-header { margin-bottom: 20px; }
+    .page-header h1 { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+    .filter-card { background: white; border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; border: 1px solid var(--border); }
+    .date-group { display: flex; align-items: center; gap: 10px; background: var(--bg); padding: 6px 14px; border-radius: 40px; border: 1px solid var(--border); }
     .date-group label { font-weight: 600; font-size: 0.75rem; color: #334155; }
-    input[type="date"] {
-      border: none;
-      background: transparent;
-      font-family: monospace;
-      font-size: 0.85rem;
-      padding: 6px 0;
-      outline: none;
-      color: #0f172a;
-    }
-    .range-badge {
-      background: #fff7ed;
-      padding: 6px 16px;
-      border-radius: 60px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: #b45309;
-    }
-    .matrix-wrapper {
-      background: white;
-      border-radius: 24px;
-      border: 1px solid #eef2f6;
-      overflow-x: auto;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-    }
-    .inventory-matrix {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.74rem;
-      min-width: 1100px;
-    }
-    .inventory-matrix th {
-      background: #fefcf5;
-      padding: 12px 8px;
-      text-align: center;
-      font-weight: 700;
-      color: #334155;
-      border-bottom: 2px solid #f1e8d9;
-      border-right: 1px solid #f0e9df;
-    }
-    .inventory-matrix td {
-      padding: 9px 6px;
-      text-align: center;
-      border-bottom: 1px solid #f0f2f5;
-      border-right: 1px solid #f5f2ec;
-      color: #1e293b;
-      font-weight: 500;
-    }
-    .location-col {
-      background: #fafdff;
-      font-weight: 700;
-      text-align: left;
-      position: sticky;
-      left: 0;
-      background-color: white;
-      z-index: 2;
-    }
-    .product-header {
-      background: #fdf9f0;
-      font-weight: 700;
-      min-width: 110px;
-    }
-    .zero-cell {
-      color: #a0abb9;
-      background-color: #fefefe;
-      font-weight: 400;
-    }
-    .positive-cell {
-      background: #eef9ef;
-      color: #2c6e2f;
-      font-weight: 700;
-    }
-    .restock-highlight {
-      background: #fff0db;
-      color: #b45309;
-    }
-    .footer-note {
-      margin-top: 24px;
-      background: #fef9ef;
-      border-radius: 20px;
-      padding: 12px 20px;
-      font-size: 0.7rem;
-      color: #5b6e8c;
-      text-align: center;
-    }
-    .loading-overlay {
-      text-align: center;
-      padding: 40px;
-    }
-    .spinner {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      border: 3px solid #e2e8f0;
-      border-top-color: #f59e0b;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
+    input[type="date"] { border: none; background: transparent; font-family: monospace; font-size: 0.85rem; padding: 5px 0; outline: none; color: #0f172a; }
+    .range-badge { background: #fff7ed; padding: 6px 16px; border-radius: 40px; font-size: 0.75rem; font-weight: 500; color: #b45309; }
+    .btn { padding: 7px 18px; border-radius: 40px; font-weight: 600; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; border: none; background: white; border: 1px solid var(--border); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .btn-primary:hover { background: #d97706; }
+    .btn-outline:hover { background: #fef9e3; border-color: var(--accent); }
+    
+    .matrix-wrapper { background: white; border-radius: 20px; border: 1px solid var(--border); overflow-x: auto; margin-bottom: 28px; }
+    .inventory-matrix { width: 100%; border-collapse: collapse; font-size: 0.74rem; min-width: 1100px; }
+    .inventory-matrix th { background: #fefcf5; padding: 12px 8px; text-align: center; font-weight: 700; color: #334155; border-bottom: 2px solid #f1e8d9; border-right: 1px solid #f0e9df; }
+    .inventory-matrix td { padding: 9px 6px; text-align: center; border-bottom: 1px solid #f0f2f5; border-right: 1px solid #f5f2ec; color: #1e293b; font-weight: 500; }
+    .location-col { background: #fafdff; font-weight: 700; text-align: left; position: sticky; left: 0; background-color: white; z-index: 2; }
+    .product-header { background: #fdf9f0; font-weight: 700; min-width: 110px; }
+    .zero-cell { color: #a0abb9; background-color: #fefefe; font-weight: 400; }
+    .positive-cell { background: #eef9ef; color: #2c6e2f; font-weight: 700; }
+    .total-row { background: #1e293b; color: white; font-weight: 700; }
+    .total-row td { background: #1e293b; color: #f59e0b; font-weight: 700; }
+    
+    .charts-section { margin-top: 8px; margin-bottom: 20px; }
+    .charts-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .chart-card { background: white; border-radius: 20px; border: 1px solid var(--border); padding: 16px; flex: 1; min-width: 280px; }
+    .chart-card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .chart-card h3 i { color: var(--accent); }
+    canvas { max-height: 260px; width: 100%; }
+    
+    .footer-note { margin-top: 16px; background: #fef9ef; border-radius: 16px; padding: 10px 16px; font-size: 0.7rem; color: #5b6e8c; text-align: center; }
+    .loading-overlay { text-align: center; padding: 40px; }
+    .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 760px) {
-      body { padding: 16px; }
-      .filter-card { flex-direction: column; align-items: stretch; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    
+    @media print {
+      .sidebar, .topbar, .filter-card, .btn, .toggle-btn, .footer-note { display: none !important; }
+      .matrix-wrapper { margin: 0; }
+      body { padding: 0; margin: 0; }
     }
+    @media (max-width: 760px) { .content-area { padding: 12px; } .filter-card { flex-direction: column; align-items: stretch; } }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <div class="title">
-      <h1><i class="fas fa-chalkboard-user" style="color:#f59e0b;"></i> Stock Movement</h1>
- 
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name"><span class="brand-dot"></span>Kaunda</div>
+    <div class="brand-sub">Hazida Cleaning</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <a href="cleandashboard.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+    <div class="nav-section-label" style="margin-top:10px;">Management</div>
+    <a href="cleanaccounts.html" class="nav-item"><i class="fas fa-wallet"></i><span>Accounts</span></a>
+    <a href="users.html" class="nav-item"><i class="fas fa-users"></i><span>Users</span></a>
+    <a href="cleaninventory.html" class="nav-item"><i class="fas fa-boxes-stacked"></i><span>Inventory</span></a>
+    <a href="#" class="nav-item active" id="reportsNavBtn"><i class="fas fa-file-chart-column"></i><span>Stock Report</span></a>
+    <div class="nav-divider" style="margin-top:10px;"></div>
+    <button class="nav-item logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="toggle-btn" id="toggleBtn"><i class="fas fa-bars"></i></button>
+      <div class="page-title">Stock Movement <span>| Complete Report</span></div>
     </div>
-    <div class="action-group">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="clock-display"><i class="fas fa-clock" style="color:var(--accent);margin-right:5px;"></i><span id="clockTime">00:00:00</span></div>
+      <div class="user-chip"><div class="user-avatar">A</div><span id="userName">Admin</span></div>
+    </div>
+  </div>
+
+  <div class="content-area" id="reportContent">
+    <div class="page-header"><h1><i class="fas fa-chalkboard-user" style="color:var(--accent);"></i> Stock Movement Report</h1></div>
+
+    <div class="filter-card">
+      <div class="date-group"><label><i class="far fa-calendar-alt"></i> From</label><input type="date" id="startDateFilter"></div>
+      <div class="date-group"><label><i class="far fa-calendar-alt"></i> To</label><input type="date" id="endDateFilter"></div>
+      <button class="btn btn-primary" id="applyDateBtn" style="background:#1e293b; border:none;">Apply range <i class="fas fa-chevron-right"></i></button>
+      <div class="range-badge" id="dateInfoBadge">Loading...</div>
       <button class="btn btn-outline" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
       <button class="btn btn-primary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF</button>
     </div>
-  </div>
 
-  <div class="filter-card">
-    <div class="date-group">
-      <label><i class="far fa-calendar-alt"></i> From</label>
-      <input type="date" id="startDateFilter">
+    <div class="matrix-wrapper">
+      <table class="inventory-matrix" id="matrixTable">
+        <thead id="matrixHeader"><tr><th style="min-width:160px;"> Location / Department</th><th class="product-header">Loading products...</th></tr></thead>
+        <tbody id="matrixBody"><tr><td colspan="20" class="loading-overlay"><div class="spinner"></div> Fetching data...</td></tr></tbody>
+      </table>
     </div>
-    <div class="date-group">
-      <label><i class="far fa-calendar-alt"></i> To</label>
-      <input type="date" id="endDateFilter">
-    </div>
-    <button class="btn btn-primary" id="applyDateBtn" style="background:#1e293b; border:none;">Apply range <i class="fas fa-chevron-right"></i></button>
-    <div class="range-badge" id="dateInfoBadge">Loading...</div>
-  </div>
 
-  <div class="matrix-wrapper">
-    <table class="inventory-matrix" id="matrixTable">
-      <thead id="matrixHeader">
-        <tr><th style="min-width: 160px;">Location / Department</th><th class="product-header">Loading products...</th></tr>
-      </thead>
-      <tbody id="matrixBody">
-        <tr><td colspan="20" class="loading-overlay"><div class="spinner"></div> Fetching locations & products...<br>Please wait</td></tr>
-      </tbody>
-    </table>
+    <div class="charts-section">
+      <div class="charts-row">
+        <div class="chart-card"><h3><i class="fas fa-chart-simple"></i> Top 5 Most Used Products</h3><canvas id="productsChart" width="400" height="220"></canvas></div>
+        <div class="chart-card"><h3><i class="fas fa-location-dot"></i> Top 5 Locations (by units)</h3><canvas id="locationsChart" width="400" height="220"></canvas></div>
+      </div>
+    </div>
+
   </div>
- 
+</div>
+
+<div class="modal" id="sessionWarning">
+  <div style="background:var(--white); border-radius:12px; padding:24px; max-width:380px; width:90%;">
+    <div style="text-align:center; margin-bottom:16px;"><i class="fas fa-hourglass-end" style="font-size:2rem;color:var(--accent);"></i></div>
+    <div style="text-align:center; margin-bottom:8px; font-size:1rem; font-weight:700;">Session Expiring Soon</div>
+    <div style="text-align:center; margin-bottom:16px; color:var(--text-muted);">Your session will expire due to inactivity.</div>
+    <div style="text-align:center; margin-bottom:16px; font-size:1.2rem; font-weight:700; color:var(--accent);"><span id="countdownTimer">60</span>s</div>
+    <div style="display:flex; gap:8px;"><button class="btn btn-primary" style="flex:1;" id="continueBtn">Continue</button><button class="btn btn-secondary" style="flex:1;" id="logoutWarningBtn">Logout</button></div>
+  </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-  import { 
-    getFirestore, 
-    collection, 
-    getDocs,
-    query,
-    orderBy
-  } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
@@ -249,13 +180,12 @@
     messagingSenderId: "411882772509",
     appId: "1:411882772509:web:08d613186c101a99f38ef4"
   };
-
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
-  // DOM elements
-  const matrixHeader = document.getElementById('matrixHeader');
-  const matrixBody = document.getElementById('matrixBody');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const sidebar = document.getElementById('sidebar');
   const startDateInput = document.getElementById('startDateFilter');
   const endDateInput = document.getElementById('endDateFilter');
   const applyBtn = document.getElementById('applyDateBtn');
@@ -263,272 +193,256 @@
   const exportBtn = document.getElementById('exportPdfBtn');
   const dateInfoBadge = document.getElementById('dateInfoBadge');
 
-  // Data stores
-  let allLocations = [];      // { id, name, department }
-  let allProducts = [];       // { id, name }
-  let assignmentsRaw = [];    // full assignments (userId, assignedDate, items)
-  let restocksRaw = [];       // { productName, quantity, date }
-  
-  let currentStartDate = null;
-  let currentEndDate = null;
+  let allLocations = [], allProducts = [], assignmentsRaw = [];
+  let currentStartDate = null, currentEndDate = null;
+  let productsChart = null, locationsChart = null;
 
-  function parseDateField(dateField) {
-    if (!dateField) return null;
-    if (dateField.toDate) return dateField.toDate();
-    if (dateField instanceof Date) return dateField;
-    if (typeof dateField === 'string') return new Date(dateField);
+  function parseDateField(field) {
+    if (!field) return null;
+    if (field.toDate) return field.toDate();
+    if (field instanceof Date) return field;
+    if (typeof field === 'string') return new Date(field);
     return null;
   }
+  
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
 
-  // 1. LOAD LOCATIONS (from cleaningUsers + any extra location from assignments)
   async function loadLocations() {
     try {
       const usersSnap = await getDocs(collection(db, 'cleaningUsers'));
       const locs = [];
       usersSnap.forEach(doc => {
-        const data = doc.data();
-        const name = data.name || data.fullName || data.locationName || 'Unnamed';
-        const department = data.department || data.role || 'Staff';
-        locs.push({ id: doc.id, name: name, department: department });
+        const d = doc.data();
+        locs.push({ id: doc.id, name: d.name || d.fullName || 'Unnamed', department: d.department || d.role || 'Staff' });
       });
-      // fallback if empty
       if (locs.length === 0) locs.push({ id: 'default', name: 'Head Office', department: 'Admin' });
       return locs;
-    } catch (err) {
-      console.warn("Locations error", err);
+    } catch (e) {
       return [{ id: 'fallback', name: 'Main Branch', department: 'Operations' }];
     }
   }
-
-  // 2. LOAD PRODUCTS from cleanInventory (name field)
+  
   async function loadProducts() {
     try {
       const invSnap = await getDocs(collection(db, 'cleanInventory'));
       const prods = [];
       invSnap.forEach(doc => {
-        const data = doc.data();
-        const pName = data.name || data.productName;
-        if (pName) prods.push({ id: doc.id, name: pName });
+        const name = doc.data().name;
+        if (name) prods.push({ id: doc.id, name: name });
       });
       if (prods.length === 0) prods.push({ id: 'sample', name: 'Cleaning Supply' });
-      prods.sort((a,b) => a.name.localeCompare(b.name));
+      prods.sort((a, b) => a.name.localeCompare(b.name));
       return prods;
-    } catch (err) {
-      console.error("Products error", err);
+    } catch (e) {
       return [{ id: 'default', name: 'General Item' }];
     }
   }
-
-  // 3. LOAD ASSIGNMENTS from 'assignments' collection (flatten items)
+  
   async function loadAssignments() {
     try {
-      const assignSnap = await getDocs(query(collection(db, 'assignments'), orderBy('assignedAt', 'desc')));
+      const snap = await getDocs(query(collection(db, 'assignments'), orderBy('assignedAt', 'desc')));
       const assigns = [];
-      assignSnap.forEach(doc => {
-        const data = doc.data();
-        const assignedDate = parseDateField(data.assignedAt) || new Date();
-        const userId = data.userId || data.locationId || data.user;
-        const userName = data.userName || data.locationName || 'Unknown';
-        const items = Array.isArray(data.items) ? data.items : [];
+      snap.forEach(doc => {
+        const d = doc.data();
         assigns.push({
-          id: doc.id,
-          userId: userId,
-          locationName: userName,
-          assignedDate: assignedDate,
-          items: items
+          userId: d.userId || d.locationId,
+          locationName: d.userName || d.locationName,
+          assignedDate: parseDateField(d.assignedAt) || new Date(),
+          items: Array.isArray(d.items) ? d.items : []
         });
       });
       return assigns;
-    } catch (err) {
-      console.error("Assignments error", err);
+    } catch (e) {
       return [];
     }
   }
 
-  // 4. LOAD RESTOCKS from 'cleanRestockHistory' (standard collection)
-  async function loadRestocks() {
-    try {
-      const restockSnap = await getDocs(query(collection(db, 'cleanRestockHistory'), orderBy('date', 'desc')));
-      const restocks = [];
-      restockSnap.forEach(doc => {
-        const data = doc.data();
-        const restockDate = parseDateField(data.date) || new Date();
-        const productName = data.productName || data.name;
-        if (!productName) return;
-        const qty = Number(data.restockedQuantity) || Number(data.quantity) || 0;
-        restocks.push({
-          id: doc.id,
-          productName: productName,
-          quantity: qty,
-          date: restockDate
-        });
-      });
-      // fallback: if no restock history, return empty (still show matrix)
-      return restocks;
-    } catch (err) {
-      console.warn("Restocks collection not found, using empty", err);
-      return [];
-    }
-  }
-
-  // Build master matrix
   async function buildFullMatrix() {
-    matrixBody.innerHTML = `<tr><td colspan="20" class="loading-overlay"><div class="spinner"></div> Building full matrix...<br>Loading locations & products</td></tr>`;
-    
-    const [locations, products, assignments, restocks] = await Promise.all([
-      loadLocations(),
-      loadProducts(),
-      loadAssignments(),
-      loadRestocks()
+    document.getElementById('matrixBody').innerHTML = '<tr><td colspan="20" class="loading-overlay"><div class="spinner"></div> Loading...</td></tr>';
+    const [locations, products, assignments] = await Promise.all([
+      loadLocations(), loadProducts(), loadAssignments()
     ]);
-    
     allLocations = locations;
     allProducts = products;
     assignmentsRaw = assignments;
-    restocksRaw = restocks;
-    
     renderMatrixHeader();
-    applyFiltersAndRender(); // will apply current date filter (or default)
+    applyFiltersAndRender();
   }
 
   function renderMatrixHeader() {
     if (!allProducts.length) {
-      matrixHeader.innerHTML = `<tr><th>Location</th><th>No products found</th></tr>`;
+      document.getElementById('matrixHeader').innerHTML = '<tr><th>Location</th><th>No products</th></tr>';
       return;
     }
-    let headerHtml = `<tr><th style="min-width: 160px;">📍 Location / Department</th>`;
-    allProducts.forEach(prod => {
-      let displayName = prod.name.length > 24 ? prod.name.slice(0,22)+'..' : prod.name;
-      headerHtml += `<th class="product-header" title="${escapeHtml(prod.name)}">${escapeHtml(displayName)}</th>`;
+    let html = '<tr><th style="min-width:160px;"> Location / Department</th>';
+    allProducts.forEach(p => {
+      let display = p.name.length > 24 ? p.name.slice(0, 22) + '..' : p.name;
+      html += '<th class="product-header" title="' + escapeHtml(p.name) + '">' + escapeHtml(display) + '</th>';
     });
-    headerHtml += `</tr>`;
-    matrixHeader.innerHTML = headerHtml;
+    html += '</tr>';
+    document.getElementById('matrixHeader').innerHTML = html;
   }
 
-  // filter assignments & restocks by date range
   function filterDataByDateRange() {
     let filteredAssign = [...assignmentsRaw];
-    let filteredRestocks = [...restocksRaw];
     if (currentStartDate && currentEndDate) {
       filteredAssign = filteredAssign.filter(a => a.assignedDate >= currentStartDate && a.assignedDate <= currentEndDate);
-      filteredRestocks = filteredRestocks.filter(r => r.date >= currentStartDate && r.date <= currentEndDate);
     }
-    return { filteredAssign, filteredRestocks };
+    return filteredAssign;
+  }
+
+  function getPeriodDescription() {
+    if (!currentStartDate || !currentEndDate) return "All time";
+    const diffDays = Math.round((currentEndDate - currentStartDate) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 31) return "1 month period";
+    if (diffDays <= 62) return "2 months period";
+    if (diffDays <= 93) return "3 months period";
+    return Math.round(diffDays / 30) + " months period";
   }
 
   function renderMatrixWithData() {
-    if (!allLocations.length || !allProducts.length) {
-      matrixBody.innerHTML = `<tr><td colspan="20" class="loading-overlay">⚠️ No locations or products loaded. Please ensure users & inventory exist.</td></tr>`;
-      return;
-    }
-
-    const { filteredAssign, filteredRestocks } = filterDataByDateRange();
+    if (!allLocations.length || !allProducts.length) return;
     
-    // Build assignment map: locationId (or name fallback) + productName => assigned quantity
-    const assignMap = new Map(); // key = `${locKey}::${prodName}`
+    const filteredAssign = filterDataByDateRange();
+    
+    // Build assignment map: location + product => quantity
+    const assignMap = new Map();
     for (const assign of filteredAssign) {
       const locKey = assign.userId || assign.locationName;
       if (!locKey) continue;
       for (const item of assign.items) {
-        const prodNameRaw = item.itemName || item.name;
-        if (!prodNameRaw) continue;
+        const prodName = item.itemName || item.name;
+        if (!prodName) continue;
         const qty = Number(item.quantity) || 0;
-        const mapKey = `${locKey}::${prodNameRaw}`;
-        assignMap.set(mapKey, (assignMap.get(mapKey) || 0) + qty);
+        const key = locKey + '::' + prodName;
+        assignMap.set(key, (assignMap.get(key) || 0) + qty);
       }
     }
-    
-    // Build restock map: productName => total restocked qty (global, not per location)
-    const restockMap = new Map();
-    for (const rest of filteredRestocks) {
-      const prodName = rest.productName;
-      if (!prodName) continue;
-      const restQty = Number(rest.quantity) || 0;
-      restockMap.set(prodName, (restockMap.get(prodName) || 0) + restQty);
+
+    // Calculate totals per product
+    const productTotals = new Map();
+    for (const prod of allProducts) {
+      productTotals.set(prod.name, 0);
     }
-    
-    // generate rows for each location
+
     let rowsHtml = '';
     for (const loc of allLocations) {
-      const locationDisplay = `${escapeHtml(loc.name)} <span style="font-size:0.65rem; color:#6c757d;">(${escapeHtml(loc.department)})</span>`;
-      rowsHtml += `<tr>`;
-      rowsHtml += `<td class="location-col" style="text-align:left; font-weight:600;">${locationDisplay}</td>`;
+      rowsHtml += '<tr>';
+      rowsHtml += '<td class="location-col" style="text-align:left; font-weight:600;">' + escapeHtml(loc.name) + ' <span style="font-size:0.65rem; color:#6c757d;">(' + escapeHtml(loc.department) + ')</span></td>';
       
       for (const prod of allProducts) {
-        // try matching by location ID or location name
-        let assignedQty = 0;
-        const primaryKey = `${loc.id}::${prod.name}`;
-        if (assignMap.has(primaryKey)) assignedQty = assignMap.get(primaryKey);
+        let assigned = 0;
+        const key1 = loc.id + '::' + prod.name;
+        const key2 = loc.name + '::' + prod.name;
+        if (assignMap.has(key1)) assigned = assignMap.get(key1);
+        else if (assignMap.has(key2)) assigned = assignMap.get(key2);
         else {
-          // fallback: match by location name string (legacy)
-          for (let [key, val] of assignMap.entries()) {
-            if (key.endsWith(`::${prod.name}`) && (key.startsWith(loc.id) || key.startsWith(loc.name))) {
-              assignedQty = val;
+          for (let [k, v] of assignMap) {
+            if (k.endsWith('::' + prod.name) && (k.startsWith(loc.id) || k.startsWith(loc.name))) {
+              assigned = v;
               break;
             }
           }
         }
+        // Add to product total
+        productTotals.set(prod.name, (productTotals.get(prod.name) || 0) + assigned);
         
-        const restockedQty = restockMap.get(prod.name) || 0;
-        
-        let cellClass = '';
-        let displayValue = '';
-        if (assignedQty === 0 && restockedQty === 0) {
-          cellClass = 'zero-cell';
-          displayValue = `<span style="font-size:0.7rem;">0</span>`;
-        } else {
-          cellClass = 'positive-cell';
-          displayValue = `<strong>${assignedQty}</strong>`;
-          if (restockedQty > 0) {
-            displayValue += ` <span style="font-size:0.65rem; background:#fff0db; padding:2px 6px; border-radius:16px; margin-left:4px;">R:${restockedQty}</span>`;
-          } else if (assignedQty > 0) {
-            displayValue += ` <span style="font-size:0.65rem; color:#8b5e3c;">(R:0)</span>`;
-          } else if (restockedQty > 0) {
-            displayValue = `<span style="color:#c2410c;">R:${restockedQty}</span>`;
-            cellClass = 'restock-highlight';
-          }
-        }
-        rowsHtml += `<td class="${cellClass}" style="font-size:0.73rem;">${displayValue}</td>`;
+        const cellClass = assigned === 0 ? 'zero-cell' : 'positive-cell';
+        rowsHtml += '<td class="' + cellClass + '" style="font-size:0.75rem;"><strong>' + assigned + '</strong></td>';
       }
-      rowsHtml += `</tr>`;
+      rowsHtml += '</tr>';
     }
     
-    // add a special footer row: global restock totals per product
-    rowsHtml += `<tr style="background: #fef4e8; border-top: 2px solid #ffe0b5;">
-      <td class="location-col" style="background:#fef4e8; font-weight:800;"> Total added</td>`;
+    // TOTAL row at bottom - sums all assigned quantities per product
+    rowsHtml += '<tr class="total-row"><td class="location-col" style="font-weight:800; background:#1e293b;"> TOTAL</td>';
     for (const prod of allProducts) {
-      const restockedQty = restockMap.get(prod.name) || 0;
-      rowsHtml += `<td style="background:#fff3e6; font-weight:700; color:#b45309;">${restockedQty > 0 ? `+${restockedQty}` : '0'}</td>`;
+      const total = productTotals.get(prod.name) || 0;
+      rowsHtml += '<td style="background:#1e293b; font-weight:700; color:#f59e0b;"><strong>' + total + '</strong></td>';
     }
-    rowsHtml += `</tr>`;
+    rowsHtml += '</tr>';
     
-    matrixBody.innerHTML = rowsHtml;
+    document.getElementById('matrixBody').innerHTML = rowsHtml;
+    
+    // Update Charts
+    updateCharts(filteredAssign);
     updateDateBadge();
   }
   
+  function updateCharts(filteredAssign) {
+    const productUsage = new Map();
+    const locationUsage = new Map();
+    
+    for (const assign of filteredAssign) {
+      let locName = assign.locationName || (assign.userId ? 'Location' : 'Unknown');
+      let locUnits = 0;
+      for (const item of assign.items) {
+        const prod = item.itemName || item.name;
+        const qty = Number(item.quantity) || 0;
+        if (prod) {
+          productUsage.set(prod, (productUsage.get(prod) || 0) + qty);
+          locUnits += qty;
+        }
+      }
+      locationUsage.set(locName, (locationUsage.get(locName) || 0) + locUnits);
+    }
+
+    const topProducts = Array.from(productUsage.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const topLocations = Array.from(locationUsage.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    
+    if (productsChart) productsChart.destroy();
+    if (locationsChart) locationsChart.destroy();
+    
+    const ctxProd = document.getElementById('productsChart').getContext('2d');
+    const ctxLoc = document.getElementById('locationsChart').getContext('2d');
+    
+    productsChart = new Chart(ctxProd, {
+      type: 'bar',
+      data: {
+        labels: topProducts.map(p => p[0].length > 20 ? p[0].slice(0, 18) + '..' : p[0]),
+        datasets: [{ label: 'Units Assigned', data: topProducts.map(p => p[1]), backgroundColor: '#f59e0b', borderRadius: 6 }]
+      },
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+    });
+    
+    locationsChart = new Chart(ctxLoc, {
+      type: 'bar',
+      data: {
+        labels: topLocations.map(l => l[0].length > 20 ? l[0].slice(0, 18) + '..' : l[0]),
+        datasets: [{ label: 'Units Received', data: topLocations.map(l => l[1]), backgroundColor: '#1e293b', borderRadius: 6 }]
+      },
+      options: { responsive: true, maintainAspectRatio: true }
+    });
+  }
+
   function updateDateBadge() {
     if (currentStartDate && currentEndDate) {
-      dateInfoBadge.innerHTML = `<i class="far fa-calendar-check"></i> ${currentStartDate.toLocaleDateString()} – ${currentEndDate.toLocaleDateString()}`;
+      dateInfoBadge.innerHTML = '<i class="far fa-calendar-check"></i> ' + currentStartDate.toLocaleDateString() + ' – ' + currentEndDate.toLocaleDateString() + ' (' + getPeriodDescription() + ')';
     } else {
-      dateInfoBadge.innerHTML = `All time (no filter)`;
+      dateInfoBadge.innerHTML = 'All time';
     }
   }
   
   function applyFiltersAndRender() {
-    if (!allLocations.length || !allProducts.length) return;
-    renderMatrixWithData();
+    if (allLocations.length && allProducts.length) renderMatrixWithData();
   }
   
-  // Set default dates (last 30 days)
   function setDefaultDates() {
     const today = new Date();
     const thirtyAgo = new Date();
     thirtyAgo.setDate(today.getDate() - 30);
-    startDateInput.value = thirtyAgo.toISOString().slice(0,10);
-    endDateInput.value = today.toISOString().slice(0,10);
+    startDateInput.value = thirtyAgo.toISOString().slice(0, 10);
+    endDateInput.value = today.toISOString().slice(0, 10);
     currentStartDate = new Date(startDateInput.value);
     currentEndDate = new Date(endDateInput.value);
-    currentEndDate.setHours(23,59,59,999);
+    currentEndDate.setHours(23, 59, 59, 999);
     updateDateBadge();
   }
   
@@ -540,8 +454,8 @@
       currentEndDate = null;
     } else {
       const start = new Date(startRaw);
-      let end = new Date(endRaw);
-      end.setHours(23,59,59,999);
+      const end = new Date(endRaw);
+      end.setHours(23, 59, 59, 999);
       if (start > end) {
         alert("Start date cannot be after end date");
         return;
@@ -552,92 +466,101 @@
     updateDateBadge();
     renderMatrixWithData();
   }
-  
-  // PDF export (landscape, clean matrix)
-  async function exportMatrixPDF() {
+
+  async function exportPDF() {
     const loadingMsg = document.createElement('div');
-    loadingMsg.innerText = '📄 Generating PDF report ...';
-    loadingMsg.style.position = 'fixed';
-    loadingMsg.style.bottom = '20px';
-    loadingMsg.style.right = '20px';
-    loadingMsg.style.background = '#1e293b';
-    loadingMsg.style.color = '#fff';
-    loadingMsg.style.padding = '10px 20px';
-    loadingMsg.style.borderRadius = '40px';
-    loadingMsg.style.zIndex = '9999';
-    loadingMsg.style.fontSize = '0.8rem';
+    loadingMsg.innerText = ' Generating PDF...';
+    loadingMsg.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 20px;border-radius:40px;z-index:9999;font-size:0.8rem;';
     document.body.appendChild(loadingMsg);
     
     try {
-      const originalMatrix = document.querySelector('.matrix-wrapper');
-      const cloneWrapper = document.createElement('div');
-      cloneWrapper.style.padding = '20px';
-      cloneWrapper.style.background = 'white';
-      cloneWrapper.style.fontFamily = 'Inter, sans-serif';
-      
-      const titleDiv = document.createElement('div');
-      titleDiv.style.marginBottom = '20px';
-      titleDiv.style.borderBottom = '2px solid #f59e0b';
-      titleDiv.style.paddingBottom = '12px';
-      titleDiv.innerHTML = `
-        <h2 style="color:#1e293b;">Hazida Cleaning - Complete Movement Report</h2>
-        <p style="color:#334155;">Period: ${currentStartDate ? currentStartDate.toLocaleDateString() : 'All time'} — ${currentEndDate ? currentEndDate.toLocaleDateString() : 'All time'}  |  Generated: ${new Date().toLocaleString()}</p>
-        <p><small>Assigned quantity (issued to location) + restocked badge (global restock). Zero means no activity.</small></p>
-      `;
-      cloneWrapper.appendChild(titleDiv);
-      
-      const tableClone = originalMatrix.cloneNode(true);
-      cloneWrapper.appendChild(tableClone);
-      
-      document.body.appendChild(cloneWrapper);
+      const element = document.getElementById('reportContent');
       const opt = {
         margin: [8, 8, 8, 8],
-        filename: `hazida_full_movement_${new Date().toISOString().slice(0,19)}.pdf`,
+        filename: 'hazida_stock_report_' + new Date().toISOString().slice(0, 19) + '.pdf',
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, letterRendering: true },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
       };
-      await html2pdf().set(opt).from(cloneWrapper).save();
-      document.body.removeChild(cloneWrapper);
+      await html2pdf().set(opt).from(element).save();
       
-      const successToast = document.createElement('div');
-      successToast.innerText = '✅ PDF exported successfully';
-      successToast.style.position = 'fixed';
-      successToast.style.bottom = '20px';
-      successToast.style.right = '20px';
-      successToast.style.background = '#10b981';
-      successToast.style.color = 'white';
-      successToast.style.padding = '8px 16px';
-      successToast.style.borderRadius = '40px';
-      document.body.appendChild(successToast);
-      setTimeout(() => successToast.remove(), 2500);
+      const toast = document.createElement('div');
+      toast.innerText = ' PDF exported';
+      toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#10b981;color:#fff;padding:8px 16px;border-radius:40px;z-index:9999;font-size:0.8rem;';
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 2000);
     } catch (err) {
-      console.error(err);
-      alert("PDF export error: " + err.message);
+      alert("PDF error: " + err.message);
     } finally {
       loadingMsg.remove();
     }
   }
+
+  // Session Management
+  const SESSION_TIMEOUT = 15 * 60 * 1000;
+  const WARNING_TIME = 60 * 1000;
+  let sessionTimer, warningTimer, countdownInterval, sessionActive = true;
   
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+  async function performLogout() {
+    sessionActive = false;
+    clearTimeout(sessionTimer);
+    clearTimeout(warningTimer);
+    clearInterval(countdownInterval);
+    try { await signOut(auth); } catch(e) {}
+    window.location.href = 'index.html';
   }
   
-  // Event listeners
-  applyBtn.addEventListener('click', handleApplyDate);
-  refreshBtn.addEventListener('click', async () => {
-    matrixBody.innerHTML = `<tr><td colspan="20" class="loading-overlay"><div class="spinner"></div> Refreshing data...</td></tr>`;
-    await buildFullMatrix();
-    handleApplyDate(); // reapply current filter after fresh data
-  });
-  exportBtn.addEventListener('click', exportMatrixPDF);
+  function resetSessionTimer() {
+    clearTimeout(sessionTimer);
+    clearTimeout(warningTimer);
+    clearInterval(countdownInterval);
+    document.getElementById('sessionWarning').style.display = 'none';
+    sessionActive = true;
+    warningTimer = setTimeout(showSessionWarning, SESSION_TIMEOUT - WARNING_TIME);
+    sessionTimer = setTimeout(function() { if (sessionActive) performLogout(); }, SESSION_TIMEOUT);
+  }
   
-  // INIT
-  setDefaultDates();
-  buildFullMatrix().then(() => {
+  function showSessionWarning() {
+    document.getElementById('sessionWarning').style.display = 'flex';
+    let c = 60;
+    document.getElementById('countdownTimer').innerText = c;
+    countdownInterval = setInterval(function() {
+      c--;
+      document.getElementById('countdownTimer').innerText = c;
+      if (c <= 0) clearInterval(countdownInterval);
+    }, 1000);
+  }
+  
+  document.getElementById('continueBtn').onclick = function() {
+    document.getElementById('sessionWarning').style.display = 'none';
+    resetSessionTimer();
+  };
+  document.getElementById('logoutWarningBtn').onclick = performLogout;
+  document.getElementById('logoutBtn').onclick = performLogout;
+  
+  document.addEventListener('mousemove', resetSessionTimer);
+  document.addEventListener('keypress', resetSessionTimer);
+  document.addEventListener('click', resetSessionTimer);
+  resetSessionTimer();
+  
+  function updateClock() {
+    const n = new Date();
+    document.getElementById('clockTime').innerText = [n.getHours(), n.getMinutes(), n.getSeconds()].map(function(v) { return String(v).padStart(2, '0'); }).join(':');
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+  
+  toggleBtn.onclick = function() { sidebar.classList.toggle('collapsed'); };
+  applyBtn.onclick = handleApplyDate;
+  refreshBtn.onclick = async function() {
+    document.getElementById('matrixBody').innerHTML = '<tr><td colspan="20" class="loading-overlay"><div class="spinner"></div> Refreshing...<\/td><\/tr>';
+    await buildFullMatrix();
     handleApplyDate();
-  });
+  };
+  exportBtn.onclick = exportPDF;
+  
+  setDefaultDates();
+  buildFullMatrix().then(function() { handleApplyDate(); });
 </script>
 </body>
 </html>
