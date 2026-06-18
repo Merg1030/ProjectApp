@@ -322,8 +322,11 @@
         .btn-cancel:hover { background: #e6efff; }
         .btn-save { background: #059669; color: white; margin-left: auto; }
         .btn-save:hover { background: #047857; }
+        .btn-save:disabled { background: #97adc9; cursor: not-allowed; opacity: 0.8; }
         .modal-foot .enter-hint { font-size: 0.62rem; color: #97adc9; display: flex; align-items: center; gap: 5px; }
         .enter-hint kbd { background: #e6efff; color: #2b4a73; border: 1px solid #b3c7e0; border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; font-family: monospace; }
+        .spin { animation: spin .7s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         .purchase-toggle-bar {
             display: flex; align-items: center; gap: 0;
@@ -655,8 +658,8 @@
         </div>
         <div class="modal-foot">
             <span class="enter-hint"><kbd>Enter</kbd> next row &nbsp;|&nbsp; <kbd>Tab</kbd> between fields</span>
-            <button class="btn-cancel" onclick="closeMaterialAllocModal()">Cancel</button>
-            <button class="btn-save" onclick="assignMaterials()"><i class="fas fa-check"></i> Save All</button>
+            <button class="btn-cancel" id="matCancelBtn" onclick="closeMaterialAllocModal()">Cancel</button>
+            <button class="btn-save" id="matSaveBtn" onclick="assignMaterials()"><i class="fas fa-check"></i> Save All</button>
         </div>
     </div>
 </div>
@@ -713,8 +716,8 @@
         </div>
         <div class="modal-foot">
             <span class="enter-hint"><kbd>Enter</kbd> to save last row &nbsp;|&nbsp; <kbd>Tab</kbd> to move between fields</span>
-            <button class="btn-cancel" onclick="closeLaborAllocModal()">Cancel</button>
-            <button class="btn-save" onclick="assignLabors()"><i class="fas fa-check"></i> Save All</button>
+            <button class="btn-cancel" id="labCancelBtn" onclick="closeLaborAllocModal()">Cancel</button>
+            <button class="btn-save" id="labSaveBtn" onclick="assignLabors()"><i class="fas fa-check"></i> Save All</button>
         </div>
     </div>
 </div>
@@ -778,11 +781,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleGanttBtn     = document.getElementById('toggleGanttBtn');
     const toggleGanttLabel   = document.getElementById('toggleGanttLabel');
     const toggleGanttIcon    = document.getElementById('toggleGanttIcon');
+    const matSaveBtn         = document.getElementById('matSaveBtn');
+    const matCancelBtn       = document.getElementById('matCancelBtn');
+    const labSaveBtn         = document.getElementById('labSaveBtn');
+    const labCancelBtn       = document.getElementById('labCancelBtn');
 
     const LABOR_RATE = 18;
 
+    // ═══════════════════════════════════════════════════════
+    // RESOURCE CACHE (materials / employees)
+    // Loaded once on page load, refreshed in the background if stale.
+    // This is what was making modals slow to open before.
+    // ═══════════════════════════════════════════════════════
     let materials    = [];
     let laborWorkers = [];
+    let resourcesLoadedAt = 0;
+    let resourcesLoadingPromise = null;
+    const RESOURCE_STALE_MS = 60000; // 60s
+
     let currentAssigningTaskId      = null;
     let currentAssigningDocId       = null;
     let currentAssigningTaskLevel   = null;
@@ -918,13 +934,42 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    async function loadResources() {
-        try {
-            const mSnap = await getDocs(collection(db, "materials"));
-            materials = []; mSnap.forEach(d => materials.push({ docId: d.id, ...d.data() }));
-            const lSnap = await getDocs(collection(db, "employees"));
-            laborWorkers = []; lSnap.forEach(d => laborWorkers.push({ docId: d.id, ...d.data() }));
-        } catch(e) { console.error('loadResources:', e); }
+    // ═══════════════════════════════════════════════════════
+    // FIXED loadResources:
+    // - Returns a single shared in-flight promise (no duplicate fetches
+    //   if called again while already loading)
+    // - Only re-fetches from Firestore if the cache is missing or stale
+    // - force=true bypasses the cache (used for the initial page load)
+    // ═══════════════════════════════════════════════════════
+    async function loadResources(force = false) {
+        const isStale = (Date.now() - resourcesLoadedAt) > RESOURCE_STALE_MS;
+        if (!force && materials.length === 0 && laborWorkers.length === 0) {
+            // first ever load, must wait
+        } else if (!force && !isStale) {
+            return; // cache is fresh, nothing to do
+        }
+        if (resourcesLoadingPromise) return resourcesLoadingPromise;
+
+        resourcesLoadingPromise = (async () => {
+            try {
+                const [mSnap, lSnap] = await Promise.all([
+                    getDocs(collection(db, "materials")),
+                    getDocs(collection(db, "employees"))
+                ]);
+                const newMaterials = [];
+                mSnap.forEach(d => newMaterials.push({ docId: d.id, ...d.data() }));
+                const newLabor = [];
+                lSnap.forEach(d => newLabor.push({ docId: d.id, ...d.data() }));
+                materials    = newMaterials;
+                laborWorkers = newLabor;
+                resourcesLoadedAt = Date.now();
+            } catch(e) {
+                console.error('loadResources:', e);
+            } finally {
+                resourcesLoadingPromise = null;
+            }
+        })();
+        return resourcesLoadingPromise;
     }
 
     function listenForMaterialChanges() {
@@ -1009,6 +1054,25 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHoursCellInDom(taskId, val);
         const { found, level, parentDocId, subDocId } = findPathFor(taskId);
         if (found) { const r = getTaskDocRef(taskId, level, parentDocId, subDocId); if (r) try { await updateDoc(r, { totalHours: val }); } catch(e) { console.warn(e); } }
+    }
+
+    // ══════════════════════════════════════
+    // SAVE-BUTTON LOADING STATE HELPER
+    // Disables the button + cancel button, swaps in a spinner,
+    // and restores everything automatically if there's an error.
+    // This is what stops the double-click duplicate-save problem.
+    // ══════════════════════════════════════
+    function setBtnLoading(btn, cancelBtn, isLoading, loadingText = 'Saving...') {
+        if (isLoading) {
+            btn.dataset.originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner spin"></i> ${loadingText}`;
+            btn.disabled = true;
+            if (cancelBtn) cancelBtn.disabled = true;
+        } else {
+            if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+            btn.disabled = false;
+            if (cancelBtn) cancelBtn.disabled = false;
+        }
     }
 
     // ══════════════════════════════════════
@@ -1164,16 +1228,32 @@ document.addEventListener('DOMContentLoaded', function() {
         matStockWarning.style.display = 'none';
         matRowCounter = 0;
         currentPurchaseMode = 'inventory';
+
+        // ── Open modal INSTANTLY using cached resources, don't block on network ──
         setPurchaseMode('inventory');
+        materialModal.classList.add('active');
+        setTimeout(() => matEntryBody.querySelector('select,input')?.focus(), 80);
+
+        // Refresh resources in the background only if cache is stale/empty.
+        // If new data arrives after rows are already drawn, refresh the
+        // material dropdown options in place without disrupting input.
         loadResources().then(() => {
-            window.addMaterialEntryRow();
-            materialModal.classList.add('active');
-            setTimeout(() => matEntryBody.querySelector('select,input')?.focus(), 80);
+            matEntryBody.querySelectorAll('select.mat-material').forEach(sel => {
+                const currentVal = sel.value;
+                sel.innerHTML = matOptions(currentVal);
+            });
         });
     };
-    window.closeMaterialAllocModal = function() { materialModal.classList.remove('active'); currentAssigningTaskId = null; };
+    window.closeMaterialAllocModal = function() {
+        materialModal.classList.remove('active');
+        currentAssigningTaskId = null;
+        setBtnLoading(matSaveBtn, matCancelBtn, false);
+    };
 
     window.assignMaterials = async function() {
+        // ── Guard against double-click: bail instantly if already saving ──
+        if (matSaveBtn.disabled) return;
+
         matStockWarning.style.display = 'none';
         const entries = [];
 
@@ -1211,20 +1291,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!entries.length) { alert('Add at least one material row.'); return; }
 
+        // ── Lock the button the instant validation passes ──
+        setBtnLoading(matSaveBtn, matCancelBtn, true);
+
         try {
-            for (const e of entries) {
+            // ── Fire all writes in PARALLEL instead of one-by-one ──
+            await Promise.all(entries.map(async (e) => {
                 if (e.mode === 'inventory') {
-                    await updateDoc(doc(db,"materials",e.matId), { quantity: (+(e.mat.quantity||0)) - e.qty });
-                    await addDoc(collection(db,"materialsUsage"), {
-                        taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
-                        taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
-                        taskDescription: e.desc||currentTaskContext.taskDescription||'',
-                        materialId: e.matId, materialName: e.mat.materialName||e.mat.name,
-                        quantity: e.qty, unitPrice: e.price, cost: e.cost,
-                        location: e.location||currentTaskContext.location||'',
-                        assignedAt: e.assignedAt, projectId,
-                        savedAt: Timestamp.now(), reversed: false, purchaseType: 'inventory'
-                    });
+                    await Promise.all([
+                        updateDoc(doc(db,"materials",e.matId), { quantity: (+(e.mat.quantity||0)) - e.qty }),
+                        addDoc(collection(db,"materialsUsage"), {
+                            taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                            taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
+                            taskDescription: e.desc||currentTaskContext.taskDescription||'',
+                            materialId: e.matId, materialName: e.mat.materialName||e.mat.name,
+                            quantity: e.qty, unitPrice: e.price, cost: e.cost,
+                            location: e.location||currentTaskContext.location||'',
+                            assignedAt: e.assignedAt, projectId,
+                            savedAt: Timestamp.now(), reversed: false, purchaseType: 'inventory'
+                        })
+                    ]);
+                    // keep local cache in sync so stock numbers are right if reopened immediately
+                    e.mat.quantity = (+(e.mat.quantity||0)) - e.qty;
                 } else {
                     await addDoc(collection(db,"materialsUsage"), {
                         taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
@@ -1237,9 +1325,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         savedAt: Timestamp.now(), reversed: false, purchaseType: 'direct'
                     });
                 }
-            }
+            }));
             closeMaterialAllocModal();
-        } catch(err) { alert('Error saving: ' + err.message); }
+        } catch(err) {
+            alert('Error saving: ' + err.message);
+            setBtnLoading(matSaveBtn, matCancelBtn, false);
+        }
     };
 
     // ══════════════════════════════════════
@@ -1388,11 +1479,31 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('labCtxProject').textContent    = projectId ? `Project ${projectId.slice(0,6)}...` : '—';
 
         labEntryBody.innerHTML = ''; labRowCounter = 0;
-        loadResources().then(() => { window.addLaborEntryRow(); laborModal.classList.add('active'); setTimeout(() => labEntryBody.querySelector('select')?.focus(), 80); });
+
+        // ── Open modal INSTANTLY using cached resources, don't block on network ──
+        window.addLaborEntryRow();
+        laborModal.classList.add('active');
+        setTimeout(() => labEntryBody.querySelector('select')?.focus(), 80);
+
+        // Refresh resources in background only if stale/empty; if new
+        // employees show up, refresh the employee dropdown options in place.
+        loadResources().then(() => {
+            labEntryBody.querySelectorAll('select.lab-employee').forEach(sel => {
+                const currentVal = sel.value;
+                sel.innerHTML = employeeOptions(currentVal);
+            });
+        });
     };
-    window.closeLaborAllocModal = function() { laborModal.classList.remove('active'); currentAssigningTaskId = null; };
+    window.closeLaborAllocModal = function() {
+        laborModal.classList.remove('active');
+        currentAssigningTaskId = null;
+        setBtnLoading(labSaveBtn, labCancelBtn, false);
+    };
 
     window.assignLabors = async function() {
+        // ── Guard against double-click: bail instantly if already saving ──
+        if (labSaveBtn.disabled) return;
+
         const entries = [];
         for (const row of labEntryBody.querySelectorAll('tr')) {
             const empId = row.querySelector('.lab-employee')?.value; if (!empId) continue;
@@ -1412,21 +1523,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         if (!entries.length) { alert('Please add at least one employee with MH entered.'); return; }
+
+        // ── Lock the button the instant validation passes ──
+        setBtnLoading(labSaveBtn, labCancelBtn, true);
+
         try {
-            for (const e of entries) {
-                await addDoc(collection(db,"locationHistory"), {
-                    projectId, taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
-                    taskLevel: currentAssigningTaskLevel,
-                    employeeId: e.employeeId, employeeIdNumber: e.employeeIdNumber,
-                    employeeName: e.employeeName, projectName: e.projectName,
-                    location: e.location, taskIdDisplay: currentTaskContext.taskId,
-                    taskDescription: e.taskDescription, status: e.status,
-                    transferDate: e.transferDate, mh: e.mh, rate: e.rate, cost: e.cost,
-                    savedAt: Timestamp.now(), reversed: false
-                });
-            }
+            // ── Fire all writes in PARALLEL instead of one-by-one ──
+            await Promise.all(entries.map(e => addDoc(collection(db,"locationHistory"), {
+                projectId, taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                taskLevel: currentAssigningTaskLevel,
+                employeeId: e.employeeId, employeeIdNumber: e.employeeIdNumber,
+                employeeName: e.employeeName, projectName: e.projectName,
+                location: e.location, taskIdDisplay: currentTaskContext.taskId,
+                taskDescription: e.taskDescription, status: e.status,
+                transferDate: e.transferDate, mh: e.mh, rate: e.rate, cost: e.cost,
+                savedAt: Timestamp.now(), reversed: false
+            })));
             closeLaborAllocModal();
-        } catch(err) { console.error('Error saving labor:', err); alert('Error saving labor: ' + err.message); }
+        } catch(err) {
+            console.error('Error saving labor:', err);
+            alert('Error saving labor: ' + err.message);
+            setBtnLoading(labSaveBtn, labCancelBtn, false);
+        }
     };
 
     function getTaskDocRef(docId, level, parentDocId, subDocId) {
@@ -2041,7 +2159,9 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
     });
 
-    loadResources();
+    // ── Initial load: fetch resources up-front (force) so the cache is warm
+    // before the user ever opens a modal, then load tasks. ──
+    loadResources(true);
     loadTasks();
     setInterval(() => renderGantt(), 60000);
 
