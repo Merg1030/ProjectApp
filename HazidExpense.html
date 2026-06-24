@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>IMS | Expenses Tracker - Hide Projects</title>
+  <title>IMS | Expenses Tracker - Payment Method</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
     html, body {
@@ -165,7 +165,31 @@
       font-weight: bold;
     }
     
-    /* Hide projects management section inside dropdown */
+    .payment-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 30px;
+      letter-spacing: 0.2px;
+      margin-left: 4px;
+    }
+    .payment-badge.cash {
+      background: #e2f0f7;
+      color: #0a5c7a;
+      border: 1px solid #0a5c7a;
+    }
+    .payment-badge.bank {
+      background: #f0e6f7;
+      color: #5c2a7a;
+      border: 1px solid #5c2a7a;
+    }
+    .payment-badge.direct {
+      background: #f0e6f7;
+      color: #5c2a7a;
+      border: 1px solid #5c2a7a;
+    }
+
     .manage-hide-section {
       padding: 6px 0;
       border-top: 1px solid #b3c7e0;
@@ -307,7 +331,7 @@
       padding: 0 18px;
       box-sizing: border-box;
       position: sticky;
-      top: 74px;
+      top: 120px;
       z-index: 8;
       width: 100vw;
     }
@@ -418,6 +442,37 @@
       padding: 4px 16px 8px 16px;
       border-top: 1px solid #e0e8f0;
     }
+
+    /* Transaction type badge */
+    .type-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 30px;
+      letter-spacing: 0.3px;
+    }
+    .type-badge.cash-in {
+      background: #e2f7e9;
+      color: #1a7d3a;
+      border: 1px solid #1a7d3a;
+    }
+    .type-badge.expense {
+      background: #fdeaea;
+      color: #cc0000;
+      border: 1px solid #cc0000;
+    }
+    #exp-type { font-weight: bold; }
+
+    /* Balance column styling */
+    .balance-amount {
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .balance-amount.negative { color: #cc0000; }
+    .balance-amount.positive { color: #1a7d3a; }
+    .balance-amount.zero { color: #666; }
+
     @media (max-width: 700px) {
       .panel { padding: 0; }
       table th, table td { white-space: nowrap; }
@@ -471,18 +526,25 @@
     </div>
   </div>
   <form id="expense-form" autocomplete="off" class="hide">
+    <div><label for="exp-type">Type</label><br><select id="exp-type"><option value="expense">Expense (Purchase)</option><option value="cash_in">Petty Cash Received</option></select></div>
     <div><label for="exp-date">Date</label><br><input type="date" id="exp-date" required></div>
     <div><label for="exp-description">Description</label><br><textarea id="exp-description" placeholder="Expense Description"></textarea></div>
-    <div><label for="exp-project">Project</label><br><select id="exp-project" required><option value="">--Choose Project--</option><option value="_general">General (No Project)</option></select></div>
+    <div id="exp-project-wrap"><label for="exp-project">Project</label><br><select id="exp-project" required><option value="">--Choose Project--</option><option value="_general">General (No Project)</option></select></div>
     <div><label for="exp-account">Account</label><br><select id="exp-account" required><option value="">--Choose--</option><option value="Hazida Limited">Hazida Limited</option><option value="Hazida Motors">Hazida Motors</option><option value="Freight n Passengers">Freight n Passengers</option><option value="Hazida Ezone Limited">Hazida Ezone Limited</option></select></div>
-    <div><label for="exp-supplier">Supplier</label><br><input type="text" id="exp-supplier" required placeholder="Supplier name"></div>
+    <div><label for="exp-supplier" id="exp-supplier-label">Supplier</label><br><input type="text" id="exp-supplier" required placeholder="Supplier name"></div>
     <div><label for="exp-amount">Amount</label><br><input type="number" min="0" id="exp-amount" required placeholder="Amount"></div>
+    <div><label for="exp-payment-method">Payment Method</label><br>
+      <select id="exp-payment-method" required>
+        <option value="cash_flow">Cash Flow</option>
+        <option value="direct_transfer">Direct Transfer</option>
+      </select>
+    </div>
     <div style="align-self: flex-end;"><button type="submit" id="submit-btn">Add Expense</button><button type="button" id="cancel-edit-btn" class="hide">Cancel Edit</button></div>
     <div id="expense-form-error"></div>
   </form>
   <div class="table-responsive">
     <table>
-      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
+      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
       <tbody id="expenses-table-body"></tbody>
     </table>
   </div>
@@ -501,10 +563,14 @@
   const toggleFormBtn = document.getElementById("toggle-form-btn");
   const accountSelect = document.getElementById("exp-account");
   const dateInput = document.getElementById("exp-date");
+  const typeSelect = document.getElementById("exp-type");
+  const projectWrap = document.getElementById("exp-project-wrap");
+  const supplierLabel = document.getElementById("exp-supplier-label");
   const projectSelect = document.getElementById("exp-project");
   const supplierInput = document.getElementById("exp-supplier");
   const descriptionInput = document.getElementById("exp-description");
   const amountInput = document.getElementById("exp-amount");
+  const paymentMethodSelect = document.getElementById("exp-payment-method");
   const submitBtn = document.getElementById("submit-btn");
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
   const searchFilter = document.getElementById("search-filter");
@@ -538,19 +604,49 @@
   let editingTransactionId = null;
   let allExpenses = [];
   let filteredExpenses = [];
+
+  function netAmount(exp) {
+    const amt = exp.amount || 0;
+    if (exp.type === "cash_in") {
+      return amt;
+    } else {
+      if (exp.paymentMethod === 'cash_flow' || !exp.paymentMethod) {
+        return -amt;
+      } else {
+        return 0;
+      }
+    }
+  }
+
+  // Toggle form fields
+  function applyTypeVisibility() {
+    const isCashIn = typeSelect.value === 'cash_in';
+    projectWrap.classList.toggle('hide', isCashIn);
+    projectSelect.required = !isCashIn;
+    if (isCashIn) {
+      supplierLabel.textContent = 'Received From / Note';
+      supplierInput.placeholder = 'e.g. Director, Bank withdrawal';
+      supplierInput.required = false;
+      submitBtn.textContent = editingTransactionId ? 'Update Cash Received' : 'Add Cash Received';
+      paymentMethodSelect.value = 'cash_flow';
+    } else {
+      supplierLabel.textContent = 'Supplier';
+      supplierInput.placeholder = 'Supplier name';
+      supplierInput.required = true;
+      submitBtn.textContent = editingTransactionId ? 'Update Expense' : 'Add Expense';
+    }
+  }
+  typeSelect.addEventListener('change', applyTypeVisibility);
   
-  // HIDDEN PROJECTS SET (store IDs or names? we store project names as strings for simplicity)
   let hiddenProjectsSet = new Set(JSON.parse(localStorage.getItem('hidden_projects') || '[]'));
   
   function saveHiddenProjects() {
     localStorage.setItem('hidden_projects', JSON.stringify(Array.from(hiddenProjectsSet)));
-    refreshProjectDropdown(); // refresh the form dropdown
-    renderProjectButtonsForFilter(); // also refresh filter project buttons (they are independent but fine)
+    refreshProjectDropdown();
+    renderProjectButtonsForFilter();
   }
   
-  // Function to rebuild project dropdown with hidden filtering
   function refreshProjectDropdown() {
-    // We'll re-render based on currently loaded projects from firestore (projectsRawList)
     if (!window.allProjectsRaw) return;
     let html = `<option value="">--Choose Project--</option><option value="_general">General (No Project)</option>`;
     for (let p of window.allProjectsRaw) {
@@ -559,13 +655,14 @@
       }
     }
     projectSelect.innerHTML = html;
-    // preserve selection if possible
     if (editingTransactionId === null) projectSelect.value = "";
   }
   
-  function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  function escapeHtml(str) { 
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); 
+  }
   
-  // Render hide projects UI inside dropdown
   function renderHideProjectsUI(projectsList) {
     const container = document.getElementById('hide-projects-list');
     if (!container) return;
@@ -596,7 +693,6 @@
   }
   function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   
-  // Filter toggles and UI persistence
   function initializeFilterVisibility() {
     toggleWeekFilter.checked = weekFilterVisible;
     toggleMonthFilter.checked = monthFilterVisible;
@@ -633,7 +729,6 @@
   function fillMonthDropdown() { const months=["January","February","March","April","May","June","July","August","September","October","November","December"]; let d=new Date(); let opts=`<option value="all" ${(localStorage.getItem('expenses_monthFilter')||"all")==="all"?"selected":""}>All Months</option>`; for(let y=d.getFullYear();y>=d.getFullYear()-10;y--) for(let m=11;m>=0;m--) { let val=`${y}-${String(m+1).padStart(2,'0')}`; opts+=`<option value="${val}" ${val===localStorage.getItem('expenses_monthFilter')?'selected':''}>${months[m]} ${y}</option>`; } monthFilter.innerHTML=opts; }
   fillMonthDropdown();
   
-  // Project filter buttons for global filter (not hidden)
   function renderProjectButtonsForFilter() {
     let projectList = window.allProjectsRaw || [];
     let html = `<button type="button" class="project-btn${selectedProjectFilter===""?" selected":""}" data-project="">All Projects</button>`;
@@ -643,7 +738,6 @@
     projectBtnsContainer.querySelectorAll(".project-btn").forEach(btn=>{ btn.addEventListener("click",()=>{ projectBtnsContainer.querySelectorAll(".project-btn").forEach(b=>b.classList.remove("selected")); btn.classList.add("selected"); selectedProjectFilter=btn.getAttribute("data-project"); localStorage.setItem('expenses_selectedProject',selectedProjectFilter); renderTable(); }); });
   }
   
-  // load projects for dropdown and hide manager
   let projectsRawListener = null;
   function loadProjects() {
     if(projectsRawListener) return;
@@ -658,39 +752,133 @@
   }
   loadProjects();
   
-  // Add transaction logic, edit, delete
   let formVisible = false;
   expenseForm.classList.add("hide"); toggleFormBtn.textContent = "Add Transaction";
   toggleFormBtn.onclick = function() { formVisible = !formVisible; expenseForm.classList.toggle("hide", !formVisible); toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction"; if (!formVisible) cancelEdit(); };
-  function cancelEdit() { editingTransactionId=null; submitBtn.textContent="Add Expense"; cancelEditBtn.classList.add("hide"); expenseForm.reset(); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
+  function cancelEdit() { editingTransactionId=null; cancelEditBtn.classList.add("hide"); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value = 'cash_flow'; applyTypeVisibility(); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
   cancelEditBtn.addEventListener("click", cancelEdit);
-  function editTransaction(exp){ editingTransactionId=exp.id; dateInput.value=exp.date||""; descriptionInput.value=exp.description||""; supplierInput.value=exp.supplier||""; amountInput.value=exp.amount||""; accountSelect.value=exp.account||""; setTimeout(()=>{ const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); if(optionExists) projectSelect.value=optionExists.value; else if(exp.project==="General") projectSelect.value="_general"; },100); submitBtn.textContent="Update Expense"; cancelEditBtn.classList.remove("hide"); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } expenseForm.scrollIntoView({behavior:'smooth'}); }
+  function editTransaction(exp){ editingTransactionId=exp.id; typeSelect.value=(exp.type==='cash_in')?'cash_in':'expense'; applyTypeVisibility(); dateInput.value=exp.date||""; descriptionInput.value=exp.description||""; supplierInput.value=exp.supplier||""; amountInput.value=exp.amount||""; accountSelect.value=exp.account||""; paymentMethodSelect.value = exp.paymentMethod || 'cash_flow'; setTimeout(()=>{ const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); if(optionExists) projectSelect.value=optionExists.value; else if(exp.project==="General") projectSelect.value="_general"; },100); cancelEditBtn.classList.remove("hide"); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } expenseForm.scrollIntoView({behavior:'smooth'}); }
   async function deleteTransaction(id){ if(!confirm("Delete transaction?")) return; await deleteDoc(doc(db,"General expenses",id)); selectedTransactions.delete(id); }
   
-  expenseForm.onsubmit = async function(e) { e.preventDefault(); document.getElementById("expense-form-error").textContent=""; const dateVal=dateInput.value; const projectVal=projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||""; const accountVal=accountSelect.value; const supplierVal=supplierInput.value.trim(); const descriptionVal=descriptionInput.value.trim(); const amountVal=parseFloat(amountInput.value); if(!accountVal||!dateVal||!supplierVal||isNaN(amountVal)||amountVal<0||!projectVal){ document.getElementById("expense-form-error").textContent="Please fill all fields."; return; } const expenseData={date:dateVal,project:projectVal,account:accountVal,supplier:supplierVal,description:descriptionVal,amount:amountVal,updatedAt:Timestamp.now()}; try{ if(editingTransactionId){ await updateDoc(doc(db,"General expenses",editingTransactionId),expenseData); cancelEdit(); } else { await addDoc(collection(db,"General expenses"),{...expenseData,createdAt:Timestamp.now()}); expenseForm.reset(); } } catch(err){ document.getElementById("expense-form-error").textContent="Error: "+err.message; } };
+  expenseForm.onsubmit = async function(e) { e.preventDefault(); document.getElementById("expense-form-error").textContent=""; const typeVal=typeSelect.value==='cash_in'?'cash_in':'expense'; const isCashIn=typeVal==='cash_in'; const dateVal=dateInput.value; let projectVal = projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||"";
+    if (isCashIn) {
+      projectVal = "Petty Cash Imprest";
+    }
+    const accountVal=accountSelect.value; 
+    const supplierVal=supplierInput.value.trim(); 
+    const descriptionVal=descriptionInput.value.trim(); 
+    const amountVal=parseFloat(amountInput.value); 
+    const paymentMethodVal = paymentMethodSelect.value;
+    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||(!isCashIn&&!supplierVal)||(!isCashIn&&!projectVal)){ document.getElementById("expense-form-error").textContent="Please fill all fields."; return; }
+    const expenseData={type:typeVal,date:dateVal,project:projectVal,account:accountVal,supplier:supplierVal,description:descriptionVal,amount:amountVal,paymentMethod:paymentMethodVal,updatedAt:Timestamp.now()};
+    try{ if(editingTransactionId){ await updateDoc(doc(db,"General expenses",editingTransactionId),expenseData); cancelEdit(); } else { await addDoc(collection(db,"General expenses"),{...expenseData,createdAt:Timestamp.now()}); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value='cash_flow'; applyTypeVisibility(); } } catch(err){ document.getElementById("expense-form-error").textContent="Error: "+err.message; } };
   
   onSnapshot(collection(db,"General expenses"), (snapshot)=>{ allExpenses=[]; snapshot.forEach(d=>{ let e=d.data(); e.id=d.id; allExpenses.push(e); }); fillWeekDropdown(allExpenses); renderTable(); });
   
   function getWeekYear(date){ let d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())); d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7)); let yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1)); let weekNo=Math.ceil(((d-yearStart)/86400000+1)/7); return {week:weekNo,year:d.getUTCFullYear()}; }
   function formatDate(iso){ let d=new Date(iso); if(isNaN(d)) return iso; return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
   
+  function getPaymentBadge(paymentMethod) {
+    if (!paymentMethod || paymentMethod === 'cash_flow') {
+      return '<span class="payment-badge cash">Cash Flow</span>';
+    } else if (paymentMethod === 'direct_transfer') {
+      return '<span class="payment-badge direct">Direct Transfer</span>';
+    }
+    return '';
+  }
+  
   function renderTable() {
+    // First, get all expenses sorted by date for proper running balance
+    let allSorted = [...allExpenses];
+    allSorted.sort((a,b) => {
+      const dateA = a.date || "";
+      const dateB = b.date || "";
+      if (dateA === dateB) {
+        return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+      }
+      return dateA < dateB ? -1 : 1;
+    });
+    
+    // Calculate running balances for ALL transactions (to get starting balance for filtered view)
+    let runningBalances = {};
+    let runningBalance = 0;
+    allSorted.forEach(exp => {
+      runningBalance += netAmount(exp);
+      runningBalances[exp.id] = runningBalance;
+    });
+    
+    // Now apply filters for display
     let filtered = [...allExpenses];
     if(selectedAccount) filtered = filtered.filter(exp=>exp.account===selectedAccount);
     if(selectedProjectFilter) filtered = filtered.filter(exp=>exp.project && exp.project.toLowerCase()===selectedProjectFilter.toLowerCase());
-    let weekVal=weekFilter.value; if(weekVal && weekVal!=="ALL"){ let [fy,fw]=weekVal.split("-").map(Number); filtered=filtered.filter(exp=>{ if(!exp.date) return false; let d=new Date(exp.date); let wy=getWeekYear(d); return wy.year===fy && wy.week===fw; }); }
-    let monthVal=monthFilter.value; if(monthVal && monthVal!=="all"){ filtered=filtered.filter(exp=>{ if(!exp.date) return false; let d=new Date(exp.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`===monthVal; }); }
-    let searchVal=searchFilter.value.trim().toLowerCase(); if(searchVal) filtered=filtered.filter(exp=>Object.values(exp).some(v=>v&&String(v).toLowerCase().includes(searchVal)));
-    filteredExpenses=filtered; filtered.sort((a,b)=>(a.date||"")===(b.date||"")?((a.createdAt?.seconds||0)-(b.createdAt?.seconds||0)):(a.date||"")<(b.date||"")?-1:1);
-    expensesTableBody.innerHTML=""; let balance=0;
-    filtered.forEach(exp=>{ balance+=exp.amount||0; const tr=document.createElement("tr"); const isChecked=selectedTransactions.has(exp.id);
-    tr.innerHTML=`<td class="checkbox-col ${checkboxesVisible?'':'hide'}"><input type="checkbox" ${isChecked?'checked':''} data-id="${exp.id}"></td><td>${formatDate(exp.date)}</td><td>${exp.description||"-"}</td><td>${exp.project||"-"}</td><td>${exp.account||"-"}</td><td>${exp.supplier||"-"}</td><td>${typeof exp.amount==="number"?exp.amount.toLocaleString(undefined,{minimumFractionDigits:2}):"-"}</td><td>${balance.toLocaleString(undefined,{minimumFractionDigits:2})}</td><td class="action-cell"><button class="action-btn" data-id="${exp.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" id="dropdown-${exp.id}"><button class="row-dropdown-item edit" data-id="${exp.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete" data-id="${exp.id}"><i class="fa fa-trash"></i> Delete</button></div></td>`;
-    expensesTableBody.appendChild(tr);
-    const cb=tr.querySelector('input[type="checkbox"]'); if(cb) cb.addEventListener('change',function(){ if(this.checked) selectedTransactions.add(exp.id); else selectedTransactions.delete(exp.id); });
-    const actBtn=tr.querySelector('.action-btn'); const rowDrop=tr.querySelector('.row-dropdown-content'); const editBtn=tr.querySelector('.row-dropdown-item.edit'); const delBtn=tr.querySelector('.row-dropdown-item.delete');
-    actBtn.addEventListener('click',(e)=>{ e.stopPropagation(); document.querySelectorAll('.row-dropdown-content.show').forEach(d=>{if(d!==rowDrop)d.classList.remove('show');}); rowDrop.classList.toggle('show'); });
-    editBtn.addEventListener('click',(e)=>{ rowDrop.classList.remove('show'); editTransaction(exp); });
-    delBtn.addEventListener('click',(e)=>{ rowDrop.classList.remove('show'); deleteTransaction(exp.id); });
+    let weekVal=weekFilter.value; 
+    if(weekVal && weekVal!=="ALL"){ 
+      let [fy,fw]=weekVal.split("-").map(Number); 
+      filtered = filtered.filter(exp=>{ 
+        if(!exp.date) return false; 
+        let d=new Date(exp.date); 
+        let wy=getWeekYear(d); 
+        return wy.year===fy && wy.week===fw; 
+      }); 
+    }
+    let monthVal=monthFilter.value; 
+    if(monthVal && monthVal!=="all"){ 
+      filtered=filtered.filter(exp=>{ 
+        if(!exp.date) return false; 
+        let d=new Date(exp.date); 
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`===monthVal; 
+      }); 
+    }
+    let searchVal=searchFilter.value.trim().toLowerCase(); 
+    if(searchVal) filtered=filtered.filter(exp=>Object.values(exp).some(v=>v&&String(v).toLowerCase().includes(searchVal)));
+    
+    filteredExpenses=filtered; 
+    filtered.sort((a,b)=>{
+      const dateA = a.date || "";
+      const dateB = b.date || "";
+      if (dateA === dateB) {
+        return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+      }
+      return dateA < dateB ? -1 : 1;
+    });
+    
+    expensesTableBody.innerHTML=""; 
+    let displayBalance = 0;
+    let foundFirst = false;
+    
+    filtered.forEach(exp=>{ 
+      // Get the correct running balance from the full dataset
+      const correctBalance = runningBalances[exp.id] || 0;
+      displayBalance = correctBalance;
+      
+      const tr=document.createElement("tr"); 
+      const isChecked=selectedTransactions.has(exp.id);
+      const isCashIn = exp.type === 'cash_in';
+      const typeBadge = isCashIn ? '<span class="type-badge cash-in">CASH IN</span>' : '<span class="type-badge expense">EXPENSE</span>';
+      const amountDisplay = typeof exp.amount==="number" ? exp.amount.toLocaleString(undefined,{minimumFractionDigits:2}) : "-";
+      let balanceClass = 'balance-amount';
+      if (displayBalance > 0) balanceClass += ' positive';
+      else if (displayBalance < 0) balanceClass += ' negative';
+      else balanceClass += ' zero';
+      const paymentBadge = getPaymentBadge(exp.paymentMethod);
+      const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (exp.project || "-");
+      tr.innerHTML=`<td class="checkbox-col ${checkboxesVisible?'':'hide'}"><input type="checkbox" ${isChecked?'checked':''} data-id="${exp.id}"></td>
+        <td>${formatDate(exp.date)}</td>
+        <td>${typeBadge}</td>
+        <td>${escapeHtml(exp.description)||"-"}</td>
+        <td>${escapeHtml(projectDisplay)}</td>
+        <td>${escapeHtml(exp.account)||"-"}</td>
+        <td>${escapeHtml(exp.supplier)||"-"}</td>
+        <td>${paymentBadge}</td>
+        <td>${amountDisplay}</td>
+        <td class="${balanceClass}">${displayBalance.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+        <td class="action-cell"><button class="action-btn" data-id="${exp.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" id="dropdown-${exp.id}"><button class="row-dropdown-item edit" data-id="${exp.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete" data-id="${exp.id}"><i class="fa fa-trash"></i> Delete</button></div></td>`;
+      expensesTableBody.appendChild(tr);
+      const cb=tr.querySelector('input[type="checkbox"]'); if(cb) cb.addEventListener('change',function(){ if(this.checked) selectedTransactions.add(exp.id); else selectedTransactions.delete(exp.id); });
+      const actBtn=tr.querySelector('.action-btn'); const rowDrop=tr.querySelector('.row-dropdown-content'); const editBtn=tr.querySelector('.row-dropdown-item.edit'); const delBtn=tr.querySelector('.row-dropdown-item.delete');
+      actBtn.addEventListener('click',(e)=>{ e.stopPropagation(); document.querySelectorAll('.row-dropdown-content.show').forEach(d=>{if(d!==rowDrop)d.classList.remove('show');}); rowDrop.classList.toggle('show'); });
+      editBtn.addEventListener('click',(e)=>{ rowDrop.classList.remove('show'); editTransaction(exp); });
+      delBtn.addEventListener('click',(e)=>{ rowDrop.classList.remove('show'); deleteTransaction(exp.id); });
     });
     document.addEventListener('click',()=>{ document.querySelectorAll('.row-dropdown-content.show').forEach(d=>d.classList.remove('show')); });
   }
@@ -699,7 +887,8 @@
   dropdownDownloadSelectedBtn.onclick = function(){ if(selectedTransactions.size===0) return alert("Select transactions"); const sel=filteredExpenses.filter(e=>selectedTransactions.has(e.id)); if(sel.length) downloadReport(sel,"selected-report"); else alert("No matching"); dropdownMenu.classList.remove('show'); };
   dropdownToggleCheckboxes.onclick = function(){ checkboxesVisible=!checkboxesVisible; document.querySelectorAll('.checkbox-col').forEach(col=>col.classList.toggle('hide',!checkboxesVisible)); dropdownDownloadSelectedBtn.classList.toggle('hide',!checkboxesVisible); dropdownToggleCheckboxes.textContent=checkboxesVisible?"Hide Checkboxes":"Show Checkboxes"; if(!checkboxesVisible) selectedTransactions.clear(); dropdownMenu.classList.remove('show'); };
   
-  function downloadReport(expenses,filename){ let balance=0; let rows=""; expenses.sort((a,b)=>(a.date||"")===(b.date||"")?0:(a.date||"")<(b.date||"")?-1:1); expenses.forEach(e=>{ balance+=e.amount||0; rows+=`<tr><td>${formatDate(e.date)}</td><td>${e.description||"-"}</td><td>${e.project||"-"}</td><td>${e.account||"-"}</td><td>${e.supplier||"-"}</td><td>${e.amount?e.amount.toLocaleString():0}</td><td>${balance.toLocaleString()}</td></tr>`; }); let html=`<div><h3>Expense Report</h3><table border="1" cellpadding="5"><thead><tr><th>Date</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Amount</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table></div>`; let div=document.createElement('div'); div.innerHTML=html; document.body.appendChild(div); html2pdf().from(div).set({margin:0.5,filename:`${filename}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'in',format:'a4',orientation:'landscape'}}).save().then(()=>document.body.removeChild(div)); }
+  function downloadReport(expenses,filename){ let balance=0; let rows=""; expenses.sort((a,b)=>(a.date||"")===(b.date||"")?0:(a.date||"")<(b.date||"")?-1:1); expenses.forEach(e=>{ balance+=netAmount(e); const isCashIn=e.type==='cash_in'; const typeLabel=isCashIn?'Cash In':'Expense'; const amtLabel=e.amount?e.amount.toLocaleString():0; const pmt = e.paymentMethod ? e.paymentMethod.replace('_',' ') : 'Cash Flow'; const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (e.project || "-"); rows+=`<tr><td>${formatDate(e.date)}</td><td>${typeLabel}</td><td>${escapeHtml(e.description)||"-"}</td><td>${escapeHtml(projectDisplay)}</td><td>${escapeHtml(e.account)||"-"}</td><td>${escapeHtml(e.supplier)||"-"}</td><td>${pmt}</td><td>${amtLabel}</td><td>${balance.toLocaleString()}</td></tr>`; }); let html=`<div><h3>Expense Report</h3><table border="1" cellpadding="5"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table></div>`; let div=document.createElement('div'); div.innerHTML=html; document.body.appendChild(div); html2pdf().from(div).set({margin:0.5,filename:`${filename}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'in',format:'a4',orientation:'landscape'}}).save().then(()=>document.body.removeChild(div)); }
+  applyTypeVisibility();
   initializeFilterVisibility();
   if(dropdownDownloadSelectedBtn) dropdownDownloadSelectedBtn.classList.add('hide');
 </script>
