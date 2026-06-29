@@ -23,6 +23,23 @@
         .title-section { display: flex; align-items: center; gap: 6px; }
         .title-section h2 { font-size: 14px; font-weight: 500; color: white; }
 
+        .project-switcher-wrap { position: relative; margin-left: 4px; }
+        .project-switcher {
+            background: #1f3d62; color: white; border: 1px solid #2b4a73;
+            border-radius: 20px; padding: 4px 26px 4px 12px; font-size: 0.68rem;
+            font-weight: 600; cursor: pointer; outline: none; max-width: 220px;
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            text-overflow: ellipsis;
+        }
+        .project-switcher:hover { background: #2b4a73; }
+        .project-switcher:disabled { opacity: 0.6; cursor: default; }
+        .project-switcher option { color: #0a1c2f; background: white; }
+        .project-switcher-wrap::after {
+            content: '\f078'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            color: white; font-size: 9px; pointer-events: none;
+        }
+
         .back-link {
             color: #0b1f33; text-decoration: none; padding: 0.2rem 1rem;
             border: none; background: white; border-radius: 30px; font-size: 0.7rem;
@@ -444,6 +461,11 @@
         <div class="title-section">
             <i class="fas fa-tasks" style="font-size:16px;"></i>
             <h2 id="projectTitle">Project Tasks</h2>
+            <div class="project-switcher-wrap">
+                <select id="projectSwitcher" class="project-switcher" title="Switch project">
+                    <option value="">Loading projects…</option>
+                </select>
+            </div>
         </div>
         <a href="dashboard.html" class="back-link"><i class="fas fa-arrow-left"></i> Dashboard</a>
     </div>
@@ -753,6 +775,54 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('labHistoryNavBtn').href  = `employee-assignment-history.html?id=${projectId}`;
     document.getElementById('labHistoryLink').href    = `employee-assignment-history.html?id=${projectId}`;
     document.getElementById('projectTitle').textContent = `Project ${projectId.slice(0,6)}...`;
+
+    // ══════════════════════════════════════════════════════
+    // PROJECT SWITCHER
+    // Lets you jump between projects without going back to the dashboard.
+    // Pulls from "projectDashboard" (same collection dashboard.html uses),
+    // hides projects marked hidden:true, and labels completed ones.
+    // ══════════════════════════════════════════════════════
+    const projectSwitcher = document.getElementById('projectSwitcher');
+
+    function projectLabel(id, data) {
+        const name = data.name || 'Unnamed';
+        const client = data.client || '';
+        let label = client ? `${name} — ${client}` : name;
+        if (data.status === 'completed') label += ' (Completed)';
+        return label;
+    }
+
+    async function loadProjectSwitcher() {
+        try {
+            const snap = await getDocs(collection(db, "projectDashboard"));
+            if (snap.empty) {
+                projectSwitcher.innerHTML = `<option value="${projectId}">Current Project</option>`;
+                return;
+            }
+            const projects = [];
+            snap.forEach(d => {
+                const data = d.data();
+                if (data.hidden && d.id !== projectId) return; // skip hidden ones (unless it's the current project)
+                projects.push({ id: d.id, label: projectLabel(d.id, data) });
+            });
+            projects.sort((a, b) => a.label.localeCompare(b.label));
+            projectSwitcher.innerHTML = projects.map(p =>
+                `<option value="${p.id}" ${p.id === projectId ? 'selected' : ''}>${p.label}</option>`
+            ).join('');
+        } catch (e) {
+            console.warn('Project switcher load failed:', e);
+            projectSwitcher.innerHTML = `<option value="${projectId}">Current Project</option>`;
+        }
+    }
+
+    projectSwitcher.addEventListener('change', () => {
+        const newId = projectSwitcher.value;
+        if (newId && newId !== projectId) {
+            window.location.href = window.location.pathname + '?id=' + encodeURIComponent(newId);
+        }
+    });
+
+    loadProjectSwitcher();
 
     const actionsHeader      = document.getElementById('actionsHeader');
     const actionsPanel       = document.getElementById('actionsPanel');
