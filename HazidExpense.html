@@ -843,13 +843,10 @@
     });
     
     expensesTableBody.innerHTML=""; 
-    let displayBalance = 0;
-    let foundFirst = false;
     
     filtered.forEach(exp=>{ 
       // Get the correct running balance from the full dataset
       const correctBalance = runningBalances[exp.id] || 0;
-      displayBalance = correctBalance;
       
       const tr=document.createElement("tr"); 
       const isChecked=selectedTransactions.has(exp.id);
@@ -857,8 +854,8 @@
       const typeBadge = isCashIn ? '<span class="type-badge cash-in">CASH IN</span>' : '<span class="type-badge expense">EXPENSE</span>';
       const amountDisplay = typeof exp.amount==="number" ? exp.amount.toLocaleString(undefined,{minimumFractionDigits:2}) : "-";
       let balanceClass = 'balance-amount';
-      if (displayBalance > 0) balanceClass += ' positive';
-      else if (displayBalance < 0) balanceClass += ' negative';
+      if (correctBalance > 0) balanceClass += ' positive';
+      else if (correctBalance < 0) balanceClass += ' negative';
       else balanceClass += ' zero';
       const paymentBadge = getPaymentBadge(exp.paymentMethod);
       const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (exp.project || "-");
@@ -871,7 +868,7 @@
         <td>${escapeHtml(exp.supplier)||"-"}</td>
         <td>${paymentBadge}</td>
         <td>${amountDisplay}</td>
-        <td class="${balanceClass}">${displayBalance.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+        <td class="${balanceClass}">${correctBalance.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
         <td class="action-cell"><button class="action-btn" data-id="${exp.id}"><i class="fa fa-ellipsis-v"></i></button><div class="row-dropdown-content" id="dropdown-${exp.id}"><button class="row-dropdown-item edit" data-id="${exp.id}"><i class="fa fa-edit"></i> Edit</button><button class="row-dropdown-item delete" data-id="${exp.id}"><i class="fa fa-trash"></i> Delete</button></div></td>`;
       expensesTableBody.appendChild(tr);
       const cb=tr.querySelector('input[type="checkbox"]'); if(cb) cb.addEventListener('change',function(){ if(this.checked) selectedTransactions.add(exp.id); else selectedTransactions.delete(exp.id); });
@@ -883,11 +880,103 @@
     document.addEventListener('click',()=>{ document.querySelectorAll('.row-dropdown-content.show').forEach(d=>d.classList.remove('show')); });
   }
   
-  dropdownDownloadWeekBtn.onclick = function(){ if(!filteredExpenses.length) return alert("No data"); downloadReport(filteredExpenses,"expenses-report"); dropdownMenu.classList.remove('show'); };
-  dropdownDownloadSelectedBtn.onclick = function(){ if(selectedTransactions.size===0) return alert("Select transactions"); const sel=filteredExpenses.filter(e=>selectedTransactions.has(e.id)); if(sel.length) downloadReport(sel,"selected-report"); else alert("No matching"); dropdownMenu.classList.remove('show'); };
-  dropdownToggleCheckboxes.onclick = function(){ checkboxesVisible=!checkboxesVisible; document.querySelectorAll('.checkbox-col').forEach(col=>col.classList.toggle('hide',!checkboxesVisible)); dropdownDownloadSelectedBtn.classList.toggle('hide',!checkboxesVisible); dropdownToggleCheckboxes.textContent=checkboxesVisible?"Hide Checkboxes":"Show Checkboxes"; if(!checkboxesVisible) selectedTransactions.clear(); dropdownMenu.classList.remove('show'); };
+  dropdownDownloadWeekBtn.onclick = function(){ 
+    if(!filteredExpenses.length) return alert("No data"); 
+    downloadReport(filteredExpenses,"expenses-report"); 
+    dropdownMenu.classList.remove('show'); 
+  };
   
-  function downloadReport(expenses,filename){ let balance=0; let rows=""; expenses.sort((a,b)=>(a.date||"")===(b.date||"")?0:(a.date||"")<(b.date||"")?-1:1); expenses.forEach(e=>{ balance+=netAmount(e); const isCashIn=e.type==='cash_in'; const typeLabel=isCashIn?'Cash In':'Expense'; const amtLabel=e.amount?e.amount.toLocaleString():0; const pmt = e.paymentMethod ? e.paymentMethod.replace('_',' ') : 'Cash Flow'; const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (e.project || "-"); rows+=`<tr><td>${formatDate(e.date)}</td><td>${typeLabel}</td><td>${escapeHtml(e.description)||"-"}</td><td>${escapeHtml(projectDisplay)}</td><td>${escapeHtml(e.account)||"-"}</td><td>${escapeHtml(e.supplier)||"-"}</td><td>${pmt}</td><td>${amtLabel}</td><td>${balance.toLocaleString()}</td></tr>`; }); let html=`<div><h3>Expense Report</h3><table border="1" cellpadding="5"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table></div>`; let div=document.createElement('div'); div.innerHTML=html; document.body.appendChild(div); html2pdf().from(div).set({margin:0.5,filename:`${filename}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'in',format:'a4',orientation:'landscape'}}).save().then(()=>document.body.removeChild(div)); }
+  dropdownDownloadSelectedBtn.onclick = function(){ 
+    if(selectedTransactions.size===0) return alert("Select transactions"); 
+    const sel=filteredExpenses.filter(e=>selectedTransactions.has(e.id)); 
+    if(sel.length) downloadReport(sel,"selected-report"); 
+    else alert("No matching"); 
+    dropdownMenu.classList.remove('show'); 
+  };
+  
+  dropdownToggleCheckboxes.onclick = function(){ 
+    checkboxesVisible=!checkboxesVisible; 
+    document.querySelectorAll('.checkbox-col').forEach(col=>col.classList.toggle('hide',!checkboxesVisible)); 
+    dropdownDownloadSelectedBtn.classList.toggle('hide',!checkboxesVisible); 
+    dropdownToggleCheckboxes.textContent=checkboxesVisible?"Hide Checkboxes":"Show Checkboxes"; 
+    if(!checkboxesVisible) selectedTransactions.clear(); 
+    dropdownMenu.classList.remove('show'); 
+  };
+  
+  function downloadReport(expenses,filename){ 
+    let rows = ""; 
+    let runningBal = 0;
+    expenses.sort((a,b)=>{
+      const dateA = a.date || "";
+      const dateB = b.date || "";
+      if (dateA === dateB) {
+        return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+      }
+      return dateA < dateB ? -1 : 1;
+    }); 
+    
+    expenses.forEach(e=>{ 
+      runningBal += netAmount(e);
+      const isCashIn=e.type==='cash_in'; 
+      const typeLabel=isCashIn?'Cash In':'Expense'; 
+      const amtLabel=e.amount ? e.amount.toLocaleString() : '0'; 
+      const pmt = e.paymentMethod ? e.paymentMethod.replace('_',' ') : 'Cash Flow'; 
+      const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (e.project || "-");
+      // Remove negative sign from balance for PDF display
+      const balanceDisplay = Math.abs(runningBal).toLocaleString();
+      rows+=`<tr>
+        <td>${formatDate(e.date)}</td>
+        <td>${typeLabel}</td>
+        <td>${escapeHtml(e.description)||"-"}</td>
+        <td>${escapeHtml(projectDisplay)}</td>
+        <td>${escapeHtml(e.account)||"-"}</td>
+        <td>${escapeHtml(e.supplier)||"-"}</td>
+        <td>${pmt}</td>
+        <td>${amtLabel}</td>
+        <td>${balanceDisplay}</td>
+      </tr>`; 
+    }); 
+    
+    let html = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="text-align: center; color: #0a1c2f; border-bottom: 2px solid #0a1c2f; padding-bottom: 10px;">
+          PENTA CONSTRUCTION - EXPENSE REPORT
+        </h2>
+        
+        <table border="1" cellpadding="5" style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px;">
+          <thead style="background: #0a1c2f; color: white;">
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Project</th>
+              <th>Account</th>
+              <th>Supplier</th>
+              <th>Payment</th>
+              <th>Amount</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        
+        <div style="margin-top: 20px; font-size: 11px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 10px;">
+          Generated on ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+        </div>
+      </div>
+    `; 
+    
+    let div=document.createElement('div'); 
+    div.innerHTML=html; 
+    document.body.appendChild(div); 
+    html2pdf().from(div).set({
+      margin: 0.5,
+      filename: `${filename}.pdf`,
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    }).save().then(()=>document.body.removeChild(div)); 
+  }
+  
   applyTypeVisibility();
   initializeFilterVisibility();
   if(dropdownDownloadSelectedBtn) dropdownDownloadSelectedBtn.classList.add('hide');
