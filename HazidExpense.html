@@ -190,6 +190,42 @@
       border: 1px solid #5c2a7a;
     }
 
+    /* Cost Category badges */
+    .category-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 30px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .category-badge.direct-cost {
+      background: #e8f3e8;
+      color: #1a6b1a;
+      border: 1px solid #1a6b1a;
+    }
+    .category-badge.external-labor-cost {
+      background: #fff2e0;
+      color: #a15c00;
+      border: 1px solid #a15c00;
+    }
+    .category-badge.material-cost {
+      background: #e6f0fa;
+      color: #0a4c8a;
+      border: 1px solid #0a4c8a;
+    }
+    .category-badge.indirect-cost {
+      background: #f7e6f0;
+      color: #8a0a5c;
+      border: 1px solid #8a0a5c;
+    }
+    .category-badge.none {
+      background: #eee;
+      color: #777;
+      border: 1px solid #999;
+    }
+
     .manage-hide-section {
       padding: 6px 0;
       border-top: 1px solid #b3c7e0;
@@ -510,6 +546,7 @@
           <div class="filter-toggle"><span>Week Filter</span><label class="toggle-switch"><input type="checkbox" id="toggle-week-filter"><span class="toggle-slider"></span></label></div>
           <div class="filter-toggle"><span>Month Filter</span><label class="toggle-switch"><input type="checkbox" id="toggle-month-filter"><span class="toggle-slider"></span></label></div>
           <div class="filter-toggle"><span>Project Filter (Buttons)</span><label class="toggle-switch"><input type="checkbox" id="toggle-project-filter"><span class="toggle-slider"></span></label></div>
+          <div class="filter-toggle"><span>Category Filter</span><label class="toggle-switch"><input type="checkbox" id="toggle-category-filter"><span class="toggle-slider"></span></label></div>
         </div>
       </div>
     </div>
@@ -518,6 +555,15 @@
         <div class="search-bar"><input type="text" id="search-filter" placeholder="Search any field..."></div>
         <div id="week-filter-container" class="hide"><select id="week-filter"></select></div>
         <div id="month-filter-container" class="hide"><select id="month-filter"></select></div>
+        <div id="category-filter-container" class="hide">
+          <select id="category-filter">
+            <option value="">All Categories</option>
+            <option value="Direct Cost">Direct Cost</option>
+            <option value="External Labor Cost">External Labor Cost</option>
+            <option value="Material Cost">Material Cost</option>
+            <option value="Indirect Cost">Indirect Cost</option>
+          </select>
+        </div>
         <div id="project-filter-container" class="hide" style="display:flex;align-items:center;">
           <button class="project-filter-collapse-btn" id="project-collapse-btn" title="Show/Hide Projects">&#9660;</button>
           <div class="project-filter-btns" id="project-btns"></div>
@@ -530,6 +576,15 @@
     <div><label for="exp-date">Date</label><br><input type="date" id="exp-date" required></div>
     <div><label for="exp-description">Description</label><br><textarea id="exp-description" placeholder="Expense Description"></textarea></div>
     <div id="exp-project-wrap"><label for="exp-project">Project</label><br><select id="exp-project" required><option value="">--Choose Project--</option><option value="_general">General (No Project)</option></select></div>
+    <div id="exp-category-wrap"><label for="exp-category">Cost Category</label><br>
+      <select id="exp-category" required>
+        <option value="">--Choose Category--</option>
+        <option value="Direct Cost">Direct Cost</option>
+        <option value="External Labor Cost">External Labor Cost</option>
+        <option value="Material Cost">Material Cost</option>
+        <option value="Indirect Cost">Indirect Cost</option>
+      </select>
+    </div>
     <div><label for="exp-account">Account</label><br><select id="exp-account" required><option value="">--Choose--</option><option value="Hazida Limited">Hazida Limited</option><option value="Hazida Motors">Hazida Motors</option><option value="Freight n Passengers">Freight n Passengers</option><option value="Hazida Ezone Limited">Hazida Ezone Limited</option></select></div>
     <div><label for="exp-supplier" id="exp-supplier-label">Supplier</label><br><input type="text" id="exp-supplier" required placeholder="Supplier name"></div>
     <div><label for="exp-amount">Amount</label><br><input type="number" min="0" id="exp-amount" required placeholder="Amount"></div>
@@ -544,7 +599,7 @@
   </form>
   <div class="table-responsive">
     <table>
-      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
+      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Category</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
       <tbody id="expenses-table-body"></tbody>
     </table>
   </div>
@@ -565,6 +620,8 @@
   const dateInput = document.getElementById("exp-date");
   const typeSelect = document.getElementById("exp-type");
   const projectWrap = document.getElementById("exp-project-wrap");
+  const categoryWrap = document.getElementById("exp-category-wrap");
+  const categorySelect = document.getElementById("exp-category");
   const supplierLabel = document.getElementById("exp-supplier-label");
   const projectSelect = document.getElementById("exp-project");
   const supplierInput = document.getElementById("exp-supplier");
@@ -576,6 +633,7 @@
   const searchFilter = document.getElementById("search-filter");
   const monthFilter = document.getElementById("month-filter");
   const weekFilter = document.getElementById("week-filter");
+  const categoryFilter = document.getElementById("category-filter");
   const projectBtnsContainer = document.getElementById("project-btns");
   const projectCollapseBtn = document.getElementById("project-collapse-btn");
   const dropdownMenu = document.getElementById("dropdown-menu");
@@ -584,9 +642,11 @@
   const toggleWeekFilter = document.getElementById('toggle-week-filter');
   const toggleMonthFilter = document.getElementById('toggle-month-filter');
   const toggleProjectFilter = document.getElementById('toggle-project-filter');
+  const toggleCategoryFilter = document.getElementById('toggle-category-filter');
   const weekFilterContainer = document.getElementById('week-filter-container');
   const monthFilterContainer = document.getElementById('month-filter-container');
   const projectFilterContainer = document.getElementById('project-filter-container');
+  const categoryFilterContainer = document.getElementById('category-filter-container');
   const dropdownDownloadWeekBtn = document.getElementById('dropdown-download-week-btn');
   const dropdownDownloadSelectedBtn = document.getElementById('dropdown-download-selected-btn');
   const dropdownToggleCheckboxes = document.getElementById('dropdown-toggle-checkboxes');
@@ -598,6 +658,7 @@
   let weekFilterVisible = localStorage.getItem('expenses_weekFilterVisible') === 'true';
   let monthFilterVisible = localStorage.getItem('expenses_monthFilterVisible') === 'true';
   let projectFilterVisible = localStorage.getItem('expenses_projectFilterVisible') === 'true';
+  let categoryFilterVisible = localStorage.getItem('expenses_categoryFilterVisible') === 'true';
   let projectBtnsVisible = localStorage.getItem('expenses_projectBtnsVisible') !== 'false';
   let checkboxesVisible = false;
   let selectedTransactions = new Set();
@@ -618,11 +679,18 @@
     }
   }
 
+  function categoryClass(cat) {
+    if (!cat) return 'none';
+    return cat.toLowerCase().replace(/\s+/g, '-');
+  }
+
   // Toggle form fields
   function applyTypeVisibility() {
     const isCashIn = typeSelect.value === 'cash_in';
     projectWrap.classList.toggle('hide', isCashIn);
     projectSelect.required = !isCashIn;
+    categoryWrap.classList.toggle('hide', isCashIn);
+    categorySelect.required = !isCashIn;
     if (isCashIn) {
       supplierLabel.textContent = 'Received From / Note';
       supplierInput.placeholder = 'e.g. Director, Bank withdrawal';
@@ -697,15 +765,18 @@
     toggleWeekFilter.checked = weekFilterVisible;
     toggleMonthFilter.checked = monthFilterVisible;
     toggleProjectFilter.checked = projectFilterVisible;
+    toggleCategoryFilter.checked = categoryFilterVisible;
     weekFilterContainer.classList.toggle('hide', !weekFilterVisible);
     monthFilterContainer.classList.toggle('hide', !monthFilterVisible);
     projectFilterContainer.classList.toggle('hide', !projectFilterVisible);
+    categoryFilterContainer.classList.toggle('hide', !categoryFilterVisible);
     projectBtnsContainer.style.display = projectBtnsVisible ? 'flex' : 'none';
     if(projectCollapseBtn) projectCollapseBtn.innerHTML = projectBtnsVisible ? "&#9660;" : "&#9654;";
   }
   toggleWeekFilter.addEventListener('change', function(){ weekFilterVisible=this.checked; weekFilterContainer.classList.toggle('hide',!weekFilterVisible); localStorage.setItem('expenses_weekFilterVisible',weekFilterVisible); renderTable(); });
   toggleMonthFilter.addEventListener('change', function(){ monthFilterVisible=this.checked; monthFilterContainer.classList.toggle('hide',!monthFilterVisible); localStorage.setItem('expenses_monthFilterVisible',monthFilterVisible); renderTable(); });
   toggleProjectFilter.addEventListener('change', function(){ projectFilterVisible=this.checked; projectFilterContainer.classList.toggle('hide',!projectFilterVisible); localStorage.setItem('expenses_projectFilterVisible',projectFilterVisible); if(projectFilterVisible) renderTable(); });
+  toggleCategoryFilter.addEventListener('change', function(){ categoryFilterVisible=this.checked; categoryFilterContainer.classList.toggle('hide',!categoryFilterVisible); localStorage.setItem('expenses_categoryFilterVisible',categoryFilterVisible); renderTable(); });
   projectCollapseBtn.onclick = function(){ projectBtnsVisible=!projectBtnsVisible; projectBtnsContainer.style.display=projectBtnsVisible?'flex':'none'; projectCollapseBtn.innerHTML=projectBtnsVisible?"&#9660;":"&#9654;"; localStorage.setItem('expenses_projectBtnsVisible',projectBtnsVisible); };
   
   dropdownBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.toggle('show'); });
@@ -717,6 +788,8 @@
   searchFilter.addEventListener('input', () => { localStorage.setItem('expenses_searchFilter',searchFilter.value); renderTable(); });
   weekFilter.addEventListener('change', () => { localStorage.setItem('expenses_weekFilter', weekFilter.value); renderTable(); });
   monthFilter.addEventListener('change', () => { localStorage.setItem('expenses_monthFilter', monthFilter.value); renderTable(); });
+  categoryFilter.value = localStorage.getItem('expenses_categoryFilter') || "";
+  categoryFilter.addEventListener('change', () => { localStorage.setItem('expenses_categoryFilter', categoryFilter.value); renderTable(); });
   
   function fillWeekDropdown(data) {
     const weeksSet = new Set();
@@ -757,7 +830,7 @@
   toggleFormBtn.onclick = function() { formVisible = !formVisible; expenseForm.classList.toggle("hide", !formVisible); toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction"; if (!formVisible) cancelEdit(); };
   function cancelEdit() { editingTransactionId=null; cancelEditBtn.classList.add("hide"); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value = 'cash_flow'; applyTypeVisibility(); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
   cancelEditBtn.addEventListener("click", cancelEdit);
-  function editTransaction(exp){ editingTransactionId=exp.id; typeSelect.value=(exp.type==='cash_in')?'cash_in':'expense'; applyTypeVisibility(); dateInput.value=exp.date||""; descriptionInput.value=exp.description||""; supplierInput.value=exp.supplier||""; amountInput.value=exp.amount||""; accountSelect.value=exp.account||""; paymentMethodSelect.value = exp.paymentMethod || 'cash_flow'; setTimeout(()=>{ const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); if(optionExists) projectSelect.value=optionExists.value; else if(exp.project==="General") projectSelect.value="_general"; },100); cancelEditBtn.classList.remove("hide"); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } expenseForm.scrollIntoView({behavior:'smooth'}); }
+  function editTransaction(exp){ editingTransactionId=exp.id; typeSelect.value=(exp.type==='cash_in')?'cash_in':'expense'; applyTypeVisibility(); dateInput.value=exp.date||""; descriptionInput.value=exp.description||""; supplierInput.value=exp.supplier||""; amountInput.value=exp.amount||""; accountSelect.value=exp.account||""; paymentMethodSelect.value = exp.paymentMethod || 'cash_flow'; categorySelect.value = exp.category || ""; setTimeout(()=>{ const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); if(optionExists) projectSelect.value=optionExists.value; else if(exp.project==="General") projectSelect.value="_general"; },100); cancelEditBtn.classList.remove("hide"); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } expenseForm.scrollIntoView({behavior:'smooth'}); }
   async function deleteTransaction(id){ if(!confirm("Delete transaction?")) return; await deleteDoc(doc(db,"General expenses",id)); selectedTransactions.delete(id); }
   
   expenseForm.onsubmit = async function(e) { e.preventDefault(); document.getElementById("expense-form-error").textContent=""; const typeVal=typeSelect.value==='cash_in'?'cash_in':'expense'; const isCashIn=typeVal==='cash_in'; const dateVal=dateInput.value; let projectVal = projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||"";
@@ -769,8 +842,9 @@
     const descriptionVal=descriptionInput.value.trim(); 
     const amountVal=parseFloat(amountInput.value); 
     const paymentMethodVal = paymentMethodSelect.value;
-    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||(!isCashIn&&!supplierVal)||(!isCashIn&&!projectVal)){ document.getElementById("expense-form-error").textContent="Please fill all fields."; return; }
-    const expenseData={type:typeVal,date:dateVal,project:projectVal,account:accountVal,supplier:supplierVal,description:descriptionVal,amount:amountVal,paymentMethod:paymentMethodVal,updatedAt:Timestamp.now()};
+    const categoryVal = isCashIn ? "" : categorySelect.value;
+    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||(!isCashIn&&!supplierVal)||(!isCashIn&&!projectVal)||(!isCashIn&&!categoryVal)){ document.getElementById("expense-form-error").textContent="Please fill all fields."; return; }
+    const expenseData={type:typeVal,date:dateVal,project:projectVal,category:categoryVal,account:accountVal,supplier:supplierVal,description:descriptionVal,amount:amountVal,paymentMethod:paymentMethodVal,updatedAt:Timestamp.now()};
     try{ if(editingTransactionId){ await updateDoc(doc(db,"General expenses",editingTransactionId),expenseData); cancelEdit(); } else { await addDoc(collection(db,"General expenses"),{...expenseData,createdAt:Timestamp.now()}); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value='cash_flow'; applyTypeVisibility(); } } catch(err){ document.getElementById("expense-form-error").textContent="Error: "+err.message; } };
   
   onSnapshot(collection(db,"General expenses"), (snapshot)=>{ allExpenses=[]; snapshot.forEach(d=>{ let e=d.data(); e.id=d.id; allExpenses.push(e); }); fillWeekDropdown(allExpenses); renderTable(); });
@@ -785,6 +859,11 @@
       return '<span class="payment-badge direct">Direct Transfer</span>';
     }
     return '';
+  }
+
+  function getCategoryBadge(category) {
+    if (!category) return '<span class="category-badge none">-</span>';
+    return `<span class="category-badge ${categoryClass(category)}">${escapeHtml(category)}</span>`;
   }
   
   function renderTable() {
@@ -811,6 +890,8 @@
     let filtered = [...allExpenses];
     if(selectedAccount) filtered = filtered.filter(exp=>exp.account===selectedAccount);
     if(selectedProjectFilter) filtered = filtered.filter(exp=>exp.project && exp.project.toLowerCase()===selectedProjectFilter.toLowerCase());
+    let categoryVal = categoryFilter.value;
+    if(categoryVal) filtered = filtered.filter(exp=>exp.category===categoryVal);
     let weekVal=weekFilter.value; 
     if(weekVal && weekVal!=="ALL"){ 
       let [fy,fw]=weekVal.split("-").map(Number); 
@@ -858,12 +939,14 @@
       else if (correctBalance < 0) balanceClass += ' negative';
       else balanceClass += ' zero';
       const paymentBadge = getPaymentBadge(exp.paymentMethod);
+      const categoryBadge = isCashIn ? getCategoryBadge('') : getCategoryBadge(exp.category);
       const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (exp.project || "-");
       tr.innerHTML=`<td class="checkbox-col ${checkboxesVisible?'':'hide'}"><input type="checkbox" ${isChecked?'checked':''} data-id="${exp.id}"></td>
         <td>${formatDate(exp.date)}</td>
         <td>${typeBadge}</td>
         <td>${escapeHtml(exp.description)||"-"}</td>
         <td>${escapeHtml(projectDisplay)}</td>
+        <td>${categoryBadge}</td>
         <td>${escapeHtml(exp.account)||"-"}</td>
         <td>${escapeHtml(exp.supplier)||"-"}</td>
         <td>${paymentBadge}</td>
@@ -922,6 +1005,7 @@
       const amtLabel=e.amount ? e.amount.toLocaleString() : '0'; 
       const pmt = e.paymentMethod ? e.paymentMethod.replace('_',' ') : 'Cash Flow'; 
       const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (e.project || "-");
+      const categoryDisplay = isCashIn ? '-' : (e.category || "-");
       // Remove negative sign from balance for PDF display
       const balanceDisplay = Math.abs(runningBal).toLocaleString();
       rows+=`<tr>
@@ -929,6 +1013,7 @@
         <td>${typeLabel}</td>
         <td>${escapeHtml(e.description)||"-"}</td>
         <td>${escapeHtml(projectDisplay)}</td>
+        <td>${escapeHtml(categoryDisplay)}</td>
         <td>${escapeHtml(e.account)||"-"}</td>
         <td>${escapeHtml(e.supplier)||"-"}</td>
         <td>${pmt}</td>
@@ -950,6 +1035,7 @@
               <th>Type</th>
               <th>Description</th>
               <th>Project</th>
+              <th>Category</th>
               <th>Account</th>
               <th>Supplier</th>
               <th>Payment</th>
