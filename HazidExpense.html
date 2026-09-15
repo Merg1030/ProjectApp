@@ -190,6 +190,32 @@
       border: 1px solid #5c2a7a;
     }
 
+    /* Task badge for table */
+    .task-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 30px;
+      background: #eef3fb;
+      color: #1f3d62;
+      border: 1px solid #1f3d62;
+      white-space: nowrap;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+    .task-badge .task-id {
+      font-weight: bold;
+      color: #0a1c2f;
+      margin-right: 4px;
+    }
+    .task-badge.empty {
+      background: #eee;
+      color: #777;
+      border-color: #999;
+    }
+
     /* Cost Category badges */
     .category-badge {
       display: inline-block;
@@ -403,6 +429,8 @@
       margin-left: 5px;
     }
     #cancel-edit-btn:hover { background: #97adc9;}
+    /* Wider task select in form */
+    #exp-task { min-width: 220px; max-width: 320px; }
     .account-filter-bar {
       display: flex;
       align-items: center;
@@ -576,6 +604,13 @@
     <div><label for="exp-date">Date</label><br><input type="date" id="exp-date" required></div>
     <div><label for="exp-description">Description</label><br><textarea id="exp-description" placeholder="Expense Description"></textarea></div>
     <div id="exp-project-wrap"><label for="exp-project">Project</label><br><select id="exp-project" required><option value="">--Choose Project--</option><option value="_general">General (No Project)</option></select></div>
+    <!-- NEW: Task dropdown -->
+    <div id="exp-task-wrap">
+      <label for="exp-task">Task</label><br>
+      <select id="exp-task">
+        <option value="">— Select Project First —</option>
+      </select>
+    </div>
     <div id="exp-category-wrap"><label for="exp-category">Cost Category</label><br>
       <select id="exp-category" required>
         <option value="">--Choose Category--</option>
@@ -599,14 +634,14 @@
   </form>
   <div class="table-responsive">
     <table>
-      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Category</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
+      <thead><tr><th class="checkbox-col hide">Select</th><th>Date</th><th>Type</th><th>Description</th><th>Project</th><th>Task</th><th>Category</th><th>Account</th><th>Supplier</th><th>Payment</th><th>Amount</th><th>Balance</th><th class="action-cell">Actions</th></tr></thead>
       <tbody id="expenses-table-body"></tbody>
     </table>
   </div>
 </div>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
   const firebaseConfig = { apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU", authDomain: "project-task-588c4.firebaseapp.com", projectId: "project-task-588c4", storageBucket: "project-task-588c4.appspot.com", messagingSenderId: "411882772509", appId: "1:411882772509:web:08d613186c101a99f38ef4", measurementId: "G-JMFLFYEM0F" };
   const app = initializeApp(firebaseConfig);
@@ -624,6 +659,8 @@
   const categorySelect = document.getElementById("exp-category");
   const supplierLabel = document.getElementById("exp-supplier-label");
   const projectSelect = document.getElementById("exp-project");
+  const taskWrap = document.getElementById("exp-task-wrap");
+  const taskSelect = document.getElementById("exp-task");
   const supplierInput = document.getElementById("exp-supplier");
   const descriptionInput = document.getElementById("exp-description");
   const amountInput = document.getElementById("exp-amount");
@@ -666,6 +703,11 @@
   let allExpenses = [];
   let filteredExpenses = [];
 
+  // ── NEW: cache for tasks per project (for the dropdown) ──
+  // taskCache[projectId] = [ {id, taskId, taskDescription, status, level, parentLabel}, ... ]
+  const taskCache = {};
+  let activeTaskListener = null;
+
   function netAmount(exp) {
     const amt = exp.amount || 0;
     if (exp.type === "cash_in") {
@@ -684,6 +726,158 @@
     return cat.toLowerCase().replace(/\s+/g, '-');
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // NEW: TASK LOADING FOR THE SELECTED PROJECT
+  // Loads main tasks + subtasks + sub-subtasks (all levels),
+  // EXCLUDING anything with status === 'COMPLETED'.
+  // ═══════════════════════════════════════════════════════════
+  function buildTaskOptionLabel(t) {
+    const id = t.taskId || '';
+    const desc = t.taskDescription || 'Untitled task';
+    return `${id} — ${desc}`;
+  }
+
+  function fillTaskDropdown(projectIdValue, keepSelection) {
+    // projectIdValue is the value of the project <select> (docId), or "" / "_general"
+    const currentTaskValue = keepSelection ? taskSelect.value : "";
+
+    if (!projectIdValue || projectIdValue === "_general") {
+      taskSelect.innerHTML = '<option value="">— Select Project First —</option>';
+      taskSelect.disabled = true;
+      return;
+    }
+
+    const tasks = taskCache[projectIdValue] || [];
+    if (!tasks.length) {
+      taskSelect.innerHTML = '<option value="">— No open tasks for this project —</option>';
+      taskSelect.disabled = true;
+      return;
+    }
+
+    let html = '<option value="">— No Task / Not Task-Specific —</option>';
+    for (const t of tasks) {
+      const indent = t.level === 'sub' ? '&nbsp;&nbsp;&nbsp;↪ ' : t.level === 'subsub' ? '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↪↪ ' : '';
+      // value is JSON with id, taskId, taskDescription so we can save all three
+      const val = encodeURIComponent(JSON.stringify({
+        id: t.id, taskId: t.taskId || '', taskDescription: t.taskDescription || ''
+      }));
+      const selected = (currentTaskValue && currentTaskValue === val) ? 'selected' : '';
+      html += `<option value="${val}" ${selected}>${indent}${escapeHtml(buildTaskOptionLabel(t))}</option>`;
+    }
+    taskSelect.innerHTML = html;
+    taskSelect.disabled = false;
+    if (currentTaskValue) taskSelect.value = currentTaskValue;
+  }
+
+  async function loadTasksForProject(projectDocId, keepSelection = false) {
+    // Detach previous live listener
+    if (activeTaskListener) { activeTaskListener(); activeTaskListener = null; }
+
+    if (!projectDocId || projectDocId === "_general") {
+      taskCache[projectDocId] = [];
+      fillTaskDropdown(projectDocId, false);
+      return;
+    }
+
+    // Show a loading state quickly
+    taskSelect.innerHTML = '<option value="">Loading tasks…</option>';
+    taskSelect.disabled = true;
+
+    // 1) Fetch once immediately (fast initial paint)
+    try {
+      const snap = await getDocs(query(collection(db, "projectTasks"), where("projectId", "==", projectDocId)));
+      const flat = [];
+      for (const mainDoc of snap.docs) {
+        const m = { id: mainDoc.id, ...mainDoc.data() };
+        if ((m.status || 'PENDING').toUpperCase() !== 'COMPLETED') {
+          flat.push({ id: m.id, taskId: m.taskId || '', taskDescription: m.taskDescription || '', status: m.status || 'PENDING', level: 'main' });
+        }
+        // Subtasks
+        const subSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks"));
+        for (const subDoc of subSnap.docs) {
+          const s = { id: subDoc.id, ...subDoc.data() };
+          if ((s.status || 'PENDING').toUpperCase() !== 'COMPLETED') {
+            flat.push({ id: s.id, taskId: s.taskId || '', taskDescription: s.taskDescription || '', status: s.status || 'PENDING', level: 'sub' });
+          }
+          // Sub-subtasks
+          const ssSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks", subDoc.id, "subsubtasks"));
+          for (const ssDoc of ssSnap.docs) {
+            const ss = { id: ssDoc.id, ...ssDoc.data() };
+            if ((ss.status || 'PENDING').toUpperCase() !== 'COMPLETED') {
+              flat.push({ id: ss.id, taskId: ss.taskId || '', taskDescription: ss.taskDescription || '', status: ss.status || 'PENDING', level: 'subsub' });
+            }
+          }
+        }
+      }
+      // Sort: main tasks by taskId natural, then subs, then subsubs
+      flat.sort((a, b) => String(a.taskId).localeCompare(String(b.taskId), undefined, { numeric: true }));
+      taskCache[projectDocId] = flat;
+      fillTaskDropdown(projectDocId, keepSelection);
+    } catch (e) {
+      console.error('Task load failed:', e);
+      taskSelect.innerHTML = '<option value="">— Failed to load tasks —</option>';
+      taskSelect.disabled = true;
+      return;
+    }
+
+    // 2) Live updates: listen to main tasks + subtask/subsub collections
+    // We use a simple periodic refresh plus onSnapshot on main tasks so completed
+    // tasks disappear from the dropdown without needing a hard reload.
+    activeTaskListener = onSnapshot(
+      query(collection(db, "projectTasks"), where("projectId", "==", projectDocId)),
+      async (snap) => {
+        const flat = [];
+        for (const mainDoc of snap.docs) {
+          const m = { id: mainDoc.id, ...mainDoc.data() };
+          if ((m.status || 'PENDING').toUpperCase() !== 'COMPLETED') {
+            flat.push({ id: m.id, taskId: m.taskId || '', taskDescription: m.taskDescription || '', status: m.status || 'PENDING', level: 'main' });
+          }
+          const subSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks"));
+          for (const subDoc of subSnap.docs) {
+            const s = { id: subDoc.id, ...subDoc.data() };
+            if ((s.status || 'PENDING').toUpperCase() !== 'COMPLETED') {
+              flat.push({ id: s.id, taskId: s.taskId || '', taskDescription: s.taskDescription || '', status: s.status || 'PENDING', level: 'sub' });
+            }
+            const ssSnap = await getDocs(collection(db, "projectTasks", mainDoc.id, "subtasks", subDoc.id, "subsubtasks"));
+            for (const ssDoc of ssSnap.docs) {
+              const ss = { id: ssDoc.id, ...ssDoc.data() };
+              if ((ss.status || 'PENDING').toUpperCase() !== 'COMPLETED') {
+                flat.push({ id: ss.id, taskId: ss.taskId || '', taskDescription: ss.taskDescription || '', status: ss.status || 'PENDING', level: 'subsub' });
+              }
+            }
+          }
+        }
+        flat.sort((a, b) => String(a.taskId).localeCompare(String(b.taskId), undefined, { numeric: true }));
+        taskCache[projectDocId] = flat;
+        fillTaskDropdown(projectDocId, true);
+      },
+      (err) => console.warn('Task listener error:', err)
+    );
+  }
+
+  // Helper: extract task fields from a task <select> value (JSON-encoded)
+  function parseTaskSelectValue(v) {
+    if (!v) return { id: '', taskId: '', taskDescription: '' };
+    try {
+      const obj = JSON.parse(decodeURIComponent(v));
+      return {
+        id: obj.id || '',
+        taskId: obj.taskId || '',
+        taskDescription: obj.taskDescription || ''
+      };
+    } catch (e) {
+      return { id: '', taskId: '', taskDescription: '' };
+    }
+  }
+
+  // Helper: build a task badge for the table from saved fields
+  function getTaskBadge(taskId, taskDescription) {
+    if (!taskId && !taskDescription) return '<span class="task-badge empty">—</span>';
+    const idPart = taskId ? `<span class="task-id">${escapeHtml(taskId)}</span>` : '';
+    const descPart = taskDescription ? escapeHtml(taskDescription) : '';
+    return `<span class="task-badge" title="${escapeHtml((taskId?taskId+' — ':'') + (taskDescription||''))}">${idPart}${descPart}</span>`;
+  }
+
   // Toggle form fields
   function applyTypeVisibility() {
     const isCashIn = typeSelect.value === 'cash_in';
@@ -691,7 +885,12 @@
     projectSelect.required = !isCashIn;
     categoryWrap.classList.toggle('hide', isCashIn);
     categorySelect.required = !isCashIn;
+    // NEW: Task dropdown follows the project — hidden for cash-in
+    taskWrap.classList.toggle('hide', isCashIn);
     if (isCashIn) {
+      taskSelect.value = "";
+      taskSelect.disabled = true;
+      taskSelect.innerHTML = '<option value="">— N/A for Petty Cash —</option>';
       supplierLabel.textContent = 'Received From / Note';
       supplierInput.placeholder = 'e.g. Director, Bank withdrawal';
       supplierInput.required = false;
@@ -702,9 +901,26 @@
       supplierInput.placeholder = 'Supplier name';
       supplierInput.required = true;
       submitBtn.textContent = editingTransactionId ? 'Update Expense' : 'Add Expense';
+      // If a project is already chosen, ensure tasks are loaded for it
+      if (projectSelect.value && projectSelect.value !== "_general") {
+        if (!taskCache[projectSelect.value]) loadTasksForProject(projectSelect.value, true);
+        else fillTaskDropdown(projectSelect.value, true);
+      }
     }
   }
   typeSelect.addEventListener('change', applyTypeVisibility);
+
+  // NEW: when the project changes, reload the task dropdown for that project
+  projectSelect.addEventListener('change', () => {
+    const pid = projectSelect.value;
+    if (!pid || pid === "_general") {
+      taskSelect.innerHTML = '<option value="">— No Task / Not Task-Specific —</option>';
+      taskSelect.disabled = false;
+      taskCache[pid] = [];
+      return;
+    }
+    loadTasksForProject(pid, false);
+  });
   
   let hiddenProjectsSet = new Set(JSON.parse(localStorage.getItem('hidden_projects') || '[]'));
   
@@ -728,7 +944,7 @@
   
   function escapeHtml(str) { 
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); 
+    return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); 
   }
   
   function renderHideProjectsUI(projectsList) {
@@ -759,7 +975,7 @@
       });
     });
   }
-  function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function escapeAttr(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   
   function initializeFilterVisibility() {
     toggleWeekFilter.checked = weekFilterVisible;
@@ -828,12 +1044,54 @@
   let formVisible = false;
   expenseForm.classList.add("hide"); toggleFormBtn.textContent = "Add Transaction";
   toggleFormBtn.onclick = function() { formVisible = !formVisible; expenseForm.classList.toggle("hide", !formVisible); toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction"; if (!formVisible) cancelEdit(); };
-  function cancelEdit() { editingTransactionId=null; cancelEditBtn.classList.add("hide"); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value = 'cash_flow'; applyTypeVisibility(); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
+  function cancelEdit() { editingTransactionId=null; cancelEditBtn.classList.add("hide"); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value = 'cash_flow'; applyTypeVisibility(); taskSelect.innerHTML='<option value="">— Select Project First —</option>'; taskSelect.disabled=true; if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
   cancelEditBtn.addEventListener("click", cancelEdit);
-  function editTransaction(exp){ editingTransactionId=exp.id; typeSelect.value=(exp.type==='cash_in')?'cash_in':'expense'; applyTypeVisibility(); dateInput.value=exp.date||""; descriptionInput.value=exp.description||""; supplierInput.value=exp.supplier||""; amountInput.value=exp.amount||""; accountSelect.value=exp.account||""; paymentMethodSelect.value = exp.paymentMethod || 'cash_flow'; categorySelect.value = exp.category || ""; setTimeout(()=>{ const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); if(optionExists) projectSelect.value=optionExists.value; else if(exp.project==="General") projectSelect.value="_general"; },100); cancelEditBtn.classList.remove("hide"); if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } expenseForm.scrollIntoView({behavior:'smooth'}); }
+
+  function editTransaction(exp){ 
+    editingTransactionId=exp.id; 
+    typeSelect.value=(exp.type==='cash_in')?'cash_in':'expense'; 
+    applyTypeVisibility(); 
+    dateInput.value=exp.date||""; 
+    descriptionInput.value=exp.description||""; 
+    supplierInput.value=exp.supplier||""; 
+    amountInput.value=exp.amount||""; 
+    accountSelect.value=exp.account||""; 
+    paymentMethodSelect.value = exp.paymentMethod || 'cash_flow'; 
+    categorySelect.value = exp.category || ""; 
+    setTimeout(()=>{ 
+      // Set project first
+      const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); 
+      if(optionExists) projectSelect.value=optionExists.value; 
+      else if(exp.project==="General") projectSelect.value="_general"; 
+      // Then restore task if it belongs to the chosen project
+      const projVal = projectSelect.value;
+      if (projVal && projVal !== "_general") {
+        loadTasksForProject(projVal, false).then(() => {
+          // Try to find the saved task in the dropdown by its id
+          if (exp.taskIdValue || exp.taskId) {
+            const opts = Array.from(taskSelect.options);
+            const found = opts.find(o => {
+              try { const j = JSON.parse(decodeURIComponent(o.value)); return j.id === (exp.taskIdValue||'') || j.taskId === exp.taskId; }
+              catch(e) { return false; }
+            });
+            if (found) taskSelect.value = found.value;
+          }
+        });
+      }
+    },100); 
+    cancelEditBtn.classList.remove("hide"); 
+    if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } 
+    expenseForm.scrollIntoView({behavior:'smooth'}); 
+  }
   async function deleteTransaction(id){ if(!confirm("Delete transaction?")) return; await deleteDoc(doc(db,"General expenses",id)); selectedTransactions.delete(id); }
   
-  expenseForm.onsubmit = async function(e) { e.preventDefault(); document.getElementById("expense-form-error").textContent=""; const typeVal=typeSelect.value==='cash_in'?'cash_in':'expense'; const isCashIn=typeVal==='cash_in'; const dateVal=dateInput.value; let projectVal = projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||"";
+  expenseForm.onsubmit = async function(e) { 
+    e.preventDefault(); 
+    document.getElementById("expense-form-error").textContent=""; 
+    const typeVal=typeSelect.value==='cash_in'?'cash_in':'expense'; 
+    const isCashIn=typeVal==='cash_in'; 
+    const dateVal=dateInput.value; 
+    let projectVal = projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||"";
     if (isCashIn) {
       projectVal = "Petty Cash Imprest";
     }
@@ -843,9 +1101,49 @@
     const amountVal=parseFloat(amountInput.value); 
     const paymentMethodVal = paymentMethodSelect.value;
     const categoryVal = isCashIn ? "" : categorySelect.value;
-    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||(!isCashIn&&!supplierVal)||(!isCashIn&&!projectVal)||(!isCashIn&&!categoryVal)){ document.getElementById("expense-form-error").textContent="Please fill all fields."; return; }
-    const expenseData={type:typeVal,date:dateVal,project:projectVal,category:categoryVal,account:accountVal,supplier:supplierVal,description:descriptionVal,amount:amountVal,paymentMethod:paymentMethodVal,updatedAt:Timestamp.now()};
-    try{ if(editingTransactionId){ await updateDoc(doc(db,"General expenses",editingTransactionId),expenseData); cancelEdit(); } else { await addDoc(collection(db,"General expenses"),{...expenseData,createdAt:Timestamp.now()}); expenseForm.reset(); typeSelect.value="expense"; paymentMethodSelect.value='cash_flow'; applyTypeVisibility(); } } catch(err){ document.getElementById("expense-form-error").textContent="Error: "+err.message; } };
+
+    // NEW: parse task selection (only for expenses, not cash_in)
+    const taskParsed = isCashIn ? { id:'', taskId:'', taskDescription:'' } : parseTaskSelectValue(taskSelect.value);
+
+    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||(!isCashIn&&!supplierVal)||(!isCashIn&&!projectVal)||(!isCashIn&&!categoryVal)){ 
+      document.getElementById("expense-form-error").textContent="Please fill all fields."; 
+      return; 
+    }
+
+    const expenseData={
+      type:typeVal,
+      date:dateVal,
+      project:projectVal,
+      category:categoryVal,
+      account:accountVal,
+      supplier:supplierVal,
+      description:descriptionVal,
+      amount:amountVal,
+      paymentMethod:paymentMethodVal,
+      // NEW: task fields saved to Firestore
+      taskIdValue: taskParsed.id || "",
+      taskId: taskParsed.taskId || "",
+      taskDescription: taskParsed.taskDescription || "",
+      updatedAt:Timestamp.now()
+    };
+
+    try{ 
+      if(editingTransactionId){ 
+        await updateDoc(doc(db,"General expenses",editingTransactionId),expenseData); 
+        cancelEdit(); 
+      } else { 
+        await addDoc(collection(db,"General expenses"),{...expenseData,createdAt:Timestamp.now()}); 
+        expenseForm.reset(); 
+        typeSelect.value="expense"; 
+        paymentMethodSelect.value='cash_flow'; 
+        applyTypeVisibility(); 
+        taskSelect.innerHTML='<option value="">— Select Project First —</option>'; 
+        taskSelect.disabled=true; 
+      } 
+    } catch(err){ 
+      document.getElementById("expense-form-error").textContent="Error: "+err.message; 
+    } 
+  };
   
   onSnapshot(collection(db,"General expenses"), (snapshot)=>{ allExpenses=[]; snapshot.forEach(d=>{ let e=d.data(); e.id=d.id; allExpenses.push(e); }); fillWeekDropdown(allExpenses); renderTable(); });
   
@@ -941,11 +1239,14 @@
       const paymentBadge = getPaymentBadge(exp.paymentMethod);
       const categoryBadge = isCashIn ? getCategoryBadge('') : getCategoryBadge(exp.category);
       const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (exp.project || "-");
+      // NEW: task badge for the table
+      const taskBadge = isCashIn ? '<span class="task-badge empty">—</span>' : getTaskBadge(exp.taskId || '', exp.taskDescription || '');
       tr.innerHTML=`<td class="checkbox-col ${checkboxesVisible?'':'hide'}"><input type="checkbox" ${isChecked?'checked':''} data-id="${exp.id}"></td>
         <td>${formatDate(exp.date)}</td>
         <td>${typeBadge}</td>
         <td>${escapeHtml(exp.description)||"-"}</td>
         <td>${escapeHtml(projectDisplay)}</td>
+        <td>${taskBadge}</td>
         <td>${categoryBadge}</td>
         <td>${escapeHtml(exp.account)||"-"}</td>
         <td>${escapeHtml(exp.supplier)||"-"}</td>
@@ -1006,6 +1307,8 @@
       const pmt = e.paymentMethod ? e.paymentMethod.replace('_',' ') : 'Cash Flow'; 
       const projectDisplay = isCashIn ? 'Petty Cash Imprest' : (e.project || "-");
       const categoryDisplay = isCashIn ? '-' : (e.category || "-");
+      // NEW: include task info in PDF
+      const taskDisplay = isCashIn ? '-' : `${e.taskId ? e.taskId + ' — ' : ''}${e.taskDescription || '-'}`;
       // Remove negative sign from balance for PDF display
       const balanceDisplay = Math.abs(runningBal).toLocaleString();
       rows+=`<tr>
@@ -1013,6 +1316,7 @@
         <td>${typeLabel}</td>
         <td>${escapeHtml(e.description)||"-"}</td>
         <td>${escapeHtml(projectDisplay)}</td>
+        <td>${escapeHtml(taskDisplay)}</td>
         <td>${escapeHtml(categoryDisplay)}</td>
         <td>${escapeHtml(e.account)||"-"}</td>
         <td>${escapeHtml(e.supplier)||"-"}</td>
@@ -1035,6 +1339,7 @@
               <th>Type</th>
               <th>Description</th>
               <th>Project</th>
+              <th>Task</th>
               <th>Category</th>
               <th>Account</th>
               <th>Supplier</th>
