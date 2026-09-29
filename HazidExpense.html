@@ -216,6 +216,16 @@
       color: #8a0a5c;
       border: 1px solid #8a0a5c;
     }
+    .category-badge.tools {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border: 1px solid #1b5e20;
+    }
+    .category-badge.stock-material {
+      background: #ede7f6;
+      color: #4527a0;
+      border: 1px solid #4527a0;
+    }
     .category-badge.none {
       background: #eee;
       color: #777;
@@ -529,6 +539,8 @@
             <option value="External Labor Cost">External Labor Cost</option>
             <option value="Material Cost">Material Cost</option>
             <option value="Indirect Cost">Indirect Cost</option>
+            <option value="Tools">Tools</option>
+            <option value="Stock Material">Stock Material</option>
           </select>
         </div>
         <div id="project-filter-container" class="hide" style="display:flex;align-items:center;">
@@ -555,6 +567,8 @@
         <option value="External Labor Cost">External Labor Cost</option>
         <option value="Material Cost">Material Cost</option>
         <option value="Indirect Cost">Indirect Cost</option>
+        <option value="Tools">Tools</option>
+        <option value="Stock Material">Stock Material</option>
       </select>
     </div>
     <div><label for="exp-account">Account</label><br><select id="exp-account" required><option value="">--Choose--</option><option value="Hazida Limited">Hazida Limited</option><option value="Hazida Motors">Hazida Motors</option><option value="Freight n Passengers">Freight n Passengers</option><option value="Hazida Ezone Limited">Hazida Ezone Limited</option></select></div>
@@ -616,6 +630,12 @@
   const dropdownDownloadWeekBtn = document.getElementById('dropdown-download-week-btn');
   const dropdownDownloadSelectedBtn = document.getElementById('dropdown-download-selected-btn');
   const dropdownToggleCheckboxes = document.getElementById('dropdown-toggle-checkboxes');
+
+  // Categories that don't require a project/task
+  const NO_PROJECT_CATEGORIES = ['Tools', 'Stock Material'];
+  function isNoProjectCategory(cat) {
+    return NO_PROJECT_CATEGORIES.includes(cat);
+  }
 
   // State
   let selectedAccount = localStorage.getItem('expenses_selectedAccount') || "";
@@ -793,6 +813,21 @@
     }
     loadTasksForProject(pid, false);
   });
+
+  // when the category changes, show/hide the project & task fields
+  function applyCategoryBehavior() {
+    const noProject = isNoProjectCategory(categorySelect.value);
+    projectWrap.style.display = noProject ? 'none' : '';
+    taskWrap.style.display = noProject ? 'none' : '';
+    projectSelect.required = !noProject;
+    if (noProject) {
+      // clear any project/task selection so it doesn't leak into save
+      projectSelect.value = "";
+      taskSelect.innerHTML = '<option value="">— No Task / Not Task-Specific —</option>';
+      taskSelect.disabled = false;
+    }
+  }
+  categorySelect.addEventListener('change', applyCategoryBehavior);
   
   let hiddenProjectsSet = new Set(JSON.parse(localStorage.getItem('hidden_projects') || '[]'));
   
@@ -916,7 +951,18 @@
   let formVisible = false;
   expenseForm.classList.add("hide"); toggleFormBtn.textContent = "Add Transaction";
   toggleFormBtn.onclick = function() { formVisible = !formVisible; expenseForm.classList.toggle("hide", !formVisible); toggleFormBtn.textContent = formVisible ? "Hide Form" : "Add Transaction"; if (!formVisible) cancelEdit(); };
-  function cancelEdit() { editingTransactionId=null; cancelEditBtn.classList.add("hide"); expenseForm.reset(); taskSelect.innerHTML='<option value="">— Select Project First —</option>'; taskSelect.disabled=true; if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; } }
+  function cancelEdit() {
+    editingTransactionId=null;
+    cancelEditBtn.classList.add("hide");
+    expenseForm.reset();
+    taskSelect.innerHTML='<option value="">— Select Project First —</option>';
+    taskSelect.disabled=true;
+    // restore project & task visibility in case a no-project category was selected
+    projectWrap.style.display = '';
+    taskWrap.style.display = '';
+    projectSelect.required = true;
+    if(!formVisible){ formVisible=true; expenseForm.classList.remove("hide"); toggleFormBtn.textContent="Hide Form"; }
+  }
   cancelEditBtn.addEventListener("click", cancelEdit);
 
   function editTransaction(exp){ 
@@ -927,22 +973,26 @@
     amountInput.value=exp.amount||""; 
     accountSelect.value=exp.account||""; 
     categorySelect.value = exp.category || ""; 
+    // apply visibility based on the category we just set
+    applyCategoryBehavior();
     setTimeout(()=>{ 
-      const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); 
-      if(optionExists) projectSelect.value=optionExists.value; 
-      else if(exp.project==="General") projectSelect.value="_general"; 
-      const projVal = projectSelect.value;
-      if (projVal && projVal !== "_general") {
-        loadTasksForProject(projVal, false).then(() => {
-          if (exp.taskIdValue || exp.taskId) {
-            const opts = Array.from(taskSelect.options);
-            const found = opts.find(o => {
-              try { const j = JSON.parse(decodeURIComponent(o.value)); return j.id === (exp.taskIdValue||'') || j.taskId === exp.taskId; }
-              catch(e) { return false; }
-            });
-            if (found) taskSelect.value = found.value;
-          }
-        });
+      if (!isNoProjectCategory(categorySelect.value)) {
+        const optionExists=Array.from(projectSelect.options).find(opt=>opt.text===exp.project||opt.value===exp.project); 
+        if(optionExists) projectSelect.value=optionExists.value; 
+        else if(exp.project==="General") projectSelect.value="_general"; 
+        const projVal = projectSelect.value;
+        if (projVal && projVal !== "_general") {
+          loadTasksForProject(projVal, false).then(() => {
+            if (exp.taskIdValue || exp.taskId) {
+              const opts = Array.from(taskSelect.options);
+              const found = opts.find(o => {
+                try { const j = JSON.parse(decodeURIComponent(o.value)); return j.id === (exp.taskIdValue||'') || j.taskId === exp.taskId; }
+                catch(e) { return false; }
+              });
+              if (found) taskSelect.value = found.value;
+            }
+          });
+        }
       }
     },100); 
     cancelEditBtn.classList.remove("hide"); 
@@ -955,17 +1005,30 @@
     e.preventDefault(); 
     document.getElementById("expense-form-error").textContent=""; 
     const dateVal=dateInput.value; 
-    let projectVal = projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||"";
     const accountVal=accountSelect.value; 
     const supplierVal=supplierInput.value.trim(); 
     const descriptionVal=descriptionInput.value.trim(); 
     const amountVal=parseFloat(amountInput.value); 
     const categoryVal = categorySelect.value;
+    const noProject = isNoProjectCategory(categoryVal);
 
-    const taskParsed = parseTaskSelectValue(taskSelect.value);
+    let projectVal;
+    if (noProject) {
+      projectVal = "General";
+    } else {
+      projectVal = projectSelect.value==="_general"?"General":projectSelect.options[projectSelect.selectedIndex]?.text||"";
+    }
 
-    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||!supplierVal||!projectVal||!categoryVal){ 
+    const taskParsed = noProject
+      ? { id: '', taskId: '', taskDescription: '' }
+      : parseTaskSelectValue(taskSelect.value);
+
+    if(!accountVal||!dateVal||isNaN(amountVal)||amountVal<0||!supplierVal||!categoryVal){ 
       document.getElementById("expense-form-error").textContent="Please fill all fields."; 
+      return; 
+    }
+    if(!noProject && !projectVal){ 
+      document.getElementById("expense-form-error").textContent="Please select a project."; 
       return; 
     }
 
@@ -992,6 +1055,9 @@
         expenseForm.reset(); 
         taskSelect.innerHTML='<option value="">— Select Project First —</option>'; 
         taskSelect.disabled=true; 
+        projectWrap.style.display = '';
+        taskWrap.style.display = '';
+        projectSelect.required = true;
       } 
     } catch(err){ 
       document.getElementById("expense-form-error").textContent="Error: "+err.message; 
