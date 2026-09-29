@@ -44,22 +44,6 @@
   .btn.warn { background: #fff2e0; color: #a15c00; border-color: #a15c00; }
   .btn.warn:hover { background: #ffe0b3; }
 
-  .sticky-filters {
-    padding: 0 18px 10px 18px; box-sizing: border-box;
-    position: sticky; top: 60px; z-index: 8; width: 100%;
-  }
-  .filter-bar {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    background: #fff; border: 2px solid #1f3d62; border-radius: 6px;
-    padding: 10px;
-  }
-  .filter-bar input[type="text"], .filter-bar select {
-    padding: 6px 10px; border-radius: 30px; border: 1px solid #b3c7e0;
-    font-size: 12px; color: #0a1c2f; background: #fff;
-  }
-  .filter-bar input[type="text"] { flex: 1; min-width: 200px; }
-
-  /* Payee tabs (account pill bar) */
   .payee-tabs {
     display: flex; gap: 6px; flex-wrap: wrap;
     padding: 0 18px 10px 18px;
@@ -80,6 +64,21 @@
     border-radius: 30px; font-size: 10px;
   }
   .payee-tab.active .tab-count { background: rgba(255,255,255,0.25); }
+
+  .sticky-filters {
+    padding: 0 18px 10px 18px; box-sizing: border-box;
+    position: sticky; top: 60px; z-index: 8; width: 100%;
+  }
+  .filter-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: #fff; border: 2px solid #1f3d62; border-radius: 6px;
+    padding: 10px;
+  }
+  .filter-bar input[type="text"], .filter-bar select {
+    padding: 6px 10px; border-radius: 30px; border: 1px solid #b3c7e0;
+    font-size: 12px; color: #0a1c2f; background: #fff;
+  }
+  .filter-bar input[type="text"] { flex: 1; min-width: 200px; }
 
   .form-panel {
     margin: 12px 18px 4px 18px; background: #fff;
@@ -180,6 +179,36 @@
   .expand-btn:hover { background: #e6efff; }
   .expand-btn.open i { transform: rotate(90deg); }
   .expand-btn i { transition: transform .2s; }
+
+  /* ACTION MENU (3-dot) */
+  .action-cell { position: relative; width: 40px; text-align: center; }
+  .action-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 16px; color: #2b4a73; padding: 3px 8px;
+    border-radius: 4px; transition: all .2s;
+  }
+  .action-btn:hover { background: #e6efff; color: #0a1c2f; }
+  .action-menu {
+    position: absolute; right: 100%; top: 50%;
+    transform: translateY(-50%);
+    background: #fff; min-width: 140px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    border-radius: 6px; z-index: 200;
+    border: 2px solid #1f3d62; padding: 4px;
+    display: none;
+  }
+  .action-menu.show { display: block; }
+  .action-menu-item {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; text-align: left;
+    padding: 8px 12px; font-size: 13px;
+    color: #0a1c2f; background: none; border: none;
+    border-radius: 4px; cursor: pointer;
+    transition: background .15s;
+  }
+  .action-menu-item:hover { background: #e6efff; }
+  .action-menu-item.delete { color: #cc0000; }
+  .action-menu-item.delete:hover { background: #ffe5e5; }
 
   .payments-row td {
     background: #f4f8fd !important; padding: 0 !important;
@@ -375,6 +404,7 @@
     .summary-item:last-child { border-bottom: none; }
     .alloc-row { grid-template-columns: 1fr; }
     .alloc-row input[type="number"] { width: 100%; }
+    .action-menu { right: 0; top: 100%; transform: none; }
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -388,7 +418,6 @@
       <button class="btn warn" id="clear-selection-btn" style="display:none;"><i class="fa fa-times"></i> Clear Selection</button>
     </div>
 
-    <!-- PAYEE / ACCOUNT TABS -->
     <div class="payee-tabs" id="payee-tabs"></div>
 
     <div class="sticky-filters">
@@ -406,7 +435,6 @@
     </div>
   </div>
 
-  <!-- SELECTION BAR -->
   <div class="selection-bar hide" id="selection-bar">
     <div class="sb-info">
       <i class="fa fa-check-square-o"></i>
@@ -418,9 +446,8 @@
     <button class="btn clear" id="clear-selection-inline"><i class="fa fa-times"></i> Clear</button>
   </div>
 
-  <!-- NEW INVOICE FORM -->
   <div class="form-panel hide" id="invoice-form-panel">
-    <h3><i class="fa fa-file-text-o"></i> New Creditor Invoice</h3>
+    <h3 id="invoice-form-title"><i class="fa fa-file-text-o"></i> New Creditor Invoice</h3>
     <div class="form-grid">
       <div>
         <label for="inv-payee">Payee Account (Who will pay) *</label>
@@ -481,7 +508,7 @@
           <th>Last Payment</th>
           <th>Payee Account</th>
           <th>Receipt / Bank Ref #</th>
-          <th style="width:40px;"></th>
+          <th class="action-cell">Actions</th>
         </tr>
       </thead>
       <tbody id="invoice-table-body"></tbody>
@@ -572,11 +599,20 @@
 
   const INVOICES_COL = "creditorInvoices";
   const PAYMENTS_COL = "creditorPayments";
-
   const PAYEES = ["Hazida Limited", "Hazida Motors", "Freight n Passengers", "Hazida Ezone Limited"];
+
+  // ── Persisted filter keys ──
+  const LS = {
+    payee:   'creditors_selectedPayee',
+    search:  'creditors_searchFilter',
+    status:  'creditors_statusFilter',
+    creditor:'creditors_creditorFilter',
+    month:   'creditors_monthFilter'
+  };
 
   // DOM
   const invoiceFormPanel = document.getElementById('invoice-form-panel');
+  const invoiceFormTitle = document.getElementById('invoice-form-title');
   const toggleInvoiceForm = document.getElementById('toggle-invoice-form');
   const cancelInvoiceBtn = document.getElementById('cancel-invoice');
   const saveInvoiceBtn = document.getElementById('save-invoice');
@@ -634,7 +670,20 @@
   let selectedInvoiceIds = new Set();
   let currentFilteredInvoices = [];
   let batchAllocValues = {};
-  let selectedPayeeTab = ""; // "" = All accounts
+
+  // ─────────────────────────────────────────────
+  // Persisted filter state — restore from localStorage on load
+  // ─────────────────────────────────────────────
+  let selectedPayeeTab = localStorage.getItem(LS.payee) || "";
+  let persistedSearch   = localStorage.getItem(LS.search) || "";
+  let persistedStatus   = localStorage.getItem(LS.status) || "";
+  let persistedCreditor = localStorage.getItem(LS.creditor) || "";
+  let persistedMonth    = localStorage.getItem(LS.month) || "all";
+
+  searchFilter.value = persistedSearch;
+  statusFilter.value = persistedStatus;
+  monthFilter.value = persistedMonth;
+  // creditorFilter will be re-set inside refreshCreditorList() after options load
 
   // ─────────────────────────────────────────────
   // Helpers
@@ -682,7 +731,6 @@
   // Payee Tabs
   // ─────────────────────────────────────────────
   function renderPayeeTabs() {
-    // count invoices + outstanding balance per payee
     const stats = {};
     PAYEES.forEach(p => stats[p] = { count: 0, balance: 0 });
     allInvoices.forEach(inv => {
@@ -699,7 +747,6 @@
     </button>`;
     PAYEES.forEach(p => {
       const s = stats[p];
-      const pending = s.balance > 0.001 ? ` · ${fmtMoney(s.balance)} pending` : '';
       html += `<button class="payee-tab ${selectedPayeeTab===p?'active':''}" data-payee="${escapeAttr(p)}">
         ${escapeHtml(p)}
         <span class="tab-count">${s.count}</span>
@@ -710,6 +757,7 @@
     payeeTabs.querySelectorAll('.payee-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         selectedPayeeTab = btn.getAttribute('data-payee');
+        localStorage.setItem(LS.payee, selectedPayeeTab);
         selectedInvoiceIds.clear();
         renderPayeeTabs();
         render();
@@ -718,22 +766,31 @@
   }
 
   // ─────────────────────────────────────────────
-  // Form: toggle
+  // Form
   // ─────────────────────────────────────────────
   toggleInvoiceForm.addEventListener('click', () => {
     const opening = invoiceFormPanel.classList.contains('hide');
-    invoiceFormPanel.classList.toggle('hide', !opening);
     if (opening) {
       editingInvoiceId = null;
-      invDate.value = todayISO();
-      // Preselect the current payee tab if we're on one
+      invoiceFormTitle.innerHTML = '<i class="fa fa-file-text-o"></i> New Creditor Invoice';
       invPayee.value = selectedPayeeTab || '';
-      invCreditor.focus();
+      invCreditor.value = '';
+      invDate.value = todayISO();
+      invNumber.value = '';
+      invAmount.value = '';
+      invDue.value = '';
+      invNotes.value = '';
+      invoiceError.textContent = '';
+      invoiceFormPanel.classList.remove('hide');
+      invPayee.focus();
+    } else {
+      resetInvoiceForm();
     }
   });
   cancelInvoiceBtn.addEventListener('click', resetInvoiceForm);
   function resetInvoiceForm() {
     editingInvoiceId = null;
+    invoiceFormTitle.innerHTML = '<i class="fa fa-file-text-o"></i> New Creditor Invoice';
     invPayee.value = '';
     invCreditor.value = '';
     invDate.value = '';
@@ -743,6 +800,21 @@
     invNotes.value = '';
     invoiceError.textContent = '';
     invoiceFormPanel.classList.add('hide');
+  }
+
+  function startEditInvoice(inv) {
+    editingInvoiceId = inv.id;
+    invoiceFormTitle.innerHTML = '<i class="fa fa-pencil"></i> Edit Invoice — ' + escapeHtml(inv.invoiceNumber || '');
+    invPayee.value = inv.payee || '';
+    invCreditor.value = inv.creditor || '';
+    invDate.value = inv.date || '';
+    invNumber.value = inv.invoiceNumber || '';
+    invAmount.value = inv.amount || '';
+    invDue.value = inv.dueDate || '';
+    invNotes.value = inv.notes || '';
+    invoiceError.textContent = '';
+    invoiceFormPanel.classList.remove('hide');
+    invoiceFormPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   saveInvoiceBtn.addEventListener('click', async () => {
@@ -780,7 +852,7 @@
   });
 
   // ─────────────────────────────────────────────
-  // Single payment — payee comes from the invoice
+  // Payments
   // ─────────────────────────────────────────────
   async function addPayment(invoiceId, payDate, payAmount, refNumber, payeeOverride, note) {
     if (!payDate || isNaN(payAmount) || payAmount <= 0) {
@@ -862,10 +934,15 @@
     const set = new Set(allInvoices.map(i => i.creditor).filter(Boolean));
     const sorted = [...set].sort((a,b) => a.localeCompare(b));
     creditorList.innerHTML = sorted.map(c => `<option value="${escapeAttr(c)}"></option>`).join('');
-    const cur = creditorFilter.value;
     creditorFilter.innerHTML = `<option value="">All Creditors</option>` +
       sorted.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
-    creditorFilter.value = cur;
+    // restore saved creditor filter if still valid
+    if (persistedCreditor && sorted.includes(persistedCreditor)) {
+      creditorFilter.value = persistedCreditor;
+    } else {
+      creditorFilter.value = "";
+      persistedCreditor = "";
+    }
   }
 
   function refreshMonthFilter() {
@@ -873,26 +950,46 @@
     allInvoices.forEach(i => { if (i.date) set.add(i.date.slice(0,7)); });
     const sorted = [...set].sort().reverse();
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const cur = monthFilter.value;
     let html = `<option value="all">All Months</option>`;
     sorted.forEach(ym => {
       const [y,m] = ym.split('-');
       html += `<option value="${ym}">${months[parseInt(m,10)-1]} ${y}</option>`;
     });
     monthFilter.innerHTML = html;
-    monthFilter.value = cur && [...monthFilter.options].some(o=>o.value===cur) ? cur : 'all';
+    if (persistedMonth && [...monthFilter.options].some(o=>o.value===persistedMonth)) {
+      monthFilter.value = persistedMonth;
+    } else {
+      monthFilter.value = 'all';
+      persistedMonth = 'all';
+    }
   }
 
   // ─────────────────────────────────────────────
-  // Filters
+  // Filters — persist on change
   // ─────────────────────────────────────────────
-  searchFilter.addEventListener('input', render);
-  statusFilter.addEventListener('change', render);
-  creditorFilter.addEventListener('change', render);
-  monthFilter.addEventListener('change', render);
+  searchFilter.addEventListener('input', () => {
+    persistedSearch = searchFilter.value;
+    localStorage.setItem(LS.search, persistedSearch);
+    render();
+  });
+  statusFilter.addEventListener('change', () => {
+    persistedStatus = statusFilter.value;
+    localStorage.setItem(LS.status, persistedStatus);
+    render();
+  });
+  creditorFilter.addEventListener('change', () => {
+    persistedCreditor = creditorFilter.value;
+    localStorage.setItem(LS.creditor, persistedCreditor);
+    render();
+  });
+  monthFilter.addEventListener('change', () => {
+    persistedMonth = monthFilter.value;
+    localStorage.setItem(LS.month, persistedMonth);
+    render();
+  });
 
   function applyFilters(list) {
-    const q = searchFilter.value.trim().toLowerCase();
+    const q = (searchFilter.value || '').trim().toLowerCase();
     const st = statusFilter.value;
     const cr = creditorFilter.value;
     const mo = monthFilter.value;
@@ -944,10 +1041,7 @@
     else selectedInvoiceIds.add(id);
     render();
   }
-  function clearSelection() {
-    selectedInvoiceIds.clear();
-    render();
-  }
+  function clearSelection() { selectedInvoiceIds.clear(); render(); }
   clearSelectionBtn.addEventListener('click', clearSelection);
   clearSelectionInline.addEventListener('click', clearSelection);
 
@@ -1030,8 +1124,12 @@
         <td>${lastPayment ? fmtDate(lastPayment.paymentDate) + ' <span style="color:#7f96b3;">(' + fmtMoney(lastPayment.amount) + ')</span>' : '<span style="color:#999;">—</span>'}</td>
         <td>${payeeDisplay}</td>
         <td>${refDisplay}</td>
-        <td style="text-align:center;">
-          <button class="mini-del" data-del-inv="${inv.id}" title="Delete invoice"><i class="fa fa-trash"></i></button>
+        <td class="action-cell">
+          <button class="action-btn" data-action="${inv.id}" title="Actions"><i class="fa fa-ellipsis-v"></i></button>
+          <div class="action-menu" data-action-menu="${inv.id}">
+            <button class="action-menu-item" data-edit="${inv.id}"><i class="fa fa-pencil"></i> Edit Invoice</button>
+            <button class="action-menu-item delete" data-del-inv="${inv.id}"><i class="fa fa-trash"></i> Delete Invoice</button>
+          </div>
         </td>
       `;
       invoiceTableBody.appendChild(tr);
@@ -1043,14 +1141,32 @@
       }
 
       tr.addEventListener('click', (e) => {
-        if (e.target.closest('button') || e.target.closest('input')) return;
+        if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.action-menu')) return;
         toggleExpand(inv.id);
       });
       tr.querySelector('[data-expand]').addEventListener('click', (e) => {
         e.stopPropagation(); toggleExpand(inv.id);
       });
+
+      const actBtn = tr.querySelector('[data-action]');
+      const actMenu = tr.querySelector('[data-action-menu]');
+      actBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // close all other menus
+        document.querySelectorAll('.action-menu.show').forEach(m => {
+          if (m !== actMenu) m.classList.remove('show');
+        });
+        actMenu.classList.toggle('show');
+      });
+      tr.querySelector('[data-edit]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        actMenu.classList.remove('show');
+        startEditInvoice(inv);
+      });
       tr.querySelector('[data-del-inv]').addEventListener('click', (e) => {
-        e.stopPropagation(); deleteInvoice(inv.id);
+        e.stopPropagation();
+        actMenu.classList.remove('show');
+        deleteInvoice(inv.id);
       });
 
       if (isOpen) {
@@ -1082,6 +1198,13 @@
 
     updateSelectionUI();
   }
+
+  // Close all action menus when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.action-cell')) {
+      document.querySelectorAll('.action-menu.show').forEach(m => m.classList.remove('show'));
+    }
+  });
 
   function toggleExpand(invoiceId) {
     if (expandedInvoices.has(invoiceId)) expandedInvoices.delete(invoiceId);
@@ -1153,7 +1276,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // Batch payment flow — payee comes from each invoice
+  // Batch payment
   // ─────────────────────────────────────────────
   batchPayBtn.addEventListener('click', openBatchModal);
   batchModalClose.addEventListener('click', closeBatchModal);
@@ -1172,7 +1295,6 @@
       return;
     }
 
-    // If they all belong to the same payee tab, great. Otherwise warn.
     const payeesInSet = new Set(selectedInvoices.map(i => i.payee || ''));
     if (payeesInSet.size > 1) {
       if (!confirm('Selected invoices belong to different payee accounts. Continue?')) return;
