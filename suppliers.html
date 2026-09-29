@@ -59,6 +59,28 @@
   }
   .filter-bar input[type="text"] { flex: 1; min-width: 200px; }
 
+  /* Payee tabs (account pill bar) */
+  .payee-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 0 18px 10px 18px;
+  }
+  .payee-tab {
+    background: #fff; color: #0a1c2f;
+    border: 1px solid #b3c7e0; padding: 6px 14px;
+    border-radius: 30px; font-size: 12px; font-weight: bold;
+    cursor: pointer; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .payee-tab:hover { background: #e6efff; }
+  .payee-tab.active {
+    background: #0a1c2f; color: #fff; border-color: #0a1c2f;
+  }
+  .payee-tab .tab-count {
+    background: rgba(0,0,0,0.08); padding: 1px 7px;
+    border-radius: 30px; font-size: 10px;
+  }
+  .payee-tab.active .tab-count { background: rgba(255,255,255,0.25); }
+
   .form-panel {
     margin: 12px 18px 4px 18px; background: #fff;
     border: 2px solid #1f3d62; border-radius: 6px; padding: 14px;
@@ -235,7 +257,6 @@
   .summary-item.paid .svalue { color: #1b5e20; }
   .summary-item.balance .svalue { color: #cc0000; }
 
-  /* Selection toolbar (appears when invoices checked) */
   .selection-bar {
     margin: 12px 18px 0 18px;
     background: #1b5e20; color: #fff;
@@ -252,9 +273,7 @@
     background: rgba(255,255,255,0.2);
     padding: 2px 10px; border-radius: 30px;
   }
-  .selection-bar .sb-info .total {
-    color: #ffd166;
-  }
+  .selection-bar .sb-info .total { color: #ffd166; }
   .selection-bar .btn {
     background: #fff; color: #1b5e20; border-color: #fff;
   }
@@ -264,7 +283,6 @@
   }
   .selection-bar .btn.clear:hover { background: rgba(255,255,255,0.15); }
 
-  /* Batch payment modal */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(10,28,47,0.55);
     z-index: 1000; display: flex; align-items: center; justify-content: center;
@@ -369,6 +387,10 @@
       <button class="btn" id="download-report"><i class="fa fa-file-pdf-o"></i> Download Report</button>
       <button class="btn warn" id="clear-selection-btn" style="display:none;"><i class="fa fa-times"></i> Clear Selection</button>
     </div>
+
+    <!-- PAYEE / ACCOUNT TABS -->
+    <div class="payee-tabs" id="payee-tabs"></div>
+
     <div class="sticky-filters">
       <div class="filter-bar">
         <input type="text" id="search-filter" placeholder="Search creditor, invoice #, ref #...">
@@ -379,19 +401,12 @@
           <option value="PAID">Paid</option>
         </select>
         <select id="creditor-filter"><option value="">All Creditors</option></select>
-        <select id="payee-filter">
-          <option value="">All Payees</option>
-          <option value="Hazida Limited">Hazida Limited</option>
-          <option value="Hazida Motors">Hazida Motors</option>
-          <option value="Freight n Passengers">Freight n Passengers</option>
-          <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
-        </select>
         <select id="month-filter"><option value="all">All Months</option></select>
       </div>
     </div>
   </div>
 
-  <!-- SELECTION BAR (shows when invoices checked) -->
+  <!-- SELECTION BAR -->
   <div class="selection-bar hide" id="selection-bar">
     <div class="sb-info">
       <i class="fa fa-check-square-o"></i>
@@ -407,6 +422,16 @@
   <div class="form-panel hide" id="invoice-form-panel">
     <h3><i class="fa fa-file-text-o"></i> New Creditor Invoice</h3>
     <div class="form-grid">
+      <div>
+        <label for="inv-payee">Payee Account (Who will pay) *</label>
+        <select id="inv-payee" required>
+          <option value="">--Choose Account--</option>
+          <option value="Hazida Limited">Hazida Limited</option>
+          <option value="Hazida Motors">Hazida Motors</option>
+          <option value="Freight n Passengers">Freight n Passengers</option>
+          <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
+        </select>
+      </div>
       <div>
         <label for="inv-creditor">Creditor / Supplier *</label>
         <input type="text" id="inv-creditor" list="creditor-list" placeholder="e.g. ABC Suppliers Ltd">
@@ -454,7 +479,7 @@
           <th class="amount-cell">Balance</th>
           <th>Status</th>
           <th>Last Payment</th>
-          <th>Payee</th>
+          <th>Payee Account</th>
           <th>Receipt / Bank Ref #</th>
           <th style="width:40px;"></th>
         </tr>
@@ -477,7 +502,7 @@
       <span class="svalue" id="sum-paid">0.00</span>
     </div>
     <div class="summary-item balance">
-      <span class="slabel">Outstanding Balance</span>
+      <span class="slabel">Pending / Outstanding Balance</span>
       <span class="svalue" id="sum-balance">0.00</span>
     </div>
   </div>
@@ -519,16 +544,6 @@
           <input type="date" id="batch-pay-date">
         </div>
         <div>
-          <label>Payee (Who is paying) *</label>
-          <select id="batch-payee">
-            <option value="">--Choose Payee--</option>
-            <option value="Hazida Limited">Hazida Limited</option>
-            <option value="Hazida Motors">Hazida Motors</option>
-            <option value="Freight n Passengers">Freight n Passengers</option>
-            <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
-          </select>
-        </div>
-        <div>
           <label>Receipt / Bank Ref # *</label>
           <input type="text" id="batch-ref" placeholder="e.g. REC-0021 / TXN...">
         </div>
@@ -558,6 +573,8 @@
   const INVOICES_COL = "creditorInvoices";
   const PAYMENTS_COL = "creditorPayments";
 
+  const PAYEES = ["Hazida Limited", "Hazida Motors", "Freight n Passengers", "Hazida Ezone Limited"];
+
   // DOM
   const invoiceFormPanel = document.getElementById('invoice-form-panel');
   const toggleInvoiceForm = document.getElementById('toggle-invoice-form');
@@ -567,6 +584,7 @@
   const invoiceTableBody = document.getElementById('invoice-table-body');
   const emptyState = document.getElementById('empty-state');
 
+  const invPayee = document.getElementById('inv-payee');
   const invCreditor = document.getElementById('inv-creditor');
   const invDate = document.getElementById('inv-date');
   const invNumber = document.getElementById('inv-number');
@@ -578,11 +596,12 @@
   const searchFilter = document.getElementById('search-filter');
   const statusFilter = document.getElementById('status-filter');
   const creditorFilter = document.getElementById('creditor-filter');
-  const payeeFilter = document.getElementById('payee-filter');
   const monthFilter = document.getElementById('month-filter');
   const downloadReportBtn = document.getElementById('download-report');
   const selectAllCheckbox = document.getElementById('select-all-checkbox');
   const clearSelectionBtn = document.getElementById('clear-selection-btn');
+
+  const payeeTabs = document.getElementById('payee-tabs');
 
   const selectionBar = document.getElementById('selection-bar');
   const selectionCount = document.getElementById('selection-count');
@@ -594,7 +613,6 @@
   const sumPaid = document.getElementById('sum-paid');
   const sumBalance = document.getElementById('sum-balance');
 
-  // Batch modal
   const batchModal = document.getElementById('batch-modal');
   const batchModalClose = document.getElementById('batch-modal-close');
   const batchInvoiceList = document.getElementById('batch-invoice-list');
@@ -603,7 +621,6 @@
   const batchTotalPaying = document.getElementById('batch-total-paying');
   const batchTotalLeft = document.getElementById('batch-total-left');
   const batchPayDate = document.getElementById('batch-pay-date');
-  const batchPayee = document.getElementById('batch-payee');
   const batchRef = document.getElementById('batch-ref');
   const batchNote = document.getElementById('batch-note');
   const batchCancel = document.getElementById('batch-cancel');
@@ -616,8 +633,8 @@
   let editingInvoiceId = null;
   let selectedInvoiceIds = new Set();
   let currentFilteredInvoices = [];
-  let batchPaymentGroupId = null;
-  let batchAllocValues = {}; // invoiceId -> amount
+  let batchAllocValues = {};
+  let selectedPayeeTab = ""; // "" = All accounts
 
   // ─────────────────────────────────────────────
   // Helpers
@@ -662,6 +679,45 @@
   }
 
   // ─────────────────────────────────────────────
+  // Payee Tabs
+  // ─────────────────────────────────────────────
+  function renderPayeeTabs() {
+    // count invoices + outstanding balance per payee
+    const stats = {};
+    PAYEES.forEach(p => stats[p] = { count: 0, balance: 0 });
+    allInvoices.forEach(inv => {
+      const p = inv.payee;
+      if (!p || !stats[p]) return;
+      stats[p].count += 1;
+      stats[p].balance += Math.max(0, getBalance(inv));
+    });
+    const totalCount = allInvoices.length;
+
+    let html = `<button class="payee-tab ${selectedPayeeTab===''?'active':''}" data-payee="">
+      <i class="fa fa-th-large"></i> All Accounts
+      <span class="tab-count">${totalCount}</span>
+    </button>`;
+    PAYEES.forEach(p => {
+      const s = stats[p];
+      const pending = s.balance > 0.001 ? ` · ${fmtMoney(s.balance)} pending` : '';
+      html += `<button class="payee-tab ${selectedPayeeTab===p?'active':''}" data-payee="${escapeAttr(p)}">
+        ${escapeHtml(p)}
+        <span class="tab-count">${s.count}</span>
+      </button>`;
+    });
+    payeeTabs.innerHTML = html;
+
+    payeeTabs.querySelectorAll('.payee-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedPayeeTab = btn.getAttribute('data-payee');
+        selectedInvoiceIds.clear();
+        renderPayeeTabs();
+        render();
+      });
+    });
+  }
+
+  // ─────────────────────────────────────────────
   // Form: toggle
   // ─────────────────────────────────────────────
   toggleInvoiceForm.addEventListener('click', () => {
@@ -670,12 +726,15 @@
     if (opening) {
       editingInvoiceId = null;
       invDate.value = todayISO();
+      // Preselect the current payee tab if we're on one
+      invPayee.value = selectedPayeeTab || '';
       invCreditor.focus();
     }
   });
   cancelInvoiceBtn.addEventListener('click', resetInvoiceForm);
   function resetInvoiceForm() {
     editingInvoiceId = null;
+    invPayee.value = '';
     invCreditor.value = '';
     invDate.value = '';
     invNumber.value = '';
@@ -688,6 +747,7 @@
 
   saveInvoiceBtn.addEventListener('click', async () => {
     invoiceError.textContent = '';
+    const payee = invPayee.value;
     const creditor = invCreditor.value.trim();
     const date = invDate.value;
     const number = invNumber.value.trim();
@@ -695,13 +755,15 @@
     const due = invDue.value || '';
     const notes = invNotes.value.trim();
 
+    if (!payee) { invoiceError.textContent = 'Please choose the Payee Account.'; return; }
     if (!creditor || !date || !number || isNaN(amount) || amount <= 0) {
       invoiceError.textContent = 'Please fill Creditor, Date, Invoice # and a positive Amount.';
       return;
     }
 
     const payload = {
-      creditor, date, invoiceNumber: number, amount, dueDate: due, notes,
+      payee, creditor, date, invoiceNumber: number, amount,
+      dueDate: due, notes,
       updatedAt: Timestamp.now()
     };
 
@@ -718,19 +780,17 @@
   });
 
   // ─────────────────────────────────────────────
-  // Payments — single
+  // Single payment — payee comes from the invoice
   // ─────────────────────────────────────────────
-  async function addPayment(invoiceId, payDate, payAmount, refNumber, payee, note) {
+  async function addPayment(invoiceId, payDate, payAmount, refNumber, payeeOverride, note) {
     if (!payDate || isNaN(payAmount) || payAmount <= 0) {
       alert('Please enter a valid payment date and a positive amount.');
       return false;
     }
-    if (!payee) {
-      alert('Please choose a Payee (who is paying).');
-      return false;
-    }
     const invoice = allInvoices.find(i => i.id === invoiceId);
     if (!invoice) return false;
+    const payee = payeeOverride || invoice.payee || '';
+    if (!payee) { alert('Invoice has no payee account.'); return false; }
     const balance = getBalance(invoice);
     if (payAmount > balance + 0.001) {
       if (!confirm(`Payment (${fmtMoney(payAmount)}) exceeds remaining balance (${fmtMoney(balance)}). Continue anyway?`)) return false;
@@ -738,12 +798,12 @@
     try {
       await addDoc(collection(db, PAYMENTS_COL), {
         invoiceId,
+        payee,
         creditor: invoice.creditor,
         invoiceNumber: invoice.invoiceNumber,
         paymentDate: payDate,
         amount: payAmount,
         reference: refNumber || '',
-        payee: payee || '',
         note: note || '',
         createdAt: Timestamp.now()
       });
@@ -783,17 +843,18 @@
   onSnapshot(collection(db, INVOICES_COL), snap => {
     allInvoices = [];
     snap.forEach(d => allInvoices.push({ id: d.id, ...d.data() }));
-    // remove any selected invoices that no longer exist
     [...selectedInvoiceIds].forEach(id => {
       if (!allInvoices.some(i => i.id === id)) selectedInvoiceIds.delete(id);
     });
     refreshCreditorList();
     refreshMonthFilter();
+    renderPayeeTabs();
     render();
   });
   onSnapshot(collection(db, PAYMENTS_COL), snap => {
     allPayments = [];
     snap.forEach(d => allPayments.push({ id: d.id, ...d.data() }));
+    renderPayeeTabs();
     render();
   });
 
@@ -828,28 +889,23 @@
   searchFilter.addEventListener('input', render);
   statusFilter.addEventListener('change', render);
   creditorFilter.addEventListener('change', render);
-  payeeFilter.addEventListener('change', render);
   monthFilter.addEventListener('change', render);
 
   function applyFilters(list) {
     const q = searchFilter.value.trim().toLowerCase();
     const st = statusFilter.value;
     const cr = creditorFilter.value;
-    const py = payeeFilter.value;
     const mo = monthFilter.value;
 
     return list.filter(inv => {
+      if (selectedPayeeTab && inv.payee !== selectedPayeeTab) return false;
       if (st && getStatus(inv) !== st) return false;
       if (cr && inv.creditor !== cr) return false;
       if (mo && mo !== 'all' && (inv.date || '').slice(0,7) !== mo) return false;
-      if (py) {
-        const pays = getPaymentsForInvoice(inv.id);
-        if (!pays.some(p => p.payee === py)) return false;
-      }
       if (q) {
         const hay = [
-          inv.creditor, inv.invoiceNumber, inv.notes,
-          ...getPaymentsForInvoice(inv.id).map(p => (p.reference||'') + ' ' + (p.note||'') + ' ' + (p.payee||''))
+          inv.creditor, inv.invoiceNumber, inv.notes, inv.payee,
+          ...getPaymentsForInvoice(inv.id).map(p => (p.reference||'') + ' ' + (p.note||''))
         ].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
@@ -872,7 +928,6 @@
     selectionBar.classList.toggle('hide', count === 0);
     clearSelectionBtn.style.display = count === 0 ? 'none' : 'inline-flex';
 
-    // update select-all checkbox
     if (currentFilteredInvoices.length) {
       const visibleIds = currentFilteredInvoices.map(i => i.id);
       const allChecked = visibleIds.every(id => selectedInvoiceIds.has(id));
@@ -899,7 +954,7 @@
   selectAllCheckbox.addEventListener('change', function() {
     if (this.checked) {
       currentFilteredInvoices.forEach(i => {
-        if (getBalance(i) > 0.001) selectedInvoiceIds.add(i.id); // only payable
+        if (getBalance(i) > 0.001) selectedInvoiceIds.add(i.id);
       });
     } else {
       selectedInvoiceIds.clear();
@@ -950,8 +1005,8 @@
         ? `<span class="ref-chip" title="${escapeAttr(lastPayment.reference)}">${escapeHtml(lastPayment.reference)}</span>`
         : `<span class="ref-chip empty">—</span>`;
 
-      const payeeDisplay = lastPayment && lastPayment.payee
-        ? `<span class="payee-chip" title="${escapeAttr(lastPayment.payee)}">${escapeHtml(lastPayment.payee)}</span>`
+      const payeeDisplay = inv.payee
+        ? `<span class="payee-chip" title="${escapeAttr(inv.payee)}">${escapeHtml(inv.payee)}</span>`
         : `<span class="payee-chip empty">—</span>`;
 
       const tr = document.createElement('tr');
@@ -1010,13 +1065,11 @@
             const payDate = payRow.querySelector('.pay-date').value;
             const payAmount = parseFloat(payRow.querySelector('.pay-amount').value);
             const ref = payRow.querySelector('.pay-ref').value.trim();
-            const payee = payRow.querySelector('.pay-payee').value;
             const note = payRow.querySelector('.pay-note').value.trim();
-            const ok = await addPayment(inv.id, payDate, payAmount, ref, payee, note);
+            const ok = await addPayment(inv.id, payDate, payAmount, ref, inv.payee, note);
             if (ok) {
               payRow.querySelector('.pay-amount').value = '';
               payRow.querySelector('.pay-ref').value = '';
-              payRow.querySelector('.pay-payee').value = '';
               payRow.querySelector('.pay-note').value = '';
             }
           });
@@ -1039,7 +1092,7 @@
   function renderPaymentsPanel(inv, payments, balance) {
     let rowsHtml = '';
     if (!payments.length) {
-      rowsHtml = `<tr><td colspan="7" style="text-align:center; color:#999; padding:14px;">No payments recorded yet.</td></tr>`;
+      rowsHtml = `<tr><td colspan="6" style="text-align:center; color:#999; padding:14px;">No payments recorded yet.</td></tr>`;
     } else {
       payments.forEach((p, idx) => {
         const isBatch = !!p.batchPaymentGroupId;
@@ -1048,7 +1101,6 @@
             <td style="width:30px; color:#7f96b3;">${idx+1}</td>
             <td>${fmtDate(p.paymentDate)}</td>
             <td class="amount-cell num-bold">${fmtMoney(p.amount)}</td>
-            <td>${p.payee ? `<span class="payee-chip">${escapeHtml(p.payee)}</span>` : '<span style="color:#999;">—</span>'}</td>
             <td>${p.reference ? `<span class="ref-chip">${escapeHtml(p.reference)}</span>${isBatch?'<span class="batch-chip">BATCH</span>':''}` : '<span style="color:#999;">—</span>'}</td>
             <td>${escapeHtml(p.note) || '<span style="color:#999;">—</span>'}</td>
             <td style="width:40px; text-align:center;">
@@ -1059,18 +1111,14 @@
       });
     }
 
-    const payeeOpts = ["Hazida Limited","Hazida Motors","Freight n Passengers","Hazida Ezone Limited"]
-      .map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
-
     return `
-      <h4><i class="fa fa-list-ul"></i> Payment History — Invoice ${escapeHtml(inv.invoiceNumber)}</h4>
+      <h4><i class="fa fa-list-ul"></i> Payment History — Invoice ${escapeHtml(inv.invoiceNumber)} (Payee: ${escapeHtml(inv.payee || '—')})</h4>
       <table class="payments-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Payment Date</th>
             <th class="amount-cell">Amount Paid</th>
-            <th>Payee</th>
             <th>Receipt / Bank Reference</th>
             <th>Note</th>
             <th></th>
@@ -1080,7 +1128,7 @@
       </table>
 
       <div class="pay-form">
-        <h4 style="margin-top:0;"><i class="fa fa-money"></i> Record New Payment (Balance: ${fmtMoney(balance)})</h4>
+        <h4 style="margin-top:0;"><i class="fa fa-money"></i> Record New Payment from <b>${escapeHtml(inv.payee || '—')}</b> (Balance: ${fmtMoney(balance)})</h4>
         <div class="form-grid">
           <div>
             <label>Payment Date *</label>
@@ -1089,13 +1137,6 @@
           <div>
             <label>Amount Paid *</label>
             <input type="number" min="0" step="0.01" class="pay-amount" placeholder="0.00">
-          </div>
-          <div>
-            <label>Payee (Who is paying) *</label>
-            <select class="pay-payee">
-              <option value="">--Choose Payee--</option>
-              ${payeeOpts}
-            </select>
           </div>
           <div>
             <label>Receipt / Bank Ref #</label>
@@ -1112,7 +1153,7 @@
   }
 
   // ─────────────────────────────────────────────
-  // Batch payment flow
+  // Batch payment flow — payee comes from each invoice
   // ─────────────────────────────────────────────
   batchPayBtn.addEventListener('click', openBatchModal);
   batchModalClose.addEventListener('click', closeBatchModal);
@@ -1131,22 +1172,24 @@
       return;
     }
 
-    // Default: allocate full remaining balance to each
+    // If they all belong to the same payee tab, great. Otherwise warn.
+    const payeesInSet = new Set(selectedInvoices.map(i => i.payee || ''));
+    if (payeesInSet.size > 1) {
+      if (!confirm('Selected invoices belong to different payee accounts. Continue?')) return;
+    }
+
     batchAllocValues = {};
-    let totalDue = 0;
     selectedInvoices.forEach(inv => {
-      const bal = getBalance(inv);
-      batchAllocValues[inv.id] = Number(bal.toFixed(2));
-      totalDue += bal;
+      batchAllocValues[inv.id] = Number(getBalance(inv).toFixed(2));
     });
 
-    // Build invoice list table
     let listHtml = `
       <table>
         <thead>
           <tr>
             <th>Invoice #</th>
             <th>Creditor</th>
+            <th>Payee Account</th>
             <th class="amount-cell" style="text-align:right;">Balance</th>
           </tr>
         </thead>
@@ -1157,6 +1200,7 @@
         <tr>
           <td>${escapeHtml(inv.invoiceNumber)}</td>
           <td>${escapeHtml(inv.creditor)}</td>
+          <td><span class="payee-chip">${escapeHtml(inv.payee || '—')}</span></td>
           <td style="text-align:right;">${fmtMoney(getBalance(inv))}</td>
         </tr>
       `;
@@ -1164,12 +1208,9 @@
     listHtml += `</tbody></table>`;
     batchInvoiceList.innerHTML = listHtml;
 
-    // Allocations inputs
     renderBatchAllocations(selectedInvoices);
 
-    // Defaults
     batchPayDate.value = todayISO();
-    batchPayee.value = '';
     batchRef.value = '';
     batchNote.value = '';
     batchError.textContent = '';
@@ -1186,6 +1227,7 @@
         <div class="alloc-row" data-inv-id="${inv.id}">
           <div class="inv-info">
             <b>${escapeHtml(inv.invoiceNumber)}</b> — ${escapeHtml(inv.creditor)}
+            <span class="payee-chip" style="margin-left:4px;">${escapeHtml(inv.payee || '—')}</span>
             (Balance: ${fmtMoney(bal)}) ${dueDate}
           </div>
           <input type="number" min="0" step="0.01" data-alloc="${inv.id}" value="${batchAllocValues[inv.id].toFixed(2)}">
@@ -1223,12 +1265,10 @@
     batchError.textContent = '';
 
     const payDate = batchPayDate.value;
-    const payee = batchPayee.value;
     const ref = batchRef.value.trim();
     const note = batchNote.value.trim();
 
     if (!payDate) { batchError.textContent = 'Payment date is required.'; return; }
-    if (!payee) { batchError.textContent = 'Please choose a Payee.'; return; }
     if (!ref) { batchError.textContent = 'Receipt / Bank Reference # is required.'; return; }
 
     const allocations = [];
@@ -1245,7 +1285,6 @@
       return;
     }
 
-    // Group ID ties all these payment records together
     const groupId = 'BATCH-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
 
     batchConfirm.disabled = true;
@@ -1257,18 +1296,17 @@
         if (!inv) continue;
         await addDoc(collection(db, PAYMENTS_COL), {
           invoiceId: a.invoiceId,
+          payee: inv.payee || '',
           creditor: inv.creditor,
           invoiceNumber: inv.invoiceNumber,
           paymentDate: payDate,
           amount: a.amount,
           reference: ref,
-          payee: payee,
           note: note || '',
           batchPaymentGroupId: groupId,
           createdAt: Timestamp.now()
         });
       }
-      // success
       selectedInvoiceIds.clear();
       closeBatchModal();
     } catch (e) {
@@ -1301,17 +1339,16 @@
       const pays = getPaymentsForInvoice(inv.id);
       const lastPay = pays.length ? pays[pays.length-1] : null;
       const lastRef = lastPay && lastPay.reference ? lastPay.reference : '—';
-      const lastPayee = lastPay && lastPay.payee ? lastPay.payee : '—';
       rows += `
         <tr>
           <td>${fmtDate(inv.date)}</td>
+          <td>${escapeHtml(inv.payee || '—')}</td>
           <td>${escapeHtml(inv.creditor)}</td>
           <td>${escapeHtml(inv.invoiceNumber)}</td>
           <td style="text-align:right;">${fmtMoney(inv.amount)}</td>
           <td style="text-align:right;">${fmtMoney(paid)}</td>
           <td style="text-align:right;">${fmtMoney(bal)}</td>
           <td style="text-align:center;">${status}</td>
-          <td>${escapeHtml(lastPayee)}</td>
           <td>${escapeHtml(lastRef)}</td>
         </tr>
       `;
@@ -1325,23 +1362,21 @@
         <table border="1" cellpadding="6" style="width:100%; border-collapse: collapse; font-size:12px; margin-top:15px;">
           <thead style="background:#0a1c2f; color:#fff;">
             <tr>
-              <th>Invoice Date</th><th>Creditor</th><th>Invoice #</th>
+              <th>Invoice Date</th><th>Payee Account</th><th>Creditor</th><th>Invoice #</th>
               <th style="text-align:right;">Invoice Amount</th>
               <th style="text-align:right;">Total Paid</th>
               <th style="text-align:right;">Balance</th>
               <th>Status</th>
-              <th>Payee</th>
               <th>Receipt / Bank Ref #</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
           <tfoot>
             <tr style="background:#e6efff; font-weight:bold;">
-              <td colspan="3" style="text-align:right;">TOTALS</td>
+              <td colspan="4" style="text-align:right;">TOTALS</td>
               <td style="text-align:right;">${fmtMoney(sInv)}</td>
               <td style="text-align:right;">${fmtMoney(sPaid)}</td>
               <td style="text-align:right;">${fmtMoney(sInv - sPaid)}</td>
-              <td></td>
               <td></td>
               <td></td>
             </tr>
@@ -1365,6 +1400,7 @@
   });
 
   invDate.value = todayISO();
+  renderPayeeTabs();
   updateSelectionUI();
 </script>
 </body>
