@@ -1,535 +1,838 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Accounts Dashboard</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-    }
-    
-    html, body {
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      background: #f8fafc;
-    }
-    
-    /* Full screen container */
-    .full-screen {
-      height: 100vh;
-      width: 100vw;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* Header */
-    .header {
-      background: white;
-      padding: 20px 30px;
-      border-bottom: 1px solid #e5e7eb;
-      flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    
-    .header h1 {
-      font-size: 22px;
-      color: #1f2937;
-      font-weight: 600;
-    }
-    
-    .header p {
-      color: #6b7280;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-    
-    /* Add Account Form */
-    .add-form {
-      padding: 20px 30px;
-      background: white;
-      border-bottom: 1px solid #e5e7eb;
-      flex-shrink: 0;
-    }
-    
-    .form-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      max-width: 600px;
-    }
-    
-    .form-row input {
-      flex: 1;
-      padding: 12px 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 15px;
-      transition: all 0.2s;
-    }
-    
-    .form-row input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    
-    .btn {
-      padding: 12px 24px;
-      border-radius: 8px;
-      border: none;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: #3b82f6;
-      color: white;
-      white-space: nowrap;
-    }
-    
-    .btn:hover {
-      background: #2563eb;
-    }
-    
-    /* Main table container */
-    .table-container {
-      flex: 1;
-      overflow: auto;
-      background: white;
-      margin: 20px 30px 30px 30px;
-      border-radius: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      border: 1px solid #e5e7eb;
-    }
-    
-    /* Table */
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    
-    thead {
-      background: #f9fafb;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    
-    th {
-      padding: 16px 20px;
-      text-align: left;
-      font-weight: 600;
-      color: #4b5563;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-    
-    td {
-      padding: 18px 20px;
-      border-bottom: 1px solid #f3f4f6;
-      font-size: 15px;
-      transition: background 0.2s;
-    }
-    
-    tbody tr {
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    tbody tr:hover {
-      background: #f9fafb;
-    }
-    
-    tbody tr:active {
-      background: #f3f4f6;
-    }
-    
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-    
-    /* Account name styling */
-    .account-name {
-      font-weight: 600;
-      color: #111827;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .account-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 15px;
-    }
-    
-    /* Date styling */
-    .date-cell {
-      color: #6b7280;
-      font-size: 14px;
-    }
-    
-    /* Status badge */
-    .status-badge {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background: #dcfce7;
-      color: #166534;
-    }
-    
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 80px 20px;
-      color: #9ca3af;
-    }
-    
-    .empty-state i {
-      font-size: 48px;
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
-    
-    .empty-state h3 {
-      font-size: 18px;
-      color: #6b7280;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    
-    .empty-state p {
-      font-size: 14px;
-      max-width: 400px;
-      margin: 0 auto;
-      line-height: 1.5;
-    }
-    
-    /* Loading state */
-    .loading-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #6b7280;
-    }
-    
-    .loading-state i {
-      font-size: 24px;
-      margin-bottom: 16px;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-      .header, .add-form {
-        padding: 20px;
-      }
-      
-      .table-container {
-        margin: 15px;
-      }
-      
-      .form-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .btn {
-        width: 100%;
-      }
-      
-      th, td {
-        padding: 14px 16px;
-      }
-      
-      .account-name {
-        font-size: 15px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .table-container {
-        border-radius: 8px;
-        margin: 10px;
-      }
-      
-      .account-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 14px;
-      }
-    }
-  </style>
+<meta charset="utf-8" />
+<title>IMS | Creditors Accounts Tracker</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+  html, body {
+    height: 100%; background: #d3dfed; margin: 0; padding: 0; width: 100vw;
+  }
+  body {
+    font-family: 'Open Sans', Arial, sans-serif; color: #0a1c2f;
+    min-height: 100vh; box-sizing: border-box; overflow-x: hidden;
+  }
+  .panel {
+    background: #ffffff; border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(20,20,20,0.26);
+    margin: 0; padding: 0; min-height: 100dvh;
+    width: 100vw; display: flex; flex-direction: column;
+  }
+  .panel-top-sticky {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(4px);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 2px 10px 0 rgba(20,20,20,0.16);
+    width: 100vw; margin: 0;
+  }
+  .panel-controls {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 12px 18px 10px 18px; background: none;
+  }
+  .btn {
+    background: white; color: #0a1c2f; border: 1px solid #2b4a73;
+    font-size: 13px; padding: 6px 14px; border-radius: 30px;
+    cursor: pointer; font-weight: bold;
+    transition: background .2s; box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: #e6efff; }
+  .btn.primary { background: #0a1c2f; color: #fff; border-color: #0a1c2f; }
+  .btn.primary:hover { background: #1f3d62; }
+
+  .sticky-filters {
+    padding: 0 18px 10px 18px; box-sizing: border-box;
+    position: sticky; top: 60px; z-index: 8; width: 100%;
+  }
+  .filter-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: #fff; border: 2px solid #1f3d62; border-radius: 6px;
+    padding: 10px;
+  }
+  .filter-bar input[type="text"], .filter-bar select {
+    padding: 6px 10px; border-radius: 30px; border: 1px solid #b3c7e0;
+    font-size: 12px; color: #0a1c2f; background: #fff;
+  }
+  .filter-bar input[type="text"] { flex: 1; min-width: 200px; }
+
+  .form-panel {
+    margin: 12px 18px 4px 18px; background: #fff;
+    border: 2px solid #1f3d62; border-radius: 6px; padding: 14px;
+    font-size: 13px;
+  }
+  .form-panel h3 {
+    margin: 0 0 10px 0; color: #0a1c2f; font-size: 15px;
+    border-bottom: 1px solid #d4e2f2; padding-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .form-panel h3 i { color: #1f3d62; }
+  .form-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 10px 12px; align-items: end;
+  }
+  .form-grid label { font-weight: bold; color: #1f3d62; display:block; margin-bottom: 3px; font-size:12px; }
+  .form-grid input, .form-grid select, .form-grid textarea {
+    width: 100%; padding: 6px 10px; font-size: 13px;
+    border-radius: 4px; border: 1px solid #b3c7e0;
+    box-sizing: border-box; background: #fff; color: #0a1c2f;
+    font-family: inherit;
+  }
+  .form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
+    outline: 2px solid #2b4a73; outline-offset: 0;
+  }
+  .form-actions {
+    display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+    align-items: center;
+  }
+  .form-error { color: #cc0000; font-size: 12px; font-weight: bold; margin-left: auto; }
+
+  .table-responsive {
+    flex: 1 1 auto; width: 100%; overflow-x: auto;
+    margin: 12px 0 0 0; padding: 0;
+  }
+  table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; color: #0a1c2f; }
+  th, td { padding: 9px 8px; text-align: left; font-size: 13px; vertical-align: middle; }
+  th {
+    font-weight: 700; background: #d4e2f2; position: sticky; top: 0;
+    z-index: 5; color: #0a1c2f; border-bottom: 2px solid #1f3d62;
+    white-space: nowrap;
+  }
+  tr:nth-child(even) td { background: #f9f9f9; }
+  tr.inv-row:hover td { background: #e3ecf7; }
+  tr.inv-row { cursor: pointer; }
+  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .num-bold { font-weight: bold; }
+
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: bold;
+    padding: 3px 9px; border-radius: 30px; letter-spacing: .3px;
+    white-space: nowrap; text-transform: uppercase;
+  }
+  .badge.paid { background: #e8f5e9; color: #1b5e20; border: 1px solid #1b5e20; }
+  .badge.unpaid { background: #ffe5e5; color: #cc0000; border: 1px solid #cc0000; }
+  .badge.partial { background: #fff2e0; color: #a15c00; border: 1px solid #a15c00; }
+
+  .ref-chip {
+    display: inline-block; font-size: 10px; font-weight: bold;
+    padding: 2px 8px; border-radius: 30px;
+    background: #eef3fb; color: #1f3d62; border: 1px solid #1f3d62;
+    max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; vertical-align: middle;
+  }
+  .ref-chip.empty { background: #eee; color: #999; border-color: #ccc; font-weight: normal; }
+
+  .expand-btn {
+    background: none; border: 1px solid #b3c7e0; border-radius: 4px;
+    width: 24px; height: 24px; cursor: pointer; color: #1f3d62;
+    font-size: 11px; display: inline-flex; align-items: center;
+    justify-content: center; transition: all .2s;
+  }
+  .expand-btn:hover { background: #e6efff; }
+  .expand-btn.open i { transform: rotate(90deg); }
+  .expand-btn i { transition: transform .2s; }
+
+  .payments-row td {
+    background: #f4f8fd !important; padding: 0 !important;
+    border-bottom: 2px solid #1f3d62;
+  }
+  .payments-inner { padding: 12px 18px 14px 18px; }
+  .payments-inner h4 {
+    margin: 0 0 10px 0; font-size: 12px; color: #1f3d62;
+    text-transform: uppercase; letter-spacing: .5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .payments-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    background: #fff; border: 1px solid #b3c7e0; border-radius: 4px;
+    overflow: hidden;
+  }
+  .payments-table th {
+    background: #e6efff; color: #0a1c2f; font-size: 11px;
+    padding: 6px 8px; position: static; border-bottom: 1px solid #b3c7e0;
+  }
+  .payments-table td {
+    padding: 6px 8px; border-bottom: 1px solid #e0e8f0;
+    background: #fff;
+  }
+  .payments-table tr:last-child td { border-bottom: none; }
+
+  .pay-form {
+    margin-top: 12px; padding: 10px; background: #fff;
+    border: 1px dashed #2b4a73; border-radius: 6px;
+  }
+  .pay-form .form-grid { grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); }
+
+  .add-pay-btn {
+    background: #0a1c2f; color: #fff; border: none;
+    padding: 6px 12px; border-radius: 4px; font-weight: bold;
+    font-size: 12px; cursor: pointer; display: inline-flex;
+    align-items: center; gap: 6px; margin-top: 8px;
+  }
+  .add-pay-btn:hover { background: #1f3d62; }
+
+  .mini-del {
+    background: none; border: none; color: #cc0000;
+    cursor: pointer; font-size: 12px; padding: 2px 6px;
+    border-radius: 4px; transition: background .15s;
+  }
+  .mini-del:hover { background: #ffe5e5; }
+
+  .empty-state {
+    padding: 40px 20px; text-align: center; color: #7f96b3;
+    font-size: 14px;
+  }
+  .empty-state i { font-size: 40px; display: block; margin-bottom: 10px; opacity: .5; }
+
+  /* Summary bar BELOW the table */
+  .summary-bar {
+    margin: 14px 18px 18px 18px;
+    display: flex; flex-wrap: wrap; gap: 10px;
+    border: 2px solid #1f3d62; border-radius: 6px;
+    background: #f4f8fd; overflow: hidden;
+  }
+  .summary-item {
+    flex: 1 1 200px; padding: 12px 18px;
+    border-right: 1px solid #b3c7e0;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .summary-item:last-child { border-right: none; }
+  .summary-item .slabel {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    color: #5a6e85; font-weight: bold;
+  }
+  .summary-item .svalue {
+    font-size: 18px; font-weight: bold; color: #0a1c2f;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary-item.invoiced .svalue { color: #0a1c2f; }
+  .summary-item.paid .svalue { color: #1b5e20; }
+  .summary-item.balance .svalue { color: #cc0000; }
+
+  .hide { display: none !important; }
+
+  @media (max-width: 700px) {
+    th, td { white-space: nowrap; padding: 7px 5px; }
+    .summary-item { flex: 1 1 100%; border-right: none; border-bottom: 1px solid #b3c7e0; }
+    .summary-item:last-child { border-bottom: none; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-  <div class="full-screen">
-    <!-- Header -->
-    <div class="header">
-      <h1>Accounts Management</h1>
-      <p>Click any account to view its journal</p>
+<div class="panel">
+  <div class="panel-top-sticky">
+    <div class="panel-controls">
+      <button class="btn primary" id="toggle-invoice-form"><i class="fa fa-plus"></i> New Invoice</button>
+      <button class="btn" id="download-report"><i class="fa fa-file-pdf-o"></i> Download Report</button>
     </div>
-    
-    <!-- Add Account Form -->
-    <div class="add-form">
-      <div class="form-row">
-        <input type="text" id="acct-name" placeholder="Enter account name (e.g., Cash, Bank, Supplier)">
-        <button id="add-acct" class="btn">
-          + Add Account
-        </button>
+    <div class="sticky-filters">
+      <div class="filter-bar">
+        <input type="text" id="search-filter" placeholder="Search creditor, invoice #, ref #...">
+        <select id="status-filter">
+          <option value="">All Status</option>
+          <option value="UNPAID">Unpaid</option>
+          <option value="PARTIAL">Partial</option>
+          <option value="PAID">Paid</option>
+        </select>
+        <select id="creditor-filter"><option value="">All Creditors</option></select>
+        <select id="month-filter"><option value="all">All Months</option></select>
       </div>
-    </div>
-    
-    <!-- Accounts Table -->
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th width="60%">Account</th>
-            <th width="25%">Created</th>
-            <th width="15%">Status</th>
-          </tr>
-        </thead>
-        <tbody id="accounts-table">
-          <tr>
-            <td colspan="3" class="loading-state">
-              <i class="fas fa-spinner fa-spin"></i>
-              <div>Loading accounts...</div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 
-  <!-- Font Awesome -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <!-- NEW INVOICE FORM -->
+  <div class="form-panel hide" id="invoice-form-panel">
+    <h3><i class="fa fa-file-text-o"></i> New Creditor Invoice</h3>
+    <div class="form-grid">
+      <div>
+        <label for="inv-creditor">Creditor / Supplier *</label>
+        <input type="text" id="inv-creditor" list="creditor-list" placeholder="e.g. ABC Suppliers Ltd">
+        <datalist id="creditor-list"></datalist>
+      </div>
+      <div>
+        <label for="inv-date">Invoice Date *</label>
+        <input type="date" id="inv-date" required>
+      </div>
+      <div>
+        <label for="inv-number">Invoice Number *</label>
+        <input type="text" id="inv-number" placeholder="e.g. INV-00123">
+      </div>
+      <div>
+        <label for="inv-amount">Invoice Amount *</label>
+        <input type="number" min="0" step="0.01" id="inv-amount" placeholder="0.00">
+      </div>
+      <div>
+        <label for="inv-due">Due Date</label>
+        <input type="date" id="inv-due">
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <label for="inv-notes">Notes</label>
+        <textarea id="inv-notes" rows="2" placeholder="Optional notes..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn primary" id="save-invoice"><i class="fa fa-save"></i> Save Invoice</button>
+      <button class="btn" id="cancel-invoice">Cancel</button>
+      <span class="form-error" id="invoice-error"></span>
+    </div>
+  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      onSnapshot,
-      query,
-      orderBy,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px;"></th>
+          <th>Invoice Date</th>
+          <th>Creditor</th>
+          <th>Invoice #</th>
+          <th class="amount-cell">Invoice Amount</th>
+          <th class="amount-cell">Total Paid</th>
+          <th class="amount-cell">Balance</th>
+          <th>Status</th>
+          <th>Last Payment</th>
+          <th>Receipt / Bank Ref #</th>
+          <th style="width:40px;"></th>
+        </tr>
+      </thead>
+      <tbody id="invoice-table-body"></tbody>
+    </table>
+    <div id="empty-state" class="empty-state hide">
+      <i class="fa fa-inbox"></i>
+      No invoices yet. Click <b>New Invoice</b> to add your first creditor invoice.
+    </div>
+  </div>
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-      authDomain: "project-task-588c4.firebaseapp.com",
-      projectId: "project-task-588c4",
-      storageBucket: "project-task-588c4.appspot.com",
-      messagingSenderId: "411882772509",
-      appId: "1:411882772509:web:08d613186c101a99f38ef4",
-      measurementId: "G-JMFLFYEM0F"
+  <!-- SUMMARY TOTALS — BELOW THE TABLE -->
+  <div class="summary-bar">
+    <div class="summary-item invoiced">
+      <span class="slabel">Total Invoiced</span>
+      <span class="svalue" id="sum-invoiced">0.00</span>
+    </div>
+    <div class="summary-item paid">
+      <span class="slabel">Total Paid</span>
+      <span class="svalue" id="sum-paid">0.00</span>
+    </div>
+    <div class="summary-item balance">
+      <span class="slabel">Outstanding Balance</span>
+      <span class="svalue" id="sum-balance">0.00</span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+  const firebaseConfig = { apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU", authDomain: "project-task-588c4.firebaseapp.com", projectId: "project-task-588c4", storageBucket: "project-task-588c4.appspot.com", messagingSenderId: "411882772509", appId: "1:411882772509:web:08d613186c101a99f38ef4", measurementId: "G-JMFLFYEM0F" };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const INVOICES_COL = "creditorInvoices";
+  const PAYMENTS_COL = "creditorPayments";
+
+  // DOM
+  const invoiceFormPanel = document.getElementById('invoice-form-panel');
+  const toggleInvoiceForm = document.getElementById('toggle-invoice-form');
+  const cancelInvoiceBtn = document.getElementById('cancel-invoice');
+  const saveInvoiceBtn = document.getElementById('save-invoice');
+  const invoiceError = document.getElementById('invoice-error');
+  const invoiceTableBody = document.getElementById('invoice-table-body');
+  const emptyState = document.getElementById('empty-state');
+
+  const invCreditor = document.getElementById('inv-creditor');
+  const invDate = document.getElementById('inv-date');
+  const invNumber = document.getElementById('inv-number');
+  const invAmount = document.getElementById('inv-amount');
+  const invDue = document.getElementById('inv-due');
+  const invNotes = document.getElementById('inv-notes');
+  const creditorList = document.getElementById('creditor-list');
+
+  const searchFilter = document.getElementById('search-filter');
+  const statusFilter = document.getElementById('status-filter');
+  const creditorFilter = document.getElementById('creditor-filter');
+  const monthFilter = document.getElementById('month-filter');
+  const downloadReportBtn = document.getElementById('download-report');
+
+  const sumInvoiced = document.getElementById('sum-invoiced');
+  const sumPaid = document.getElementById('sum-paid');
+  const sumBalance = document.getElementById('sum-balance');
+
+  // State
+  let allInvoices = [];
+  let allPayments = [];
+  let expandedInvoices = new Set();
+  let editingInvoiceId = null;
+
+  // ─────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  }
+  function escapeAttr(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtMoney(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function getPaymentsForInvoice(invoiceId) {
+    return allPayments.filter(p => p.invoiceId === invoiceId)
+      .sort((a,b) => (a.paymentDate || '').localeCompare(b.paymentDate || ''));
+  }
+  function getTotalPaid(invoiceId) {
+    return getPaymentsForInvoice(invoiceId).reduce((s,p) => s + (Number(p.amount)||0), 0);
+  }
+  function getStatus(invoice) {
+    const paid = getTotalPaid(invoice.id);
+    const total = Number(invoice.amount) || 0;
+    if (paid <= 0) return 'UNPAID';
+    if (paid >= total - 0.001) return 'PAID';
+    return 'PARTIAL';
+  }
+
+  // ─────────────────────────────────────────────
+  // Form: toggle
+  // ─────────────────────────────────────────────
+  toggleInvoiceForm.addEventListener('click', () => {
+    const opening = invoiceFormPanel.classList.contains('hide');
+    invoiceFormPanel.classList.toggle('hide', !opening);
+    if (opening) {
+      editingInvoiceId = null;
+      invDate.value = todayISO();
+      invCreditor.focus();
+    }
+  });
+  cancelInvoiceBtn.addEventListener('click', resetInvoiceForm);
+  function resetInvoiceForm() {
+    editingInvoiceId = null;
+    invCreditor.value = '';
+    invDate.value = '';
+    invNumber.value = '';
+    invAmount.value = '';
+    invDue.value = '';
+    invNotes.value = '';
+    invoiceError.textContent = '';
+    invoiceFormPanel.classList.add('hide');
+  }
+
+  // ─────────────────────────────────────────────
+  // Save invoice
+  // ─────────────────────────────────────────────
+  saveInvoiceBtn.addEventListener('click', async () => {
+    invoiceError.textContent = '';
+    const creditor = invCreditor.value.trim();
+    const date = invDate.value;
+    const number = invNumber.value.trim();
+    const amount = parseFloat(invAmount.value);
+    const due = invDue.value || '';
+    const notes = invNotes.value.trim();
+
+    if (!creditor || !date || !number || isNaN(amount) || amount <= 0) {
+      invoiceError.textContent = 'Please fill Creditor, Date, Invoice # and a positive Amount.';
+      return;
+    }
+
+    const payload = {
+      creditor, date, invoiceNumber: number, amount, dueDate: due, notes,
+      updatedAt: Timestamp.now()
     };
-    
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // Collections
-    const ACCOUNTS = 'accounts';
-    
-    // DOM elements
-    const acctName = document.getElementById('acct-name');
-    const addAcctBtn = document.getElementById('add-acct');
-    const accountsTable = document.getElementById('accounts-table');
-    
-    // Runtime state
-    let accounts = [];
-    let accountsUnsub = null;
-    
-    // Get initials from account name
-    function getInitials(name) {
-      if (!name) return 'AC';
-      const words = name.split(' ');
-      if (words.length === 1) {
-        return name.substring(0, 2).toUpperCase();
+
+    try {
+      if (editingInvoiceId) {
+        await updateDoc(doc(db, INVOICES_COL, editingInvoiceId), payload);
+      } else {
+        await addDoc(collection(db, INVOICES_COL), { ...payload, createdAt: Timestamp.now() });
       }
-      return (words[0][0] + words[1][0]).toUpperCase();
+      resetInvoiceForm();
+    } catch (e) {
+      invoiceError.textContent = 'Error: ' + e.message;
     }
-    
-    // Format date
-    function formatDate(date) {
-      if (!date) return 'N/A';
-      return date.toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
+  });
+
+  // ─────────────────────────────────────────────
+  // Payments
+  // ─────────────────────────────────────────────
+  async function addPayment(invoiceId, payDate, payAmount, refNumber, note) {
+    if (!payDate || isNaN(payAmount) || payAmount <= 0) {
+      alert('Please enter a valid payment date and a positive amount.');
+      return false;
+    }
+    const invoice = allInvoices.find(i => i.id === invoiceId);
+    if (!invoice) return false;
+    const totalPaid = getTotalPaid(invoiceId);
+    const balance = (Number(invoice.amount)||0) - totalPaid;
+    if (payAmount > balance + 0.001) {
+      if (!confirm(`Payment (${fmtMoney(payAmount)}) exceeds remaining balance (${fmtMoney(balance)}). Continue anyway?`)) return false;
+    }
+    try {
+      await addDoc(collection(db, PAYMENTS_COL), {
+        invoiceId,
+        creditor: invoice.creditor,
+        invoiceNumber: invoice.invoiceNumber,
+        paymentDate: payDate,
+        amount: payAmount,
+        reference: refNumber || '',
+        note: note || '',
+        createdAt: Timestamp.now()
       });
+      return true;
+    } catch (e) {
+      alert('Error saving payment: ' + e.message);
+      return false;
     }
-    
-    // Navigate to journal
-    function goToJournal(accountId, accountName) {
-      window.location.href = `journals.html?account=${accountId}&name=${encodeURIComponent(accountName)}`;
+  }
+
+  async function deletePayment(paymentId) {
+    if (!confirm('Delete this payment?')) return;
+    try {
+      await deleteDoc(doc(db, PAYMENTS_COL, paymentId));
+    } catch (e) {
+      alert('Error deleting payment: ' + e.message);
     }
-    
-    // Add account
-    addAcctBtn.addEventListener('click', async () => {
-      const name = acctName.value.trim();
-      
-      if (!name) {
-        alert('Please enter an account name');
-        acctName.focus();
-        return;
+  }
+
+  async function deleteInvoice(invoiceId) {
+    if (!confirm('Delete this invoice AND all its payments? This cannot be undone.')) return;
+    try {
+      const payments = getPaymentsForInvoice(invoiceId);
+      for (const p of payments) {
+        await deleteDoc(doc(db, PAYMENTS_COL, p.id));
       }
-      
-      try {
-        await addDoc(collection(db, ACCOUNTS), {
-          name: name,
-          createdAt: serverTimestamp()
-        });
-        
-        // Clear form
-        acctName.value = '';
-        acctName.focus();
-        
-      } catch (error) {
-        console.error('Error adding account:', error);
-        alert('Error adding account. Please check console.');
-      }
+      await deleteDoc(doc(db, INVOICES_COL, invoiceId));
+    } catch (e) {
+      alert('Error deleting invoice: ' + e.message);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // Load data
+  // ─────────────────────────────────────────────
+  onSnapshot(collection(db, INVOICES_COL), snap => {
+    allInvoices = [];
+    snap.forEach(d => allInvoices.push({ id: d.id, ...d.data() }));
+    refreshCreditorList();
+    refreshMonthFilter();
+    render();
+  });
+  onSnapshot(collection(db, PAYMENTS_COL), snap => {
+    allPayments = [];
+    snap.forEach(d => allPayments.push({ id: d.id, ...d.data() }));
+    render();
+  });
+
+  function refreshCreditorList() {
+    const set = new Set(allInvoices.map(i => i.creditor).filter(Boolean));
+    const sorted = [...set].sort((a,b) => a.localeCompare(b));
+    creditorList.innerHTML = sorted.map(c => `<option value="${escapeAttr(c)}"></option>`).join('');
+    const cur = creditorFilter.value;
+    creditorFilter.innerHTML = `<option value="">All Creditors</option>` +
+      sorted.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+    creditorFilter.value = cur;
+  }
+
+  function refreshMonthFilter() {
+    const set = new Set();
+    allInvoices.forEach(i => { if (i.date) set.add(i.date.slice(0,7)); });
+    const sorted = [...set].sort().reverse();
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const cur = monthFilter.value;
+    let html = `<option value="all">All Months</option>`;
+    sorted.forEach(ym => {
+      const [y,m] = ym.split('-');
+      html += `<option value="${ym}">${months[parseInt(m,10)-1]} ${y}</option>`;
     });
-    
-    // Allow Enter key to submit
-    acctName.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        addAcctBtn.click();
+    monthFilter.innerHTML = html;
+    monthFilter.value = cur && [...monthFilter.options].some(o=>o.value===cur) ? cur : 'all';
+  }
+
+  // ─────────────────────────────────────────────
+  // Filters
+  // ─────────────────────────────────────────────
+  searchFilter.addEventListener('input', render);
+  statusFilter.addEventListener('change', render);
+  creditorFilter.addEventListener('change', render);
+  monthFilter.addEventListener('change', render);
+
+  function applyFilters(list) {
+    const q = searchFilter.value.trim().toLowerCase();
+    const st = statusFilter.value;
+    const cr = creditorFilter.value;
+    const mo = monthFilter.value;
+
+    return list.filter(inv => {
+      if (st && getStatus(inv) !== st) return false;
+      if (cr && inv.creditor !== cr) return false;
+      if (mo && mo !== 'all' && (inv.date || '').slice(0,7) !== mo) return false;
+      if (q) {
+        const hay = [
+          inv.creditor, inv.invoiceNumber, inv.notes,
+          ...getPaymentsForInvoice(inv.id).map(p => (p.reference||'') + ' ' + (p.note||''))
+        ].join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
       }
+      return true;
     });
-    
-    // Start accounts listener
-    function startAccountsListener() {
-      if (accountsUnsub) accountsUnsub();
-      
-      const q = query(collection(db, ACCOUNTS), orderBy('createdAt', 'desc'));
-      
-      accountsUnsub = onSnapshot(q, (snapshot) => {
-        accounts = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          accounts.push({
-            id: doc.id,
-            name: data.name || 'Unnamed Account',
-            createdAt: data.createdAt?.toDate() || new Date()
+  }
+
+  // ─────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────
+  function render() {
+    const filtered = applyFilters(allInvoices);
+    filtered.sort((a,b) => {
+      const da = a.date || '', db_ = b.date || '';
+      if (da !== db_) return db_.localeCompare(da);
+      return (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0);
+    });
+
+    let sInv = 0, sPaid = 0;
+    filtered.forEach(i => {
+      sInv += Number(i.amount)||0;
+      sPaid += getTotalPaid(i.id);
+    });
+    sumInvoiced.textContent = fmtMoney(sInv);
+    sumPaid.textContent = fmtMoney(sPaid);
+    sumBalance.textContent = fmtMoney(sInv - sPaid);
+
+    invoiceTableBody.innerHTML = '';
+    if (!filtered.length) {
+      emptyState.classList.remove('hide');
+      return;
+    }
+    emptyState.classList.add('hide');
+
+    filtered.forEach(inv => {
+      const totalPaid = getTotalPaid(inv.id);
+      const balance = (Number(inv.amount)||0) - totalPaid;
+      const status = getStatus(inv);
+      const payments = getPaymentsForInvoice(inv.id);
+      const lastPayment = payments.length ? payments[payments.length-1] : null;
+      const isOpen = expandedInvoices.has(inv.id);
+
+      // Reference badge on the main table = latest payment's ref
+      const refDisplay = lastPayment && lastPayment.reference
+        ? `<span class="ref-chip" title="${escapeAttr(lastPayment.reference)}">${escapeHtml(lastPayment.reference)}</span>`
+        : `<span class="ref-chip empty">—</span>`;
+
+      const tr = document.createElement('tr');
+      tr.className = 'inv-row';
+      tr.innerHTML = `
+        <td>
+          <button class="expand-btn ${isOpen?'open':''}" data-expand="${inv.id}" title="Show payments">
+            <i class="fa fa-chevron-right"></i>
+          </button>
+        </td>
+        <td>${fmtDate(inv.date)}</td>
+        <td><b>${escapeHtml(inv.creditor)||'-'}</b></td>
+        <td>${escapeHtml(inv.invoiceNumber)||'-'}</td>
+        <td class="amount-cell">${fmtMoney(inv.amount)}</td>
+        <td class="amount-cell">${fmtMoney(totalPaid)}</td>
+        <td class="amount-cell num-bold" style="color:${balance>0?'#cc0000':'#1b5e20'};">${fmtMoney(balance)}</td>
+        <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
+        <td>${lastPayment ? fmtDate(lastPayment.paymentDate) + ' <span style="color:#7f96b3;">(' + fmtMoney(lastPayment.amount) + ')</span>' : '<span style="color:#999;">—</span>'}</td>
+        <td>${refDisplay}</td>
+        <td style="text-align:center;">
+          <button class="mini-del" data-del-inv="${inv.id}" title="Delete invoice"><i class="fa fa-trash"></i></button>
+        </td>
+      `;
+      invoiceTableBody.appendChild(tr);
+
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        toggleExpand(inv.id);
+      });
+      tr.querySelector('[data-expand]').addEventListener('click', (e) => {
+        e.stopPropagation(); toggleExpand(inv.id);
+      });
+      tr.querySelector('[data-del-inv]').addEventListener('click', (e) => {
+        e.stopPropagation(); deleteInvoice(inv.id);
+      });
+
+      if (isOpen) {
+        const payRow = document.createElement('tr');
+        payRow.className = 'payments-row';
+        payRow.innerHTML = `<td colspan="11"><div class="payments-inner">${renderPaymentsPanel(inv, payments, balance)}</div></td>`;
+        invoiceTableBody.appendChild(payRow);
+
+        const addBtn = payRow.querySelector('[data-add-pay]');
+        if (addBtn) {
+          addBtn.addEventListener('click', async () => {
+            const payDate = payRow.querySelector('.pay-date').value;
+            const payAmount = parseFloat(payRow.querySelector('.pay-amount').value);
+            const ref = payRow.querySelector('.pay-ref').value.trim();
+            const note = payRow.querySelector('.pay-note').value.trim();
+            const ok = await addPayment(inv.id, payDate, payAmount, ref, note);
+            if (ok) {
+              payRow.querySelector('.pay-amount').value = '';
+              payRow.querySelector('.pay-ref').value = '';
+              payRow.querySelector('.pay-note').value = '';
+            }
           });
-        });
-        
-        renderAccountsTable();
-      }, (error) => {
-        console.error('Error loading accounts:', error);
-        accountsTable.innerHTML = `
-          <tr>
-            <td colspan="3" class="empty-state">
-              <i class="fas fa-exclamation-triangle"></i>
-              <h3>Error loading accounts</h3>
-              <p>Please check your internet connection and try again.</p>
-            </td>
-          </tr>`;
-      });
-    }
-    
-    // Render accounts table
-    function renderAccountsTable() {
-      if (accounts.length === 0) {
-        accountsTable.innerHTML = `
-          <tr>
-            <td colspan="3" class="empty-state">
-              <i class="fas fa-folder-plus"></i>
-              <h3>No accounts yet</h3>
-              <p>Add your first account using the form above to get started.</p>
-            </td>
-          </tr>`;
-        return;
-      }
-      
-      accountsTable.innerHTML = '';
-      
-      accounts.forEach(account => {
-        const row = document.createElement('tr');
-        
-        // Click event for entire row
-        row.addEventListener('click', () => {
-          goToJournal(account.id, account.name);
-        });
-        
-        // Account name cell
-        const nameCell = document.createElement('td');
-        nameCell.innerHTML = `
-          <div class="account-name">
-            <div class="account-icon">${getInitials(account.name)}</div>
-            <div>
-              <div>${account.name}</div>
-              <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">
-                ID: ${account.id.substring(0, 10)}...
-              </div>
-            </div>
-          </div>
-        `;
-        
-        // Created date cell
-        const dateCell = document.createElement('td');
-        dateCell.className = 'date-cell';
-        dateCell.innerHTML = `
-          <div>${formatDate(account.createdAt)}</div>
-          <div style="font-size: 13px; color: #9ca3af; margin-top: 2px;">
-            ${account.createdAt.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: true 
-            })}
-          </div>
-        `;
-        
-        // Status cell
-        const statusCell = document.createElement('td');
-        statusCell.innerHTML = `
-          <div class="status-badge">Active</div>
-        `;
-        
-        // Append cells to row
-        row.appendChild(nameCell);
-        row.appendChild(dateCell);
-        row.appendChild(statusCell);
-        
-        // Add row to table
-        accountsTable.appendChild(row);
-      });
-    }
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      startAccountsListener();
-    });
-    
-    // Cleanup on unload
-    window.addEventListener('beforeunload', () => {
-      if (accountsUnsub) {
-        try {
-          accountsUnsub();
-        } catch (e) {
-          console.error('Error unsubscribing:', e);
         }
+        payRow.querySelectorAll('[data-del-pay]').forEach(btn => {
+          btn.addEventListener('click', () => deletePayment(btn.getAttribute('data-del-pay')));
+        });
       }
     });
-  </script>
+  }
+
+  function toggleExpand(invoiceId) {
+    if (expandedInvoices.has(invoiceId)) expandedInvoices.delete(invoiceId);
+    else expandedInvoices.add(invoiceId);
+    render();
+  }
+
+  function renderPaymentsPanel(inv, payments, balance) {
+    let rowsHtml = '';
+    if (!payments.length) {
+      rowsHtml = `<tr><td colspan="6" style="text-align:center; color:#999; padding:14px;">No payments recorded yet.</td></tr>`;
+    } else {
+      payments.forEach((p, idx) => {
+        rowsHtml += `
+          <tr>
+            <td style="width:30px; color:#7f96b3;">${idx+1}</td>
+            <td>${fmtDate(p.paymentDate)}</td>
+            <td class="amount-cell num-bold">${fmtMoney(p.amount)}</td>
+            <td>${p.reference ? `<span class="ref-chip">${escapeHtml(p.reference)}</span>` : '<span style="color:#999;">—</span>'}</td>
+            <td>${escapeHtml(p.note) || '<span style="color:#999;">—</span>'}</td>
+            <td style="width:40px; text-align:center;">
+              <button class="mini-del" data-del-pay="${p.id}" title="Delete payment"><i class="fa fa-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    return `
+      <h4><i class="fa fa-list-ul"></i> Payment History — Invoice ${escapeHtml(inv.invoiceNumber)}</h4>
+      <table class="payments-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Payment Date</th>
+            <th class="amount-cell">Amount Paid</th>
+            <th>Receipt / Bank Reference</th>
+            <th>Note</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+
+      <div class="pay-form">
+        <h4 style="margin-top:0;"><i class="fa fa-money"></i> Record New Payment (Balance: ${fmtMoney(balance)})</h4>
+        <div class="form-grid">
+          <div>
+            <label>Payment Date *</label>
+            <input type="date" class="pay-date" value="${todayISO()}">
+          </div>
+          <div>
+            <label>Amount Paid *</label>
+            <input type="number" min="0" step="0.01" class="pay-amount" placeholder="0.00">
+          </div>
+          <div>
+            <label>Receipt / Bank Ref #</label>
+            <input type="text" class="pay-ref" placeholder="e.g. REC-0021 / TXN...">
+          </div>
+          <div>
+            <label>Note</label>
+            <input type="text" class="pay-note" placeholder="Optional">
+          </div>
+        </div>
+        <button class="add-pay-btn" data-add-pay><i class="fa fa-plus"></i> Add Payment</button>
+      </div>
+    `;
+  }
+
+  // ─────────────────────────────────────────────
+  // PDF report
+  // ─────────────────────────────────────────────
+  downloadReportBtn.addEventListener('click', () => {
+    const list = applyFilters(allInvoices).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    if (!list.length) return alert('No invoices to export.');
+
+    let rows = '';
+    let sInv = 0, sPaid = 0;
+    list.forEach(inv => {
+      const paid = getTotalPaid(inv.id);
+      const bal = (Number(inv.amount)||0) - paid;
+      sInv += Number(inv.amount)||0; sPaid += paid;
+      const status = getStatus(inv);
+      const pays = getPaymentsForInvoice(inv.id);
+      const lastPay = pays.length ? pays[pays.length-1] : null;
+      const lastRef = lastPay && lastPay.reference ? lastPay.reference : '—';
+      rows += `
+        <tr>
+          <td>${fmtDate(inv.date)}</td>
+          <td>${escapeHtml(inv.creditor)}</td>
+          <td>${escapeHtml(inv.invoiceNumber)}</td>
+          <td style="text-align:right;">${fmtMoney(inv.amount)}</td>
+          <td style="text-align:right;">${fmtMoney(paid)}</td>
+          <td style="text-align:right;">${fmtMoney(bal)}</td>
+          <td style="text-align:center;">${status}</td>
+          <td>${escapeHtml(lastRef)}</td>
+        </tr>
+      `;
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="text-align: center; color: #0a1c2f; border-bottom: 2px solid #0a1c2f; padding-bottom: 10px;">
+          PENTA CONSTRUCTION — CREDITORS ACCOUNTS REPORT
+        </h2>
+        <table border="1" cellpadding="6" style="width:100%; border-collapse: collapse; font-size:12px; margin-top:15px;">
+          <thead style="background:#0a1c2f; color:#fff;">
+            <tr>
+              <th>Invoice Date</th><th>Creditor</th><th>Invoice #</th>
+              <th style="text-align:right;">Invoice Amount</th>
+              <th style="text-align:right;">Total Paid</th>
+              <th style="text-align:right;">Balance</th>
+              <th>Status</th>
+              <th>Receipt / Bank Ref #</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr style="background:#e6efff; font-weight:bold;">
+              <td colspan="3" style="text-align:right;">TOTALS</td>
+              <td style="text-align:right;">${fmtMoney(sInv)}</td>
+              <td style="text-align:right;">${fmtMoney(sPaid)}</td>
+              <td style="text-align:right;">${fmtMoney(sInv - sPaid)}</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div style="margin-top:20px; font-size:11px; color:#666; text-align:center; border-top:1px solid #ddd; padding-top:10px;">
+          Generated on ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+        </div>
+      </div>
+    `;
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    document.body.appendChild(div);
+    html2pdf().from(div).set({
+      margin: 0.5,
+      filename: `creditors-report-${todayISO()}.pdf`,
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    }).save().then(() => document.body.removeChild(div));
+  });
+
+  invDate.value = todayISO();
+</script>
 </body>
 </html>
