@@ -39,6 +39,10 @@
   .btn:hover { background: #e6efff; }
   .btn.primary { background: #0a1c2f; color: #fff; border-color: #0a1c2f; }
   .btn.primary:hover { background: #1f3d62; }
+  .btn.pay { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+  .btn.pay:hover { background: #2e7d32; }
+  .btn.warn { background: #fff2e0; color: #a15c00; border-color: #a15c00; }
+  .btn.warn:hover { background: #ffe0b3; }
 
   .sticky-filters {
     padding: 0 18px 10px 18px; box-sizing: border-box;
@@ -100,8 +104,16 @@
   tr:nth-child(even) td { background: #f9f9f9; }
   tr.inv-row:hover td { background: #e3ecf7; }
   tr.inv-row { cursor: pointer; }
+  tr.inv-row.selected td { background: #d9ecff !important; }
   .amount-cell { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .num-bold { font-weight: bold; }
+
+  .check-col {
+    width: 34px; text-align: center;
+  }
+  .check-col input[type="checkbox"] {
+    transform: scale(1.3); cursor: pointer; accent-color: #1b5e20;
+  }
 
   .badge {
     display: inline-block; font-size: 10px; font-weight: bold;
@@ -120,6 +132,22 @@
     white-space: nowrap; vertical-align: middle;
   }
   .ref-chip.empty { background: #eee; color: #999; border-color: #ccc; font-weight: normal; }
+
+  .payee-chip {
+    display: inline-block; font-size: 10px; font-weight: bold;
+    padding: 2px 8px; border-radius: 30px;
+    background: #ede7f6; color: #4527a0; border: 1px solid #4527a0;
+    max-width: 180px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; vertical-align: middle;
+  }
+  .payee-chip.empty { background: #eee; color: #999; border-color: #ccc; font-weight: normal; }
+
+  .batch-chip {
+    display: inline-block; font-size: 9px; font-weight: bold;
+    padding: 1px 6px; border-radius: 30px;
+    background: #fff2e0; color: #a15c00; border: 1px solid #a15c00;
+    margin-left: 4px;
+  }
 
   .expand-btn {
     background: none; border: 1px solid #b3c7e0; border-radius: 4px;
@@ -183,7 +211,6 @@
   }
   .empty-state i { font-size: 40px; display: block; margin-bottom: 10px; opacity: .5; }
 
-  /* Summary bar BELOW the table */
   .summary-bar {
     margin: 14px 18px 18px 18px;
     display: flex; flex-wrap: wrap; gap: 10px;
@@ -208,12 +235,128 @@
   .summary-item.paid .svalue { color: #1b5e20; }
   .summary-item.balance .svalue { color: #cc0000; }
 
+  /* Selection toolbar (appears when invoices checked) */
+  .selection-bar {
+    margin: 12px 18px 0 18px;
+    background: #1b5e20; color: #fff;
+    border-radius: 6px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 3px 10px rgba(27,94,32,0.3);
+  }
+  .selection-bar .sb-info {
+    font-size: 13px; font-weight: bold;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .selection-bar .sb-info .count {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 10px; border-radius: 30px;
+  }
+  .selection-bar .sb-info .total {
+    color: #ffd166;
+  }
+  .selection-bar .btn {
+    background: #fff; color: #1b5e20; border-color: #fff;
+  }
+  .selection-bar .btn:hover { background: #e8f5e9; }
+  .selection-bar .btn.clear {
+    background: transparent; color: #fff; border-color: rgba(255,255,255,0.5);
+  }
+  .selection-bar .btn.clear:hover { background: rgba(255,255,255,0.15); }
+
+  /* Batch payment modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(10,28,47,0.55);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal {
+    background: #fff; border-radius: 8px; width: 100%;
+    max-width: 720px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    border: 2px solid #1f3d62;
+  }
+  .modal-head {
+    background: #0a1c2f; color: #fff;
+    padding: 14px 18px; font-size: 16px; font-weight: bold;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 6px 6px 0 0;
+  }
+  .modal-head .close-x {
+    background: none; border: none; color: #fff;
+    font-size: 20px; cursor: pointer; line-height: 1; padding: 0 6px;
+  }
+  .modal-head .close-x:hover { color: #ffd166; }
+  .modal-body { padding: 16px 18px 20px 18px; }
+  .modal-body h4 {
+    margin: 0 0 10px 0; font-size: 13px; color: #1f3d62;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .modal-body .batch-list {
+    max-height: 200px; overflow-y: auto;
+    border: 1px solid #b3c7e0; border-radius: 4px;
+    margin-bottom: 14px; font-size: 12px;
+  }
+  .modal-body .batch-list table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+  }
+  .modal-body .batch-list th {
+    background: #e6efff; color: #0a1c2f; font-size: 11px;
+    padding: 6px 8px; position: static; border-bottom: 1px solid #b3c7e0;
+  }
+  .modal-body .batch-list td {
+    padding: 6px 8px; border-bottom: 1px solid #e0e8f0;
+  }
+  .modal-body .batch-list tr:last-child td { border-bottom: none; }
+  .batch-summary {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    background: #f4f8fd; border: 1px solid #b3c7e0;
+    border-radius: 6px; padding: 10px 14px; margin-bottom: 14px;
+    font-size: 13px;
+  }
+  .batch-summary > div { flex: 1 1 140px; }
+  .batch-summary .lbl {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .5px;
+    color: #5a6e85; font-weight: bold;
+  }
+  .batch-summary .val {
+    font-size: 16px; font-weight: bold; font-variant-numeric: tabular-nums;
+  }
+  .batch-summary .val.total { color: #0a1c2f; }
+  .batch-summary .val.paying { color: #1b5e20; }
+  .batch-summary .val.left { color: #cc0000; }
+
+  .alloc-row {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 8px; align-items: center;
+    padding: 6px 0; border-bottom: 1px dashed #e0e8f0;
+    font-size: 12px;
+  }
+  .alloc-row:last-child { border-bottom: none; }
+  .alloc-row .inv-info { color: #0a1c2f; }
+  .alloc-row .inv-info b { color: #1f3d62; }
+  .alloc-row .inv-info .due { color: #cc0000; font-weight: bold; font-size: 11px; margin-left: 4px; }
+  .alloc-row input[type="number"] {
+    width: 130px; padding: 5px 8px; font-size: 13px;
+    border: 1px solid #b3c7e0; border-radius: 4px;
+    text-align: right; font-variant-numeric: tabular-nums;
+    font-weight: bold;
+  }
+  .alloc-row input[type="number"]:focus { outline: 2px solid #1b5e20; }
+
+  .modal-foot {
+    display: flex; gap: 8px; justify-content: flex-end;
+    padding-top: 14px; border-top: 1px solid #e0e8f0; margin-top: 10px;
+  }
+
   .hide { display: none !important; }
 
   @media (max-width: 700px) {
     th, td { white-space: nowrap; padding: 7px 5px; }
     .summary-item { flex: 1 1 100%; border-right: none; border-bottom: 1px solid #b3c7e0; }
     .summary-item:last-child { border-bottom: none; }
+    .alloc-row { grid-template-columns: 1fr; }
+    .alloc-row input[type="number"] { width: 100%; }
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -224,6 +367,7 @@
     <div class="panel-controls">
       <button class="btn primary" id="toggle-invoice-form"><i class="fa fa-plus"></i> New Invoice</button>
       <button class="btn" id="download-report"><i class="fa fa-file-pdf-o"></i> Download Report</button>
+      <button class="btn warn" id="clear-selection-btn" style="display:none;"><i class="fa fa-times"></i> Clear Selection</button>
     </div>
     <div class="sticky-filters">
       <div class="filter-bar">
@@ -235,9 +379,28 @@
           <option value="PAID">Paid</option>
         </select>
         <select id="creditor-filter"><option value="">All Creditors</option></select>
+        <select id="payee-filter">
+          <option value="">All Payees</option>
+          <option value="Hazida Limited">Hazida Limited</option>
+          <option value="Hazida Motors">Hazida Motors</option>
+          <option value="Freight n Passengers">Freight n Passengers</option>
+          <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
+        </select>
         <select id="month-filter"><option value="all">All Months</option></select>
       </div>
     </div>
+  </div>
+
+  <!-- SELECTION BAR (shows when invoices checked) -->
+  <div class="selection-bar hide" id="selection-bar">
+    <div class="sb-info">
+      <i class="fa fa-check-square-o"></i>
+      <span class="count" id="selection-count">0</span>
+      invoice(s) selected
+      — Total: <span class="total" id="selection-total">0.00</span>
+    </div>
+    <button class="btn pay" id="batch-pay-btn"><i class="fa fa-money"></i> Pay Selected (One Transaction)</button>
+    <button class="btn clear" id="clear-selection-inline"><i class="fa fa-times"></i> Clear</button>
   </div>
 
   <!-- NEW INVOICE FORM -->
@@ -281,6 +444,7 @@
     <table>
       <thead>
         <tr>
+          <th class="check-col"><input type="checkbox" id="select-all-checkbox" title="Select all"></th>
           <th style="width:30px;"></th>
           <th>Invoice Date</th>
           <th>Creditor</th>
@@ -290,6 +454,7 @@
           <th class="amount-cell">Balance</th>
           <th>Status</th>
           <th>Last Payment</th>
+          <th>Payee</th>
           <th>Receipt / Bank Ref #</th>
           <th style="width:40px;"></th>
         </tr>
@@ -302,7 +467,6 @@
     </div>
   </div>
 
-  <!-- SUMMARY TOTALS — BELOW THE TABLE -->
   <div class="summary-bar">
     <div class="summary-item invoiced">
       <span class="slabel">Total Invoiced</span>
@@ -315,6 +479,70 @@
     <div class="summary-item balance">
       <span class="slabel">Outstanding Balance</span>
       <span class="svalue" id="sum-balance">0.00</span>
+    </div>
+  </div>
+</div>
+
+<!-- BATCH PAYMENT MODAL -->
+<div class="modal-backdrop hide" id="batch-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span><i class="fa fa-money"></i> Batch Payment — One Transaction</span>
+      <button class="close-x" id="batch-modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h4><i class="fa fa-list-ul"></i> Selected Invoices</h4>
+      <div class="batch-list" id="batch-invoice-list"></div>
+
+      <div class="batch-summary">
+        <div>
+          <div class="lbl">Total Due</div>
+          <div class="val total" id="batch-total-due">0.00</div>
+        </div>
+        <div>
+          <div class="lbl">Total Paying</div>
+          <div class="val paying" id="batch-total-paying">0.00</div>
+        </div>
+        <div>
+          <div class="lbl">Left Unpaid</div>
+          <div class="val left" id="batch-total-left">0.00</div>
+        </div>
+      </div>
+
+      <h4><i class="fa fa-sliders"></i> Allocate Payment Per Invoice</h4>
+      <div id="batch-allocations"></div>
+
+      <h4 style="margin-top:16px;"><i class="fa fa-credit-card"></i> Payment Details (applies to all)</h4>
+      <div class="form-grid">
+        <div>
+          <label>Payment Date *</label>
+          <input type="date" id="batch-pay-date">
+        </div>
+        <div>
+          <label>Payee (Who is paying) *</label>
+          <select id="batch-payee">
+            <option value="">--Choose Payee--</option>
+            <option value="Hazida Limited">Hazida Limited</option>
+            <option value="Hazida Motors">Hazida Motors</option>
+            <option value="Freight n Passengers">Freight n Passengers</option>
+            <option value="Hazida Ezone Limited">Hazida Ezone Limited</option>
+          </select>
+        </div>
+        <div>
+          <label>Receipt / Bank Ref # *</label>
+          <input type="text" id="batch-ref" placeholder="e.g. REC-0021 / TXN...">
+        </div>
+        <div>
+          <label>Note</label>
+          <input type="text" id="batch-note" placeholder="Optional">
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn" id="batch-cancel">Cancel</button>
+        <button class="btn pay" id="batch-confirm"><i class="fa fa-check"></i> Post Payment</button>
+      </div>
+      <div class="form-error" id="batch-error" style="margin-top:8px; text-align:right;"></div>
     </div>
   </div>
 </div>
@@ -350,18 +578,46 @@
   const searchFilter = document.getElementById('search-filter');
   const statusFilter = document.getElementById('status-filter');
   const creditorFilter = document.getElementById('creditor-filter');
+  const payeeFilter = document.getElementById('payee-filter');
   const monthFilter = document.getElementById('month-filter');
   const downloadReportBtn = document.getElementById('download-report');
+  const selectAllCheckbox = document.getElementById('select-all-checkbox');
+  const clearSelectionBtn = document.getElementById('clear-selection-btn');
+
+  const selectionBar = document.getElementById('selection-bar');
+  const selectionCount = document.getElementById('selection-count');
+  const selectionTotal = document.getElementById('selection-total');
+  const batchPayBtn = document.getElementById('batch-pay-btn');
+  const clearSelectionInline = document.getElementById('clear-selection-inline');
 
   const sumInvoiced = document.getElementById('sum-invoiced');
   const sumPaid = document.getElementById('sum-paid');
   const sumBalance = document.getElementById('sum-balance');
 
-  // State
+  // Batch modal
+  const batchModal = document.getElementById('batch-modal');
+  const batchModalClose = document.getElementById('batch-modal-close');
+  const batchInvoiceList = document.getElementById('batch-invoice-list');
+  const batchAllocations = document.getElementById('batch-allocations');
+  const batchTotalDue = document.getElementById('batch-total-due');
+  const batchTotalPaying = document.getElementById('batch-total-paying');
+  const batchTotalLeft = document.getElementById('batch-total-left');
+  const batchPayDate = document.getElementById('batch-pay-date');
+  const batchPayee = document.getElementById('batch-payee');
+  const batchRef = document.getElementById('batch-ref');
+  const batchNote = document.getElementById('batch-note');
+  const batchCancel = document.getElementById('batch-cancel');
+  const batchConfirm = document.getElementById('batch-confirm');
+  const batchError = document.getElementById('batch-error');
+
   let allInvoices = [];
   let allPayments = [];
   let expandedInvoices = new Set();
   let editingInvoiceId = null;
+  let selectedInvoiceIds = new Set();
+  let currentFilteredInvoices = [];
+  let batchPaymentGroupId = null;
+  let batchAllocValues = {}; // invoiceId -> amount
 
   // ─────────────────────────────────────────────
   // Helpers
@@ -393,6 +649,9 @@
   }
   function getTotalPaid(invoiceId) {
     return getPaymentsForInvoice(invoiceId).reduce((s,p) => s + (Number(p.amount)||0), 0);
+  }
+  function getBalance(invoice) {
+    return (Number(invoice.amount)||0) - getTotalPaid(invoice.id);
   }
   function getStatus(invoice) {
     const paid = getTotalPaid(invoice.id);
@@ -427,9 +686,6 @@
     invoiceFormPanel.classList.add('hide');
   }
 
-  // ─────────────────────────────────────────────
-  // Save invoice
-  // ─────────────────────────────────────────────
   saveInvoiceBtn.addEventListener('click', async () => {
     invoiceError.textContent = '';
     const creditor = invCreditor.value.trim();
@@ -462,17 +718,20 @@
   });
 
   // ─────────────────────────────────────────────
-  // Payments
+  // Payments — single
   // ─────────────────────────────────────────────
-  async function addPayment(invoiceId, payDate, payAmount, refNumber, note) {
+  async function addPayment(invoiceId, payDate, payAmount, refNumber, payee, note) {
     if (!payDate || isNaN(payAmount) || payAmount <= 0) {
       alert('Please enter a valid payment date and a positive amount.');
       return false;
     }
+    if (!payee) {
+      alert('Please choose a Payee (who is paying).');
+      return false;
+    }
     const invoice = allInvoices.find(i => i.id === invoiceId);
     if (!invoice) return false;
-    const totalPaid = getTotalPaid(invoiceId);
-    const balance = (Number(invoice.amount)||0) - totalPaid;
+    const balance = getBalance(invoice);
     if (payAmount > balance + 0.001) {
       if (!confirm(`Payment (${fmtMoney(payAmount)}) exceeds remaining balance (${fmtMoney(balance)}). Continue anyway?`)) return false;
     }
@@ -484,6 +743,7 @@
         paymentDate: payDate,
         amount: payAmount,
         reference: refNumber || '',
+        payee: payee || '',
         note: note || '',
         createdAt: Timestamp.now()
       });
@@ -511,6 +771,7 @@
         await deleteDoc(doc(db, PAYMENTS_COL, p.id));
       }
       await deleteDoc(doc(db, INVOICES_COL, invoiceId));
+      selectedInvoiceIds.delete(invoiceId);
     } catch (e) {
       alert('Error deleting invoice: ' + e.message);
     }
@@ -522,6 +783,10 @@
   onSnapshot(collection(db, INVOICES_COL), snap => {
     allInvoices = [];
     snap.forEach(d => allInvoices.push({ id: d.id, ...d.data() }));
+    // remove any selected invoices that no longer exist
+    [...selectedInvoiceIds].forEach(id => {
+      if (!allInvoices.some(i => i.id === id)) selectedInvoiceIds.delete(id);
+    });
     refreshCreditorList();
     refreshMonthFilter();
     render();
@@ -563,28 +828,84 @@
   searchFilter.addEventListener('input', render);
   statusFilter.addEventListener('change', render);
   creditorFilter.addEventListener('change', render);
+  payeeFilter.addEventListener('change', render);
   monthFilter.addEventListener('change', render);
 
   function applyFilters(list) {
     const q = searchFilter.value.trim().toLowerCase();
     const st = statusFilter.value;
     const cr = creditorFilter.value;
+    const py = payeeFilter.value;
     const mo = monthFilter.value;
 
     return list.filter(inv => {
       if (st && getStatus(inv) !== st) return false;
       if (cr && inv.creditor !== cr) return false;
       if (mo && mo !== 'all' && (inv.date || '').slice(0,7) !== mo) return false;
+      if (py) {
+        const pays = getPaymentsForInvoice(inv.id);
+        if (!pays.some(p => p.payee === py)) return false;
+      }
       if (q) {
         const hay = [
           inv.creditor, inv.invoiceNumber, inv.notes,
-          ...getPaymentsForInvoice(inv.id).map(p => (p.reference||'') + ' ' + (p.note||''))
+          ...getPaymentsForInvoice(inv.id).map(p => (p.reference||'') + ' ' + (p.note||'') + ' ' + (p.payee||''))
         ].join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
   }
+
+  // ─────────────────────────────────────────────
+  // Selection
+  // ─────────────────────────────────────────────
+  function updateSelectionUI() {
+    const count = selectedInvoiceIds.size;
+    let total = 0;
+    selectedInvoiceIds.forEach(id => {
+      const inv = allInvoices.find(i => i.id === id);
+      if (inv) total += getBalance(inv);
+    });
+    selectionCount.textContent = count;
+    selectionTotal.textContent = fmtMoney(total);
+    selectionBar.classList.toggle('hide', count === 0);
+    clearSelectionBtn.style.display = count === 0 ? 'none' : 'inline-flex';
+
+    // update select-all checkbox
+    if (currentFilteredInvoices.length) {
+      const visibleIds = currentFilteredInvoices.map(i => i.id);
+      const allChecked = visibleIds.every(id => selectedInvoiceIds.has(id));
+      const someChecked = visibleIds.some(id => selectedInvoiceIds.has(id));
+      selectAllCheckbox.checked = allChecked;
+      selectAllCheckbox.indeterminate = !allChecked && someChecked;
+    } else {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    }
+  }
+  function toggleInvoiceSelection(id) {
+    if (selectedInvoiceIds.has(id)) selectedInvoiceIds.delete(id);
+    else selectedInvoiceIds.add(id);
+    render();
+  }
+  function clearSelection() {
+    selectedInvoiceIds.clear();
+    render();
+  }
+  clearSelectionBtn.addEventListener('click', clearSelection);
+  clearSelectionInline.addEventListener('click', clearSelection);
+
+  selectAllCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      currentFilteredInvoices.forEach(i => {
+        if (getBalance(i) > 0.001) selectedInvoiceIds.add(i.id); // only payable
+      });
+    } else {
+      selectedInvoiceIds.clear();
+    }
+    render();
+  });
 
   // ─────────────────────────────────────────────
   // Render
@@ -596,6 +917,7 @@
       if (da !== db_) return db_.localeCompare(da);
       return (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0);
     });
+    currentFilteredInvoices = filtered;
 
     let sInv = 0, sPaid = 0;
     filtered.forEach(i => {
@@ -609,26 +931,35 @@
     invoiceTableBody.innerHTML = '';
     if (!filtered.length) {
       emptyState.classList.remove('hide');
+      updateSelectionUI();
       return;
     }
     emptyState.classList.add('hide');
 
     filtered.forEach(inv => {
       const totalPaid = getTotalPaid(inv.id);
-      const balance = (Number(inv.amount)||0) - totalPaid;
+      const balance = getBalance(inv);
       const status = getStatus(inv);
       const payments = getPaymentsForInvoice(inv.id);
       const lastPayment = payments.length ? payments[payments.length-1] : null;
       const isOpen = expandedInvoices.has(inv.id);
+      const isSelected = selectedInvoiceIds.has(inv.id);
+      const isPaid = balance <= 0.001;
 
-      // Reference badge on the main table = latest payment's ref
       const refDisplay = lastPayment && lastPayment.reference
         ? `<span class="ref-chip" title="${escapeAttr(lastPayment.reference)}">${escapeHtml(lastPayment.reference)}</span>`
         : `<span class="ref-chip empty">—</span>`;
 
+      const payeeDisplay = lastPayment && lastPayment.payee
+        ? `<span class="payee-chip" title="${escapeAttr(lastPayment.payee)}">${escapeHtml(lastPayment.payee)}</span>`
+        : `<span class="payee-chip empty">—</span>`;
+
       const tr = document.createElement('tr');
-      tr.className = 'inv-row';
+      tr.className = 'inv-row' + (isSelected ? ' selected' : '');
       tr.innerHTML = `
+        <td class="check-col">
+          <input type="checkbox" data-check="${inv.id}" ${isSelected?'checked':''} ${isPaid?'disabled title="Fully paid"':''}>
+        </td>
         <td>
           <button class="expand-btn ${isOpen?'open':''}" data-expand="${inv.id}" title="Show payments">
             <i class="fa fa-chevron-right"></i>
@@ -642,6 +973,7 @@
         <td class="amount-cell num-bold" style="color:${balance>0?'#cc0000':'#1b5e20'};">${fmtMoney(balance)}</td>
         <td><span class="badge ${status.toLowerCase()}">${status}</span></td>
         <td>${lastPayment ? fmtDate(lastPayment.paymentDate) + ' <span style="color:#7f96b3;">(' + fmtMoney(lastPayment.amount) + ')</span>' : '<span style="color:#999;">—</span>'}</td>
+        <td>${payeeDisplay}</td>
         <td>${refDisplay}</td>
         <td style="text-align:center;">
           <button class="mini-del" data-del-inv="${inv.id}" title="Delete invoice"><i class="fa fa-trash"></i></button>
@@ -649,8 +981,14 @@
       `;
       invoiceTableBody.appendChild(tr);
 
+      const cb = tr.querySelector('[data-check]');
+      if (cb) {
+        cb.addEventListener('click', (e) => e.stopPropagation());
+        cb.addEventListener('change', () => toggleInvoiceSelection(inv.id));
+      }
+
       tr.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return;
+        if (e.target.closest('button') || e.target.closest('input')) return;
         toggleExpand(inv.id);
       });
       tr.querySelector('[data-expand]').addEventListener('click', (e) => {
@@ -663,7 +1001,7 @@
       if (isOpen) {
         const payRow = document.createElement('tr');
         payRow.className = 'payments-row';
-        payRow.innerHTML = `<td colspan="11"><div class="payments-inner">${renderPaymentsPanel(inv, payments, balance)}</div></td>`;
+        payRow.innerHTML = `<td colspan="13"><div class="payments-inner">${renderPaymentsPanel(inv, payments, balance)}</div></td>`;
         invoiceTableBody.appendChild(payRow);
 
         const addBtn = payRow.querySelector('[data-add-pay]');
@@ -672,11 +1010,13 @@
             const payDate = payRow.querySelector('.pay-date').value;
             const payAmount = parseFloat(payRow.querySelector('.pay-amount').value);
             const ref = payRow.querySelector('.pay-ref').value.trim();
+            const payee = payRow.querySelector('.pay-payee').value;
             const note = payRow.querySelector('.pay-note').value.trim();
-            const ok = await addPayment(inv.id, payDate, payAmount, ref, note);
+            const ok = await addPayment(inv.id, payDate, payAmount, ref, payee, note);
             if (ok) {
               payRow.querySelector('.pay-amount').value = '';
               payRow.querySelector('.pay-ref').value = '';
+              payRow.querySelector('.pay-payee').value = '';
               payRow.querySelector('.pay-note').value = '';
             }
           });
@@ -686,6 +1026,8 @@
         });
       }
     });
+
+    updateSelectionUI();
   }
 
   function toggleExpand(invoiceId) {
@@ -697,15 +1039,17 @@
   function renderPaymentsPanel(inv, payments, balance) {
     let rowsHtml = '';
     if (!payments.length) {
-      rowsHtml = `<tr><td colspan="6" style="text-align:center; color:#999; padding:14px;">No payments recorded yet.</td></tr>`;
+      rowsHtml = `<tr><td colspan="7" style="text-align:center; color:#999; padding:14px;">No payments recorded yet.</td></tr>`;
     } else {
       payments.forEach((p, idx) => {
+        const isBatch = !!p.batchPaymentGroupId;
         rowsHtml += `
           <tr>
             <td style="width:30px; color:#7f96b3;">${idx+1}</td>
             <td>${fmtDate(p.paymentDate)}</td>
             <td class="amount-cell num-bold">${fmtMoney(p.amount)}</td>
-            <td>${p.reference ? `<span class="ref-chip">${escapeHtml(p.reference)}</span>` : '<span style="color:#999;">—</span>'}</td>
+            <td>${p.payee ? `<span class="payee-chip">${escapeHtml(p.payee)}</span>` : '<span style="color:#999;">—</span>'}</td>
+            <td>${p.reference ? `<span class="ref-chip">${escapeHtml(p.reference)}</span>${isBatch?'<span class="batch-chip">BATCH</span>':''}` : '<span style="color:#999;">—</span>'}</td>
             <td>${escapeHtml(p.note) || '<span style="color:#999;">—</span>'}</td>
             <td style="width:40px; text-align:center;">
               <button class="mini-del" data-del-pay="${p.id}" title="Delete payment"><i class="fa fa-trash"></i></button>
@@ -715,6 +1059,9 @@
       });
     }
 
+    const payeeOpts = ["Hazida Limited","Hazida Motors","Freight n Passengers","Hazida Ezone Limited"]
+      .map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
+
     return `
       <h4><i class="fa fa-list-ul"></i> Payment History — Invoice ${escapeHtml(inv.invoiceNumber)}</h4>
       <table class="payments-table">
@@ -723,6 +1070,7 @@
             <th>#</th>
             <th>Payment Date</th>
             <th class="amount-cell">Amount Paid</th>
+            <th>Payee</th>
             <th>Receipt / Bank Reference</th>
             <th>Note</th>
             <th></th>
@@ -743,6 +1091,13 @@
             <input type="number" min="0" step="0.01" class="pay-amount" placeholder="0.00">
           </div>
           <div>
+            <label>Payee (Who is paying) *</label>
+            <select class="pay-payee">
+              <option value="">--Choose Payee--</option>
+              ${payeeOpts}
+            </select>
+          </div>
+          <div>
             <label>Receipt / Bank Ref #</label>
             <input type="text" class="pay-ref" placeholder="e.g. REC-0021 / TXN...">
           </div>
@@ -754,6 +1109,179 @@
         <button class="add-pay-btn" data-add-pay><i class="fa fa-plus"></i> Add Payment</button>
       </div>
     `;
+  }
+
+  // ─────────────────────────────────────────────
+  // Batch payment flow
+  // ─────────────────────────────────────────────
+  batchPayBtn.addEventListener('click', openBatchModal);
+  batchModalClose.addEventListener('click', closeBatchModal);
+  batchCancel.addEventListener('click', closeBatchModal);
+
+  function openBatchModal() {
+    if (!selectedInvoiceIds.size) return;
+
+    const selectedInvoices = [...selectedInvoiceIds]
+      .map(id => allInvoices.find(i => i.id === id))
+      .filter(Boolean)
+      .filter(i => getBalance(i) > 0.001);
+
+    if (!selectedInvoices.length) {
+      alert('Selected invoices are already fully paid.');
+      return;
+    }
+
+    // Default: allocate full remaining balance to each
+    batchAllocValues = {};
+    let totalDue = 0;
+    selectedInvoices.forEach(inv => {
+      const bal = getBalance(inv);
+      batchAllocValues[inv.id] = Number(bal.toFixed(2));
+      totalDue += bal;
+    });
+
+    // Build invoice list table
+    let listHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Creditor</th>
+            <th class="amount-cell" style="text-align:right;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    selectedInvoices.forEach(inv => {
+      listHtml += `
+        <tr>
+          <td>${escapeHtml(inv.invoiceNumber)}</td>
+          <td>${escapeHtml(inv.creditor)}</td>
+          <td style="text-align:right;">${fmtMoney(getBalance(inv))}</td>
+        </tr>
+      `;
+    });
+    listHtml += `</tbody></table>`;
+    batchInvoiceList.innerHTML = listHtml;
+
+    // Allocations inputs
+    renderBatchAllocations(selectedInvoices);
+
+    // Defaults
+    batchPayDate.value = todayISO();
+    batchPayee.value = '';
+    batchRef.value = '';
+    batchNote.value = '';
+    batchError.textContent = '';
+
+    batchModal.classList.remove('hide');
+  }
+
+  function renderBatchAllocations(selectedInvoices) {
+    let html = '';
+    selectedInvoices.forEach(inv => {
+      const bal = getBalance(inv);
+      const dueDate = inv.dueDate ? `<span class="due">Due: ${fmtDate(inv.dueDate)}</span>` : '';
+      html += `
+        <div class="alloc-row" data-inv-id="${inv.id}">
+          <div class="inv-info">
+            <b>${escapeHtml(inv.invoiceNumber)}</b> — ${escapeHtml(inv.creditor)}
+            (Balance: ${fmtMoney(bal)}) ${dueDate}
+          </div>
+          <input type="number" min="0" step="0.01" data-alloc="${inv.id}" value="${batchAllocValues[inv.id].toFixed(2)}">
+        </div>
+      `;
+    });
+    batchAllocations.innerHTML = html;
+
+    batchAllocations.querySelectorAll('input[data-alloc]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const id = inp.getAttribute('data-alloc');
+        const v = parseFloat(inp.value);
+        batchAllocValues[id] = isNaN(v) ? 0 : v;
+        recalcBatchTotals();
+      });
+    });
+
+    recalcBatchTotals();
+  }
+
+  function recalcBatchTotals() {
+    let totalDue = 0, totalPaying = 0;
+    Object.keys(batchAllocValues).forEach(id => {
+      const inv = allInvoices.find(i => i.id === id);
+      if (!inv) return;
+      totalDue += getBalance(inv);
+      totalPaying += Number(batchAllocValues[id]) || 0;
+    });
+    batchTotalDue.textContent = fmtMoney(totalDue);
+    batchTotalPaying.textContent = fmtMoney(totalPaying);
+    batchTotalLeft.textContent = fmtMoney(Math.max(0, totalDue - totalPaying));
+  }
+
+  batchConfirm.addEventListener('click', async () => {
+    batchError.textContent = '';
+
+    const payDate = batchPayDate.value;
+    const payee = batchPayee.value;
+    const ref = batchRef.value.trim();
+    const note = batchNote.value.trim();
+
+    if (!payDate) { batchError.textContent = 'Payment date is required.'; return; }
+    if (!payee) { batchError.textContent = 'Please choose a Payee.'; return; }
+    if (!ref) { batchError.textContent = 'Receipt / Bank Reference # is required.'; return; }
+
+    const allocations = [];
+    let totalPaying = 0;
+    for (const [id, amt] of Object.entries(batchAllocValues)) {
+      const n = Number(amt) || 0;
+      if (n > 0) {
+        allocations.push({ invoiceId: id, amount: n });
+        totalPaying += n;
+      }
+    }
+    if (!allocations.length || totalPaying <= 0) {
+      batchError.textContent = 'Please allocate at least one payment > 0.';
+      return;
+    }
+
+    // Group ID ties all these payment records together
+    const groupId = 'BATCH-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+
+    batchConfirm.disabled = true;
+    batchConfirm.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Posting...';
+
+    try {
+      for (const a of allocations) {
+        const inv = allInvoices.find(i => i.id === a.invoiceId);
+        if (!inv) continue;
+        await addDoc(collection(db, PAYMENTS_COL), {
+          invoiceId: a.invoiceId,
+          creditor: inv.creditor,
+          invoiceNumber: inv.invoiceNumber,
+          paymentDate: payDate,
+          amount: a.amount,
+          reference: ref,
+          payee: payee,
+          note: note || '',
+          batchPaymentGroupId: groupId,
+          createdAt: Timestamp.now()
+        });
+      }
+      // success
+      selectedInvoiceIds.clear();
+      closeBatchModal();
+    } catch (e) {
+      batchError.textContent = 'Error: ' + e.message;
+    } finally {
+      batchConfirm.disabled = false;
+      batchConfirm.innerHTML = '<i class="fa fa-check"></i> Post Payment';
+    }
+  });
+
+  function closeBatchModal() {
+    batchModal.classList.add('hide');
+    batchAllocValues = {};
   }
 
   // ─────────────────────────────────────────────
@@ -773,6 +1301,7 @@
       const pays = getPaymentsForInvoice(inv.id);
       const lastPay = pays.length ? pays[pays.length-1] : null;
       const lastRef = lastPay && lastPay.reference ? lastPay.reference : '—';
+      const lastPayee = lastPay && lastPay.payee ? lastPay.payee : '—';
       rows += `
         <tr>
           <td>${fmtDate(inv.date)}</td>
@@ -782,6 +1311,7 @@
           <td style="text-align:right;">${fmtMoney(paid)}</td>
           <td style="text-align:right;">${fmtMoney(bal)}</td>
           <td style="text-align:center;">${status}</td>
+          <td>${escapeHtml(lastPayee)}</td>
           <td>${escapeHtml(lastRef)}</td>
         </tr>
       `;
@@ -800,6 +1330,7 @@
               <th style="text-align:right;">Total Paid</th>
               <th style="text-align:right;">Balance</th>
               <th>Status</th>
+              <th>Payee</th>
               <th>Receipt / Bank Ref #</th>
             </tr>
           </thead>
@@ -810,6 +1341,7 @@
               <td style="text-align:right;">${fmtMoney(sInv)}</td>
               <td style="text-align:right;">${fmtMoney(sPaid)}</td>
               <td style="text-align:right;">${fmtMoney(sInv - sPaid)}</td>
+              <td></td>
               <td></td>
               <td></td>
             </tr>
@@ -833,6 +1365,7 @@
   });
 
   invDate.value = todayISO();
+  updateSelectionUI();
 </script>
 </body>
 </html>
