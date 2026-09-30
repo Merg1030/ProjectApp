@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PENTA | Tools Management</title>
+  <title>PENTA | Tools Management – Assigned View</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -79,6 +79,8 @@
     .btn-success:hover { background: #047857; }
     .btn-danger { background: #cc0000; color: white; border: none; }
     .btn-danger:hover { background: #990000; }
+    .btn-secondary { background: #1f3d62; color: white; border: none; }
+    .btn-secondary:hover { background: #0a1c2f; }
 
     /* Actions Panel */
     .actions-container { padding: 4px 20px; background: #f2f6fc; border-bottom: 1px solid #b3c7e0; flex-shrink: 0; }
@@ -140,7 +142,6 @@
     .tools-table th { background: #d4e2f2; color: #0a1c2f; padding: 12px 10px; text-align: left; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #9bb1cc; border-bottom: 2px solid #1f3d62; position: sticky; top: 0; z-index: 10; }
     .tools-table td { padding: 10px; border: 1px solid #c7d6ec; color: #0a1c2f; vertical-align: middle; background: white; }
     .tools-table tbody tr:hover td { background: #e3ecf7; }
-    /* returned row highlight */
     .tools-table tbody tr.returned-row td { background: #f0fff4 !important; opacity: 0.7; }
 
     /* Status Badges */
@@ -153,10 +154,8 @@
     .action-buttons { display: flex; gap: 6px; align-items: center; }
     .btn-small { padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 
-    /* ── RETURN CHECKBOX ── */
-    .return-wrap {
-      display: flex; align-items: center; gap: 7px;
-    }
+    /* Return Checkbox */
+    .return-wrap { display: flex; align-items: center; gap: 7px; }
     .return-checkbox {
       appearance: none; -webkit-appearance: none;
       width: 18px; height: 18px; border-radius: 4px;
@@ -164,20 +163,14 @@
       cursor: pointer; position: relative; flex-shrink: 0;
       transition: all 0.18s;
     }
-    .return-checkbox:checked {
-      background: #059669; border-color: #059669;
-    }
+    .return-checkbox:checked { background: #059669; border-color: #059669; }
     .return-checkbox:checked::after {
       content: '✓'; position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       color: white; font-size: 11px; font-weight: 900;
     }
-    .return-checkbox:disabled {
-      opacity: 0.45; cursor: not-allowed;
-    }
-    .return-label {
-      font-size: 0.65rem; color: #2b4a73; font-weight: 600; white-space: nowrap;
-    }
+    .return-checkbox:disabled { opacity: 0.45; cursor: not-allowed; }
+    .return-label { font-size: 0.65rem; color: #2b4a73; font-weight: 600; white-space: nowrap; }
     .return-label.done { color: #059669; }
 
     /* Delete Mode Toggle */
@@ -338,6 +331,16 @@
             <input type="text" id="tool-search-bar" placeholder="Search by tool name, bin, holder...">
           </div>
           <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <!-- View Assigned Only Toggle (New Feature) -->
+            <div style="display:inline-flex; align-items:center; gap:6px; background:#e6efff; padding:5px 12px; border-radius:30px; border:1px solid #b3c7e0;">
+              <i class="fas fa-user-check" style="color:#059669; font-size:13px;"></i>
+              <span style="font-size:12px; font-weight:600; color:#0a1c2f;">Assigned Only</span>
+              <label class="toggle-switch" style="width:36px; height:20px; margin:0 4px;">
+                <input type="checkbox" id="assigned-only-toggle">
+                <span class="slider" style="border-radius:20px;"></span>
+              </label>
+              <span class="mode-label" id="assigned-only-status">Off</span>
+            </div>
             <!-- Return Mode Toggle -->
             <div style="display:inline-flex; align-items:center; gap:6px;">
               <span style="font-size:12px; font-weight:600; color:#7f96b3;">Return Mode:</span>
@@ -360,9 +363,15 @@
         </div>
 
         <!-- Return mode info banner -->
-        <div id="return-mode-banner" style="display:none; background:#ecfdf5; border:1.5px solid #6ee7b7; border-radius:8px; padding:10px 16px; margin-bottom:14px; font-size:12px; color:#064e3b; display:none; align-items:center; gap:8px;">
+        <div id="return-mode-banner" style="display:none; background:#ecfdf5; border:1.5px solid #6ee7b7; border-radius:8px; padding:10px 16px; margin-bottom:14px; font-size:12px; color:#064e3b; align-items:center; gap:8px;">
           <i class="fas fa-info-circle" style="color:#059669;"></i>
           <span>Return Mode is <strong>ON</strong> — tick the checkbox next to any assigned tool to mark it as returned to warehouse.</span>
+        </div>
+
+        <!-- Assigned-only info banner (dynamically shown) -->
+        <div id="assigned-only-banner" style="display:none; background:#e6f7ff; border:1.5px solid #91d5ff; border-radius:8px; padding:10px 16px; margin-bottom:14px; font-size:12px; color:#0050b3; align-items:center; gap:8px;">
+          <i class="fas fa-filter" style="color:#1890ff;"></i>
+          <span>Showing <strong>only assigned tools</strong> — all tools currently held by a team member.</span>
         </div>
 
         <!-- Tools Table -->
@@ -478,6 +487,9 @@
     const returnModeToggle = document.getElementById('return-mode-toggle');
     const returnModeStatus = document.getElementById('return-mode-status');
     const returnModeBanner = document.getElementById('return-mode-banner');
+    const assignedOnlyToggle = document.getElementById('assigned-only-toggle');
+    const assignedOnlyStatus = document.getElementById('assigned-only-status');
+    const assignedOnlyBanner = document.getElementById('assigned-only-banner');
     const deleteModal      = document.getElementById('delete-modal');
     const deleteToolName   = document.getElementById('delete-tool-name');
     const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
@@ -490,6 +502,7 @@
     let currentWarehouse = localStorage.getItem('selectedWarehouse') || 'penta';
     let deleteMode       = false;
     let returnMode       = false;
+    let assignedOnly     = false;   // NEW
     let toolToDelete     = null;
     let toolToReturn     = null;
 
@@ -564,12 +577,19 @@
       if (returnMode) { deleteMode = false; deleteModeToggle.checked = false; deleteModeStatus.textContent = 'Off'; deleteModeStatus.className = 'mode-label'; }
       returnModeStatus.textContent = returnMode ? 'On' : 'Off';
       returnModeStatus.className = returnMode ? 'mode-label active' : 'mode-label';
-      // toggle return mode banner colour using inline display flex
       returnModeBanner.style.display = returnMode ? 'flex' : 'none';
       filterToolsByWarehouse();
     });
-    // fix banner slider colour to green when return mode
     document.querySelector('#return-mode-toggle + .slider').style.setProperty('--checked-bg','#059669');
+
+    // Assigned-only toggle
+    assignedOnlyToggle.addEventListener('change', function() {
+      assignedOnly = this.checked;
+      assignedOnlyStatus.textContent = assignedOnly ? 'On' : 'Off';
+      assignedOnlyStatus.style.color = assignedOnly ? '#059669' : '#7f96b3';
+      assignedOnlyBanner.style.display = assignedOnly ? 'flex' : 'none';
+      filterToolsByWarehouse();
+    });
 
     // Helpers
     function getToolStatus(tool) {
@@ -587,6 +607,12 @@
     function filterToolsByWarehouse() {
       const q = searchInput.value.toLowerCase();
       let data = toolsData.filter(t => t.warehouse === currentWarehouse);
+      
+      // Filter assigned only if toggle is ON
+      if (assignedOnly) {
+        data = data.filter(t => t.currentHolder && t.currentHolder !== 'Not Allocated');
+      }
+      
       if (q) data = data.filter(t =>
         (t.bin||'').toLowerCase().includes(q) ||
         (t.name||'').toLowerCase().includes(q) ||
@@ -608,11 +634,12 @@
     // Render
     function renderTable(data) {
       if (!data.length) {
+        let emptyMsg = assignedOnly 
+          ? '<h3 style="color:#7f96b3;font-weight:500;">No assigned tools found</h3><p style="color:#7f96b3;margin-top:10px;">All tools in this warehouse are currently available or in repair.</p>'
+          : '<h3 style="color:#7f96b3;font-weight:500;">No tools found in this warehouse</h3><p style="color:#7f96b3;margin-top:10px;">Try adding a new tool or switch to another warehouse</p><a href="addtool.html?warehouse=' + currentWarehouse + '" class="btn btn-primary" style="margin-top:20px;"><i class="fas fa-plus-circle"></i> Add Tool</a>';
         tableBody.innerHTML = `<tr><td colspan="7" style="padding:40px;text-align:center;">
           <i class="fas fa-warehouse" style="font-size:48px;color:#97adc9;margin-bottom:15px;display:block;"></i>
-          <h3 style="color:#7f96b3;font-weight:500;">No tools found in this warehouse</h3>
-          <p style="color:#7f96b3;margin-top:10px;">Try adding a new tool or switch to another warehouse</p>
-          <a href="addtool.html?warehouse=${currentWarehouse}" class="btn btn-primary" style="margin-top:20px;"><i class="fas fa-plus-circle"></i> Add Tool</a>
+          ${emptyMsg}
         </td></tr>`;
         return;
       }
@@ -621,12 +648,11 @@
       data.forEach((tool, index) => {
         const status    = getToolStatus(tool);
         const isAssigned = status === 'assigned';
-        const isReturned = tool._returned === true; // local flag
+        const isReturned = tool._returned === true;
 
         let actionsHtml = '';
 
         if (returnMode) {
-          // show checkbox — only enabled for assigned tools
           const checked   = isReturned ? 'checked' : '';
           const disabled  = (!isAssigned && !isReturned) ? 'disabled' : '';
           const lblClass  = isReturned ? 'return-label done' : 'return-label';
@@ -669,7 +695,6 @@
 
       tableBody.innerHTML = html;
 
-      // attach checkbox listeners
       tableBody.querySelectorAll('.return-checkbox').forEach(cb => {
         cb.addEventListener('change', function() {
           if (this.checked) {
@@ -708,7 +733,6 @@
       returnModal.classList.add('show');
     }
     window.closeReturnModal = function() {
-      // uncheck the checkbox if user cancels
       if (pendingCheckbox) { pendingCheckbox.checked = false; pendingCheckbox = null; }
       returnModal.classList.remove('show');
       toolToReturn = null;
@@ -724,7 +748,6 @@
           status: 'available',
           location: 'Warehouse'
         });
-        // mark local flag so row stays green until snapshot refreshes
         const t = toolsData.find(x => x.id === toolToReturn.id);
         if (t) t._returned = true;
         pendingCheckbox = null;
@@ -742,6 +765,7 @@
     window.downloadToolsPDF = function() {
       const { jsPDF } = window.jspdf;
       const p = new jsPDF('landscape','mm','a4');
+      // PDF always uses all warehouse tools, not filtered by assignedOnly
       const warehouseData = toolsData.filter(t => t.warehouse === currentWarehouse);
       const wName = currentWarehouse === 'penta' ? 'Penta Tools' : 'Techno Tools';
       const now = new Date();
