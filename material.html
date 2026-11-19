@@ -1,926 +1,1157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Ledger | REC / ISSU / B/C</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #d3dfed;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            padding: 20px;
-            color: #0a1c2f;
-        }
-        .ledger-container {
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            overflow: hidden;
-            border: 2px solid #1f3d62;
-        }
-        .ledger-header {
-            background: #0a1c2f;
-            padding: 16px 24px;
-            border-bottom: 3px solid #e9b35f;
-        }
-        .ledger-header h1 {
-            color: white;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .ledger-header h1 i { color: #e9b35f; }
-        
-        .item-selector-area {
-            background: #f8fafd;
-            padding: 16px 24px;
-            border-bottom: 1px solid #b3c7e0;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .selector-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            min-width: 180px;
-        }
-        .selector-group label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #4b6e8a;
-        }
-        select, .selector-group input {
-            background: white;
-            border: 2px solid #b3c7e0;
-            border-radius: 40px;
-            padding: 10px 18px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            outline: none;
-        }
-        .btn-sm {
-            background: white;
-            border: 2px solid #b3c7e0;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
-        }
-        .btn-sm:hover { background: #e6efff; border-color: #e9b35f; }
-        .btn-primary { background: #0a1c2f; color: white; border-color: #0a1c2f; }
-        .btn-primary:hover { background: #1f3d62; }
-        .btn-success { background: #059669; color: white; border-color: #059669; }
-        .btn-success:hover { background: #047857; }
-        
-        .ledger-table-wrapper { padding: 20px 24px; overflow-x: auto; }
-        .weekly-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            min-width: 400px;
-        }
-        .weekly-table th, .weekly-table td {
-            border: 1.5px solid #cfdfed;
-            padding: 12px 8px;
-            text-align: center;
-        }
-        .weekly-table th {
-            background: #e6f0f9;
-            font-weight: 800;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #1a4c6e;
-        }
-        .weekly-table td:first-child { font-weight: 700; background: #fefaf5; }
-        .rec-cell { background: #f2f9f0; font-weight: 600; color: #2e6b2f; }
-        .issu-cell { background: #fff2e6; font-weight: 600; color: #bc5a2c; }
-        .balance-cell { background: #eef2fa; font-weight: 700; color: #1f6392; }
-        
-        .week-selector-panel {
-            background: #f8fafd;
-            padding: 12px 24px;
-            border-bottom: 1px solid #b3c7e0;
-        }
-        .week-toggle-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            padding: 8px 0;
-        }
-        .week-toggle-header h4 {
-            font-size: 0.8rem;
-            color: #0a1c2f;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .week-toggle-header i { transition: transform 0.2s; color: #1f3d62; }
-        .week-range-selector {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            padding: 0;
-        }
-        .week-range-selector.open {
-            max-height: 200px;
-            padding: 12px 0 16px 0;
-        }
-        .range-inputs {
-            display: flex;
-            gap: 20px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-        .range-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .range-group label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #4b6e8a;
-            text-transform: uppercase;
-        }
-        .range-group input {
-            width: 100px;
-            padding: 8px 12px;
-            border: 1px solid #b3c7e0;
-            border-radius: 8px;
-            font-size: 0.8rem;
-        }
-        .week-buttons {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .active-range-badge {
-            background: #e6efff;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            color: #0a1c2f;
-            border: 1px solid #b3c7e0;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 1000px;
-            max-height: 85vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border: 3px solid #1f3d62;
-        }
-        .modal-header {
-            background: #0a1c2f;
-            color: white;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h3 { display: flex; align-items: center; gap: 10px; }
-        .modal-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        .modal-body {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
-        .modal-footer {
-            padding: 16px 20px;
-            border-top: 1px solid #e0e8f5;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .receive-items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .receive-items-table th, .receive-items-table td {
-            border: 1px solid #b3c7e0;
-            padding: 10px;
-            text-align: left;
-            font-size: 0.75rem;
-        }
-        .receive-items-table th {
-            background: #e6f0f9;
-            font-weight: 700;
-        }
-        .receive-items-table input, .receive-items-table select {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #b3c7e0;
-            border-radius: 6px;
-            font-size: 0.7rem;
-        }
-        .add-row-btn {
-            background: #0a1c2f;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            margin-bottom: 10px;
-        }
-        .remove-row-btn {
-            background: #dc2626;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.65rem;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #4b6e8a;
-            margin-bottom: 4px;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #b3c7e0;
-            border-radius: 8px;
-            font-size: 0.8rem;
-        }
-        
-        .history-item {
-            background: #f8fafd;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            padding: 12px;
-            border: 1px solid #b3c7e0;
-        }
-        .loading { text-align: center; padding: 40px; color: #7f96b3; }
-        .selected-item-info {
-            background:#f8fafd; 
-            padding:12px 16px; 
-            border-radius:12px;
-        }
-        footer {
-            font-size:0.7rem; 
-            text-align:center; 
-            padding:16px; 
-            color:#6f95b5; 
-            border-top:1px solid #e2edf7;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Inventory Manager</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#d3dfed; font-family:system-ui,sans-serif; padding:20px; color:#0a1c2f; }
+  .wrap { margin:0 auto; background:#fff; border-radius:16px; overflow:hidden; border:2px solid #1f3d62; }
+  .top { background:#0a1c2f; color:#fff; padding:16px 24px; border-bottom:3px solid #e9b35f; }
+  .top h1 { font-size:1.2rem; }
+  .tabs { display:flex; background:#1f3d62; padding:0 12px; gap:4px; }
+  .tab { background:none; border:none; color:#b3c7e0; padding:14px 20px; cursor:pointer; font-weight:700; font-size:.82rem; border-bottom:3px solid transparent; }
+  .tab.active { color:#e9b35f; border-bottom-color:#e9b35f; }
+  .panel { display:none; padding:20px; }
+  .panel.active { display:block; }
+  .bar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .bar input, .bar select { padding:8px 14px; border:2px solid #b3c7e0; border-radius:20px; font-size:.85rem; }
+  .btn { background:#fff; border:2px solid #b3c7e0; padding:8px 16px; border-radius:20px; font-weight:600; font-size:.78rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .btn:hover { background:#e6efff; }
+  .btn.primary { background:#0a1c2f; color:#fff; border-color:#0a1c2f; }
+  .btn.gold { background:#e9b35f; color:#0a1c2f; border-color:#e9b35f; font-weight:800; }
+  .btn.green { background:#059669; color:#fff; border-color:#059669; }
+  .btn.red { background:#dc2626; color:#fff; border-color:#dc2626; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  table { width:100%; border-collapse:collapse; font-size:.8rem; }
+  th, td { border:1px solid #cfdfed; padding:9px 8px; text-align:center; }
+  th { background:#e6f0f9; font-size:.7rem; text-transform:uppercase; color:#1a4c6e; font-weight:800; }
+  td.left { text-align:left; }
+  .low { background:#fee2e2; color:#b91c1c; font-weight:700; }
+  .ok { background:#dcfce7; color:#166534; font-weight:700; }
+  .star { background:none; border:none; cursor:pointer; font-size:1.1rem; color:#cbd5e1; }
+  .star.on { color:#e9b35f; }
+  .loading { text-align:center; padding:30px; color:#7f96b3; }
+  .unit-pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.68rem; font-weight:700; background:#e6efff; color:#1f3d62; }
+  .pieces { font-size:.75rem; color:#6f95b5; }
+  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; }
+  .modal.open { display:flex; }
+  .mc { background:#fff; border-radius:16px; width:92%; max-width:1000px; max-height:90vh; overflow:hidden; display:flex; flex-direction:column; border:3px solid #1f3d62; }
+  .mh { background:#0a1c2f; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+  .mh h3 { font-size:1rem; }
+  .mc-close { background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; }
+  .mb { padding:18px; overflow-y:auto; flex:1; }
+  .mf { padding:14px 20px; border-top:1px solid #e2edf7; display:flex; gap:10px; justify-content:flex-end; }
+  .fg { margin-bottom:12px; }
+  .fg label { display:block; font-size:.7rem; font-weight:700; color:#4b6e8a; text-transform:uppercase; margin-bottom:4px; }
+  .fg input, .fg select, .fg textarea { width:100%; padding:8px; border:1px solid #b3c7e0; border-radius:6px; font-size:.82rem; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .order-line-input { width:100%; padding:5px; border:1px solid #b3c7e0; border-radius:4px; font-size:.75rem; }
+  .summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+  .sc { background:#f8fafd; border:1px solid #b3c7e0; border-radius:10px; padding:12px; }
+  .sc .lb { font-size:.65rem; font-weight:700; text-transform:uppercase; color:#6f95b5; }
+  .sc .vl { font-size:1.4rem; font-weight:800; color:#0a1c2f; }
+  .sc.gold { background:#fef3c7; border-color:#e9b35f; }
+  .sc.gold .vl { color:#8a5a00; }
+  .sc.green { background:#dcfce7; border-color:#86efac; }
+  .sc.green .vl { color:#166534; }
+  .sc.red { background:#fee2e2; border-color:#fca5a5; }
+  .sc.red .vl { color:#b91c1c; }
+  .ord-card { background:#f8fafd; border:1px solid #b3c7e0; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .ord-card.selected { border:2px solid #e9b35f; background:#fffbf0; }
+  .ord-head { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:center; }
+  .ord-head-left { display:flex; align-items:center; gap:12px; }
+  .ord-check { width:22px; height:22px; cursor:pointer; accent-color:#0a1c2f; }
+  .ord-meta { font-size:.72rem; color:#6f95b5; display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
+  .ord-meta strong { color:#0a1c2f; }
+  .badge { padding:2px 8px; border-radius:10px; font-size:.65rem; font-weight:700; background:#fef3c7; color:#8a5a00; }
+  .empty { text-align:center; padding:40px; color:#7f96b3; }
+  .empty i { font-size:2.5rem; display:block; margin-bottom:10px; }
+  .rep-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .rep-tab { background:#fff; border:2px solid #b3c7e0; border-radius:20px; padding:8px 16px; font-size:.75rem; font-weight:700; cursor:pointer; color:#4b6e8a; }
+  .rep-tab.active { background:#0a1c2f; color:#fff; border-color:#0a1c2f; }
+  .grp-head td { background:#e6f0f9; font-weight:800; text-align:left; padding:8px 12px; }
+  .grp-tot td { background:#fdf5e6; font-weight:800; color:#8a5a00; }
+  .grand td { background:#0a1c2f; color:#fff; font-weight:900; padding:10px; }
+  .in-q { background:#f0fdf4; color:#166534; font-weight:700; }
+  .out-q { background:#fff7ed; color:#c2410c; font-weight:700; }
+  .hint { font-size:.7rem; color:#6f95b5; font-style:italic; margin-top:4px; }
+  /* Selection toolbar for orders */
+  .sel-bar { background:#fffbf0; border:2px solid #e9b35f; border-radius:12px; padding:12px 16px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .sel-bar .info { font-size:.82rem; font-weight:700; color:#8a5a00; display:flex; align-items:center; gap:8px; }
+  .sel-bar .info .count { background:#e9b35f; color:#0a1c2f; padding:2px 10px; border-radius:20px; font-size:.75rem; }
+  .sel-bar-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .dl-menu { position:relative; }
+  .dl-menu-list { display:none; position:absolute; top:100%; right:0; background:#fff; border:2px solid #1f3d62; border-radius:10px; margin-top:6px; min-width:220px; box-shadow:0 8px 24px rgba(0,0,0,.15); z-index:100; overflow:hidden; }
+  .dl-menu-list.open { display:block; }
+  .dl-menu-list button { display:block; width:100%; text-align:left; background:none; border:none; padding:11px 16px; font-size:.8rem; cursor:pointer; border-bottom:1px solid #e2edf7; }
+  .dl-menu-list button:hover { background:#f8fafd; }
+  .dl-menu-list button:last-child { border-bottom:none; }
+  .dl-menu-list button i { color:#1f3d62; margin-right:8px; width:16px; }
+</style>
 </head>
 <body>
 
-<div class="ledger-container">
-    <div class="ledger-header">
-        <h1><i class="fas fa-clipboard-list"></i> MATERIAL LEDGER</h1>
-    </div>
+<div class="wrap">
+  <div class="top"><h1><i class="fas fa-boxes"></i> INVENTORY MANAGER</h1></div>
 
-    <div class="item-selector-area">
-        <div class="selector-group">
-            <label><i class="fas fa-cubes"></i> SELECT MATERIAL</label>
-            <select id="itemSelect">
-                <option value="">— Loading materials —</option>
-            </select>
-        </div>
-        
-        <div class="selector-group">
-            <label><i class="fas fa-calendar"></i> YEAR</label>
-            <select id="yearSelect">
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026" selected>2026</option>
-                <option value="2027">2027</option>
-            </select>
-        </div>
-        
-        <div>
-            <button class="btn-sm btn-success" id="showReceiveFormBtn"><i class="fas fa-boxes"></i> RECEIVE ITEMS</button>
-            <button class="btn-sm" id="viewHistoryBtn"><i class="fas fa-history"></i> Received History</button>
-            <button class="btn-sm" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
-        </div>
-    </div>
-    
-    <div class="week-selector-panel">
-        <div class="week-toggle-header" id="weekToggleHeader">
-            <h4><i class="fas fa-calendar-alt"></i> WEEK RANGE <span id="activeRangeBadge" class="active-range-badge" style="margin-left:8px;">1/26 - 52/26</span></h4>
-            <i class="fas fa-chevron-down chevron" id="weekChevron"></i>
-        </div>
-        <div class="week-range-selector" id="weekRangeSelector">
-            <div class="range-inputs">
-                <div class="range-group">
-                    <label>FROM WEEK</label>
-                    <input type="number" id="fromWeek" min="1" max="52" value="1">
-                </div>
-                <div class="range-group">
-                    <label>TO WEEK</label>
-                    <input type="number" id="toWeek" min="1" max="52" value="52">
-                </div>
-                <div class="week-buttons">
-                    <button class="btn-sm" id="applyWeekRangeBtn" style="padding: 8px 20px;">APPLY</button>
-                    <button class="btn-sm" id="resetWeeksBtn" style="padding: 8px 16px;">Reset</button>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="inv"> INVENTORY</button>
+    <button class="tab" data-tab="ord"> ORDERS</button>
+    <button class="tab" data-tab="rep"> REPORTS</button>
+  </div>
 
-    <div class="ledger-table-wrapper">
-        <table class="weekly-table" id="weeklyLedgerTable">
-            <thead>
-                <tr><th>WEEK</th><th>REC (Received)</th><th>ISSU (Issued)</th><th>B/C (Balance)</th></tr>
-            </thead>
-            <tbody id="ledgerTableBody">
-                <tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...<\/td><\/tr>
-            </tbody>
-        </table>
+  <!-- INVENTORY -->
+  <div class="panel active" id="p-inv">
+    <div class="bar">
+      <input type="text" id="invSearch" placeholder="Search ID / name / supplier / location…" style="flex:1;min-width:220px;">
+      <select id="invFilter">
+        <option value="all">All products</option>
+        <option value="important">⭐ Important only</option>
+        <option value="notimportant">Not important</option>
+        <option value="low">Below reorder level</option>
+      </select>
+      <button class="btn primary" id="addProdBtn"><i class="fas fa-plus"></i> Add Product</button>
+      <button class="btn" id="refreshInvBtn"><i class="fas fa-sync"></i> Refresh</button>
     </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;">⭐</th>
+            <th>Product ID</th>
+            <th>Description</th>
+            <th>Location</th>
+            <th>Supplier</th>
+            <th>Unit Type</th>
+            <th>Qty/Unit</th>
+            <th>Cost/Unit</th>
+            <th>Reorder</th>
+            <th>Qty (Units)</th>
+            <th>Actual Pieces</th>
+            <th>Stock Value</th>
+            <th>Status</th>
+            <th>Order Date</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody id="invBody"><tr><td colspan="15" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-    <div style="padding: 0 24px 24px 24px;">
-        <div class="selected-item-info" id="currentItemInfo">
-            <i class="fas fa-info-circle"></i> Select a material to view ledger
+  <!-- ORDERS -->
+  <div class="panel" id="p-ord">
+    <div class="bar">
+      <input type="text" id="ordSearch" placeholder="Search orders…" style="flex:1;min-width:220px;">
+      <button class="btn gold" id="newOrdBtn"><i class="fas fa-plus"></i> NEW ORDER</button>
+      <button class="btn" id="refreshOrdBtn"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+    <div class="sel-bar" id="ordSelBar" style="display:none;">
+      <div class="info"><i class="fas fa-check-square"></i> Selected: <span class="count" id="ordSelCount">0</span> order(s)</div>
+      <div class="sel-bar-actions">
+        <button class="btn" id="selAllOrdBtn"><i class="fas fa-check-double"></i> Select All</button>
+        <button class="btn" id="selNoneOrdBtn"><i class="fas fa-times"></i> Clear</button>
+        <div class="dl-menu">
+          <button class="btn green" id="dlMenuBtn"><i class="fas fa-download"></i> Download Selected ▾</button>
+          <div class="dl-menu-list" id="dlMenuList">
+            <button onclick="downloadSelected('individual')"><i class="fas fa-file-pdf"></i> As Separate PDFs</button>
+            <button onclick="downloadSelected('combined')"><i class="fas fa-file-archive"></i> As One Combined PDF</button>
+          </div>
         </div>
+      </div>
     </div>
+    <div id="ordList"><div class="loading">Loading…</div></div>
+  </div>
 
-    <footer>
-        <i class="fas fa-database"></i> Data synced with Firebase | Your selected material and week range are saved
-    </footer>
+  <!-- REPORTS -->
+  <div class="panel" id="p-rep">
+    <div class="rep-tabs">
+      <button class="rep-tab active" data-rep="stock"> Stock Summary</button>
+      <button class="rep-tab" data-rep="in"> Stock In</button>
+      <button class="rep-tab" data-rep="out"> Stock Out</button>
+      <button class="rep-tab" data-rep="move"> Movement</button>
+    </div>
+    <div class="bar">
+      <div><label style="font-size:.7rem;font-weight:700;color:#4b6e8a;">FROM</label><br><input type="date" id="repFrom"></div>
+      <div><label style="font-size:.7rem;font-weight:700;color:#4b6e8a;">TO</label><br><input type="date" id="repTo"></div>
+      <button class="btn primary" id="runRepBtn"><i class="fas fa-play"></i> Run</button>
+      <button class="btn" id="pdfRepBtn"><i class="fas fa-file-pdf"></i> Download PDF</button>
+    </div>
+    <div class="summary" id="repSummary"></div>
+    <div id="repBody"><div class="loading">Select a report and click Run</div></div>
+  </div>
 </div>
 
-<!-- RECEIVE ITEMS MODAL -->
-<div id="receiveModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-boxes"></i> RECEIVE MATERIALS</h3>
-            <button class="modal-close" onclick="closeReceiveModal()">&times;</button>
+<!-- PRODUCT MODAL -->
+<div class="modal" id="prodModal">
+  <div class="mc" style="max-width:640px;">
+    <div class="mh"><h3 id="prodTitle">ADD PRODUCT</h3><button class="mc-close" onclick="closeModal('prodModal')">&times;</button></div>
+    <div class="mb">
+      <div class="fg"><label>Product ID (auto)</label><input type="text" id="fPid" readonly style="background:#f1f5f9;"></div>
+      <div class="fg"><label>Description</label><input type="text" id="fName" placeholder="e.g. Welding Rods 2.5mm"></div>
+      <div class="row2">
+        <div class="fg"><label>Stored Location</label><input type="text" id="fLoc" placeholder="e.g. Store A"></div>
+        <div class="fg"><label>Supplier</label><input type="text" id="fSup" placeholder="e.g. CozyHome Traders"></div>
+      </div>
+      <div class="row3">
+        <div class="fg">
+          <label>Unit Type</label>
+          <input type="text" id="fUnit" list="unitList" placeholder="e.g. Box, Pack, Bundle, Piece" value="Piece">
+          <datalist id="unitList">
+            <option value="Piece"><option value="Box"><option value="Pack"><option value="Bundle"><option value="Roll"><option value="Sack"><option value="Bag"><option value="Set"><option value="Carton"><option value="Kg">
+          </datalist>
+          <div class="hint">What you call ONE unit</div>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label><i class="fas fa-truck"></i> SUPPLIER NAME</label>
-                <input type="text" id="supplierName" placeholder="Enter supplier name">
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-calendar-day"></i> RECEIPT DATE</label>
-                <input type="date" id="receiptDate">
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-receipt"></i> INVOICE / REFERENCE #</label>
-                <input type="text" id="invoiceRef" placeholder="Optional invoice number">
-            </div>
-            
-            <label><i class="fas fa-list"></i> ITEMS RECEIVED</label>
-            <table class="receive-items-table" id="receiveItemsTable">
-                <thead>
-                    <tr><th>Material</th><th>Quantity</th><th>Unit Price</th><th>Total</th><th style="width:40px"></th></tr>
-                </thead>
-                <tbody id="receiveItemsBody">
-                    <tr class="item-row">
-                        <td><select class="material-select"><option value="">Select material</option></select></td>
-                        <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
-                        <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
-                        <td><span class="item-total">0.00</span></td>
-                        <td><button class="remove-row-btn" onclick="removeRow(this)" style="display:none;">✕</button></td>
-                    </tr>
-                </tbody>
-            </table>
-            <button class="add-row-btn" onclick="addReceiveRow()"><i class="fas fa-plus"></i> Add another material</button>
-            
-            <div class="form-group" style="margin-top:15px;">
-                <label><i class="fas fa-sticky-note"></i> NOTES</label>
-                <textarea id="receiveNotes" rows="2" style="width:100%; padding:8px; border-radius:8px; border:1px solid #b3c7e0;"></textarea>
-            </div>
+        <div class="fg">
+          <label>Qty Per Unit</label>
+          <input type="number" id="fPerUnit" min="1" step="1" value="1">
+          <div class="hint">Pieces inside 1 unit</div>
         </div>
-        <div class="modal-footer">
-            <button class="btn-sm" onclick="closeReceiveModal()">Cancel</button>
-            <button class="btn-sm btn-primary" id="submitReceiveBtn"><i class="fas fa-save"></i> SAVE RECEIVED ITEMS</button>
+        <div class="fg">
+          <label>Qty On Hand (Units)</label>
+          <input type="number" id="fQty" min="0" step="1" value="0">
+          <div class="hint">How many units you have</div>
         </div>
+      </div>
+      <div class="row3">
+        <div class="fg"><label>Cost Per Unit</label><input type="number" id="fCost" min="0" step="0.01" value="0"></div>
+        <div class="fg"><label>Reorder Level (units)</label><input type="number" id="fReord" min="0" step="1" value="10"></div>
+        <div class="fg"><label>Order Date</label><input type="date" id="fOrdDate"></div>
+      </div>
+      <div style="background:#f8fafd;border:1px dashed #b3c7e0;border-radius:8px;padding:10px;font-size:.75rem;color:#4b6e8a;margin-top:8px;">
+        <i class="fas fa-calculator"></i> <span id="previewText">0 units × 1 = 0 pieces</span>
+      </div>
     </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal('prodModal')">Cancel</button>
+      <button class="btn primary" id="saveProdBtn"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
 </div>
 
-<!-- RECEIVED HISTORY MODAL -->
-<div id="historyModal" class="modal">
-    <div class="modal-content" style="max-width: 900px;">
-        <div class="modal-header">
-            <h3><i class="fas fa-history"></i> RECEIVED ITEMS HISTORY</h3>
-            <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+<!-- ORDER MODAL -->
+<div class="modal" id="ordModal">
+  <div class="mc">
+    <div class="mh"><h3>NEW ORDER</h3><button class="mc-close" onclick="closeModal('ordModal')">&times;</button></div>
+    <div class="mb">
+      <div class="row2">
+        <div class="fg"><label>Order Date</label><input type="date" id="oDate"></div>
+        <div class="fg"><label>Notes (optional)</label><input type="text" id="oNotes" placeholder="Optional"></div>
+      </div>
+      <div class="fg">
+        <label>Add product to order</label>
+        <div style="display:flex;gap:10px;">
+          <select id="oPick" style="flex:1;"><option value="">— Choose product —</option></select>
+          <button class="btn primary" onclick="addLine()"><i class="fas fa-plus"></i> ADD</button>
         </div>
-        <div class="modal-body" id="historyModalBody">
-            <div class="loading">Loading history...</div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-sm" onclick="closeHistoryModal()">Close</button>
-        </div>
+      </div>
+      <div id="oLines"></div>
     </div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal('ordModal')">Cancel</button>
+      <button class="btn green" id="placeOrdBtn"><i class="fas fa-save"></i> PLACE ORDER & SAVE PDF</button>
+    </div>
+  </div>
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
-        authDomain: "project-task-588c4.firebaseapp.com",
-        projectId: "project-task-588c4",
-        storageBucket: "project-task-588c4.appspot.com",
-        messagingSenderId: "411882772509",
-        appId: "1:411882772509:web:08d613186c101a99f38ef4"
-    };
+// ========== FIREBASE ==========
+const firebaseConfig = {
+  apiKey: "AIzaSyDXhhy94Aqmaav6X0UsfMcmsBT539-aheU",
+  authDomain: "project-task-588c4.firebaseapp.com",
+  projectId: "project-task-588c4",
+  storageBucket: "project-task-588c4.appspot.com",
+  messagingSenderId: "411882772509",
+  appId: "1:411882772509:web:08d613186c101a99f38ef4"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+// ========== STATE ==========
+let products = [];
+let orders = [];
+let editId = null;
+let lines = [];
+let currentRep = 'stock';
+let lastRepData = null;
+let selectedOrders = new Set();
 
-    let currentSelectedMaterialId = null;
-    let materialsList = [];
-    let allUsageRecords = [];
-    let currentYear = 2026;
-    let fromWeek = 1;
-    let toWeek = 52;
-    
-    function saveToLocalStorage() {
-        if (currentSelectedMaterialId) {
-            localStorage.setItem('selectedMaterialId', currentSelectedMaterialId);
-        }
-        localStorage.setItem('selectedYear', currentYear);
-        localStorage.setItem('fromWeek', fromWeek);
-        localStorage.setItem('toWeek', toWeek);
-    }
-    
-    function loadFromLocalStorage() {
-        const savedMaterialId = localStorage.getItem('selectedMaterialId');
-        const savedYear = localStorage.getItem('selectedYear');
-        const savedFromWeek = localStorage.getItem('fromWeek');
-        const savedToWeek = localStorage.getItem('toWeek');
-        
-        if (savedYear) {
-            currentYear = parseInt(savedYear);
-            document.getElementById("yearSelect").value = currentYear;
-        }
-        if (savedFromWeek) {
-            fromWeek = parseInt(savedFromWeek);
-            document.getElementById("fromWeek").value = fromWeek;
-        }
-        if (savedToWeek) {
-            toWeek = parseInt(savedToWeek);
-            document.getElementById("toWeek").value = toWeek;
-        }
-        return savedMaterialId;
-    }
-    
-    function formatWeekDisplay(weekNum, year) {
-        const yearShort = year.toString().slice(-2);
-        return `${weekNum}/${yearShort}`;
-    }
-    
-    function updateRangeBadge() {
-        const yearShort = currentYear.toString().slice(-2);
-        const badge = document.getElementById("activeRangeBadge");
-        if (fromWeek === 1 && toWeek === 52) {
-            badge.innerHTML = `1/${yearShort} - 52/${yearShort} (All)`;
-        } else {
-            badge.innerHTML = `${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
-        }
-    }
-    
-    let weekPanelOpen = false;
-    function toggleWeekPanel() {
-        weekPanelOpen = !weekPanelOpen;
-        const selector = document.getElementById("weekRangeSelector");
-        const chevron = document.getElementById("weekChevron");
-        if (weekPanelOpen) {
-            selector.classList.add("open");
-            chevron.style.transform = "rotate(180deg)";
-        } else {
-            selector.classList.remove("open");
-            chevron.style.transform = "rotate(0deg)";
-        }
-    }
-    
-    function applyWeekRange() {
-        let from = parseInt(document.getElementById("fromWeek").value);
-        let to = parseInt(document.getElementById("toWeek").value);
-        if (isNaN(from)) from = 1;
-        if (isNaN(to)) to = 52;
-        if (from < 1) from = 1;
-        if (to > 52) to = 52;
-        if (from > to) [from, to] = [to, from];
-        fromWeek = from;
-        toWeek = to;
-        document.getElementById("fromWeek").value = fromWeek;
-        document.getElementById("toWeek").value = toWeek;
-        updateRangeBadge();
-        saveToLocalStorage();
-        loadAllData();
-    }
-    
-    function resetWeeks() {
-        fromWeek = 1;
-        toWeek = 52;
-        document.getElementById("fromWeek").value = 1;
-        document.getElementById("toWeek").value = 52;
-        updateRangeBadge();
-        saveToLocalStorage();
-        loadAllData();
-    }
+// ========== PERSISTED UI STATE (localStorage) ==========
+const LS_KEYS = { filter:'inv_filter', search:'inv_search' };
+function saveUIState() {
+  localStorage.setItem(LS_KEYS.filter, document.getElementById('invFilter').value);
+  localStorage.setItem(LS_KEYS.search, document.getElementById('invSearch').value);
+}
+function loadUIState() {
+  const f = localStorage.getItem(LS_KEYS.filter);
+  const s = localStorage.getItem(LS_KEYS.search);
+  if (f) document.getElementById('invFilter').value = f;
+  if (s) document.getElementById('invSearch').value = s;
+}
 
-    async function loadMaterials() {
-        const selectEl = document.getElementById("itemSelect");
-        const materialSelects = document.querySelectorAll(".material-select");
-        try {
-            const snapshot = await db.collection("materials").orderBy("materialName").get();
-            materialsList = [];
-            snapshot.forEach(doc => {
-                materialsList.push({
-                    id: doc.id,
-                    name: doc.data().materialName || "Unnamed",
-                    currentStock: doc.data().quantity || 0,
-                    category: doc.data().category || ""
-                });
-            });
-            if (materialsList.length === 0) {
-                selectEl.innerHTML = '<option value="">— No materials found —</option>';
-                return;
-            }
-            const options = '<option value="">-- Choose a material --</option>' + 
-                materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-            selectEl.innerHTML = options;
-            materialSelects.forEach(sel => {
-                const currentVal = sel.value;
-                sel.innerHTML = options;
-                if (currentVal) sel.value = currentVal;
-            });
-            const savedMaterialId = loadFromLocalStorage();
-            if (savedMaterialId && materialsList.some(m => m.id === savedMaterialId)) {
-                currentSelectedMaterialId = savedMaterialId;
-                selectEl.value = currentSelectedMaterialId;
-                await loadAllData();
-            } else if (materialsList.length > 0) {
-                currentSelectedMaterialId = materialsList[0].id;
-                selectEl.value = currentSelectedMaterialId;
-                saveToLocalStorage();
-                await loadAllData();
-            }
-        } catch (error) {
-            console.error("Error loading materials:", error);
-            selectEl.innerHTML = '<option value="">— Error loading —</option>';
-        }
-    }
+// ========== HELPERS ==========
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function nextPid() {
+  const y = new Date().getFullYear();
+  const p = `PRD-${y}-`;
+  let m = 0;
+  products.forEach(x => { if (x.productId && x.productId.startsWith(p)) { const n = parseInt(x.productId.slice(p.length), 10); if (n > m) m = n; } });
+  return p + String(m + 1).padStart(4, '0');
+}
+function piecesOf(p) { return p.qty * (p.perUnit || 1); }
+function fmt(n) { return Number(n).toLocaleString(undefined, {maximumFractionDigits: 2}); }
 
-    async function loadUsageRecords() {
-        try {
-            const snapshot = await db.collection("materialsUsage").where("reversed", "!=", true).get();
-            allUsageRecords = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                allUsageRecords.push({
-                    id: doc.id,
-                    materialId: data.materialId,
-                    materialName: data.materialName,
-                    quantity: parseFloat(data.quantity) || 0,
-                    assignedAt: data.assignedAt,
-                    reversed: data.reversed || false
-                });
-            });
-        } catch (error) {
-            console.error("Error loading usage records:", error);
-            allUsageRecords = [];
-        }
-    }
-
-    async function loadWeeklyRecData(materialId) {
-        const recData = {};
-        try {
-            const ledgerRef = db.collection("materials").doc(materialId).collection("weeklyLedger");
-            const snapshot = await ledgerRef.get();
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                recData[doc.id] = {
-                    rec: data.rec || 0,
-                    issu: data.issu || 0
-                };
-            });
-        } catch (error) {
-            console.error("Error loading rec data:", error);
-        }
-        return recData;
-    }
-
-    function calculateIssuByWeek(materialId, year) {
-        const issuByWeek = {};
-        for (let w = 1; w <= 52; w++) {
-            const weekKey = `${year}-W${String(w).padStart(2,'0')}`;
-            issuByWeek[weekKey] = 0;
-        }
-        allUsageRecords.forEach(record => {
-            if (record.materialId === materialId && record.assignedAt) {
-                const assignedDate = record.assignedAt.toDate ? record.assignedAt.toDate() : new Date(record.assignedAt);
-                if (!isNaN(assignedDate) && assignedDate.getFullYear() === year) {
-                    const startOfYear = new Date(year, 0, 1);
-                    const days = Math.floor((assignedDate - startOfYear) / (24 * 60 * 60 * 1000));
-                    let weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-                    if (weekNum < 1) weekNum = 1;
-                    if (weekNum > 52) weekNum = 52;
-                    const weekKey = `${year}-W${String(weekNum).padStart(2,'0')}`;
-                    issuByWeek[weekKey] = (issuByWeek[weekKey] || 0) + record.quantity;
-                }
-            }
-        });
-        return issuByWeek;
-    }
-
-    function renderLedgerTable(recData, issuByWeek, currentStock) {
-        const tbody = document.getElementById("ledgerTableBody");
-        let rows = '';
-        let runningBalance = currentStock;
-        for (let w = 52; w >= 1; w--) {
-            const weekKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
-            const rec = recData[weekKey]?.rec || 0;
-            const issu = issuByWeek[weekKey] || 0;
-            runningBalance = runningBalance - rec + issu;
-        }
-        for (let w = 1; w <= 52; w++) {
-            const weekKey = `${currentYear}-W${String(w).padStart(2,'0')}`;
-            const rec = recData[weekKey]?.rec || 0;
-            const issu = issuByWeek[weekKey] || 0;
-            runningBalance = runningBalance + rec - issu;
-            if (w >= fromWeek && w <= toWeek) {
-                const weekDisplay = formatWeekDisplay(w, currentYear);
-                rows += `
-                    <tr>
-                        <td style="font-weight:700;">${weekDisplay}</td>
-                        <td class="rec-cell"><strong>${rec}</strong></td>
-                        <td class="issu-cell"><strong>${issu}</strong></td>
-                        <td class="balance-cell"><strong>${runningBalance}</strong></td>
-                    </tr>
-                `;
-            }
-        }
-        if (rows === '') {
-            tbody.innerHTML = `<tr><td colspan="4" class="loading"><i class="fas fa-calendar"></i> No weeks in selected range</td></tr>`;
-        } else {
-            tbody.innerHTML = rows;
-        }
-        const material = materialsList.find(m => m.id === currentSelectedMaterialId);
-        if (material) {
-            const yearShort = currentYear.toString().slice(-2);
-            document.getElementById("currentItemInfo").innerHTML = 
-                `<i class="fas fa-cube"></i> <strong>${material.name}</strong> | Current Stock: <strong>${material.currentStock}</strong> | Category: ${material.category || '—'} | Showing Weeks ${fromWeek}/${yearShort} - ${toWeek}/${yearShort}`;
-        }
-    }
-
-    async function saveReceivedItems(supplier, date, invoiceRef, items, notes) {
-        const receiptData = {
-            receiptId: Date.now().toString(),
-            supplier: supplier,
-            receiptDate: date,
-            invoiceRef: invoiceRef || '',
-            notes: notes || '',
-            items: items,
-            createdAt: new Date(),
-            totalAmount: items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
-        };
-        try {
-            await db.collection("receivedHistory").add(receiptData);
-            for (const item of items) {
-                if (item.materialId) {
-                    const receiptDateObj = new Date(date);
-                    const year = receiptDateObj.getFullYear();
-                    const startOfYear = new Date(year, 0, 1);
-                    const days = Math.floor((receiptDateObj - startOfYear) / (24 * 60 * 60 * 1000));
-                    let weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-                    if (weekNum < 1) weekNum = 1;
-                    if (weekNum > 52) weekNum = 52;
-                    const weekKey = `${year}-W${String(weekNum).padStart(2,'0')}`;
-                    const ledgerRef = db.collection("materials").doc(item.materialId).collection("weeklyLedger").doc(weekKey);
-                    const docSnap = await ledgerRef.get();
-                    let currentRec = docSnap.exists ? (docSnap.data().rec || 0) : 0;
-                    await ledgerRef.set({ rec: currentRec + item.quantity, lastUpdated: new Date() }, { merge: true });
-                    const materialRef = db.collection("materials").doc(item.materialId);
-                    const materialSnap = await materialRef.get();
-                    const currentStock = materialSnap.data().quantity || 0;
-                    await materialRef.update({ quantity: currentStock + item.quantity, lastRestocked: new Date() });
-                }
-            }
-            return true;
-        } catch (error) {
-            console.error("Error saving received items:", error);
-            throw error;
-        }
-    }
-
-    async function loadReceivedHistory() {
-        try {
-            const snapshot = await db.collection("receivedHistory").orderBy("createdAt", "desc").get();
-            const records = [];
-            snapshot.forEach(doc => records.push({ id: doc.id, ...doc.data() }));
-            return records;
-        } catch (error) {
-            console.error("Error loading history:", error);
-            return [];
-        }
-    }
-
-    async function displayHistoryModal() {
-        const historyBody = document.getElementById("historyModalBody");
-        historyBody.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...</div>';
-        const records = await loadReceivedHistory();
-        if (records.length === 0) {
-            historyBody.innerHTML = '<div class="loading"><i class="fas fa-inbox"></i> No received records found</div>';
-            return;
-        }
-        let html = '';
-        for (const record of records) {
-            html += `
-                <div class="history-item">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <strong><i class="fas fa-truck"></i> ${record.supplier || 'Unknown supplier'}</strong>
-                        <span style="color:#059669;">${new Date(record.receiptDate).toLocaleDateString()}</span>
-                    </div>
-                    <div style="font-size:0.7rem; color:#6f95b5; margin-bottom:8px;">
-                        ${record.invoiceRef ? `<i class="fas fa-receipt"></i> Invoice: ${record.invoiceRef} | ` : ''}
-                        <i class="fas fa-dollar-sign"></i> Total: ${(record.totalAmount || 0).toFixed(2)}
-                    </div>
-                    <table style="width:100%; font-size:0.7rem; border-collapse:collapse;">
-                        <thead><tr style="background:#e6f0f9;"><th style="padding:6px;">Material</th><th style="padding:6px;">Qty</th><th style="padding:6px;">Unit Price</th><th style="padding:6px;">Total</th></tr></thead>
-                        <tbody>
-                            ${record.items.map(item => `<tr><td style="padding:6px;">${item.materialName}</td><td style="padding:6px;">${item.quantity}</td><td style="padding:6px;">${(item.price || 0).toFixed(2)}</td><td style="padding:6px;">${((item.quantity || 0) * (item.price || 0)).toFixed(2)}</td></tr>`).join('')}
-                        </tbody>
-                    </table>
-                    ${record.notes ? `<div style="margin-top:8px; font-size:0.65rem;"><i class="fas fa-sticky-note"></i> ${record.notes}</div>` : ''}
-                </div>
-            `;
-        }
-        historyBody.innerHTML = html;
-    }
-
-    async function loadAllData() {
-        if (!currentSelectedMaterialId) return;
-        document.getElementById("ledgerTableBody").innerHTML = `<tr><td colspan="4" class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading ledger...</td></tr>`;
-        await loadUsageRecords();
-        const recData = await loadWeeklyRecData(currentSelectedMaterialId);
-        const issuByWeek = calculateIssuByWeek(currentSelectedMaterialId, currentYear);
-        const material = materialsList.find(m => m.id === currentSelectedMaterialId);
-        const currentStock = material ? material.currentStock : 0;
-        renderLedgerTable(recData, issuByWeek, currentStock);
-    }
-
-    function addReceiveRow() {
-        const tbody = document.getElementById("receiveItemsBody");
-        const options = '<option value="">Select material</option>' + materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-        const newRow = document.createElement('tr');
-        newRow.className = 'item-row';
-        newRow.innerHTML = `
-            <td><select class="material-select">${options}</select></td>
-            <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
-            <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
-            <td><span class="item-total">0.00</span></td>
-            <td><button class="remove-row-btn" onclick="removeRow(this)">✕</button></td>
-        `;
-        const qtyInput = newRow.querySelector('.item-qty');
-        const priceInput = newRow.querySelector('.item-price');
-        qtyInput.addEventListener('input', () => updateRowTotal(newRow));
-        priceInput.addEventListener('input', () => updateRowTotal(newRow));
-        tbody.appendChild(newRow);
-        updateRowTotal(newRow);
-    }
-    
-    function removeRow(btn) {
-        const tbody = document.getElementById("receiveItemsBody");
-        if (tbody.children.length > 1) btn.closest('tr').remove();
-        else alert("At least one item is required");
-    }
-    
-    function updateRowTotal(row) {
-        const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
-        const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-        const totalSpan = row.querySelector('.item-total');
-        if (totalSpan) totalSpan.textContent = (qty * price).toFixed(2);
-    }
-    
-    function showReceiveForm() {
-        if (materialsList.length === 0) { alert("No materials found. Please add materials first."); return; }
-        document.getElementById("supplierName").value = "";
-        document.getElementById("receiptDate").value = new Date().toISOString().split('T')[0];
-        document.getElementById("invoiceRef").value = "";
-        document.getElementById("receiveNotes").value = "";
-        const options = '<option value="">Select material</option>' + materialsList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-        const tbody = document.getElementById("receiveItemsBody");
-        tbody.innerHTML = `<tr class="item-row">
-            <td><select class="material-select">${options}</select></td>
-            <td><input type="number" class="item-qty" placeholder="Qty" min="0" step="1" value="1"></td>
-            <td><input type="number" class="item-price" placeholder="Price" min="0" step="0.01" value="0"></td>
-            <td><span class="item-total">0.00</span></td>
-            <td><button class="remove-row-btn" onclick="removeRow(this)" style="display:none;">✕</button></td>
-        </tr>`;
-        document.getElementById("receiveModal").classList.add("active");
-    }
-    
-    function closeReceiveModal() { document.getElementById("receiveModal").classList.remove("active"); }
-    function closeHistoryModal() { document.getElementById("historyModal").classList.remove("active"); }
-    
-    async function submitReceive() {
-        const supplier = document.getElementById("supplierName").value.trim();
-        if (!supplier) { alert("Please enter supplier name"); return; }
-        const receiptDate = document.getElementById("receiptDate").value;
-        if (!receiptDate) { alert("Please select receipt date"); return; }
-        const invoiceRef = document.getElementById("invoiceRef").value.trim();
-        const notes = document.getElementById("receiveNotes").value.trim();
-        const rows = document.querySelectorAll("#receiveItemsBody .item-row");
-        const items = [];
-        for (const row of rows) {
-            const materialSelect = row.querySelector('.material-select');
-            const materialId = materialSelect.value;
-            const materialName = materialSelect.options[materialSelect.selectedIndex]?.text || '';
-            const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
-            const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-            if (!materialId) { alert("Please select a material for all rows"); return; }
-            if (qty <= 0) { alert(`Quantity must be greater than 0 for ${materialName}`); return; }
-            items.push({ materialId, materialName, quantity: qty, price: price });
-        }
-        if (items.length === 0) { alert("Please add at least one item"); return; }
-        const submitBtn = document.getElementById("submitReceiveBtn");
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Saving...';
-        try {
-            await saveReceivedItems(supplier, receiptDate, invoiceRef, items, notes);
-            alert(`✅ Successfully received ${items.length} item(s) from ${supplier}!`);
-            closeReceiveModal();
-            await loadAllData();
-            await loadMaterials();
-        } catch (error) { alert("Error saving: " + error.message); } 
-        finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-save"></i> SAVE RECEIVED ITEMS'; }
-    }
-    
-    function changeYear() {
-        currentYear = parseInt(document.getElementById("yearSelect").value);
-        updateRangeBadge();
-        saveToLocalStorage();
-        loadAllData();
-    }
-
-    document.addEventListener("DOMContentLoaded", async () => {
-        loadFromLocalStorage();
-        updateRangeBadge();
-        await loadMaterials();
-        document.getElementById("yearSelect").addEventListener("change", changeYear);
-        document.getElementById("weekToggleHeader").addEventListener("click", toggleWeekPanel);
-        document.getElementById("applyWeekRangeBtn").addEventListener("click", applyWeekRange);
-        document.getElementById("resetWeeksBtn").addEventListener("click", resetWeeks);
-        document.getElementById("itemSelect").addEventListener("change", async (e) => {
-            currentSelectedMaterialId = e.target.value;
-            saveToLocalStorage();
-            if (currentSelectedMaterialId) await loadAllData();
-        });
-        document.getElementById("showReceiveFormBtn").addEventListener("click", showReceiveForm);
-        document.getElementById("submitReceiveBtn").addEventListener("click", submitReceive);
-        document.getElementById("viewHistoryBtn").addEventListener("click", async () => { await displayHistoryModal(); document.getElementById("historyModal").classList.add("active"); });
-        document.getElementById("refreshBtn").addEventListener("click", async () => { await loadMaterials(); await loadAllData(); });
+// ========== LOAD PRODUCTS ==========
+async function loadProducts() {
+  try {
+    const snap = await db.collection('materials').orderBy('materialName').get();
+    products = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      products.push({
+        id: doc.id,
+        productId: d.productId || '',
+        name: d.materialName || 'Unnamed',
+        location: d.storedLocation || '',
+        supplier: d.supplier || '—',
+        unitLabel: d.unitLabel || 'Piece',
+        perUnit: parseInt(d.perUnit) || 1,
+        costPerUnit: parseFloat(d.costPerUnit) || 0,
+        reorderLevel: parseInt(d.reorderLevel) || 0,
+        qty: parseInt(d.quantity) || 0,
+        orderDate: d.orderDate || '',
+        important: d.important === true
+      });
     });
-    
-    window.removeRow = removeRow;
-    window.closeReceiveModal = closeReceiveModal;
-    window.closeHistoryModal = closeHistoryModal;
-    window.addReceiveRow = addReceiveRow;
+    const noId = products.filter(p => !p.productId);
+    if (noId.length) {
+      let c = 1; const y = new Date().getFullYear();
+      products.forEach(p => { if (p.productId) { const n = parseInt(p.productId.split('-').pop(), 10); if (!isNaN(n) && n >= c) c = n + 1; } });
+      for (const p of noId) {
+        const nid = `PRD-${y}-${String(c).padStart(4, '0')}`; c++;
+        await db.collection('materials').doc(p.id).update({ productId: nid });
+        p.productId = nid;
+      }
+    }
+    renderInv();
+    fillPicker();
+  } catch (err) {
+    document.getElementById('invBody').innerHTML = `<tr><td colspan="15" class="loading">Error: ${err.message}</td></tr>`;
+  }
+}
+
+// ========== RENDER INVENTORY ==========
+function renderInv() {
+  const body = document.getElementById('invBody');
+  const s = (document.getElementById('invSearch').value || '').toLowerCase();
+  const f = document.getElementById('invFilter').value;
+
+  let rows = products.filter(p => {
+    if (s) { const h = `${p.productId} ${p.name} ${p.supplier} ${p.location}`.toLowerCase(); if (!h.includes(s)) return false; }
+    if (f === 'important' && !p.important) return false;
+    if (f === 'notimportant' && p.important) return false;
+    if (f === 'low' && !(p.qty <= p.reorderLevel)) return false;
+    return true;
+  });
+  if (f === 'all') rows.sort((a, b) => (b.important ? 1 : 0) - (a.important ? 1 : 0));
+
+  if (!rows.length) { body.innerHTML = `<tr><td colspan="15" class="loading">No products match</td></tr>`; return; }
+
+  body.innerHTML = rows.map(p => {
+    const low = p.qty <= p.reorderLevel;
+    const pieces = piecesOf(p);
+    const unitDisplay = p.perUnit > 1
+      ? `<span class="unit-pill">${p.unitLabel}</span><div class="pieces">${p.perUnit} pcs/${p.unitLabel.toLowerCase()}</div>`
+      : `<span class="unit-pill">${p.unitLabel}</span>`;
+    return `<tr>
+      <td><button class="star ${p.important ? 'on' : ''}" onclick="toggleStar('${p.id}')">★</button></td>
+      <td><b>${p.productId || '—'}</b></td>
+      <td class="left">${p.name}</td>
+      <td>${p.location || '—'}</td>
+      <td>${p.supplier}</td>
+      <td>${unitDisplay}</td>
+      <td>${p.perUnit}</td>
+      <td>${p.costPerUnit.toFixed(2)}</td>
+      <td>${p.reorderLevel}</td>
+      <td class="${low ? 'low' : 'ok'}">${p.qty}</td>
+      <td style="font-weight:700;color:#1f6392;">${fmt(pieces)}</td>
+      <td><b>${(p.qty * p.costPerUnit).toFixed(2)}</b></td>
+      <td>${low ? '<span class="low" style="padding:2px 8px;border-radius:10px;font-size:.65rem;">LOW</span>' : '<span class="ok" style="padding:2px 8px;border-radius:10px;font-size:.65rem;">OK</span>'}</td>
+      <td>${p.orderDate || '—'}</td>
+      <td><button class="btn" style="padding:4px 10px;font-size:.7rem;" onclick="editProd('${p.id}')"><i class="fas fa-pen"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleStar(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  try {
+    await db.collection('materials').doc(id).update({ important: !p.important });
+    p.important = !p.important;
+    renderInv();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+window.toggleStar = toggleStar;
+
+// ========== PRODUCT SAVE ==========
+function updatePreview() {
+  const u = document.getElementById('fUnit').value || 'Unit';
+  const per = parseInt(document.getElementById('fPerUnit').value) || 1;
+  const qty = parseInt(document.getElementById('fQty').value) || 0;
+  document.getElementById('previewText').textContent = `${qty} ${u.toLowerCase()}${qty===1?'':'s'} × ${per} = ${qty * per} piece${(qty*per)===1?'':'s'}`;
+}
+['fUnit','fPerUnit','fQty'].forEach(id => {
+  document.addEventListener('input', e => { if (e.target.id === id) updatePreview(); });
+});
+
+document.getElementById('addProdBtn').onclick = () => {
+  editId = null;
+  document.getElementById('prodTitle').textContent = 'ADD PRODUCT';
+  document.getElementById('fPid').value = nextPid();
+  ['fName','fLoc','fSup','fOrdDate'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('fUnit').value = 'Piece';
+  document.getElementById('fPerUnit').value = 1;
+  document.getElementById('fCost').value = 0;
+  document.getElementById('fReord').value = 10;
+  document.getElementById('fQty').value = 0;
+  updatePreview();
+  openModal('prodModal');
+};
+
+window.editProd = function(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  editId = p.id;
+  document.getElementById('prodTitle').textContent = 'EDIT PRODUCT';
+  document.getElementById('fPid').value = p.productId || '';
+  document.getElementById('fName').value = p.name;
+  document.getElementById('fLoc').value = p.location;
+  document.getElementById('fSup').value = p.supplier === '—' ? '' : p.supplier;
+  document.getElementById('fUnit').value = p.unitLabel || 'Piece';
+  document.getElementById('fPerUnit').value = p.perUnit || 1;
+  document.getElementById('fCost').value = p.costPerUnit;
+  document.getElementById('fReord').value = p.reorderLevel;
+  document.getElementById('fQty').value = p.qty;
+  document.getElementById('fOrdDate').value = p.orderDate || '';
+  updatePreview();
+  openModal('prodModal');
+};
+
+document.getElementById('saveProdBtn').onclick = async () => {
+  const desc = document.getElementById('fName').value.trim();
+  if (!desc) { alert('Description required'); return; }
+  const data = {
+    productId: document.getElementById('fPid').value,
+    materialName: desc,
+    storedLocation: document.getElementById('fLoc').value.trim(),
+    supplier: document.getElementById('fSup').value.trim(),
+    unitLabel: document.getElementById('fUnit').value.trim() || 'Piece',
+    perUnit: parseInt(document.getElementById('fPerUnit').value) || 1,
+    costPerUnit: parseFloat(document.getElementById('fCost').value) || 0,
+    reorderLevel: parseInt(document.getElementById('fReord').value) || 0,
+    quantity: parseInt(document.getElementById('fQty').value) || 0,
+    orderDate: document.getElementById('fOrdDate').value || ''
+  };
+  if (data.perUnit < 1) data.perUnit = 1;
+  const btn = document.getElementById('saveProdBtn');
+  btn.disabled = true; btn.innerHTML = 'Saving…';
+  try {
+    if (editId) await db.collection('materials').doc(editId).update(data);
+    else await db.collection('materials').add({ ...data, important: false });
+    closeModal('prodModal');
+    await loadProducts();
+  } catch (err) { alert('Save failed: ' + err.message); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save'; }
+};
+
+// ========== ORDERS ==========
+function fillPicker() {
+  const sel = document.getElementById('oPick');
+  sel.innerHTML = '<option value="">— Choose product —</option>' +
+    products.map(p => `<option value="${p.id}">${p.productId} · ${p.name} (${p.unitLabel})${p.qty <= p.reorderLevel ? ' ⚠ LOW' : ''}</option>`).join('');
+}
+
+document.getElementById('newOrdBtn').onclick = () => {
+  document.getElementById('oDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('oNotes').value = '';
+  document.getElementById('oPick').value = '';
+  lines = [];
+  renderLines();
+  openModal('ordModal');
+};
+
+window.addLine = function() {
+  const pid = document.getElementById('oPick').value;
+  if (!pid) { alert('Pick a product'); return; }
+  if (lines.some(l => l.productId === pid)) { alert('Already added'); return; }
+  const p = products.find(x => x.id === pid);
+  if (!p) return;
+  lines.push({
+    productId: p.id,
+    supplier: p.supplier === '—' ? '' : p.supplier,
+    location: p.location || '',
+    qty: Math.max(1, p.reorderLevel - p.qty)
+  });
+  document.getElementById('oPick').value = '';
+  renderLines();
+};
+
+function renderLines() {
+  const c = document.getElementById('oLines');
+  if (!lines.length) { c.innerHTML = '<div class="empty"><i class="fas fa-inbox"></i>No items yet</div>'; return; }
+  const sups = [...new Set(products.map(p => p.supplier === '—' ? '' : p.supplier).filter(Boolean))].sort();
+
+  c.innerHTML = `<table><thead><tr>
+    <th>Product ID</th><th>Description</th><th>Unit</th><th>Supplier</th><th>Location</th>
+    <th>Bal Before</th><th>Qty</th><th>Bal After</th><th>Cost</th><th>Total</th><th></th>
+  </tr></thead><tbody>
+    ${lines.map((l, i) => {
+      const p = products.find(x => x.id === l.productId);
+      if (!p) return '';
+      const after = p.qty + (l.qty || 0);
+      const tot = (l.qty || 0) * p.costPerUnit;
+      const afterPieces = after * p.perUnit;
+      const beforePieces = p.qty * p.perUnit;
+      return `<tr>
+        <td><b>${p.productId}</b></td>
+        <td class="left">${p.name}</td>
+        <td><span class="unit-pill">${p.unitLabel}${p.perUnit>1?' ('+p.perUnit+')':''}</span></td>
+        <td><input class="order-line-input" list="s${i}" value="${l.supplier}" onchange="upLine(${i},'supplier',this.value)"><datalist id="s${i}">${sups.map(s => `<option value="${s}">`).join('')}</datalist></td>
+        <td><input class="order-line-input" value="${l.location}" placeholder="Store" onchange="upLine(${i},'location',this.value)"></td>
+        <td style="color:#b91c1c;font-weight:700;">${p.qty}<div class="pieces">${beforePieces} pcs</div></td>
+        <td><input type="number" class="order-line-input" min="0" value="${l.qty}" onchange="upLine(${i},'qty',this.value)"></td>
+        <td style="color:#059669;font-weight:700;">${after}<div class="pieces">${afterPieces} pcs</div></td>
+        <td>${p.costPerUnit.toFixed(2)}</td>
+        <td><b>${tot.toFixed(2)}</b></td>
+        <td><button class="btn red" style="padding:3px 8px;font-size:.65rem;" onclick="delLine(${i})">×</button></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table>`;
+}
+window.upLine = function(i, field, val) {
+  if (!lines[i]) return;
+  if (field === 'qty') lines[i].qty = Math.max(0, parseInt(val) || 0);
+  else lines[i][field] = val;
+  renderLines();
+};
+window.delLine = function(i) { lines.splice(i, 1); renderLines(); };
+
+document.getElementById('placeOrdBtn').onclick = async () => {
+  const date = document.getElementById('oDate').value;
+  if (!date) { alert('Pick order date'); return; }
+  if (!lines.length) { alert('Add at least 1 item'); return; }
+
+  const items = [];
+  for (const l of lines) {
+    const p = products.find(x => x.id === l.productId);
+    if (!p) continue;
+    if (!l.supplier) { alert(`Supplier required for ${p.name}`); return; }
+    if (!l.qty || l.qty <= 0) { alert(`Qty required for ${p.name}`); return; }
+    items.push({
+      materialId: p.id, productId: p.productId, name: p.name,
+      supplier: l.supplier, location: l.location || '', qty: l.qty,
+      unitLabel: p.unitLabel, perUnit: p.perUnit,
+      costPerUnit: p.costPerUnit, lineTotal: l.qty * p.costPerUnit,
+      balanceBefore: p.qty, balanceAfter: p.qty + l.qty, reorderLevel: p.reorderLevel
+    });
+  }
+
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  const totalCost = items.reduce((s, i) => s + i.lineTotal, 0);
+  const totalPieces = items.reduce((s, i) => s + (i.qty * i.perUnit), 0);
+  const sups = [...new Set(items.map(i => i.supplier))];
+
+  const btn = document.getElementById('placeOrdBtn');
+  btn.disabled = true; btn.innerHTML = 'Saving…';
+  try {
+    const doc = {
+      suppliers: sups, supplier: sups.join(', '),
+      orderDate: date, notes: document.getElementById('oNotes').value.trim(),
+      items, totalQty, totalCost, totalPieces, status: 'placed', createdAt: new Date()
+    };
+    const ref = await db.collection('purchaseOrders').add(doc);
+    for (const it of items) {
+      await db.collection('materials').doc(it.materialId).update({
+        orderDate: date, lastOrderedAt: new Date(),
+        storedLocation: it.location || '', supplier: it.supplier
+      });
+    }
+    makeOrderPdf({ id: ref.id, ...doc });
+    closeModal('ordModal');
+    await loadProducts();
+    await loadOrders();
+    switchTab('ord');
+  } catch (err) { alert('Order failed: ' + err.message); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> PLACE ORDER & SAVE PDF'; }
+};
+
+// ========== LOAD ORDERS ==========
+async function loadOrders() {
+  const c = document.getElementById('ordList');
+  c.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const snap = await db.collection('purchaseOrders').orderBy('createdAt', 'desc').limit(100).get();
+    orders = [];
+    snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
+    selectedOrders.clear();
+    renderOrders();
+  } catch (err) { c.innerHTML = `<div class="empty">Error: ${err.message}</div>`; }
+}
+
+function updateSelBar() {
+  const bar = document.getElementById('ordSelBar');
+  const cnt = document.getElementById('ordSelCount');
+  cnt.textContent = selectedOrders.size;
+  bar.style.display = orders.length > 0 ? 'flex' : 'none';
+  document.getElementById('selAllOrdBtn').disabled = selectedOrders.size === orders.length;
+  document.getElementById('selNoneOrdBtn').disabled = selectedOrders.size === 0;
+  document.getElementById('dlMenuBtn').disabled = selectedOrders.size === 0;
+}
+
+function renderOrders() {
+  const c = document.getElementById('ordList');
+  const s = (document.getElementById('ordSearch').value || '').toLowerCase();
+  let list = orders;
+  if (s) list = orders.filter(o => (o.supplier || '').toLowerCase().includes(s) || (o.items || []).some(i => (i.name || '').toLowerCase().includes(s)));
+
+  if (!list.length) { c.innerHTML = '<div class="empty"><i class="fas fa-file-invoice"></i>No orders yet</div>'; updateSelBar(); return; }
+
+  c.innerHTML = list.map(o => {
+    const sups = [...new Set((o.items || []).map(i => i.supplier).filter(Boolean))];
+    const checked = selectedOrders.has(o.id);
+    return `<div class="ord-card ${checked ? 'selected' : ''}" data-ord-id="${o.id}">
+      <div class="ord-head">
+        <div class="ord-head-left">
+          <input type="checkbox" class="ord-check" data-id="${o.id}" ${checked ? 'checked' : ''} onchange="toggleOrderSelect('${o.id}', this.checked)">
+          <h4><i class="fas fa-file-invoice"></i> Order ${o.id.slice(-8).toUpperCase()}</h4>
+        </div>
+        <span class="badge">✓ ${o.status || 'placed'}</span>
+      </div>
+      <div class="ord-meta">
+        <span> <b>${o.orderDate}</b></span>
+        <span> <b>${sups.join(', ')}</b></span>
+        <span> <b>${(o.items || []).length}</b> items</span>
+        <span> <b>${o.totalQty}</b> units</span>
+        ${o.totalPieces ? `<span> <b>${o.totalPieces}</b> pcs</span>` : ''}
+        <span> <b>${(o.totalCost || 0).toFixed(2)}</b></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="font-size:.72rem;">
+          <thead><tr><th>Product ID</th><th>Description</th><th>Unit</th><th>Supplier</th><th>Location</th><th>Before</th><th>Qty</th><th>After</th></tr></thead>
+          <tbody>
+            ${(o.items || []).map(it => `<tr>
+              <td><b>${it.productId || '—'}</b></td>
+              <td class="left">${it.name}</td>
+              <td><span class="unit-pill">${it.unitLabel || 'Piece'}${it.perUnit > 1 ? ' ('+it.perUnit+')' : ''}</span></td>
+              <td>${it.supplier || '—'}</td>
+              <td>${it.location || '—'}</td>
+              <td style="color:#b91c1c;font-weight:700;">${it.balanceBefore ?? '—'}${it.perUnit>1 ? `<div class="pieces">${(it.balanceBefore||0)*it.perUnit} pcs</div>`:''}</td>
+              <td><b>${it.qty}</b></td>
+              <td style="color:#059669;font-weight:700;">${it.balanceAfter ?? '—'}${it.perUnit>1 ? `<div class="pieces">${(it.balanceAfter||0)*it.perUnit} pcs</div>`:''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn" onclick="downloadOrderPdf('${o.id}')"><i class="fas fa-file-pdf"></i> Download This PDF</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateSelBar();
+}
+
+window.toggleOrderSelect = function(id, checked) {
+  if (checked) selectedOrders.add(id);
+  else selectedOrders.delete(id);
+  // Update card appearance without full re-render
+  const card = document.querySelector(`[data-ord-id="${id}"]`);
+  if (card) card.classList.toggle('selected', checked);
+  updateSelBar();
+};
+
+document.getElementById('selAllOrdBtn').onclick = () => {
+  orders.forEach(o => selectedOrders.add(o.id));
+  renderOrders();
+};
+document.getElementById('selNoneOrdBtn').onclick = () => {
+  selectedOrders.clear();
+  renderOrders();
+};
+
+// Download menu toggle
+document.getElementById('dlMenuBtn').onclick = (e) => {
+  e.stopPropagation();
+  document.getElementById('dlMenuList').classList.toggle('open');
+};
+document.addEventListener('click', () => {
+  document.getElementById('dlMenuList').classList.remove('open');
+});
+
+window.downloadSelected = async function(mode) {
+  document.getElementById('dlMenuList').classList.remove('open');
+  const ids = [...selectedOrders];
+  if (!ids.length) { alert('No orders selected'); return; }
+
+  const list = ids.map(id => orders.find(o => o.id === id)).filter(Boolean);
+  if (!list.length) return;
+
+  if (mode === 'individual') {
+    // Download each as separate PDF with a small delay between saves
+    for (let i = 0; i < list.length; i++) {
+      makeOrderPdf(list[i]);
+      if (i < list.length - 1) await new Promise(r => setTimeout(r, 400));
+    }
+  } else {
+    // Combined PDF
+    makeCombinedOrderPdf(list);
+  }
+};
+
+window.downloadOrderPdf = function(id) {
+  const o = orders.find(x => x.id === id);
+  if (o) makeOrderPdf(o);
+};
+
+// ========== ORDER PDF (single) ==========
+function makeOrderPdf(order) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  drawOrderPage(doc, order);
+  const tag = (order.suppliers && order.suppliers.length > 1) ? 'MultiSupplier' : ((order.suppliers && order.suppliers[0]) || 'order').replace(/[^a-z0-9]/gi,'_');
+  doc.save(`PO_${tag}_${order.orderDate}_${order.id.slice(-6)}.pdf`);
+}
+
+// ========== ORDER PDF (combined) ==========
+function makeCombinedOrderPdf(list) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  list.forEach((o, i) => {
+    if (i > 0) doc.addPage();
+    drawOrderPage(doc, o, i + 1, list.length);
+  });
+  doc.save(`PO_Combined_${list.length}orders_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+function drawOrderPage(doc, order, pageNum, totalPages) {
+  doc.setFillColor(10,28,47); doc.rect(0,0,297,30,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.text('PURCHASE ORDER', 14, 16);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(`Order ID: ${order.id}`, 14, 24);
+  doc.setTextColor(233,179,95);
+  doc.text('Inventory Manager', 283, 24, { align: 'right' });
+  if (pageNum) {
+    doc.setFontSize(8);
+    doc.text(`Page ${pageNum} of ${totalPages}`, 283, 10, { align: 'right' });
+  }
+
+  doc.setTextColor(10,28,47); doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text('Order Date:', 14, 40);
+  doc.text('Status:', 14, 47);
+  doc.text('Suppliers:', 14, 54);
+  doc.setFont('helvetica','normal');
+  doc.text(order.orderDate || '—', 42, 40);
+  doc.text(order.status || 'placed', 32, 47);
+  doc.text((order.suppliers || []).join(', ') || '—', 42, 54, { maxWidth: 240 });
+
+  const rows = (order.items || []).map((it, i) => {
+    const unitTxt = it.perUnit > 1 ? `${it.unitLabel} (${it.perUnit} pcs)` : (it.unitLabel || 'Piece');
+    const beforePcs = (it.balanceBefore || 0) * (it.perUnit || 1);
+    const afterPcs = (it.balanceAfter || 0) * (it.perUnit || 1);
+    return [
+      i + 1, it.productId || '—', it.name || '—', it.supplier || '—', it.location || '—',
+      unitTxt,
+      it.reorderLevel ?? '—',
+      (it.perUnit || 1) > 1 ? `${it.balanceBefore} (${beforePcs} pcs)` : (it.balanceBefore ?? '—'),
+      it.qty || 0,
+      (it.perUnit || 1) > 1 ? `${it.balanceAfter} (${afterPcs} pcs)` : (it.balanceAfter ?? '—'),
+      (it.costPerUnit || 0).toFixed(2),
+      ((it.qty || 0) * (it.costPerUnit || 0)).toFixed(2)
+    ];
+  });
+
+  doc.autoTable({
+    startY: 62,
+    head: [['#','Product ID','Description','Supplier','Location','Unit Type','Reorder','Before','Qty','After','Cost','Total']],
+    body: rows,
+    styles: { fontSize: 7, cellPadding: 2 },
+    headStyles: { fillColor: [10,28,47], textColor: [255,255,255], fontStyle: 'bold', fontSize: 7 },
+    alternateRowStyles: { fillColor: [248,250,253] },
+    margin: { left: 14, right: 14 }
+  });
+
+  const y = doc.lastAutoTable.finalY + 8;
+  doc.setFillColor(255,251,240); doc.rect(14, y, 269, 20, 'F');
+  doc.setDrawColor(233,179,95); doc.rect(14, y, 269, 20);
+  doc.setTextColor(138,90,0); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('TOTAL ITEMS:', 20, y+8);
+  doc.text('TOTAL QTY (UNITS):', 80, y+8);
+  doc.text('TOTAL PIECES:', 155, y+8);
+  doc.text('EST. COST:', 220, y+8);
+  doc.setTextColor(10,28,47); doc.setFontSize(11);
+  doc.text(String((order.items||[]).length), 55, y+8);
+  doc.text(String(order.totalQty || 0), 145, y+8);
+  doc.text(String(order.totalPieces || 0), 205, y+8);
+  doc.text((order.totalCost || 0).toFixed(2), 255, y+8);
+
+  if (order.notes) {
+    doc.setTextColor(75,110,138); doc.setFontSize(9); doc.setFont('helvetica','italic');
+    doc.text(`Notes: ${order.notes}`, 14, y+30);
+  }
+  doc.setFontSize(8); doc.setTextColor(150,160,175); doc.setFont('helvetica','normal');
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 205);
+}
+
+// ========== REPORTS ==========
+document.querySelectorAll('.rep-tab').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.rep-tab').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    currentRep = b.dataset.rep;
+  };
+});
+
+document.getElementById('runRepBtn').onclick = async () => {
+  const from = document.getElementById('repFrom').value;
+  const to = document.getElementById('repTo').value;
+  const body = document.getElementById('repBody');
+  body.innerHTML = '<div class="loading">Generating…</div>';
+  document.getElementById('repSummary').innerHTML = '';
+
+  try {
+    if (currentRep === 'stock') await repStock();
+    else if (currentRep === 'in') { if (!from || !to) { alert('Pick dates'); return; } await repIn(from, to); }
+    else if (currentRep === 'out') { if (!from || !to) { alert('Pick dates'); return; } await repOut(from, to); }
+    else if (currentRep === 'move') { if (!from || !to) { alert('Pick dates'); return; } await repMove(from, to); }
+  } catch (err) {
+    body.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
+  }
+};
+
+async function repStock() {
+  const rows = [...products].sort((a,b) => (a.supplier||'').localeCompare(b.supplier||'') || (a.productId||'').localeCompare(b.productId||''));
+  if (!rows.length) { document.getElementById('repBody').innerHTML = '<div class="empty">No products</div>'; return; }
+
+  const totalQty = rows.reduce((s,p) => s+p.qty, 0);
+  const totalPieces = rows.reduce((s,p) => s+piecesOf(p), 0);
+  const totalVal = rows.reduce((s,p) => s+p.qty*p.costPerUnit, 0);
+  const lowCnt = rows.filter(p => p.qty <= p.reorderLevel).length;
+
+  document.getElementById('repSummary').innerHTML = `
+    <div class="sc"><div class="lb">Products</div><div class="vl">${rows.length}</div></div>
+    <div class="sc green"><div class="lb">Total Units</div><div class="vl">${totalQty}</div></div>
+    <div class="sc green"><div class="lb">Total Pieces</div><div class="vl">${fmt(totalPieces)}</div></div>
+    <div class="sc gold"><div class="lb">Stock Value</div><div class="vl">${totalVal.toFixed(2)}</div></div>
+    <div class="sc red"><div class="lb">Low Stock</div><div class="vl">${lowCnt}</div></div>
+  `;
+
+  const bySup = {};
+  rows.forEach(p => { const s = p.supplier === '—' ? 'Unassigned' : p.supplier; if (!bySup[s]) bySup[s] = []; bySup[s].push(p); });
+
+  const pdfRows = [];
+  let html = `<table><thead><tr><th>Product ID</th><th class="left">Description</th><th>Location</th><th>Unit Type</th><th>Qty/Unit</th><th>Cost/Unit</th><th>Reorder</th><th>Qty (Units)</th><th>Actual Pieces</th><th>Value</th><th>Status</th></tr></thead><tbody>`;
+  let grandQty = 0, grandPieces = 0, grandVal = 0;
+
+  Object.keys(bySup).sort().forEach(sup => {
+    html += `<tr class="grp-head"><td colspan="11"> ${sup}</td></tr>`;
+    let sQty = 0, sPieces = 0, sVal = 0;
+    bySup[sup].forEach(p => {
+      const val = p.qty * p.costPerUnit;
+      const pcs = piecesOf(p);
+      const low = p.qty <= p.reorderLevel;
+      sQty += p.qty; sPieces += pcs; sVal += val;
+      const unitTxt = p.perUnit > 1 ? `${p.unitLabel} (${p.perUnit} pcs)` : p.unitLabel;
+      html += `<tr>
+        <td><b>${p.productId||'—'}</b></td>
+        <td class="left">${p.name}</td>
+        <td>${p.location||'—'}</td>
+        <td><span class="unit-pill">${unitTxt}</span></td>
+        <td>${p.perUnit}</td>
+        <td>${p.costPerUnit.toFixed(2)}</td>
+        <td>${p.reorderLevel}</td>
+        <td class="${low?'low':''}">${p.qty}</td>
+        <td style="font-weight:700;color:#1f6392;">${fmt(pcs)}</td>
+        <td><b>${val.toFixed(2)}</b></td>
+        <td>${low?'<span class="low" style="padding:2px 8px;border-radius:10px;font-size:.65rem;">LOW</span>':'<span class="ok" style="padding:2px 8px;border-radius:10px;font-size:.65rem;">OK</span>'}</td>
+      </tr>`;
+      pdfRows.push([p.productId||'—', p.name, p.location||'—', unitTxt, p.perUnit, p.costPerUnit.toFixed(2), p.reorderLevel, p.qty, pcs, val.toFixed(2), low?'LOW':'OK']);
+    });
+    html += `<tr class="grp-tot"><td colspan="7" class="left">${sup} Total</td><td>${sQty}</td><td>${fmt(sPieces)}</td><td>${sVal.toFixed(2)}</td><td></td></tr>`;
+    grandQty += sQty; grandPieces += sPieces; grandVal += sVal;
+  });
+
+  html += `<tr class="grand"><td colspan="7" class="left">GRAND TOTAL</td><td>${grandQty}</td><td>${fmt(grandPieces)}</td><td>${grandVal.toFixed(2)}</td><td></td></tr></tbody></table>`;
+  document.getElementById('repBody').innerHTML = html;
+
+  lastRepData = {
+    title: 'Stock Summary',
+    subtitle: `As of ${new Date().toLocaleString()}`,
+    headers: ['Product ID','Description','Location','Unit Type','Qty/Unit','Cost/Unit','Reorder','Qty (Units)','Actual Pieces','Value','Status'],
+    rows: pdfRows
+  };
+}
+
+async function repIn(from, to) {
+  const f = new Date(from); f.setHours(0,0,0,0);
+  const t = new Date(to); t.setHours(23,59,59,999);
+  const snap = await db.collection('receivedHistory').get();
+  const recs = [];
+  snap.forEach(d => {
+    const r = d.data();
+    const dt = r.receiptDate ? new Date(r.receiptDate) : null;
+    if (dt && dt >= f && dt <= t) recs.push({ id: d.id, ...r, _dt: dt });
+  });
+  recs.sort((a,b) => b._dt - a._dt);
+
+  if (!recs.length) { document.getElementById('repBody').innerHTML = '<div class="empty"><i class="fas fa-inbox"></i>No receipts in range</div>'; return; }
+
+  let tQty = 0, tPieces = 0, tCost = 0, tLines = 0;
+  recs.forEach(r => (r.items||[]).forEach(it => {
+    tQty += it.quantity||0;
+    const p = products.find(x => x.id === it.materialId);
+    tPieces += (it.quantity||0) * (p ? (p.perUnit||1) : 1);
+    tCost += (it.quantity||0)*(it.price||0);
+    tLines++;
+  }));
+
+  document.getElementById('repSummary').innerHTML = `
+    <div class="sc"><div class="lb">Receipts</div><div class="vl">${recs.length}</div></div>
+    <div class="sc"><div class="lb">Lines</div><div class="vl">${tLines}</div></div>
+    <div class="sc green"><div class="lb">Total Units In</div><div class="vl">+${tQty}</div></div>
+    <div class="sc green"><div class="lb">Total Pieces In</div><div class="vl">+${fmt(tPieces)}</div></div>
+    <div class="sc gold"><div class="lb">Value</div><div class="vl">${tCost.toFixed(2)}</div></div>
+  `;
+
+  const pdfRows = [];
+  let html = `<table><thead><tr><th>Date</th><th>Supplier</th><th>Product ID</th><th class="left">Description</th><th>Unit Type</th><th>Qty In</th><th>Pieces</th><th>Price</th><th>Total</th></tr></thead><tbody>`;
+  recs.forEach(r => {
+    (r.items||[]).forEach(it => {
+      const p = products.find(x => x.id === it.materialId);
+      const pid = p ? p.productId : '—';
+      const unitTxt = p ? (p.perUnit > 1 ? `${p.unitLabel} (${p.perUnit})` : p.unitLabel) : '—';
+      const pcs = (it.quantity||0) * (p ? (p.perUnit||1) : 1);
+      const line = (it.quantity||0)*(it.price||0);
+      html += `<tr>
+        <td>${r._dt.toLocaleDateString()}</td>
+        <td>${r.supplier||'—'}</td>
+        <td><b>${pid}</b></td>
+        <td class="left">${it.materialName}</td>
+        <td><span class="unit-pill">${unitTxt}</span></td>
+        <td class="in-q">+${it.quantity}</td>
+        <td style="font-weight:700;color:#166534;">+${fmt(pcs)}</td>
+        <td>${(it.price||0).toFixed(2)}</td>
+        <td><b>${line.toFixed(2)}</b></td>
+      </tr>`;
+      pdfRows.push([r._dt.toLocaleDateString(), r.supplier||'—', pid, it.materialName, unitTxt, '+'+it.quantity, '+'+pcs, (it.price||0).toFixed(2), line.toFixed(2)]);
+    });
+  });
+  html += `<tr class="grand"><td colspan="5" class="left">GRAND TOTAL</td><td>+${tQty}</td><td>+${fmt(tPieces)}</td><td></td><td>${tCost.toFixed(2)}</td></tr></tbody></table>`;
+  document.getElementById('repBody').innerHTML = html;
+
+  lastRepData = { title: 'Stock In', subtitle: `${f.toLocaleDateString()} — ${t.toLocaleDateString()}`, headers: ['Date','Supplier','Product ID','Description','Unit Type','Qty In','Pieces','Price','Total'], rows: pdfRows };
+}
+
+async function repOut(from, to) {
+  const f = new Date(from); f.setHours(0,0,0,0);
+  const t = new Date(to); t.setHours(23,59,59,999);
+  const snap = await db.collection('materialsUsage').get();
+  const us = [];
+  snap.forEach(d => {
+    const u = d.data();
+    if (u.reversed === true) return;
+    let dt = null;
+    if (u.assignedAt?.toDate) dt = u.assignedAt.toDate();
+    else if (u.assignedAt) dt = new Date(u.assignedAt);
+    if (dt && !isNaN(dt) && dt >= f && dt <= t) us.push({ id: d.id, ...u, _dt: dt });
+  });
+  us.sort((a,b) => b._dt - a._dt);
+
+  if (!us.length) { document.getElementById('repBody').innerHTML = '<div class="empty"><i class="fas fa-inbox"></i>No issuances in range</div>'; return; }
+
+  const tQty = us.reduce((s,u) => s + (parseFloat(u.quantity)||0), 0);
+  const tPieces = us.reduce((s,u) => {
+    const p = products.find(x => x.id === u.materialId);
+    return s + (parseFloat(u.quantity)||0) * (p ? (p.perUnit||1) : 1);
+  }, 0);
+  const uniq = new Set(us.map(u => u.materialId)).size;
+
+  document.getElementById('repSummary').innerHTML = `
+    <div class="sc"><div class="lb">Issuances</div><div class="vl">${us.length}</div></div>
+    <div class="sc"><div class="lb">Products</div><div class="vl">${uniq}</div></div>
+    <div class="sc red"><div class="lb">Units Out</div><div class="vl">-${tQty}</div></div>
+    <div class="sc red"><div class="lb">Pieces Out</div><div class="vl">-${fmt(tPieces)}</div></div>
+  `;
+
+  const pdfRows = [];
+  let html = `<table><thead><tr><th>Date</th><th>Product ID</th><th class="left">Description</th><th>Unit Type</th><th>Qty Out</th><th>Pieces</th><th>Notes</th></tr></thead><tbody>`;
+  us.forEach(u => {
+    const p = products.find(x => x.id === u.materialId);
+    const pid = p ? p.productId : '—';
+    const name = u.materialName || (p ? p.name : '—');
+    const qty = parseFloat(u.quantity)||0;
+    const unitTxt = p ? (p.perUnit > 1 ? `${p.unitLabel} (${p.perUnit})` : p.unitLabel) : '—';
+    const pcs = qty * (p ? (p.perUnit||1) : 1);
+    html += `<tr>
+      <td>${u._dt.toLocaleDateString()}</td>
+      <td><b>${pid}</b></td>
+      <td class="left">${name}</td>
+      <td><span class="unit-pill">${unitTxt}</span></td>
+      <td class="out-q">-${qty}</td>
+      <td style="font-weight:700;color:#c2410c;">-${fmt(pcs)}</td>
+      <td class="left">${u.assignedTo || u.notes || '—'}</td>
+    </tr>`;
+    pdfRows.push([u._dt.toLocaleDateString(), pid, name, unitTxt, '-'+qty, '-'+pcs, u.assignedTo||u.notes||'—']);
+  });
+  html += `<tr class="grand"><td colspan="4" class="left">GRAND TOTAL</td><td>-${tQty}</td><td>-${fmt(tPieces)}</td><td></td></tr></tbody></table>`;
+  document.getElementById('repBody').innerHTML = html;
+
+  lastRepData = { title: 'Stock Out', subtitle: `${f.toLocaleDateString()} — ${t.toLocaleDateString()}`, headers: ['Date','Product ID','Description','Unit Type','Qty Out','Pieces','Notes'], rows: pdfRows };
+}
+
+async function repMove(from, to) {
+  const f = new Date(from); f.setHours(0,0,0,0);
+  const t = new Date(to); t.setHours(23,59,59,999);
+
+  const [rs, us] = await Promise.all([db.collection('receivedHistory').get(), db.collection('materialsUsage').get()]);
+  const agg = {};
+  products.forEach(p => agg[p.id] = { inQ: 0, outQ: 0 });
+
+  rs.forEach(d => {
+    const r = d.data();
+    const dt = r.receiptDate ? new Date(r.receiptDate) : null;
+    if (!dt) return;
+    (r.items||[]).forEach(it => {
+      if (agg[it.materialId] && dt >= f && dt <= t) agg[it.materialId].inQ += it.quantity||0;
+    });
+  });
+  us.forEach(d => {
+    const u = d.data();
+    if (u.reversed === true) return;
+    let dt = null;
+    if (u.assignedAt?.toDate) dt = u.assignedAt.toDate();
+    else if (u.assignedAt) dt = new Date(u.assignedAt);
+    if (dt && !isNaN(dt) && dt >= f && dt <= t && agg[u.materialId]) agg[u.materialId].outQ += parseFloat(u.quantity)||0;
+  });
+
+  const rows = products.filter(p => agg[p.id].inQ > 0 || agg[p.id].outQ > 0).sort((a,b) => (a.productId||'').localeCompare(b.productId||''));
+  if (!rows.length) { document.getElementById('repBody').innerHTML = '<div class="empty"><i class="fas fa-inbox"></i>No movement in range</div>'; return; }
+
+  let tIn = 0, tOut = 0, tInPcs = 0, tOutPcs = 0;
+  rows.forEach(p => {
+    tIn += agg[p.id].inQ;
+    tOut += agg[p.id].outQ;
+    tInPcs += agg[p.id].inQ * p.perUnit;
+    tOutPcs += agg[p.id].outQ * p.perUnit;
+  });
+  const net = tIn - tOut;
+
+  document.getElementById('repSummary').innerHTML = `
+    <div class="sc"><div class="lb">Products</div><div class="vl">${rows.length}</div></div>
+    <div class="sc green"><div class="lb">In (Units/Pcs)</div><div class="vl">+${tIn} / +${fmt(tInPcs)}</div></div>
+    <div class="sc red"><div class="lb">Out (Units/Pcs)</div><div class="vl">-${tOut} / -${fmt(tOutPcs)}</div></div>
+    <div class="sc gold"><div class="lb">Net Units</div><div class="vl">${net>=0?'+':''}${net}</div></div>
+  `;
+
+  const pdfRows = [];
+  let html = `<table><thead><tr><th>Product ID</th><th class="left">Description</th><th>Unit Type</th><th>Supplier</th><th>In (U)</th><th>In (Pcs)</th><th>Out (U)</th><th>Out (Pcs)</th><th>Net</th><th>Balance (U)</th><th>Balance (Pcs)</th><th>Status</th></tr></thead><tbody>`;
+  rows.forEach(p => {
+    const a = agg[p.id];
+    const n = a.inQ - a.outQ;
+    const low = p.qty <= p.reorderLevel;
+    const unitTxt = p.perUnit > 1 ? `${p.unitLabel} (${p.perUnit})` : p.unitLabel;
+    html += `<tr>
+      <td><b>${p.productId||'—'}</b></td>
+      <td class="left">${p.name}</td>
+      <td><span class="unit-pill">${unitTxt}</span></td>
+      <td>${p.supplier}</td>
+      <td class="in-q">+${a.inQ}</td>
+      <td class="in-q">+${fmt(a.inQ*p.perUnit)}</td>
+      <td class="out-q">-${a.outQ}</td>
+      <td class="out-q">-${fmt(a.outQ*p.perUnit)}</td>
+      <td style="font-weight:800;color:${n>=0?'#059669':'#b91c1c'};">${n>=0?'+':''}${n}</td>
+      <td><b>${p.qty}</b></td>
+      <td style="font-weight:700;color:#1f6392;">${fmt(piecesOf(p))}</td>
+      <td>${low?'<span class="low" style="padding:2px 8px;border-radius:10px;font-size:.65rem;">LOW</span>':'<span class="ok" style="padding:2px 8px;border-radius:10px;font-size:.65rem;">OK</span>'}</td>
+    </tr>`;
+    pdfRows.push([p.productId||'—', p.name, unitTxt, p.supplier, '+'+a.inQ, '+'+fmt(a.inQ*p.perUnit), '-'+a.outQ, '-'+fmt(a.outQ*p.perUnit), (n>=0?'+':'')+n, p.qty, fmt(piecesOf(p)), low?'LOW':'OK']);
+  });
+  html += `<tr class="grand"><td colspan="4" class="left">GRAND TOTAL</td><td>+${tIn}</td><td>+${fmt(tInPcs)}</td><td>-${tOut}</td><td>-${fmt(tOutPcs)}</td><td>${net>=0?'+':''}${net}</td><td colspan="3"></td></tr></tbody></table>`;
+  document.getElementById('repBody').innerHTML = html;
+
+  lastRepData = { title: 'Movement Summary', subtitle: `${f.toLocaleDateString()} — ${t.toLocaleDateString()}`, headers: ['Product ID','Description','Unit Type','Supplier','In (U)','In (Pcs)','Out (U)','Out (Pcs)','Net','Balance (U)','Balance (Pcs)','Status'], rows: pdfRows };
+}
+
+document.getElementById('pdfRepBtn').onclick = () => {
+  if (!lastRepData) { alert('Run a report first'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  doc.setFillColor(10,28,47); doc.rect(0,0,297,26,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text(lastRepData.title.toUpperCase(), 14, 14);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(lastRepData.subtitle, 14, 21);
+  doc.setTextColor(233,179,95); doc.text('Inventory Manager', 283, 21, { align: 'right' });
+
+  doc.autoTable({
+    startY: 32,
+    head: [lastRepData.headers],
+    body: lastRepData.rows,
+    styles: { fontSize: 7, cellPadding: 2.2 },
+    headStyles: { fillColor: [10,28,47], textColor: [255,255,255], fontStyle: 'bold', fontSize: 7 },
+    alternateRowStyles: { fillColor: [248,250,253] },
+    margin: { left: 14, right: 14 }
+  });
+
+  const y = doc.lastAutoTable.finalY + 6;
+  doc.setFontSize(8); doc.setTextColor(150,160,175);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+  doc.save(`${lastRepData.title.replace(/[^a-z0-9]/gi,'_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+};
+
+// ========== TABS ==========
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'p-' + t));
+  if (t === 'ord') loadOrders();
+}
+document.querySelectorAll('.tab').forEach(b => { b.onclick = () => switchTab(b.dataset.tab); });
+
+// ========== INIT ==========
+document.getElementById('invSearch').oninput = () => { saveUIState(); renderInv(); };
+document.getElementById('invFilter').onchange = () => { saveUIState(); renderInv(); };
+document.getElementById('refreshInvBtn').onclick = () => { loadProducts(); };
+document.getElementById('refreshOrdBtn').onclick = loadOrders;
+document.getElementById('ordSearch').oninput = renderOrders;
+
+const today = new Date().toISOString().split('T')[0];
+const yStart = new Date().getFullYear() + '-01-01';
+document.getElementById('repFrom').value = yStart;
+document.getElementById('repTo').value = today;
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.addLine = addLine;
+window.upLine = upLine;
+window.delLine = delLine;
+window.editProd = editProd;
+window.toggleStar = toggleStar;
+window.downloadOrderPdf = downloadOrderPdf;
+window.toggleOrderSelect = toggleOrderSelect;
+window.downloadSelected = downloadSelected;
+
+// Restore filter + search BEFORE loading so the view comes back as you left it
+loadUIState();
+loadProducts();
 </script>
 </body>
 </html>
