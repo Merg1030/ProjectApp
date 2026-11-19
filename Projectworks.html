@@ -27,7 +27,7 @@
         .project-switcher {
             background: #1f3d62; color: white; border: 1px solid #2b4a73;
             border-radius: 20px; padding: 4px 26px 4px 12px; font-size: 0.68rem;
-            font-weight: 600; cursor: pointer; outline: none; max-width: 220px;
+            font-weight: 600; cursor: pointer; outline: none; max-width: 260px;
             appearance: none; -webkit-appearance: none; -moz-appearance: none;
             text-overflow: ellipsis;
         }
@@ -133,8 +133,8 @@
         .main-task-row td { font-weight: 700; background: #ecf3fc; }
         .main-task-row td:first-child { font-weight: 700; padding-left: 6px; }
 
-        .task-table th:nth-child(1)  { min-width: 52px; width: 58px; }
-        .task-table td:nth-child(1)  { max-width: 65px; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; }
+        .task-table th:nth-child(1)  { min-width: 58px; width: 66px; }
+        .task-table td:nth-child(1)  { max-width: 80px; overflow: hidden; text-overflow: ellipsis; font-size: 0.62rem; }
         .task-table th:nth-child(2)  { min-width: 35px; }
         .task-table th:nth-child(3)  { min-width: 160px; }
         .task-table th:nth-child(4)  { min-width: 80px; }
@@ -748,7 +748,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
 import {
     getFirestore, doc, collection, query, where,
-    onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, getDoc, Timestamp
+    onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -774,20 +774,132 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('matHistoryLink').href    = `material-usage-history.html?id=${projectId}`;
     document.getElementById('labHistoryNavBtn').href  = `employee-assignment-history.html?id=${projectId}`;
     document.getElementById('labHistoryLink').href    = `employee-assignment-history.html?id=${projectId}`;
-    document.getElementById('projectTitle').textContent = `Project ${projectId.slice(0,6)}...`;
+
+    // ══════════════════════════════════════════════════════
+    // DISPLAY ID SYSTEM (HDS-1, HDS-1.2, HDS-1.2.3)
+    // Never reuses a number — counter docs only increment.
+    // ══════════════════════════════════════════════════════
+    function makePrefix(name) {
+        const clean = (name || 'PRJ').toUpperCase().replace(/[^A-Z0-9 ]/g, '').trim();
+        const words = clean.split(/\s+/).filter(Boolean);
+        if (words.length >= 3) return words.slice(0, 3).map(w => w[0]).join('');
+        if (words.length === 2) return (words[0][0] || '') + (words[1][0] || '') + (words[0][1] || '');
+        const w = words[0] || 'PRJ';
+        return (w[0] || 'P') + (w[1] || 'R') + (w[2] || 'J');
+    }
+
+    let projectDisplayId = null;
+    let currentProjectPrefix = 'PRJ';
+
+    async function getNextProjectDisplayId(projectName) {
+        const prefix = makePrefix(projectName);
+        const counterRef = doc(db, 'systemCounters', 'projectPrefixes');
+        try {
+            const snap = await getDoc(counterRef);
+            const data = snap.exists() ? snap.data() : {};
+            const next = (parseInt(data[prefix]) || 0) + 1;
+            await setDoc(counterRef, { [prefix]: next }, { merge: true });
+            return `${prefix}-${next}`;
+        } catch (e) {
+            console.warn('displayId counter failed:', e);
+            return `${prefix}-${Date.now().toString().slice(-4)}`;
+        }
+    }
+
+    // Main-seq counter lives on the project doc itself (mainSeq field).
+    // Sub-seq counter lives on each task doc (subSeq field).
+    // Sub-sub-seq counter lives on each subtask doc (subsubSeq field).
+    // These only increment — deletions never free a number.
+    async function nextMainSeq() {
+        const ref = doc(db, 'projectTasks', projectId);
+        // projectTasks is a flat collection of task docs, so we need a per-project counter doc instead
+        const counterRef = doc(db, 'projectCounters', projectId);
+        const snap = await getDoc(counterRef);
+        const data = snap.exists() ? snap.data() : {};
+        const next = (parseInt(data.mainSeq) || 0) + 1;
+        await setDoc(counterRef, { mainSeq: next }, { merge: true });
+        return next;
+    }
+    async function nextSubSeq(mainTaskDocId) {
+        const counterRef = doc(db, 'projectCounters', projectId, 'mainSeqs', mainTaskDocId);
+        const snap = await getDoc(counterRef);
+        const data = snap.exists() ? snap.data() : {};
+        const next = (parseInt(data.subSeq) || 0) + 1;
+        await setDoc(counterRef, { subSeq: next }, { merge: true });
+        return next;
+    }
+    async function nextSubSubSeq(mainTaskDocId, subTaskDocId) {
+        const counterRef = doc(db, 'projectCounters', projectId, 'subSeqs', subTaskDocId);
+        const snap = await getDoc(counterRef);
+        const data = snap.exists() ? snap.data() : {};
+        const next = (parseInt(data.subsubSeq) || 0) + 1;
+        await setDoc(counterRef, { subsubSeq: next }, { merge: true });
+        return next;
+    }
+
+    async function ensureProjectDisplayId() {
+        try {
+            const ref = doc(db, 'projectDashboard', projectId);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return null;
+            const data = snap.data();
+            if (data.displayId) {
+                currentProjectPrefix = (data.displayId.split('-')[0]) || makePrefix(data.name || 'Project');
+                return data.displayId;
+            }
+            const newId = await getNextProjectDisplayId(data.name || 'Project');
+            currentProjectPrefix = newId.split('-')[0];
+            await updateDoc(ref, { displayId: newId });
+            return newId;
+        } catch (e) {
+            console.warn('ensureProjectDisplayId failed:', e);
+            return null;
+        }
+    }
+
+    // For existing tasks that already have a taskId (e.g. PRJ-1) but no displayId,
+    // generate a displayId derived from the prefix + their original number.
+    function deriveDisplayId(oldTaskId, level, parentDisplay, counter) {
+        // parentDisplay like "HDS-1" or "HDS-1.2"
+        // oldTaskId like "PRJ-3"
+        if (level === 'main') {
+            const m = (oldTaskId || '').match(/(\d+)$/);
+            const num = m ? parseInt(m[1]) : counter;
+            return `${currentProjectPrefix}-${num}`;
+        }
+        if (level === 'sub') {
+            const m = (oldTaskId || '').match(/(\d+)$/);
+            const num = m ? parseInt(m[1]) : counter;
+            return `${parentDisplay}.${num}`;
+        }
+        if (level === 'subsub') {
+            const m = (oldTaskId || '').match(/(\d+)$/);
+            const num = m ? parseInt(m[1]) : counter;
+            return `${parentDisplay}.${num}`;
+        }
+        return `${currentProjectPrefix}-${counter}`;
+    }
+
+    // Start displayId + header title setup
+    (async () => {
+        projectDisplayId = await ensureProjectDisplayId();
+        document.getElementById('projectTitle').textContent =
+            projectDisplayId ? `Project ${projectDisplayId}` : `Project ${projectId.slice(0,6)}...`;
+        // Reload switcher now that we know this project's displayId
+        loadProjectSwitcher();
+    })();
 
     // ══════════════════════════════════════════════════════
     // PROJECT SWITCHER
-    // Lets you jump between projects without going back to the dashboard.
-    // Pulls from "projectDashboard" (same collection dashboard.html uses),
-    // hides projects marked hidden:true, and labels completed ones.
     // ══════════════════════════════════════════════════════
     const projectSwitcher = document.getElementById('projectSwitcher');
 
     function projectLabel(id, data) {
         const name = data.name || 'Unnamed';
         const client = data.client || '';
-        let label = client ? `${name} — ${client}` : name;
+        const did = data.displayId || '';
+        let label = did ? `${did} · ${name}` : name;
+        if (client) label += ` — ${client}`;
         if (data.status === 'completed') label += ' (Completed)';
         return label;
     }
@@ -802,10 +914,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const projects = [];
             snap.forEach(d => {
                 const data = d.data();
-                if (data.hidden && d.id !== projectId) return; // skip hidden ones (unless it's the current project)
-                projects.push({ id: d.id, label: projectLabel(d.id, data) });
+                if (data.hidden && d.id !== projectId) return;
+                projects.push({ id: d.id, label: projectLabel(d.id, data), displayId: data.displayId || '' });
             });
-            projects.sort((a, b) => a.label.localeCompare(b.label));
+            projects.sort((a, b) => (a.displayId || a.label).localeCompare(b.displayId || b.label));
             projectSwitcher.innerHTML = projects.map(p =>
                 `<option value="${p.id}" ${p.id === projectId ? 'selected' : ''}>${p.label}</option>`
             ).join('');
@@ -818,11 +930,12 @@ document.addEventListener('DOMContentLoaded', function() {
     projectSwitcher.addEventListener('change', () => {
         const newId = projectSwitcher.value;
         if (newId && newId !== projectId) {
-            window.location.href = window.location.pathname + '?id=' + encodeURIComponent(newId);
+            // location.replace does NOT push a history entry,
+            // so Back button goes to the previous HTML page (dashboard),
+            // not the previously-viewed project.
+            window.location.replace(window.location.pathname + '?id=' + encodeURIComponent(newId));
         }
     });
-
-    loadProjectSwitcher();
 
     const actionsHeader      = document.getElementById('actionsHeader');
     const actionsPanel       = document.getElementById('actionsPanel');
@@ -858,16 +971,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const LABOR_RATE = 18;
 
-    // ═══════════════════════════════════════════════════════
-    // RESOURCE CACHE (materials / employees)
-    // Loaded once on page load, refreshed in the background if stale.
-    // This is what was making modals slow to open before.
-    // ═══════════════════════════════════════════════════════
     let materials    = [];
     let laborWorkers = [];
     let resourcesLoadedAt = 0;
     let resourcesLoadingPromise = null;
-    const RESOURCE_STALE_MS = 60000; // 60s
+    const RESOURCE_STALE_MS = 60000;
 
     let currentAssigningTaskId      = null;
     let currentAssigningDocId       = null;
@@ -889,9 +997,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function saveEmptyRows() { localStorage.setItem(`emptyRows_${projectId}`, JSON.stringify(emptyRows)); }
 
-    // ═══════════════════════════════════════════════════════
-    // HIDE COMPLETED
-    // ═══════════════════════════════════════════════════════
     const HIDE_COMPLETED_KEY = `hideCompleted_${projectId}`;
     let hideCompleted = localStorage.getItem(HIDE_COMPLETED_KEY) === 'true';
 
@@ -914,9 +1019,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderGantt();
     };
 
-    // ═══════════════════════════════════════════════════════
-    // GANTT HIDE/SHOW
-    // ═══════════════════════════════════════════════════════
     const GANTT_KEY = `ganttVisible_${projectId}`;
     let ganttVisible = localStorage.getItem(GANTT_KEY) !== 'false';
 
@@ -1004,19 +1106,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ═══════════════════════════════════════════════════════
-    // FIXED loadResources:
-    // - Returns a single shared in-flight promise (no duplicate fetches
-    //   if called again while already loading)
-    // - Only re-fetches from Firestore if the cache is missing or stale
-    // - force=true bypasses the cache (used for the initial page load)
-    // ═══════════════════════════════════════════════════════
     async function loadResources(force = false) {
         const isStale = (Date.now() - resourcesLoadedAt) > RESOURCE_STALE_MS;
         if (!force && materials.length === 0 && laborWorkers.length === 0) {
-            // first ever load, must wait
+            // first ever load
         } else if (!force && !isStale) {
-            return; // cache is fresh, nothing to do
+            return;
         }
         if (resourcesLoadingPromise) return resourcesLoadingPromise;
 
@@ -1126,12 +1221,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (found) { const r = getTaskDocRef(taskId, level, parentDocId, subDocId); if (r) try { await updateDoc(r, { totalHours: val }); } catch(e) { console.warn(e); } }
     }
 
-    // ══════════════════════════════════════
-    // SAVE-BUTTON LOADING STATE HELPER
-    // Disables the button + cancel button, swaps in a spinner,
-    // and restores everything automatically if there's an error.
-    // This is what stops the double-click duplicate-save problem.
-    // ══════════════════════════════════════
     function setBtnLoading(btn, cancelBtn, isLoading, loadingText = 'Saving...') {
         if (isLoading) {
             btn.dataset.originalHtml = btn.innerHTML;
@@ -1145,9 +1234,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ══════════════════════════════════════
-    // MATERIAL MODAL
-    // ══════════════════════════════════════
     let currentPurchaseMode = 'inventory';
 
     window.setPurchaseMode = function(mode) {
@@ -1203,7 +1289,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tr.innerHTML = `
             <td><span class="cell-readonly">${rid}</span></td>
-            <td><span class="cell-readonly">${ctx.taskId||'—'}</span></td>
+            <td><span class="cell-readonly">${ctx.displayId||ctx.taskId||'—'}</span></td>
             <td><span class="cell-readonly">${ctx.taskLine||'—'}</span></td>
             <td><input class="cell-input mat-desc" data-rid="${rid}" type="text"
                 value="${prefill.description||ctx.taskDescription||''}"
@@ -1286,11 +1372,14 @@ document.addEventListener('DOMContentLoaded', function() {
         currentAssigningParentDocId = parentDocId;
         currentAssigningSubDocId    = subDocId;
         currentTaskContext = {
-            taskId: found?.taskId||'', taskLine: found?.taskLine||'',
-            taskDescription: found?.taskDescription||'', location: found?.location||''
+            taskId: found?.taskId || '',
+            displayId: found?.displayId || found?.taskId || '',
+            taskLine: found?.taskLine || '',
+            taskDescription: found?.taskDescription || '',
+            location: found?.location || ''
         };
         document.getElementById('taskNameMaterial').textContent = found?.taskDescription || 'Task';
-        document.getElementById('ctxTaskId').textContent        = currentTaskContext.taskId || '—';
+        document.getElementById('ctxTaskId').textContent        = currentTaskContext.displayId || '—';
         document.getElementById('ctxLine').textContent          = currentTaskContext.taskLine || '—';
         document.getElementById('ctxDescription').textContent   = currentTaskContext.taskDescription || '—';
         document.getElementById('ctxLocation').textContent      = currentTaskContext.location || '—';
@@ -1299,14 +1388,10 @@ document.addEventListener('DOMContentLoaded', function() {
         matRowCounter = 0;
         currentPurchaseMode = 'inventory';
 
-        // ── Open modal INSTANTLY using cached resources, don't block on network ──
         setPurchaseMode('inventory');
         materialModal.classList.add('active');
         setTimeout(() => matEntryBody.querySelector('select,input')?.focus(), 80);
 
-        // Refresh resources in the background only if cache is stale/empty.
-        // If new data arrives after rows are already drawn, refresh the
-        // material dropdown options in place without disrupting input.
         loadResources().then(() => {
             matEntryBody.querySelectorAll('select.mat-material').forEach(sel => {
                 const currentVal = sel.value;
@@ -1321,7 +1406,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.assignMaterials = async function() {
-        // ── Guard against double-click: bail instantly if already saving ──
         if (matSaveBtn.disabled) return;
 
         matStockWarning.style.display = 'none';
@@ -1361,17 +1445,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!entries.length) { alert('Add at least one material row.'); return; }
 
-        // ── Lock the button the instant validation passes ──
         setBtnLoading(matSaveBtn, matCancelBtn, true);
 
         try {
-            // ── Fire all writes in PARALLEL instead of one-by-one ──
             await Promise.all(entries.map(async (e) => {
                 if (e.mode === 'inventory') {
                     await Promise.all([
                         updateDoc(doc(db,"materials",e.matId), { quantity: (+(e.mat.quantity||0)) - e.qty }),
                         addDoc(collection(db,"materialsUsage"), {
-                            taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                            taskId: currentAssigningTaskId,
+                            taskDisplayId: currentTaskContext.displayId || '',
+                            taskDocId: currentAssigningDocId,
                             taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
                             taskDescription: e.desc||currentTaskContext.taskDescription||'',
                             materialId: e.matId, materialName: e.mat.materialName||e.mat.name,
@@ -1381,11 +1465,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             savedAt: Timestamp.now(), reversed: false, purchaseType: 'inventory'
                         })
                     ]);
-                    // keep local cache in sync so stock numbers are right if reopened immediately
                     e.mat.quantity = (+(e.mat.quantity||0)) - e.qty;
                 } else {
                     await addDoc(collection(db,"materialsUsage"), {
-                        taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                        taskId: currentAssigningTaskId,
+                        taskDisplayId: currentTaskContext.displayId || '',
+                        taskDocId: currentAssigningDocId,
                         taskLevel: currentAssigningTaskLevel, taskLine: currentTaskContext.taskLine||'',
                         taskDescription: e.desc||currentTaskContext.taskDescription||'',
                         materialId: null, materialName: e.materialName,
@@ -1403,9 +1488,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ══════════════════════════════════════
-    // LABOR MODAL
-    // ══════════════════════════════════════
     function employeeOptions(selectedId) {
         return '<option value="">— Select Employee —</option>' +
             laborWorkers.map(e => {
@@ -1422,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = currentTaskContext;
         const tr  = document.createElement('tr');
         tr.dataset.rid = rid;
-        const projectName = projectId ? `Project ${projectId.slice(0,6)}...` : 'Current Project';
+        const projectName = projectDisplayId ? `Project ${projectDisplayId}` : (projectId ? `Project ${projectId.slice(0,6)}...` : 'Current Project');
 
         tr.innerHTML = `
             <td><span class="cell-readonly">${rid}</span></td>
@@ -1444,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     value="${prefill.location||ctx.location||''}" placeholder="Location">
             </td>
             <td>
-                <span class="cell-readonly lab-taskid" id="lab_taskid_${rid}">${ctx.taskId||'—'}</span>
+                <span class="cell-readonly lab-taskid" id="lab_taskid_${rid}">${ctx.displayId||ctx.taskId||'—'}</span>
             </td>
             <td>
                 <input class="cell-input lab-description" data-rid="${rid}" type="text"
@@ -1540,23 +1622,27 @@ document.addEventListener('DOMContentLoaded', function() {
         currentAssigningTaskLevel   = level || 'main';
         currentAssigningParentDocId = parentDocId;
         currentAssigningSubDocId    = subDocId;
-        currentTaskContext = { taskId: found?.taskId||'', taskLine: found?.taskLine||'', taskDescription: found?.taskDescription||'', location: found?.location||'', status: found?.status||'PENDING' };
+        currentTaskContext = {
+            taskId: found?.taskId || '',
+            displayId: found?.displayId || found?.taskId || '',
+            taskLine: found?.taskLine || '',
+            taskDescription: found?.taskDescription || '',
+            location: found?.location || '',
+            status: found?.status || 'PENDING'
+        };
 
         document.getElementById('taskNameLabor').textContent    = found?.taskDescription || 'Task';
-        document.getElementById('labCtxTaskId').textContent     = currentTaskContext.taskId || '—';
+        document.getElementById('labCtxTaskId').textContent     = currentTaskContext.displayId || '—';
         document.getElementById('labCtxDesc').textContent       = currentTaskContext.taskDescription || '—';
         document.getElementById('labCtxLoc').textContent        = currentTaskContext.location || '—';
-        document.getElementById('labCtxProject').textContent    = projectId ? `Project ${projectId.slice(0,6)}...` : '—';
+        document.getElementById('labCtxProject').textContent    = projectDisplayId ? `Project ${projectDisplayId}` : (projectId ? `Project ${projectId.slice(0,6)}...` : '—');
 
         labEntryBody.innerHTML = ''; labRowCounter = 0;
 
-        // ── Open modal INSTANTLY using cached resources, don't block on network ──
         window.addLaborEntryRow();
         laborModal.classList.add('active');
         setTimeout(() => labEntryBody.querySelector('select')?.focus(), 80);
 
-        // Refresh resources in background only if stale/empty; if new
-        // employees show up, refresh the employee dropdown options in place.
         loadResources().then(() => {
             labEntryBody.querySelectorAll('select.lab-employee').forEach(sel => {
                 const currentVal = sel.value;
@@ -1571,7 +1657,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.assignLabors = async function() {
-        // ── Guard against double-click: bail instantly if already saving ──
         if (labSaveBtn.disabled) return;
 
         const entries = [];
@@ -1594,17 +1679,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (!entries.length) { alert('Please add at least one employee with MH entered.'); return; }
 
-        // ── Lock the button the instant validation passes ──
         setBtnLoading(labSaveBtn, labCancelBtn, true);
 
         try {
-            // ── Fire all writes in PARALLEL instead of one-by-one ──
             await Promise.all(entries.map(e => addDoc(collection(db,"locationHistory"), {
-                projectId, taskId: currentAssigningTaskId, taskDocId: currentAssigningDocId,
+                projectId, taskId: currentAssigningTaskId,
+                taskDisplayId: currentTaskContext.displayId || '',
+                taskDocId: currentAssigningDocId,
                 taskLevel: currentAssigningTaskLevel,
                 employeeId: e.employeeId, employeeIdNumber: e.employeeIdNumber,
                 employeeName: e.employeeName, projectName: e.projectName,
-                location: e.location, taskIdDisplay: currentTaskContext.taskId,
+                location: e.location, taskIdDisplay: currentTaskContext.displayId,
                 taskDescription: e.taskDescription, status: e.status,
                 transferDate: e.transferDate, mh: e.mh, rate: e.rate, cost: e.cost,
                 savedAt: Timestamp.now(), reversed: false
@@ -1634,16 +1719,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return null;
     }
-    async function getNextTaskNumber(pId) {
-        const snap = await getDocs(query(collection(db,"projectTasks"),where("projectId","==",pId)));
-        let max = 0;
-        snap.forEach(d => { const m=(d.data().taskId||'').match(/PRJ-(\d+)$/); if(m) max=Math.max(max,parseInt(m[1])); });
-        return max + 1;
-    }
 
+    // ══════════════════════════════════════════════════════
+    // LOAD TASKS + backfill displayIds
+    // ══════════════════════════════════════════════════════
     async function loadTasks() {
         if (unsubMain) unsubMain();
         Object.values(subUnsubs).forEach(fn => fn?.());
+        subUnsubs = {};
 
         unsubMain = onSnapshot(
             query(collection(db,"projectTasks"), where("projectId","==",projectId)),
@@ -1679,6 +1762,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }));
                 });
                 await Promise.all(promises);
+
+                // Backfill displayIds for tasks missing them
+                try {
+                    await backfillDisplayIds();
+                } catch(e) { console.warn('backfillDisplayIds:', e); }
+
                 allTasks.forEach(t => {
                     t._matCost = t.matCost||0; t._labCost = t.labCost||0; t._hours = t.totalHours||0;
                     if (t.subTasks.length) {
@@ -1697,40 +1786,103 @@ document.addEventListener('DOMContentLoaded', function() {
         );
     }
 
-    // ═══════════════════════════════════════════════════════
-    // FIXED filterTasks — search now works correctly
-    // ═══════════════════════════════════════════════════════
+    // Backfill displayId on any task/subtask/subsubtask that doesn't have one yet.
+    // For tasks whose existing taskId is "PRJ-3", we reuse the number 3 in the new format
+    // so the number sequence stays consistent. If the counter is already higher, we push
+    // the counter past the max we see so future tasks don't collide.
+    async function backfillDisplayIds() {
+        if (!currentProjectPrefix || currentProjectPrefix === 'PRJ') {
+            // prefix not ready yet; skip this pass. It'll run again on next snapshot.
+            return;
+        }
+
+        // First pass: figure out highest used number per parent, to make sure counters
+        // are always >= what's already in use. Then update displayIds on tasks that lack them.
+        let mainMax = 0;
+        const subMaxByMain = {};
+        const subsubMaxBySub = {};
+
+        for (const t of allTasks) {
+            const oldNum = (t.taskId || '').match(/(\d+)$/);
+            if (oldNum) mainMax = Math.max(mainMax, parseInt(oldNum[1]));
+            for (const sub of (t.subTasks || [])) {
+                if (!subMaxByMain[t.id]) subMaxByMain[t.id] = 0;
+                const sm = (sub.taskId || '').match(/(\d+)$/);
+                if (sm) subMaxByMain[t.id] = Math.max(subMaxByMain[t.id], parseInt(sm[1]));
+                for (const ss of (sub.subSubtasks || [])) {
+                    if (!subsubMaxBySub[sub.id]) subsubMaxBySub[sub.id] = 0;
+                    const ssm = (ss.taskId || '').match(/(\d+)$/);
+                    if (ssm) subsubMaxBySub[sub.id] = Math.max(subsubMaxBySub[sub.id], parseInt(ssm[1]));
+                }
+            }
+        }
+
+        // Ensure counters are at least the max we already see (so next is max+1)
+        try {
+            const counterRef = doc(db, 'projectCounters', projectId);
+            const cSnap = await getDoc(counterRef);
+            const cData = cSnap.exists() ? cSnap.data() : {};
+            const currentMain = parseInt(cData.mainSeq) || 0;
+            if (currentMain < mainMax) {
+                await setDoc(counterRef, { mainSeq: mainMax }, { merge: true });
+            }
+        } catch(e) { console.warn(e); }
+
+        for (const t of allTasks) {
+            if (!t.displayId && t.taskId) {
+                const num = mainMax > 0 ? (parseInt((t.taskId.match(/(\d+)$/)||[])[1]) || 1) : 1;
+                const did = `${currentProjectPrefix}-${num}`;
+                try { await updateDoc(doc(db, 'projectTasks', t.id), { displayId: did }); t.displayId = did; } catch(e) {}
+            } else if (!t.displayId) {
+                const did = `${currentProjectPrefix}-${++mainMax}`;
+                try { await updateDoc(doc(db, 'projectTasks', t.id), { displayId: did }); t.displayId = did; } catch(e) {}
+            }
+
+            for (const sub of (t.subTasks || [])) {
+                if (!sub.displayId) {
+                    const num = (sub.taskId || '').match(/(\d+)$/);
+                    const n = num ? parseInt(num[1]) : (subMaxByMain[t.id] || 0) + 1;
+                    const did = `${t.displayId}.${n}`;
+                    try { await updateDoc(doc(db, 'projectTasks', t.id, 'subtasks', sub.id), { displayId: did }); sub.displayId = did; } catch(e) {}
+                }
+                for (const ss of (sub.subSubtasks || [])) {
+                    if (!ss.displayId) {
+                        const num = (ss.taskId || '').match(/(\d+)$/);
+                        const n = num ? parseInt(num[1]) : (subsubMaxBySub[sub.id] || 0) + 1;
+                        const did = `${sub.displayId}.${n}`;
+                        try { await updateDoc(doc(db, 'projectTasks', t.id, 'subtasks', sub.id, 'subsubtasks', ss.id), { displayId: did }); ss.displayId = did; } catch(e) {}
+                    }
+                }
+            }
+        }
+    }
+
     function filterTasks() {
         const status = statusFilter.value;
         const month  = monthFilter.value;
         const year   = yearFilter.value;
-        // Trim and lowercase the search term live from the input
         const search = searchInput.value.trim().toLowerCase();
 
         return allTasks
             .filter(task => {
-                // Task filter picker
                 if (selectedTaskIds !== null && !selectedTaskIds.has(task.id)) return false;
-                // Hide completed toggle
                 if (hideCompleted && task.status === 'COMPLETED') return false;
-                // Status dropdown
                 if (status && task.status !== status) return false;
-                // Month / Year filter
                 if (month || year) {
                     if (!task.startDate) return false;
                     const d = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
                     if (month && (d.getMonth() + 1) !== parseInt(month)) return false;
                     if (year  && d.getFullYear()    !== parseInt(year))  return false;
                 }
-                // Search — fixed: use String() so numbers/zeros are never dropped
                 if (search) {
                     const haystack = [
-                        String(task.taskId          ?? ''),
+                        String(task.displayId     ?? ''),
+                        String(task.taskId        ?? ''),
                         String(task.taskDescription ?? ''),
-                        String(task.assignedTo      ?? ''),
-                        String(task.status          ?? ''),
-                        String(task.location        ?? ''),
-                        String(task.taskLine        ?? '')
+                        String(task.assignedTo    ?? ''),
+                        String(task.status        ?? ''),
+                        String(task.location      ?? ''),
+                        String(task.taskLine      ?? '')
                     ].join(' ').toLowerCase();
                     return haystack.includes(search);
                 }
@@ -1810,7 +1962,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function renderTasks(tasks) {
-        // Remember scroll position and active element before wiping DOM
         const tableContainer  = document.getElementById('tableContainer');
         const scrollTop       = tableContainer.scrollTop;
         const scrollLeft      = tableContainer.scrollLeft;
@@ -1842,7 +1993,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tr.dataset.taskId = task.id;
             const mainAssigned = taskAssignedNames[task.id] || task.assignedTo || '';
             tr.innerHTML = `
-                <td>${task.taskId||''}</td>
+                <td>${task.displayId || task.taskId || ''}</td>
                 <td class="editable" data-type="main" data-field="taskLine" data-id="${task.id}">${task.taskLine||''}</td>
                 <td class="editable" data-type="main" data-field="taskDescription" data-id="${task.id}">${task.taskDescription||''}</td>
                 <td class="editable" data-type="main" data-field="assignedTo" data-id="${task.id}">${mainAssigned}</td>
@@ -1874,7 +2025,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 subTr.dataset.taskId = sub.id;
                 const subAssigned = taskAssignedNames[sub.id] || sub.assignedTo || '';
                 subTr.innerHTML = `
-                    <td>${sub.taskId||''}</td><td></td>
+                    <td>${sub.displayId || sub.taskId || ''}</td><td></td>
                     <td class="editable subtask-desc" data-type="sub" data-mainid="${task.id}" data-field="taskDescription" data-id="${sub.id}"><span class="task-prefix">↪</span> ${sub.taskDescription||''}</td>
                     <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="assignedTo" data-id="${sub.id}">${subAssigned}</td>
                     <td class="editable" data-type="sub" data-mainid="${task.id}" data-field="status" data-id="${sub.id}"><span class="status-badge status-${sub.status||'PENDING'}">${sub.status||'PENDING'}</span></td>
@@ -1905,7 +2056,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ssTr.dataset.taskId = ss.id;
                     const ssAssigned = taskAssignedNames[ss.id] || ss.assignedTo || '';
                     ssTr.innerHTML = `
-                        <td>${ss.taskId||''}</td><td></td>
+                        <td>${ss.displayId || ss.taskId || ''}</td><td></td>
                         <td class="editable" style="padding-left:35px" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="taskDescription" data-id="${ss.id}"><span class="task-prefix">↪↪</span> ${ss.taskDescription||''}</td>
                         <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="assignedTo" data-id="${ss.id}">${ssAssigned}</td>
                         <td class="editable" data-type="subsub" data-mainid="${task.id}" data-subid="${sub.id}" data-field="status" data-id="${ss.id}"><span class="status-badge status-${ss.status||'PENDING'}">${ss.status||'PENDING'}</span></td>
@@ -1935,19 +2086,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         emptyStateEl.style.display = tasks.length === 0 && emptyRows.length === 0 ? 'block' : 'none';
 
-        // Restore scroll position after DOM rebuild
         tableContainer.scrollTop  = scrollTop;
         tableContainer.scrollLeft = scrollLeft;
 
-        // ── CRITICAL FIX: restore search focus after DOM rebuild ──
-        // renderTasks wipes innerHTML which blurs any focused input.
-        // We must synchronously re-focus searchInput if it was active.
         if (wasSearchFocused) {
             searchInput.focus();
             try { searchInput.setSelectionRange(searchCursorPos, searchCursorPos); } catch(e) {}
         }
 
-        // ── CELL CLICK HANDLER ──
         document.querySelectorAll('.editable').forEach(cell => {
             cell.onclick = (e) => {
                 if (cell.querySelector('input, select')) return;
@@ -1966,468 +2112,394 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (currentVal === s) o.selected = true;
                         sel.appendChild(o);
                     });
-                    sel.onclick   = (ev) => ev.stopPropagation();
-                    sel.onchange  = () => { saveEdit(cell, type, field, sel.value); };
-                    sel.onkeydown = (ev) => {
-                        if (ev.key === 'Enter')  { ev.preventDefault(); sel.onchange(); sel.blur(); }
-                        if (ev.key === 'Escape') { renderTasks(filterTasks()); }
-                    };
                     cell.innerHTML = '';
                     cell.appendChild(sel);
                     sel.focus();
-
-                } else if (field === 'startDate' || field === 'endDate') {
-                    const inp = document.createElement('input');
-                    inp.type = 'date';
-                    if (rawText) {
-                        try {
-                            const parsed = new Date(rawText + ' ' + new Date().getFullYear());
-                            if (!isNaN(parsed)) inp.value = parsed.toISOString().split('T')[0];
-                        } catch(e) {}
-                    }
-                    inp.onblur   = () => { const val = inp.value ? new Date(inp.value) : null; saveEdit(cell, type, field, val); };
-                    inp.onkeydown = (ev) => {
-                        if (ev.key === 'Enter')  { inp.blur(); }
-                        if (ev.key === 'Escape') { renderTasks(filterTasks()); }
-                    };
-                    cell.innerHTML = '';
-                    cell.appendChild(inp);
-                    inp.focus();
-
-                } else {
-                    const inp = document.createElement('input');
-                    inp.type = field === 'taskLine' ? 'number' : 'text';
-                    inp.value = rawText;
-                    inp.style.cssText = 'width:100%;padding:2px 4px;border:1px solid #2b4a73;border-radius:4px;font-size:0.68rem;outline:none;';
-                    inp.onblur   = () => saveEdit(cell, type, field, inp.value);
-                    inp.onkeydown = (ev) => {
-                        if (ev.key === 'Enter')  { ev.preventDefault(); inp.blur(); }
-                        if (ev.key === 'Escape') { renderTasks(filterTasks()); }
-                    };
-                    cell.innerHTML = '';
-                    cell.appendChild(inp);
-                    inp.select();
+                    sel.onchange = () => saveCellEdit(cell, sel.value, type, field);
+                    sel.onblur = () => { if (sel.parentNode) saveCellEdit(cell, sel.value, type, field); };
+                    return;
                 }
+                if (field === 'startDate' || field === 'endDate') {
+                    const orig = cell.dataset.origDate || '';
+                    const input = document.createElement('input');
+                    input.type = 'date';
+                    input.value = orig;
+                    input.style.cssText = 'width:100%;padding:2px;font-size:0.68rem;border:1px solid #2b4a73;border-radius:4px;';
+                    cell.innerHTML = '';
+                    cell.appendChild(input);
+                    input.focus();
+                    if (input.showPicker) try { input.showPicker(); } catch(e){}
+                    const commit = () => saveCellEdit(cell, input.value, type, field, true);
+                    input.onblur = commit;
+                    input.onchange = commit;
+                    return;
+                }
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = rawText;
+                input.style.cssText = 'width:100%;padding:2px;font-size:0.68rem;border:1px solid #2b4a73;border-radius:4px;';
+                cell.innerHTML = '';
+                cell.appendChild(input);
+                input.focus();
+                input.select();
+                const commit = () => saveCellEdit(cell, input.value, type, field);
+                input.onblur = commit;
+                input.onkeydown = (ev) => {
+                    if (ev.key === 'Enter') { input.blur(); }
+                    if (ev.key === 'Escape') { input.value = rawText; input.blur(); }
+                };
             };
         });
     }
 
-    function renderEmptyRow(empty) {
+    function renderEmptyRow(e) {
         const tr = document.createElement('tr');
-        tr.className = 'empty-row'; tr.dataset.emptyId = empty.id;
+        tr.className = 'empty-row';
         tr.innerHTML = `
-            <td></td><td></td>
-            <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}','description',this.textContent)">${empty.description||''}</span></td>
+            <td colspan="2"></td>
+            <td><span class="empty-text" contenteditable="true" oninput="updateEmptyRow('${e.id}','description',this.textContent)" onblur="updateEmptyRow('${e.id}','description',this.textContent)">${e.description||''}</span></td>
             <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-            <td><span class="empty-text" contenteditable="true" onblur="updateEmptyRow('${empty.id}','location',this.textContent)">${empty.location||''}</span></td>
+            <td><span class="empty-text" contenteditable="true" oninput="updateEmptyRow('${e.id}','location',this.textContent)" onblur="updateEmptyRow('${e.id}','location',this.textContent)">${e.location||''}</span></td>
             <td>
                 <div class="menu-container">
-                    <button class="menu-trigger" onclick="toggleMenu('${empty.id}')">⋮</button>
-                    <div class="menu-dropdown" id="menu-${empty.id}">
-                        <div class="menu-item" onclick="removeEmptyRow('${empty.id}')"><i class="fas fa-trash"></i> Delete Row</div>
+                    <button class="menu-trigger" onclick="toggleMenu('${e.id}')">⋮</button>
+                    <div class="menu-dropdown" id="menu-${e.id}">
+                        <div class="menu-item" onclick="removeEmptyRow('${e.id}')"><i class="fas fa-trash"></i> Delete Row</div>
                     </div>
                 </div>
             </td>`;
         taskListEl.appendChild(tr);
     }
 
-    async function saveEdit(cell, type, field, value) {
-        const mainId = cell.dataset.mainid || cell.dataset.id;
+    async function saveCellEdit(cell, newValue, type, field, isDate) {
+        const taskId = cell.dataset.id;
+        const mainId = cell.dataset.mainid;
+        const subId  = cell.dataset.subid;
+        const { found, level, parentDocId, subDocId } = findPathFor(taskId);
+        if (!found) { renderTasks(filterTasks()); return; }
 
-        // Instant DOM update
-        if (field === 'status') {
-            const statusVal = value || 'PENDING';
-            cell.innerHTML = `<span class="status-badge status-${statusVal}">${statusVal}</span>`;
-            const taskObj = findTaskObj(cell.dataset.id);
-            if (taskObj) taskObj.status = statusVal;
-        } else if (field === 'startDate' || field === 'endDate') {
-            const dateVal = value ? (value instanceof Date ? value : new Date(value)) : null;
-            cell.textContent = dateVal && !isNaN(dateVal) ? formatDate(dateVal) : '';
-            const taskObj = findTaskObj(cell.dataset.id);
-            if (taskObj && dateVal && !isNaN(dateVal)) taskObj[field] = dateVal;
-        } else {
-            const taskObj = findTaskObj(cell.dataset.id);
-            if (field === 'taskDescription') {
-                const rowType = cell.dataset.type;
-                if (rowType === 'sub')    { cell.innerHTML = `<span class="task-prefix">↪</span> ${value}`; }
-                else if (rowType === 'subsub') { cell.innerHTML = `<span class="task-prefix">↪↪</span> ${value}`; }
-                else { cell.textContent = value; }
-            } else {
-                cell.textContent = value;
-            }
-            if (taskObj) taskObj[field] = value;
-        }
+        let ref;
+        if (level === 'main') ref = doc(db,"projectTasks",taskId);
+        else if (level === 'sub' && parentDocId) ref = doc(db,"projectTasks",parentDocId,"subtasks",taskId);
+        else if (level === 'subsub' && parentDocId && subDocId) ref = doc(db,"projectTasks",parentDocId,"subtasks",subDocId,"subsubtasks",taskId);
 
-        // Firestore write
+        if (!ref) { renderTasks(filterTasks()); return; }
+
+        const updates = {};
+        if (isDate) updates[field] = newValue ? Timestamp.fromDate(new Date(newValue)) : null;
+        else updates[field] = newValue;
+
         try {
-            let firestoreValue = value;
-            if ((field === 'startDate' || field === 'endDate') && value) {
-                const d = value instanceof Date ? value : new Date(value);
-                firestoreValue = isNaN(d) ? null : Timestamp.fromDate(d);
-            }
-            if (type === 'main') {
-                await updateDoc(doc(db,"projectTasks",mainId), { [field]: firestoreValue, updatedAt: new Date() });
-            } else if (type === 'sub') {
-                await updateDoc(doc(db,"projectTasks",mainId,"subtasks",cell.dataset.id), { [field]: firestoreValue, updatedAt: new Date() });
-            } else if (type === 'subsub') {
-                await updateDoc(doc(db,"projectTasks",mainId,"subtasks",cell.dataset.subid,"subsubtasks",cell.dataset.id), { [field]: firestoreValue, updatedAt: new Date() });
-            }
-        } catch(e) {
-            alert("Error saving: " + e.message);
-            renderTasks(filterTasks());
-        }
+            await updateDoc(ref, updates);
+        } catch(err) { console.error('saveCellEdit:', err); }
+        renderTasks(filterTasks());
+        renderGantt();
     }
 
-    window.deleteTask = async (type, mainId, subId, subSubId) => {
-        if (!confirm("Delete task?")) return;
+    async function deleteTask(level, taskId, subId, subsubId) {
+        if (!confirm('Delete this task? Its display ID number will NOT be reused.')) return;
         try {
-            if (type === 'main')        await deleteDoc(doc(db,"projectTasks",mainId));
-            else if (type === 'sub')    await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId));
-            else                        await deleteDoc(doc(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks",subSubId));
-        } catch(e) { alert("Delete error: " + e.message); }
-    };
-
-    // ── Gantt ──
-    function renderGantt() {
-        if (!ganttVisible) return;
-        const tasks = filterTasks();
-        if (!tasks.length) return;
-        const today = new Date(); today.setHours(0,0,0,0);
-        let minYear = today.getFullYear();
-        tasks.forEach(t => { if(t.startDate){ const y=new Date(t.startDate.toDate?t.startDate.toDate():t.startDate).getFullYear(); if(y<minYear) minYear=y; } });
-        const md = [31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
-        const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        let h1='<tr><th rowspan="3" style="min-width:120px">TASK</th>', r2='<tr>', r3='<tr>';
-        for (let m=0; m<12; m++) {
-            if (showCurrentMonthOnly && m !== today.getMonth()) continue;
-            h1 += `<th colspan="${md[m]}">${mn[m]}</th>`;
-            for (let d=1; d<=md[m]; d++) {
-                const dt = new Date(minYear,m,d), it = dt.toDateString()===today.toDateString();
-                r2 += `<th class="${it?'today-highlight':''}">${d}</th>`;
-                r3 += `<th class="${it?'today-highlight':''}">${['S','M','T','W','R','F','S'][dt.getDay()]}</th>`;
-            }
-        }
-        ganttHeadEl.innerHTML = h1+'</tr>'+r2+'</tr>'+r3+'</tr>';
-        let body = '';
-        tasks.forEach(t => {
-            body += ganttRow(t,'main',minYear,today);
-            t.subTasks.forEach(s => {
-                body += ganttRow(s,'sub',minYear,today);
-                s.subSubtasks?.forEach(ss => { body += ganttRow(ss,'subsub',minYear,today); });
-            });
-        });
-        ganttBodyEl.innerHTML = body;
+            if (level === 'main') await deleteDoc(doc(db,"projectTasks",taskId));
+            else if (level === 'sub') await deleteDoc(doc(db,"projectTasks",taskId,"subtasks",subId));
+            else if (level === 'subsub') await deleteDoc(doc(db,"projectTasks",taskId,"subtasks",subId,"subsubtasks",subsubId));
+        } catch(e) { alert('Delete failed: ' + e.message); }
     }
 
-    function ganttRow(task, level, minYear, today) {
-        const desc = level==='main'
-            ? `<b>${task.taskDescription||''}</b>`
-            : level==='sub'
-                ? `<span style="margin-left:14px">↪ ${task.taskDescription||''}</span>`
-                : `<span style="margin-left:28px">↪↪ ${task.taskDescription||''}</span>`;
-
-        const status = (task.status||'PENDING').toUpperCase();
-        let start = null, end = null;
-        if (task.startDate) {
-            start = task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate);
-            start.setHours(0,0,0,0);
-            if (task.endDate) {
-                end = task.endDate.toDate ? task.endDate.toDate() : new Date(task.endDate);
-                end.setHours(23,59,59,999);
-            } else if (status !== 'COMPLETED') {
-                end = new Date(today); end.setHours(23,59,59,999);
-            }
-        }
-
-        let hitClass = '';
-        if (status === 'COMPLETED') {
-            hitClass = 'gantt-td-done';
-        } else if (status === 'ONGOING') {
-            hitClass = level==='main' ? 'gantt-td-main' : level==='sub' ? 'gantt-td-sub' : 'gantt-td-subsub';
-        } else {
-            hitClass = level==='main' ? 'gantt-td-pending-main' : level==='sub' ? 'gantt-td-pending-sub' : 'gantt-td-pending-subsub';
-        }
-
-        const md = [31,28+(minYear%4===0?1:0),31,30,31,30,31,31,30,31,30,31];
-        let row = `<tr><td style="text-align:left;padding:3px 6px;white-space:nowrap;min-width:120px">${desc}</td>`;
-        for (let m=0; m<12; m++) {
-            if (showCurrentMonthOnly && m !== today.getMonth()) continue;
-            for (let d=1; d<=md[m]; d++) {
-                const dt = new Date(minYear, m, d);
-                const isToday  = dt.toDateString() === today.toDateString();
-                const inRange  = start && dt >= start && (!end || dt <= end);
-                const cls = isToday
-                    ? (inRange ? hitClass + ' today-highlight' : 'today-highlight')
-                    : (inRange ? hitClass : '');
-                row += `<td class="${cls}" title="${dt.toDateString()}"></td>`;
-            }
-        }
-        return row + '</tr>';
-    }
-
-    // ── Task CRUD ──
-    addTaskBtn.onclick = async () => {
-        const desc = prompt("Task description:"); if (!desc) return;
-        const num  = await getNextTaskNumber(projectId);
-        await addDoc(collection(db,"projectTasks"), {
-            projectId, taskId: `PRJ-${num}`, taskDescription: desc,
-            status: "PENDING", matCost: 0, labCost: 0, totalHours: 0,
-            createdAt: new Date(), updatedAt: new Date()
-        });
-    };
+    window.deleteTask = deleteTask;
 
     window.addSubtask = async (mainId) => {
-        const main = await getDoc(doc(db,"projectTasks",mainId)); if (!main.exists()) return;
-        const desc = prompt("Subtask description:"); if (!desc) return;
-        const existSnap = await getDocs(collection(db,"projectTasks",mainId,"subtasks"));
-        const nextNum   = existSnap.size + 1;
-        const parentId  = main.data().taskId || 'PRJ';
-        await addDoc(collection(db,"projectTasks",mainId,"subtasks"), {
-            taskId: `${parentId}-${nextNum}`, taskDescription: desc,
-            status: "PENDING", matCost: 0, labCost: 0, totalHours: 0,
-            createdAt: new Date(), updatedAt: new Date()
-        });
+        if (!currentProjectPrefix) { alert('Project prefix not ready yet. Please wait a moment and try again.'); return; }
+        try {
+            const seq = await nextSubSeq(mainId);
+            const mainTask = allTasks.find(t => t.id === mainId);
+            const parentDid = mainTask?.displayId || '';
+            const did = parentDid ? `${parentDid}.${seq}` : `${currentProjectPrefix}-${seq}`;
+            await addDoc(collection(db,"projectTasks",mainId,"subtasks"), {
+                projectId,
+                taskId: '', // old field kept empty for new tasks
+                displayId: did,
+                taskDescription: 'New Subtask',
+                taskLine: mainTask?.taskLine || '',
+                status: 'PENDING',
+                assignedTo: '',
+                location: mainTask?.location || '',
+                createdAt: Timestamp.now()
+            });
+        } catch(e) { alert('Add subtask failed: ' + e.message); }
     };
 
     window.addSubSubtask = async (mainId, subId) => {
-        const sub = await getDoc(doc(db,"projectTasks",mainId,"subtasks",subId)); if (!sub.exists()) return;
-        const desc = prompt("Sub-subtask description:"); if (!desc) return;
-        const existSnap = await getDocs(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"));
-        const nextNum   = existSnap.size + 1;
-        const parentId  = sub.data().taskId || 'PRJ-1';
-        await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"), {
-            taskId: `${parentId}-${nextNum}`, taskDescription: desc,
-            status: "PENDING", matCost: 0, labCost: 0, totalHours: 0,
-            createdAt: new Date(), updatedAt: new Date()
+        if (!currentProjectPrefix) { alert('Project prefix not ready yet. Please wait a moment and try again.'); return; }
+        try {
+            const seq = await nextSubSubSeq(mainId, subId);
+            const mainTask = allTasks.find(t => t.id === mainId);
+            const sub = mainTask?.subTasks?.find(s => s.id === subId);
+            const parentDid = sub?.displayId || '';
+            const did = parentDid ? `${parentDid}.${seq}` : `${currentProjectPrefix}-${seq}`;
+            await addDoc(collection(db,"projectTasks",mainId,"subtasks",subId,"subsubtasks"), {
+                projectId,
+                taskId: '',
+                displayId: did,
+                taskDescription: 'New Sub-subtask',
+                status: 'PENDING',
+                assignedTo: '',
+                location: sub?.location || '',
+                createdAt: Timestamp.now()
+            });
+        } catch(e) { alert('Add subsubtask failed: ' + e.message); }
+    };
+
+    addTaskBtn.addEventListener('click', async () => {
+        if (!currentProjectPrefix) { alert('Project prefix not ready yet. Please wait a moment and try again.'); return; }
+        try {
+            const seq = await nextMainSeq();
+            const did = `${currentProjectPrefix}-${seq}`;
+            const nextLine = allTasks.length > 0 ? Math.max(...allTasks.map(t => +t.taskLine || 0)) + 1 : 1;
+            await addDoc(collection(db,"projectTasks"), {
+                projectId,
+                taskId: '',
+                displayId: did,
+                taskLine: nextLine,
+                taskDescription: 'New Task',
+                status: 'PENDING',
+                assignedTo: '',
+                location: '',
+                createdAt: Timestamp.now()
+            });
+        } catch(e) { alert('Add task failed: ' + e.message); }
+    });
+
+    // ══════════════════════════════════════════════════════
+    // GANTT
+    // ══════════════════════════════════════════════════════
+    function renderGantt() {
+        if (!ganttVisible) return;
+        const tasks = filterTasks();
+        if (!tasks.length) { ganttHeadEl.innerHTML = ''; ganttBodyEl.innerHTML = ''; return; }
+
+        let minD = null, maxD = null;
+        const visitDates = (t) => {
+            if (t.startDate) { const d = t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate); if (!minD || d < minD) minD = d; if (!maxD || d > maxD) maxD = d; }
+            if (t.endDate)   { const d = t.endDate.toDate ? t.endDate.toDate() : new Date(t.endDate);     if (!minD || d < minD) minD = d; if (!maxD || d > maxD) maxD = d; }
+        };
+        tasks.forEach(t => { visitDates(t); t.subTasks?.forEach(s => { visitDates(s); s.subSubtasks?.forEach(ss => visitDates(ss)); }); });
+
+        const today = new Date();
+        if (showCurrentMonthOnly) {
+            minD = new Date(today.getFullYear(), today.getMonth(), 1);
+            maxD = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        } else {
+            if (!minD) minD = new Date(today.getFullYear(), today.getMonth(), 1);
+            if (!maxD) maxD = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            minD = new Date(minD.getFullYear(), minD.getMonth(), 1);
+            maxD = new Date(maxD.getFullYear(), maxD.getMonth() + 1, 0);
+        }
+
+        // Build months
+        const months = [];
+        let cur = new Date(minD);
+        while (cur <= maxD) {
+            const mStart = new Date(cur.getFullYear(), cur.getMonth(), 1);
+            const mEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
+            const daysInMonth = mEnd.getDate();
+            months.push({ year: cur.getFullYear(), month: cur.getMonth(), days: daysInMonth, start: mStart, end: mEnd });
+            cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+        }
+
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        let headHtml = '<tr><th style="min-width:140px;text-align:left;padding-left:6px;">Task</th>';
+        months.forEach(m => {
+            headHtml += `<th colspan="${m.days}">${monthNames[m.month]} ${m.year}</th>`;
         });
-    };
+        headHtml += '</tr><tr><th style="text-align:left;padding-left:6px;">&nbsp;</th>';
+        months.forEach(m => {
+            for (let d = 1; d <= m.days; d++) {
+                const dd = new Date(m.year, m.month, d);
+                const isToday = dd.toDateString() === today.toDateString();
+                headHtml += `<th style="${isToday?'background:#fbbf24;color:#0a1c2f;':''};font-size:0.55rem;">${d}</th>`;
+            }
+        });
+        headHtml += '</tr>';
+        ganttHeadEl.innerHTML = headHtml;
 
-    currentMonthBtn.onclick = () => {
+        const totalDays = months.reduce((s, m) => s + m.days, 0);
+        const firstDay = new Date(months[0].year, months[0].month, 1);
+
+        const dayIndex = (d) => Math.floor((d - firstDay) / (24*60*60*1000));
+
+        const rowHtml = (task, cls, indent) => {
+            let html = `<tr><td style="text-align:left;padding:0 6px;font-size:0.6rem;${indent?'padding-left:'+(10+indent*10)+'px;':''}">${task.displayId || task.taskId || ''} ${task.taskDescription||''}</td>`;
+            const start = task.startDate ? (task.startDate.toDate ? task.startDate.toDate() : new Date(task.startDate)) : null;
+            const end   = task.endDate   ? (task.endDate.toDate   ? task.endDate.toDate()   : new Date(task.endDate))   : null;
+            const sIdx = start ? dayIndex(start) : -1;
+            const eIdx = end   ? dayIndex(end)   : -1;
+            for (let i = 0; i < totalDays; i++) {
+                const dayDate = new Date(firstDay.getTime() + i*24*60*60*1000);
+                const inRange = sIdx >= 0 && eIdx >= 0 && i >= sIdx && i <= eIdx;
+                let bg = '';
+                if (inRange) {
+                    if (task.status === 'COMPLETED') bg = 'gantt-td-done';
+                    else if (cls === 'main') bg = 'gantt-td-main';
+                    else if (cls === 'sub') bg = 'gantt-td-sub';
+                    else bg = 'gantt-td-subsub';
+                }
+                const isToday = dayDate.toDateString() === today.toDateString();
+                if (isToday && !inRange) bg = 'today-highlight';
+                html += `<td class="${bg}"></td>`;
+            }
+            html += '</tr>';
+            return html;
+        };
+
+        let bodyHtml = '';
+        tasks.forEach(t => {
+            bodyHtml += rowHtml(t, 'main', 0);
+            t.subTasks?.forEach(s => {
+                bodyHtml += rowHtml(s, 'sub', 1);
+                s.subSubtasks?.forEach(ss => {
+                    bodyHtml += rowHtml(ss, 'subsub', 2);
+                });
+            });
+        });
+        ganttBodyEl.innerHTML = bodyHtml;
+    }
+
+    currentMonthBtn.addEventListener('click', () => {
         showCurrentMonthOnly = !showCurrentMonthOnly;
-        currentMonthBtn.textContent = showCurrentMonthOnly ? "All Months" : "Current Month";
+        currentMonthBtn.textContent = showCurrentMonthOnly ? 'Show All' : 'Current Month';
         renderGantt();
-    };
-
-    // ═══════════════════════════════════════════════════════
-    // FIXED FILTER EVENT LISTENERS
-    // Search: re-focuses input after every render so typing is uninterrupted
-    // Dropdowns: deferred with setTimeout so select value commits first
-    // ═══════════════════════════════════════════════════════
-    searchInput.addEventListener('input', () => {
-        renderTasks(filterTasks());
-        renderGantt();
-        // Re-focus is handled inside renderTasks via wasSearchFocused flag
     });
-
-    statusFilter.addEventListener('change', () => {
-        setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
-    });
-    monthFilter.addEventListener('change', () => {
-        setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
-    });
-    yearFilter.addEventListener('change', () => {
-        setTimeout(() => { renderTasks(filterTasks()); renderGantt(); }, 0);
-    });
-
-    // ── Initial load: fetch resources up-front (force) so the cache is warm
-    // before the user ever opens a modal, then load tasks. ──
-    loadResources(true);
-    loadTasks();
-    setInterval(() => renderGantt(), 60000);
 
     // ══════════════════════════════════════════════════════
-    // MAIN TASK FILTER PICKER
+    // FILTERS
     // ══════════════════════════════════════════════════════
-    const TASK_FILTER_KEY = `taskFilter_${projectId}`;
     let selectedTaskIds = null;
 
-    function loadTaskFilterFromStorage() {
-        const raw = localStorage.getItem(TASK_FILTER_KEY);
-        if (raw === null || raw === 'ALL') { selectedTaskIds = null; return; }
-        try { selectedTaskIds = new Set(JSON.parse(raw)); }
-        catch(e) { selectedTaskIds = null; }
-    }
-    function saveTaskFilterToStorage() {
-        if (selectedTaskIds === null) { localStorage.setItem(TASK_FILTER_KEY, 'ALL'); }
-        else { localStorage.setItem(TASK_FILTER_KEY, JSON.stringify([...selectedTaskIds])); }
-    }
-    loadTaskFilterFromStorage();
+    statusFilter.addEventListener('change', () => renderTasks(filterTasks()));
+    monthFilter.addEventListener('change', () => renderTasks(filterTasks()));
+    yearFilter.addEventListener('change', () => renderTasks(filterTasks()));
+    searchInput.addEventListener('input', () => { renderTasks(filterTasks()); });
 
     function applyTaskFilterCount() {
-        const btn   = document.getElementById('taskFilterBtn');
-        const badge = document.getElementById('taskFilterCount');
-        if (selectedTaskIds !== null && selectedTaskIds.size > 0) {
-            badge.textContent = selectedTaskIds.size;
-            badge.style.display = 'inline';
-            btn.classList.add('btn-active');
+        const el = document.getElementById('taskFilterCount');
+        if (!el) return;
+        if (selectedTaskIds && selectedTaskIds.size > 0) {
+            el.style.display = 'inline-block';
+            el.textContent = selectedTaskIds.size;
         } else {
-            badge.style.display = 'none';
-            btn.classList.remove('btn-active');
+            el.style.display = 'none';
         }
     }
-    applyTaskFilterCount();
-
-    const taskFilterDropdown = document.getElementById('taskFilterDropdown');
-    const taskFilterPanel    = document.getElementById('taskFilterPanel');
-    const taskFilterBtn      = document.getElementById('taskFilterBtn');
-    const tfpList            = document.getElementById('tfpList');
-    const tfpSearch          = document.getElementById('tfpSearch');
-
-    function positionTaskFilterPanel() {
-        const rect = taskFilterBtn.getBoundingClientRect();
-        taskFilterPanel.style.top  = (rect.bottom + 6) + 'px';
-        taskFilterPanel.style.left = Math.max(8, rect.left - 20) + 'px';
-    }
-
-    function buildTfpList(filter = '') {
-        tfpList.innerHTML = '';
-        const tasks = allTasks.slice().sort((a,b) => (a.taskLine||0) - (b.taskLine||0));
-        tasks.forEach(t => {
-            const desc = t.taskDescription || t.taskId || 'Unnamed';
-            if (filter && !desc.toLowerCase().includes(filter.toLowerCase())) return;
-            const checked = selectedTaskIds === null || selectedTaskIds.has(t.id);
-            const item = document.createElement('div');
-            item.className = 'tfp-item';
-            item.innerHTML = `
-                <input type="checkbox" id="tfp_${t.id}" data-id="${t.id}" ${checked ? 'checked' : ''}>
-                <label class="tfp-item-label" for="tfp_${t.id}">${desc}</label>
-                <span class="tfp-item-id">${t.taskId||''}</span>`;
-            tfpList.appendChild(item);
-        });
-    }
-
-    taskFilterBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        positionTaskFilterPanel();
-        buildTfpList();
-        taskFilterDropdown.classList.add('open');
-    });
-
-    document.getElementById('taskFilterBackdrop').addEventListener('click', () => {
-        taskFilterDropdown.classList.remove('open');
-    });
-
-    tfpSearch.addEventListener('input', () => buildTfpList(tfpSearch.value));
-
-    document.getElementById('tfpSelectAll').addEventListener('click', () => {
-        tfpList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-    });
-    document.getElementById('tfpClearAll').addEventListener('click', () => {
-        tfpList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    });
-    document.getElementById('tfpClearFilter').addEventListener('click', () => {
-        selectedTaskIds = null;
-        saveTaskFilterToStorage();
-        applyTaskFilterCount();
-        renderTasks(filterTasks());
-        renderGantt();
-        taskFilterDropdown.classList.remove('open');
-        tfpSearch.value = '';
-    });
-    document.getElementById('tfpApply').addEventListener('click', () => {
-        const checked = [...tfpList.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.dataset.id);
-        if (checked.length === allTasks.length) { selectedTaskIds = null; }
-        else if (checked.length === 0)          { selectedTaskIds = new Set(); }
-        else                                    { selectedTaskIds = new Set(checked); }
-        saveTaskFilterToStorage();
-        applyTaskFilterCount();
-        renderTasks(filterTasks());
-        renderGantt();
-        taskFilterDropdown.classList.remove('open');
-        tfpSearch.value = '';
-    });
 
     // ══════════════════════════════════════════════════════
     // NOTES PANEL
     // ══════════════════════════════════════════════════════
-    const NOTES_KEY     = `notes_${projectId}`;
-    const notesFab      = document.getElementById('notesFab');
-    const notesPanel    = document.getElementById('notesPanel');
-    const notesDot      = document.getElementById('notesDot');
+    const notesFab = document.getElementById('notesFab');
+    const notesPanel = document.getElementById('notesPanel');
+    const notesCloseBtn = document.getElementById('notesCloseBtn');
     const notesTextarea = document.getElementById('notesTextarea');
+    const notesDot = document.getElementById('notesDot');
     const notesSavedTxt = document.getElementById('notesSavedTxt');
-
-    notesTextarea.value = localStorage.getItem(NOTES_KEY) || '';
-    updateNotesDot();
-
-    (async () => {
-        try {
-            const notesSnap = await getDocs(query(collection(db, "projectNotes"), where("projectId","==",projectId)));
-            if (!notesSnap.empty) {
-                const data = notesSnap.docs[0].data();
-                const fbText = data.notes || '';
-                if (fbText !== notesTextarea.value) {
-                    notesTextarea.value = fbText;
-                    localStorage.setItem(NOTES_KEY, fbText);
-                    updateNotesDot();
-                }
-            }
-        } catch(e) { console.warn('Notes load:', e); }
-    })();
-
-    let notesOpen      = false;
+    const notesKey = `projectNotes_${projectId}`;
     let notesSaveTimer = null;
-    let notesDocId     = null;
 
-    (async () => {
-        try {
-            const snap = await getDocs(query(collection(db,"projectNotes"), where("projectId","==",projectId)));
-            if (!snap.empty) notesDocId = snap.docs[0].id;
-        } catch(e) {}
-    })();
-
-    notesFab.addEventListener('click', () => {
-        notesOpen = !notesOpen;
-        notesPanel.classList.toggle('open', notesOpen);
-        notesFab.classList.toggle('panel-open', notesOpen);
-        if (notesOpen) setTimeout(() => notesTextarea.focus(), 280);
-    });
-    document.getElementById('notesCloseBtn').addEventListener('click', () => {
-        notesOpen = false;
-        notesPanel.classList.remove('open');
-        notesFab.classList.remove('panel-open');
-    });
+    function loadNotes() {
+        const saved = localStorage.getItem(notesKey) || '';
+        notesTextarea.value = saved;
+        notesDot.classList.toggle('has-content', saved.trim().length > 0);
+    }
 
     notesTextarea.addEventListener('input', () => {
-        updateNotesDot();
-        localStorage.setItem(NOTES_KEY, notesTextarea.value);
         clearTimeout(notesSaveTimer);
-        notesSavedTxt.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#97adc9"></i> Saving…';
-        notesSaveTimer = setTimeout(() => saveNotesToFirebase(), 800);
+        notesSavedTxt.innerHTML = '<i class="fas fa-spinner spin" style="color:#7f96b3"></i> Saving…';
+        notesSaveTimer = setTimeout(() => {
+            localStorage.setItem(notesKey, notesTextarea.value);
+            notesDot.classList.toggle('has-content', notesTextarea.value.trim().length > 0);
+            notesSavedTxt.innerHTML = '<i class="fas fa-check-circle" style="color:#059669"></i> Saved';
+        }, 400);
     });
 
-    async function saveNotesToFirebase() {
-        const text = notesTextarea.value;
-        try {
-            if (notesDocId) {
-                await updateDoc(doc(db, "projectNotes", notesDocId), { notes: text, updatedAt: Timestamp.now() });
-            } else {
-                const ref = await addDoc(collection(db, "projectNotes"), {
-                    projectId, notes: text, createdAt: Timestamp.now(), updatedAt: Timestamp.now()
-                });
-                notesDocId = ref.id;
-            }
-            localStorage.setItem(NOTES_KEY, text);
-            notesSavedTxt.innerHTML = '<i class="fas fa-check-circle" style="color:#059669"></i> Saved';
-        } catch(e) {
-            console.error('Notes save:', e);
-            notesSavedTxt.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#cc3333"></i> Save failed';
-        }
-    }
-
-    function updateNotesDot() {
-        notesDot.classList.toggle('has-content', notesTextarea.value.length > 0);
-    }
-
-    window.clearNotes = async function() {
-        if (!notesTextarea.value || confirm('Clear all notes?')) {
-            notesTextarea.value = '';
-            localStorage.setItem(NOTES_KEY, '');
-            updateNotesDot();
-            notesSavedTxt.innerHTML = '<i class="fas fa-spinner fa-spin" style="color:#97adc9"></i> Clearing…';
-            await saveNotesToFirebase();
-        }
+    window.clearNotes = function() {
+        if (!confirm('Clear all notes?')) return;
+        notesTextarea.value = '';
+        localStorage.removeItem(notesKey);
+        notesDot.classList.remove('has-content');
     };
+
+    function openNotesPanel() { notesPanel.classList.add('open'); notesFab.classList.add('panel-open'); notesTextarea.focus(); }
+    function closeNotesPanel() { notesPanel.classList.remove('open'); notesFab.classList.remove('panel-open'); }
+
+    notesFab.onclick = () => { notesPanel.classList.contains('open') ? closeNotesPanel() : openNotesPanel(); };
+    notesCloseBtn.onclick = closeNotesPanel;
+    document.getElementById('toggleNotesBtn').onclick = () => { notesPanel.classList.contains('open') ? closeNotesPanel() : openNotesPanel(); };
+
+    // ══════════════════════════════════════════════════════
+    // TASK FILTER PICKER (top button opens overlay with checkboxes)
+    // ══════════════════════════════════════════════════════
+    const taskFilterBtn = document.getElementById('taskFilterBtn');
+    const taskFilterDropdown = document.getElementById('taskFilterDropdown');
+    const taskFilterBackdrop = document.getElementById('taskFilterBackdrop');
+    const tfpList = document.getElementById('tfpList');
+    const tfpSearch = document.getElementById('tfpSearch');
+    const tfpApply = document.getElementById('tfpApply');
+    const tfpSelectAll = document.getElementById('tfpSelectAll');
+    const tfpClearAll = document.getElementById('tfpClearAll');
+    const tfpClearFilter = document.getElementById('tfpClearFilter');
+
+    let tfpWorkingSelection = new Set();
+
+    function openTaskFilterPicker() {
+        tfpWorkingSelection = selectedTaskIds ? new Set(selectedTaskIds) : new Set(allTasks.map(t => t.id));
+        renderTfpList();
+        taskFilterDropdown.classList.add('open');
+        setTimeout(() => tfpSearch.focus(), 50);
+    }
+    function closeTaskFilterPicker() { taskFilterDropdown.classList.remove('open'); }
+    function renderTfpList() {
+        const s = tfpSearch.value.trim().toLowerCase();
+        const list = allTasks.filter(t => {
+            if (!s) return true;
+            return `${t.displayId||''} ${t.taskId||''} ${t.taskDescription||''}`.toLowerCase().includes(s);
+        });
+        if (!list.length) { tfpList.innerHTML = '<div style="padding:20px;text-align:center;color:#7f96b3;font-size:0.72rem;">No tasks</div>'; return; }
+        tfpList.innerHTML = list.map(t => `
+            <label class="tfp-item">
+                <input type="checkbox" data-tid="${t.id}" ${tfpWorkingSelection.has(t.id)?'checked':''}>
+                <span class="tfp-item-label">${t.taskDescription || 'Untitled'}</span>
+                <span class="tfp-item-id">${t.displayId || t.taskId || ''}</span>
+            </label>
+        `).join('');
+        tfpList.querySelectorAll('input[type=checkbox]').forEach(cb => {
+            cb.onchange = () => {
+                if (cb.checked) tfpWorkingSelection.add(cb.dataset.tid);
+                else tfpWorkingSelection.delete(cb.dataset.tid);
+            };
+        });
+    }
+
+    taskFilterBtn.onclick = () => openTaskFilterPicker();
+    taskFilterBackdrop.onclick = closeTaskFilterPicker;
+    tfpSearch.oninput = renderTfpList;
+    tfpSelectAll.onclick = () => { tfpWorkingSelection = new Set(allTasks.map(t => t.id)); renderTfpList(); };
+    tfpClearAll.onclick = () => { tfpWorkingSelection = new Set(); renderTfpList(); };
+    tfpApply.onclick = () => {
+        if (tfpWorkingSelection.size === allTasks.length || tfpWorkingSelection.size === 0) {
+            selectedTaskIds = tfpWorkingSelection.size === 0 ? new Set() : null;
+        } else {
+            selectedTaskIds = new Set(tfpWorkingSelection);
+        }
+        closeTaskFilterPicker();
+        renderTasks(filterTasks());
+        renderGantt();
+        applyTaskFilterCount();
+    };
+    tfpClearFilter.onclick = () => { selectedTaskIds = null; closeTaskFilterPicker(); renderTasks(filterTasks()); renderGantt(); applyTaskFilterCount(); };
+
+    // ══════════════════════════════════════════════════════
+    // BOOT
+    // ══════════════════════════════════════════════════════
+    loadNotes();
+    loadTasks();
 });
 </script>
 </body>
